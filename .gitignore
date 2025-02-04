@@ -1,15 +1,52 @@
-*.iml
-.gradle
+# Директории, создаваемые Android Studio
+/.idea/
+/.gradle/
 /local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+/captures/
+
+# Файлы системы и IDE
+*.iml
+*.log
+*.hprof
 .DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
+Thumbs.db
+*.swp
+*.swo
+*.swn
+
+# Кэш Gradle и артефакты сборки
+/.gradle/
+/build/
+/out/
+/!gradle-wrapper.jar
+
+# Артефакты CI/CD
+/.github/workflows/*.log
+*.apk
+*.aab
+*.ap_
+*.keystore
+
+# Файлы тестирования
+/test-results/
+/androidTest-results/
+
+# Файлы кэширования IntelliJ IDEA/Android Studio
+.idea/workspace.xml
+.idea/libraries/
+.idea/modules.xml
+.idea/.name
+.idea/assetWizardSettings.xml
+.idea/caches/
+.idea/httpRequests/
+
+# Локальные настройки пользователя
+*.keystore
+*.jks
+*.properties
+*.key
+*.pem
+*.p12
+.env
+/google-services.json
+/firebase/
