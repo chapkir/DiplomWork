@@ -1,46 +1,26 @@
-package com.example.diplomwork
+package com.example.diplomwork.ui.main_screen.bottom_menu
 
-import android.app.Activity
-import android.content.Context
-import android.graphics.Rect
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 
 @Composable
@@ -54,9 +34,12 @@ fun BottomMenu() {
 
     val selectedItem = remember { mutableStateOf("Home") }
 
+    val navBarHeight = SystemNavBarHeight()
+
     NavigationBar(
         containerColor = ColorForBottomMenu,
         contentColor = Color.White,
+        modifier = Modifier.height(50.dp + navBarHeight.value)
     )
     {
         items.forEach { item ->
@@ -85,6 +68,28 @@ fun BottomMenu() {
             )
         }
     }
+}
+
+@Composable
+fun SystemNavBarHeight(): MutableState<Dp>
+{
+    val navBarHeight = remember { mutableStateOf(0.dp) }
+
+    // Используем LocalContext и LocalDensity для получения отступов
+    val context = LocalContext.current
+    val view = LocalView.current
+    val density = LocalDensity.current
+
+    // Используем LaunchedEffect для того, чтобы высота навигационной панели обновлялась
+    LaunchedEffect(context) {
+        // Получаем rootWindowInsets для системных панелей
+        val insets = ViewCompat.getRootWindowInsets(view)
+        navBarHeight.value = with(density) {
+            // Получаем нижний отступ, который равен высоте навигационной панели
+            insets?.getInsets(WindowInsetsCompat.Type.systemBars())?.bottom?.toDp() ?: 0.dp
+        }
+    }
+    return navBarHeight
 }
 
 

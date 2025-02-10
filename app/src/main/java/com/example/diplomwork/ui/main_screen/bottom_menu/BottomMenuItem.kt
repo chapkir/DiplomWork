@@ -1,4 +1,6 @@
-package com.example.diplomwork
+package com.example.diplomwork.ui.main_screen.bottom_menu
+
+import com.example.diplomwork.R
 
 sealed class BottomMenuItem(
     val route: String,
