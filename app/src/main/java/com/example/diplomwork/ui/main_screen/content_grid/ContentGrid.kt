@@ -1,0 +1,28 @@
+package com.example.diplomwork.ui.main_screen.content_grid
+
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
+import com.example.diplomwork.R
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.lazy.grid.items
+
+@Composable
+fun ContentGrid(modifier: Modifier = Modifier) {
+    val images = listOf(
+        R.drawable.testimg1, R.drawable.testimg2, R.drawable.testimg3 // Заменить на реальные данные
+    )
+
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = 120.dp), // Адаптивная сетка
+        modifier = Modifier.padding(80.dp),
+        contentPadding = PaddingValues(8.dp),
+    ) {
+        items(images) { imageRes ->
+            ImageCard(imageRes)
+        }
+    }
+}

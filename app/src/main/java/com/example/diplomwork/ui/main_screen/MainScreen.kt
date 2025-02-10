@@ -14,6 +14,7 @@ import com.example.diplomwork.ui.theme.DarkWhite
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import androidx.compose.ui.Alignment
 import com.example.diplomwork.ui.main_screen.bottom_menu.BottomMenu
+import com.example.diplomwork.ui.main_screen.content_grid.ContentGrid
 import com.example.diplomwork.ui.main_screen.top_bar.TopBar
 
 
@@ -39,12 +40,6 @@ fun MainScreen() {
         }
 
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
-        ) {
-        }
+        ContentGrid(Modifier.padding(paddingValues))
     }
 }
