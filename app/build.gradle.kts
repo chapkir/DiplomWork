@@ -69,4 +69,6 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.accompanist.systemuicontroller)
     implementation("androidx.compose.material:material:1.5.4")
+    implementation("io.coil-kt:coil-compose:2.2.2")
+    implementation("androidx.compose.foundation:foundation:1.5.1")
 }

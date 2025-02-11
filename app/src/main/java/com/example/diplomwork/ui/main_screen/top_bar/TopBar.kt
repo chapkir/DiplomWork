@@ -27,7 +27,7 @@ fun TopBar() {
     )
 
     TopAppBar(
-        title = { Text("Моя Галерея", fontWeight = FontWeight.Bold) },
+        title = { Text("Картинки", fontWeight = FontWeight.Bold) },
         actions = {
 
             IconButton(
