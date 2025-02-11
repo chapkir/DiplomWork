@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.main_screen.bottom_menu
+package com.example.diplomwork.ui.screens.main_screen.bottom_menu
 
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -21,25 +21,33 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.diplomwork.system_settings.SystemInsetHeight
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
+import com.example.diplomwork.ui.theme.Dimens.BottomMenuHeight
 
 @Composable
 fun BottomMenu() {
 
     val items = listOf(
         BottomMenuItem.Home,
+        BottomMenuItem.Info,
+        BottomMenuItem.Add,
         BottomMenuItem.Favs,
-        BottomMenuItem.Settings
+        BottomMenuItem.User
+
     )
 
-    val selectedItem = remember { mutableStateOf("Home") }
+    val selectedItem = remember { mutableStateOf("home") }
 
-    val navBarHeight = SystemNavBarHeight()
+    //val sysNavBarHeight = SystemInsetHeight(WindowInsetsCompat.Type.navigationBars())
 
     NavigationBar(
         containerColor = ColorForBottomMenu,
         contentColor = Color.White,
-        modifier = Modifier.height(50.dp + navBarHeight.value)
+        modifier = Modifier
+            .height(
+                BottomMenuHeight + SystemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value
+            )
     )
     {
         items.forEach { item ->
@@ -70,27 +78,7 @@ fun BottomMenu() {
     }
 }
 
-@Composable
-fun SystemNavBarHeight(): MutableState<Dp>
-{
-    val navBarHeight = remember { mutableStateOf(0.dp) }
 
-    // Используем LocalContext и LocalDensity для получения отступов
-    val context = LocalContext.current
-    val view = LocalView.current
-    val density = LocalDensity.current
-
-    // Используем LaunchedEffect для того, чтобы высота навигационной панели обновлялась
-    LaunchedEffect(context) {
-        // Получаем rootWindowInsets для системных панелей
-        val insets = ViewCompat.getRootWindowInsets(view)
-        navBarHeight.value = with(density) {
-            // Получаем нижний отступ, который равен высоте навигационной панели
-            insets?.getInsets(WindowInsetsCompat.Type.systemBars())?.bottom?.toDp() ?: 0.dp
-        }
-    }
-    return navBarHeight
-}
 
 
 

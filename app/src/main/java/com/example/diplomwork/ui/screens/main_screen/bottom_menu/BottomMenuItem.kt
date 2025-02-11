@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.main_screen.bottom_menu
+package com.example.diplomwork.ui.screens.main_screen.bottom_menu
 
 import com.example.diplomwork.R
 
@@ -21,5 +21,20 @@ sealed class BottomMenuItem(
         route = "settings",
         title =  "",
         iconId = R.drawable.ic_settings
+    )
+    object User: BottomMenuItem(
+        route = "user",
+        title =  "",
+        iconId = R.drawable.ic_user
+    )
+    object Add: BottomMenuItem(
+        route = "add",
+        title =  "",
+        iconId = R.drawable.ic_add
+    )
+    object Info: BottomMenuItem(
+        route = "info",
+        title =  "",
+        iconId = R.drawable.ic_info
     )
 }

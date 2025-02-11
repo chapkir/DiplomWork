@@ -1,0 +1,53 @@
+package com.example.diplomwork.ui.screens.main_screen.content_grid
+
+import com.example.diplomwork.R
+
+object ImageRepository {
+    val images = listOf(
+        R.drawable.testimg1,
+        R.drawable.testimg2,
+        R.drawable.testimg3,
+        R.drawable.testimg4,
+        R.drawable.testimg5,
+        R.drawable.testimg7,
+        R.drawable.testimg6,
+        R.drawable.testimg8,
+        R.drawable.testimg9,
+        R.drawable.testimg10,
+        R.drawable.testimg11,
+        R.drawable.testimg12,
+        R.drawable.testimg13,
+        R.drawable.testimg14,
+        R.drawable.testimg15,
+        R.drawable.testimg1,
+        R.drawable.testimg2,
+        R.drawable.testimg3,
+        R.drawable.testimg4,
+        R.drawable.testimg5,
+        R.drawable.testimg7,
+        R.drawable.testimg6,
+        R.drawable.testimg8,
+        R.drawable.testimg9,
+        R.drawable.testimg10,
+        R.drawable.testimg11,
+        R.drawable.testimg12,
+        R.drawable.testimg13,
+        R.drawable.testimg14,
+        R.drawable.testimg15,
+        R.drawable.testimg1,
+        R.drawable.testimg2,
+        R.drawable.testimg3,
+        R.drawable.testimg4,
+        R.drawable.testimg5,
+        R.drawable.testimg7,
+        R.drawable.testimg6,
+        R.drawable.testimg8,
+        R.drawable.testimg9,
+        R.drawable.testimg10,
+        R.drawable.testimg11,
+        R.drawable.testimg12,
+        R.drawable.testimg13,
+        R.drawable.testimg14,
+        R.drawable.testimg15
+    )
+}

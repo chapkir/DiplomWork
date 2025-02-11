@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.main_screen.content_grid
+package com.example.diplomwork.ui.screens.main_screen.content_grid
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -30,13 +30,15 @@ fun ImageCard(imageRes: Int) {
 
     Card(
         shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
+        elevation = CardDefaults.cardElevation(5.dp),
         modifier = Modifier
-            .padding(8.dp)
+            .padding(6.dp)
             .fillMaxWidth()
             .clickable { /* Открыть полноэкранный просмотр */ }
     ) {
-        Box {
+        Box(
+            modifier = Modifier.clip(RoundedCornerShape(12.dp))
+        ) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(imageRes)
