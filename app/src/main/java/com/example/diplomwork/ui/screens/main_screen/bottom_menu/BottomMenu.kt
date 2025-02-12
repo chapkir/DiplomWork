@@ -39,14 +39,14 @@ fun BottomMenu() {
 
     val selectedItem = remember { mutableStateOf("home") }
 
-    //val sysNavBarHeight = SystemInsetHeight(WindowInsetsCompat.Type.navigationBars())
 
     NavigationBar(
         containerColor = ColorForBottomMenu,
         contentColor = Color.White,
         modifier = Modifier
             .height(
-                BottomMenuHeight + SystemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value
+                BottomMenuHeight +
+                        SystemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value
             )
     )
     {

@@ -9,6 +9,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.diplomwork.ui.theme.DarkWhite
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -18,10 +19,10 @@ import com.example.diplomwork.ui.screens.main_screen.top_bar.TopBar
 
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@Preview(showBackground = true)
+//@Preview(showBackground = true)
 @Composable
-fun MainScreen() {
-    val navController = rememberNavController()
+fun MainScreen(navController: NavHostController) {
+
     val systemUiController = rememberSystemUiController()
 
     SideEffect {
@@ -39,6 +40,13 @@ fun MainScreen() {
         }
 
     ) { paddingValues ->
-        ContentGrid(Modifier.padding(paddingValues))
+        // Передаем navController в ContentGrid через onImageClick
+        ContentGrid(
+            modifier = Modifier.padding(paddingValues),
+            onImageClick = { imageRes ->
+                // Навигация на экран с деталями
+                navController.navigate("image_detail_screen/$imageRes")
+            }
+        )
     }
 }

@@ -23,7 +23,7 @@ import com.example.diplomwork.ui.theme.Dimens.BottomMenuHeight
 import com.example.diplomwork.ui.theme.Dimens.TopBarHeight
 
 @Composable
-fun ContentGrid(modifier: Modifier = Modifier) {
+fun ContentGrid(modifier: Modifier = Modifier, onImageClick: (Int) -> Unit) {
 
     val images = ImageRepository.images
 
@@ -42,7 +42,9 @@ fun ContentGrid(modifier: Modifier = Modifier) {
         //horizontalArrangement = Arrangement.spacedBy(8.dp) // отступы между картинками
     ) {
         items(images) { imageRes ->
-            ImageCard(imageRes)
+            ImageCard(
+                imageRes = imageRes,
+                onClick = { onImageClick(imageRes) } )// Передаем обработчик клика
         }
     }
 }

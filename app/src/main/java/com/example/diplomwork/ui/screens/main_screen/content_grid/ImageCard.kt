@@ -24,9 +24,10 @@ import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
 
 @Composable
-fun ImageCard(imageRes: Int) {
+fun ImageCard(imageRes: Int, onClick: () -> Unit) {
 
     var aspectRatio by remember { mutableStateOf(1f) }
+
 
     Card(
         shape = RoundedCornerShape(12.dp),
@@ -34,7 +35,7 @@ fun ImageCard(imageRes: Int) {
         modifier = Modifier
             .padding(6.dp)
             .fillMaxWidth()
-            .clickable { /* Открыть полноэкранный просмотр */ }
+            .clickable { onClick() }
     ) {
         Box(
             modifier = Modifier.clip(RoundedCornerShape(12.dp))
@@ -68,3 +69,4 @@ fun ImageCard(imageRes: Int) {
         }
     }
 }
+
