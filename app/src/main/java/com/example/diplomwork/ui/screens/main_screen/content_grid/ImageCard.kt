@@ -35,7 +35,7 @@ fun ImageCard(imageRes: Int, onClick: () -> Unit) {
         modifier = Modifier
             .padding(6.dp)
             .fillMaxWidth()
-            .clickable { onClick() }
+            .clickable { onClick() } // Ну и тут тоже переход получается
     ) {
         Box(
             modifier = Modifier.clip(RoundedCornerShape(12.dp))
@@ -43,7 +43,7 @@ fun ImageCard(imageRes: Int, onClick: () -> Unit) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(imageRes)
-                    .crossfade(true) // Плавная загрузка
+                    .crossfade(true)
                     .build(),
                 contentDescription = null,
                 onState = { state ->
@@ -51,17 +51,17 @@ fun ImageCard(imageRes: Int, onClick: () -> Unit) {
                         val size = state.painter.intrinsicSize
                         if (size.width > 0 && size.height > 0) {
                             aspectRatio =
-                                size.width / size.height // Устанавливаем реальное соотношение
+                                size.width / size.height
                         }
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(aspectRatio) // Динамическое соотношение
+                    .aspectRatio(aspectRatio)
                     .clip(RoundedCornerShape(12.dp))
             )
 
-            if (aspectRatio == 0f) { // Пока не загружено, показываем загрузку
+            if (aspectRatio == 0f) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center)
                 )

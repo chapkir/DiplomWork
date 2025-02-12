@@ -44,7 +44,11 @@ fun ContentGrid(modifier: Modifier = Modifier, onImageClick: (Int) -> Unit) {
         items(images) { imageRes ->
             ImageCard(
                 imageRes = imageRes,
-                onClick = { onImageClick(imageRes) } )// Передаем обработчик клика
+                onClick = { onImageClick(imageRes) } )
+
+                /* Вот тут короче идет переключение с главного экрана на экран с картинкой
+                    и на него передается интовый ресурс картинки imageRes */
+
         }
     }
 }

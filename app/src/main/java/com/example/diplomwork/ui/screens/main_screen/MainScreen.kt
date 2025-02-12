@@ -40,12 +40,13 @@ fun MainScreen(navController: NavHostController) {
         }
 
     ) { paddingValues ->
-        // Передаем navController в ContentGrid через onImageClick
         ContentGrid(
             modifier = Modifier.padding(paddingValues),
             onImageClick = { imageRes ->
-                // Навигация на экран с деталями
                 navController.navigate("image_detail_screen/$imageRes")
+
+                /* Передаем navController в ContentGrid через onImageClick
+                */
             }
         )
     }

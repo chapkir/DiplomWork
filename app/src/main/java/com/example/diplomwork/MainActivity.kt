@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    val navController = rememberNavController()
+                    val navController = rememberNavController() // Инициализация навКонтроллера
                     AppNavigation(navController = navController)
                 }
         }
