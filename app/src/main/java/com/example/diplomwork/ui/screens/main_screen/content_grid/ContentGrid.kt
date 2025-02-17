@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.screens.main_screen.content_grid
+package com.example.diplomwork.frontend.ui.screens.main_screen.content_grid
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -17,10 +17,10 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowInsetsCompat
-import com.example.diplomwork.system_settings.SystemInsetHeight
-import com.example.diplomwork.ui.theme.ColorForBottomMenu
-import com.example.diplomwork.ui.theme.Dimens.BottomMenuHeight
-import com.example.diplomwork.ui.theme.Dimens.TopBarHeight
+import com.example.diplomwork.frontend.system_settings.SystemInsetHeight
+import com.example.diplomwork.frontend.ui.theme.ColorForBottomMenu
+import com.example.diplomwork.frontend.ui.theme.Dimens.BottomMenuHeight
+import com.example.diplomwork.frontend.ui.theme.Dimens.TopBarHeight
 
 @Composable
 fun ContentGrid(modifier: Modifier = Modifier, onImageClick: (Int) -> Unit) {

@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.screens.main_screen.top_bar
+package com.example.diplomwork.frontend.ui.screens.main_screen.top_bar
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,10 +20,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import com.example.diplomwork.R
-import com.example.diplomwork.system_settings.SystemInsetHeight
-import com.example.diplomwork.ui.screens.main_screen.bottom_menu.BottomMenuItem
-import com.example.diplomwork.ui.theme.ColorForBottomMenu
-import com.example.diplomwork.ui.theme.Dimens.TopBarHeight
+import com.example.diplomwork.frontend.system_settings.SystemInsetHeight
+import com.example.diplomwork.frontend.ui.screens.main_screen.bottom_menu.BottomMenuItem
+import com.example.diplomwork.frontend.ui.theme.ColorForBottomMenu
+import com.example.diplomwork.frontend.ui.theme.Dimens.TopBarHeight
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

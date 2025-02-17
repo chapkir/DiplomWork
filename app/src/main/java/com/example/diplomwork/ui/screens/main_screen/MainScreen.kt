@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.screens.main_screen
+package com.example.diplomwork.frontend.ui.screens.main_screen
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,11 +11,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.example.diplomwork.ui.theme.DarkWhite
+import com.example.diplomwork.frontend.ui.theme.DarkWhite
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.example.diplomwork.ui.screens.main_screen.bottom_menu.BottomMenu
-import com.example.diplomwork.ui.screens.main_screen.content_grid.ContentGrid
-import com.example.diplomwork.ui.screens.main_screen.top_bar.TopBar
+import com.example.diplomwork.frontend.ui.screens.main_screen.bottom_menu.BottomMenu
+import com.example.diplomwork.frontend.ui.screens.main_screen.content_grid.ContentGrid
+import com.example.diplomwork.frontend.ui.screens.main_screen.top_bar.TopBar
 
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")

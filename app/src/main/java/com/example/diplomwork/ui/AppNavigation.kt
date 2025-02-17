@@ -2,7 +2,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.diplomwork.ui.screens.main_screen.MainScreen
+import com.example.diplomwork.frontend.ui.screens.main_screen.MainScreen
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
