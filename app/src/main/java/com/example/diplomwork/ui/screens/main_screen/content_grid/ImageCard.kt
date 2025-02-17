@@ -1,4 +1,4 @@
-package com.example.diplomwork.frontend.ui.screens.main_screen.content_grid
+package com.example.diplomwork.ui.screens.main_screen.content_grid
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box

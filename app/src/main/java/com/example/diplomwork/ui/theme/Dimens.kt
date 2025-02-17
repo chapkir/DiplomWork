@@ -1,4 +1,4 @@
-package com.example.diplomwork.frontend.ui.theme
+package com.example.diplomwork.ui.theme
 
 import androidx.compose.ui.unit.dp
 

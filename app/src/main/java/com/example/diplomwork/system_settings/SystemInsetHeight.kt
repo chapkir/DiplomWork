@@ -1,4 +1,4 @@
-package com.example.diplomwork.frontend.system_settings
+package com.example.diplomwork.system_settings
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect

@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "DiplomWork"
 include(":app")
- 
+include(":server")

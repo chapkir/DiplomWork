@@ -73,4 +73,7 @@ dependencies {
     implementation("androidx.compose.foundation:foundation:1.5.1")
     implementation("com.google.android.material:material:1.11.0")
     implementation ("com.google.android.material:material:1.4.0")
+
+    
 }
+

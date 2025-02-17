@@ -1,4 +1,4 @@
-package com.example.diplomwork.frontend.ui.screens.main_screen.bottom_menu
+package com.example.diplomwork.ui.screens.main_screen.bottom_menu
 
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -21,9 +21,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.example.diplomwork.frontend.system_settings.SystemInsetHeight
-import com.example.diplomwork.frontend.ui.theme.ColorForBottomMenu
-import com.example.diplomwork.frontend.ui.theme.Dimens.BottomMenuHeight
+import com.example.diplomwork.system_settings.SystemInsetHeight
+import com.example.diplomwork.ui.theme.ColorForBottomMenu
+import com.example.diplomwork.ui.theme.Dimens.BottomMenuHeight
 
 @Composable
 fun BottomMenu() {

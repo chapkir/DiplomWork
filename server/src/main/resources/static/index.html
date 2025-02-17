@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pinspiration Boards</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="app">
+    <!-- Auth Buttons -->
+    <div class="auth-buttons" id="authButtons">
+        <!-- Если пользователь не авторизован, здесь будут кнопки Login и Register.
+             Если авторизован, JavaScript заменит содержимое на ссылку "Профиль". -->
+        <button class="btn btn-outline" id="loginBtn">
+            <i class='bx bx-log-in'></i>
+            Login
+        </button>
+        <button class="btn btn-outline" id="registerBtn">
+            <i class='bx bx-user-plus'></i>
+            Register
+        </button>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class='bx bx-user'></i> Login</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form class="auth-form">
+                <div class="form-group">
+                    <label for="loginUsername">Username</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="loginUsername" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="loginPassword" required>
+                        <i class='bx bx-key'></i>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Sign In</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal" id="registerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class='bx bx-user-plus'></i> Create Account</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form id="registerForm" class="auth-form">
+                <div class="form-group">
+                    <label for="registerUsername">Имя пользователя</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="registerUsername" placeholder="Имя пользователя" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="registerEmail">Email</label>
+                    <div class="input-wrapper">
+                        <input type="email" id="registerEmail" placeholder="Email" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Пароль</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="registerPassword" placeholder="Пароль" required>
+                        <i class='bx bx-key'></i>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Подтвердите пароль</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="confirmPassword" placeholder="Подтвердите пароль" required>
+                        <i class='bx bx-key'></i>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+            </form>
+        </div>
+    </div>
+
+    <main class="container">
+        <div class="hero">
+            <h1>Discover & Share</h1>
+            <p>Find inspiration and share your creativity with the world</p>
+            <div class="search-bar">
+                <i class='bx bx-search'></i>
+                <input type="text" placeholder="Search for inspiration...">
+            </div>
+        </div>
+
+        <div id="imageGrid"></div>
+
+        <button class="floating-btn">
+            <i class='bx bx-plus'></i>
+        </button>
+    </main>
+</div>
+<script src="js/script.js"></script>
+</body>
+</html>

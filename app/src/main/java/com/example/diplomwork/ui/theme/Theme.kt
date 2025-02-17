@@ -1,4 +1,4 @@
-package com.example.diplomwork.frontend.ui.theme
+package com.example.diplomwork.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

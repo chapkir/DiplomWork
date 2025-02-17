@@ -1,4 +1,4 @@
-package com.example.diplomwork.frontend
+package com.example.diplomwork
 
 import AppNavigation
 import android.os.Bundle
