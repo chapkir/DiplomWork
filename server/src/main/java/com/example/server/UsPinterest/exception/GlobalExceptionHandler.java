@@ -1,5 +1,6 @@
 package com.example.server.UsPinterest.exception;
 
+import com.example.server.UsPinterest.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
