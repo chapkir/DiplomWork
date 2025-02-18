@@ -47,6 +47,7 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    buildToolsVersion = "35.0.1"
 }
 
 dependencies {
@@ -68,12 +69,14 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.accompanist.systemuicontroller)
-    implementation("androidx.compose.material:material:1.5.4")
-    implementation("io.coil-kt:coil-compose:2.2.2")
-    implementation("androidx.compose.foundation:foundation:1.5.1")
-    implementation("com.google.android.material:material:1.11.0")
-    implementation ("com.google.android.material:material:1.4.0")
+    implementation("androidx.compose.material:material:1.7.8")
+    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("androidx.compose.foundation:foundation:1.7.8")
+    implementation("com.google.android.material:material:1.12.0")
+    implementation ("com.google.android.material:material:1.12.0")
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 
-    
+
 }
 

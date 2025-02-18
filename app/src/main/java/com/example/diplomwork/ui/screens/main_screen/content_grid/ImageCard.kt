@@ -9,25 +9,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
-import coil.request.ImageRequest
+import androidx.compose.ui.platform.LocalContext
+import com.example.diplomwork.network.ApiClient
 
 @Composable
-fun ImageCard(imageRes: Int, onClick: () -> Unit) {
-
+fun ImageCard(imageUrl: String, onClick: () -> Unit) {
     var aspectRatio by remember { mutableStateOf(1f) }
-
 
     Card(
         shape = RoundedCornerShape(12.dp),
@@ -35,36 +29,20 @@ fun ImageCard(imageRes: Int, onClick: () -> Unit) {
         modifier = Modifier
             .padding(6.dp)
             .fillMaxWidth()
-            .clickable { onClick() } // Ну и тут тоже переход получается
+            .clickable { onClick() }
     ) {
-        Box(
-            modifier = Modifier.clip(RoundedCornerShape(12.dp))
-        ) {
+        Box(modifier = Modifier.clip(RoundedCornerShape(12.dp))) {
             AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(imageRes)
-                    .crossfade(true)
-                    .build(),
+                model = if(imageUrl.startsWith("http")) imageUrl else ApiClient.BASE_URL + imageUrl,
                 contentDescription = null,
-                onState = { state ->
-                    if (state is AsyncImagePainter.State.Success) {
-                        val size = state.painter.intrinsicSize
-                        if (size.width > 0 && size.height > 0) {
-                            aspectRatio =
-                                size.width / size.height
-                        }
-                    }
-                },
+                onState = { state -> /* ... */ },
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(aspectRatio)
                     .clip(RoundedCornerShape(12.dp))
             )
-
             if (aspectRatio == 0f) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
-                )
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
         }
     }

@@ -34,12 +34,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors().and()
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/images/**", "/profile.html", "/favicon.ico").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/pins").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/pins/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )
@@ -71,7 +71,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:8081", "http://localhost:5500"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:8081", "http://192.168.1.125:8081", "http://localhost:5500"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
         configuration.setAllowCredentials(true);

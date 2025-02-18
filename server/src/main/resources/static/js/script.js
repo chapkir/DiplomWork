@@ -44,123 +44,67 @@ forms.forEach(form => {
 // Image Grid Demo
 const imageGrid = document.getElementById('imageGrid');
 
+// Добавим вызов функции loadPins при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    loadPins(); // Загружаем пины при старте
 
-// Create and append image cards
-// Функция загрузки пинов с бэкенда и динамическое создание карточек
+    // Добавим логирование для отладки
+    console.log("Начинаем загрузку пинов...");
+});
+
+// Обновленная функция загрузки пинов
 async function loadPins() {
     try {
-        const response = await fetch('http://localhost:8081/api/pins');
+        console.log("Отправляем запрос на получение пинов...");
+        const response = await fetch('http://localhost:8081/api/pins/all'); // Используем эндпоинт /all
+
         if (response.ok) {
             const pins = await response.json();
-            console.log("Fetched pins:", pins); // Отладочное сообщение: выводим полученные пины
+            console.log("Получены пины:", pins);
+
             const imageGrid = document.getElementById('imageGrid');
-            imageGrid.innerHTML = ''; // Очищаем сетку перед добавлением новых пинов
-            pins.forEach(pin => {
-                const card = document.createElement('div');
-                card.className = 'image-card';
-                card.innerHTML = `
-                    <img src="${pin.imageUrl}" alt="${pin.description}">
-                    <p>${pin.description}</p>
-                    <p>Загружено пользователем: ${pin.user ? pin.user.username : 'Неизвестно'}</p>
-                    <div class="actions">
-                        <button onclick="likePin(${pin.id})">Like (${pin.likes ? pin.likes.length : 0})</button>
-                        <button onclick="toggleCommentForm(${pin.id})">Comment</button>
-                    </div>
-                    <div id="comments-${pin.id}" class="comments">
-                        ${pin.comments && pin.comments.length > 0
-                    ? pin.comments.map(comment => `<p><strong>${comment.user ? comment.user.username : 'Неизвестно'}:</strong> ${comment.text}</p>`).join('')
-                    : ''
-                }
-                    </div>
-                    <div id="comment-form-${pin.id}" class="comment-form" style="display:none;">
-                        <input type="text" id="comment-input-${pin.id}" placeholder="Ваш комментарий">
-                        <button onclick="submitComment(${pin.id})">Отправить</button>
-                    </div>
-                `;
-                imageGrid.appendChild(card);
-            });
+            imageGrid.innerHTML = ''; // Очищаем сетку
+
+            if (pins && pins.length > 0) {
+                pins.forEach(pin => {
+                    const card = document.createElement('div');
+                    card.className = 'image-card';
+                    card.innerHTML = `
+                        <img src="${pin.imageUrl}" alt="${pin.description || 'Pin image'}"
+                             onerror="this.src='https://via.placeholder.com/150'"/>
+                        <p>${pin.description || 'No description'}</p>
+                        <div class="actions">
+                            <button onclick="likePin(${pin.id})">
+                                Like ${pin.likes ? `(${pin.likes.length})` : '(0)'}
+                            </button>
+                            <button onclick="toggleCommentForm(${pin.id})">Comment</button>
+                        </div>
+                        <div id="comments-${pin.id}" class="comments">
+                            ${pin.comments && pin.comments.length > 0
+                                ? pin.comments.map(comment =>
+                                    `<p><strong>${comment.user ? comment.user.username : 'Unknown'}:</strong> ${comment.text}</p>`
+                                ).join('')
+                                : ''}
+                        </div>
+                        <div id="comment-form-${pin.id}" class="comment-form" style="display:none;">
+                            <input type="text" id="comment-input-${pin.id}" placeholder="Your comment">
+                            <button onclick="submitComment(${pin.id})">Send</button>
+                        </div>
+                    `;
+                    imageGrid.appendChild(card);
+                });
+            } else {
+                imageGrid.innerHTML = '<p>No pins found</p>';
+            }
         } else {
-            console.error('Ошибка при загрузке пинов');
+            console.error('Error loading pins:', response.status);
+            const errorData = await response.text();
+            console.error('Error details:', errorData);
         }
     } catch (error) {
-        console.error('Ошибка соединения с сервером', error);
+        console.error('Error:', error);
     }
 }
-
-// Функция для отправки лайка
-async function likePin(pinId) {
-    const token = localStorage.getItem('token');
-    if (!token) {
-        alert("Пожалуйста, войдите, чтобы лайкать.");
-        return;
-    }
-    try {
-        const response = await fetch(`http://localhost:8081/api/pins/${pinId}/like`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if(response.ok){
-            const data = await response.json();
-            alert(data.liked ? 'Лайк поставлен!' : 'Лайк удалён!');
-            loadPins(); // Обновляем пины для отображения актуального счёта лайков
-        } else {
-            const errorData = await response.json();
-            alert(`Ошибка: ${errorData.message}`);
-        }
-    } catch(err) {
-        console.error(err);
-        alert('Ошибка соединения с сервером');
-    }
-}
-
-// Функция для показа/скрытия формы комментария
-function toggleCommentForm(pinId) {
-    const formDiv = document.getElementById(`comment-form-${pinId}`);
-    formDiv.style.display = (formDiv.style.display === 'none' || formDiv.style.display === '') ? 'block' : 'none';
-}
-
-// Функция отправки комментария
-async function submitComment(pinId) {
-    const token = localStorage.getItem('token');
-    if (!token) {
-        alert("Пожалуйста, войдите, чтобы оставлять комментарии.");
-        return;
-    }
-    const inputField = document.getElementById(`comment-input-${pinId}`);
-    const commentText = inputField.value.trim();
-    if (!commentText) {
-        alert("Комментарий не может быть пустым");
-        return;
-    }
-    try {
-        const response = await fetch(`http://localhost:8081/api/pins/${pinId}/comments`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ text: commentText })
-        });
-        if(response.ok){
-            alert('Комментарий добавлен!');
-            inputField.value = '';
-            loadPins(); // Обновляем пины для отображения новых комментариев
-        } else {
-            const errorData = await response.json();
-            alert(`Ошибка: ${errorData.message}`);
-        }
-    } catch (err) {
-        console.error(err);
-        alert('Ошибка соединения с сервером');
-    }
-}
-
-// Привязка загрузки пинов к событию загрузки страницы
-document.addEventListener('DOMContentLoaded', loadPins);
 
 // Floating button click handler
 const floatingBtn = document.querySelector('.floating-btn');

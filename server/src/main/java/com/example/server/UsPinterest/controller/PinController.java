@@ -3,6 +3,7 @@ package com.example.server.UsPinterest.controller;
 import com.example.server.UsPinterest.dto.CommentRequest;
 import com.example.server.UsPinterest.dto.MessageResponse;
 import com.example.server.UsPinterest.dto.PinRequest;
+import com.example.server.UsPinterest.dto.PinResponse;
 import com.example.server.UsPinterest.entity.Comment;
 import com.example.server.UsPinterest.entity.Like;
 import com.example.server.UsPinterest.exception.ResourceNotFoundException;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/pins")
@@ -47,6 +49,19 @@ public class PinController {
     public ResponseEntity<List<Pin>> getAllPins() {
         List<Pin> pins = pinRepository.findAll();
         return ResponseEntity.ok(pins);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<PinResponse>> getAllPinResponses() {
+        List<Pin> pins = pinRepository.findAll();
+        List<PinResponse> responses = pins.stream().map(pin -> {
+            PinResponse pr = new PinResponse();
+            pr.setId(pin.getId());
+            pr.setImageUrl(pin.getImageUrl());
+            pr.setDescription(pin.getDescription());
+            return pr;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
     }
 
     @PostMapping

@@ -1,54 +1,55 @@
 package com.example.diplomwork.ui.screens.main_screen.content_grid
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyGridPrefetchStrategy
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.unit.dp
-import com.example.diplomwork.R
-import androidx.compose.ui.Modifier
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
+import com.example.diplomwork.model.Pin
+import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.system_settings.SystemInsetHeight
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 import com.example.diplomwork.ui.theme.Dimens.BottomMenuHeight
 import com.example.diplomwork.ui.theme.Dimens.TopBarHeight
+import kotlinx.coroutines.launch
 
 @Composable
-fun ContentGrid(modifier: Modifier = Modifier, onImageClick: (Int) -> Unit) {
+fun ContentGrid(modifier: Modifier = Modifier, onImageClick: (String) -> Unit) {
+    // Состояние для списка пинов, получаемых из API
+    var pins by remember { mutableStateOf<List<Pin>>(emptyList()) }
 
-    val images = ImageRepository.images
+    // Запускаем корутину для получения данных
+    LaunchedEffect(Unit) {
+        try {
+            pins = ApiClient.apiService.getPins()
+            println("Получено пинов: ${pins.size}")
+        } catch (e: Exception) {
+            e.printStackTrace()
+            pins = emptyList()
+        }
+    }
 
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(2),
-        modifier = Modifier
+        modifier = modifier
             .padding(
-                top = TopBarHeight +
-                        SystemInsetHeight(WindowInsetsCompat.Type.statusBars()).value,
-                bottom = BottomMenuHeight +
-                        SystemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value
+                top = TopBarHeight + SystemInsetHeight(WindowInsetsCompat.Type.statusBars()).value,
+                bottom = BottomMenuHeight + SystemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value
             )
             .background(ColorForBottomMenu),
-        //contentPadding = PaddingValues(10.dp), // отступ со всех сторон картинки
-        //verticalArrangement = Arrangement.spacedBy(8.dp),
-        //horizontalArrangement = Arrangement.spacedBy(8.dp) // отступы между картинками
+        contentPadding = PaddingValues(8.dp)
     ) {
-        items(images) { imageRes ->
+        items(pins) { pin ->
             ImageCard(
-                imageRes = imageRes,
-                onClick = { onImageClick(imageRes) } )
-
-                /* Вот тут короче идет переключение с главного экрана на экран с картинкой
-                    и на него передается интовый ресурс картинки imageRes */
-
+                imageUrl = pin.imageUrl,
+                onClick = { onImageClick(pin.imageUrl) }
+            )
         }
     }
 }

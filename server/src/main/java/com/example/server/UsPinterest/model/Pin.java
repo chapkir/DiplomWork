@@ -31,6 +31,7 @@ public class Pin {
 
     @ManyToOne
     @JoinColumn(name = "board_id")
+    @JsonIgnoreProperties("pins")
     private Board board;
 
     @OneToMany(mappedBy = "pin", cascade = CascadeType.ALL, orphanRemoval = true)

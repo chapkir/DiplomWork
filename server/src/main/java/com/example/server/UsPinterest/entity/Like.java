@@ -3,6 +3,7 @@ package com.example.server.UsPinterest.entity;
 import com.example.server.UsPinterest.model.Photo;
 import com.example.server.UsPinterest.model.Pin;
 import com.example.server.UsPinterest.model.User;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDateTime;
 
@@ -23,6 +24,7 @@ public class Like {
     @JoinColumn(name = "photo_id", nullable = true)
     private Photo photo;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "pin_id")
     private Pin pin;

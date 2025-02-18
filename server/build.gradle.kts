@@ -14,7 +14,9 @@ java {
     }
 }
 
-
+tasks.withType<JavaCompile> {
+    options.compilerArgs.addAll(listOf("--add-opens", "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED"))
+}
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
