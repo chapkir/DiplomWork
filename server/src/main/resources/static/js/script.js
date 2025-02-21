@@ -64,34 +64,99 @@ async function loadPins() {
 
             const imageGrid = document.getElementById('imageGrid');
             imageGrid.innerHTML = ''; // Очищаем сетку
+            // Задаем контейнеру сетки стиль grid с 3 колонками и зазором 12px
+            imageGrid.style.display = 'grid';
+            imageGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+            imageGrid.style.gap = '12px';
 
             if (pins && pins.length > 0) {
-                pins.forEach(pin => {
+                // Перебираем пины и определяем шаблон по размерам изображения
+                pins.forEach((pin) => {
                     const card = document.createElement('div');
                     card.className = 'image-card';
-                    card.innerHTML = `
-                        <img src="${pin.imageUrl}" alt="${pin.description || 'Pin image'}"
-                             onerror="this.src='https://via.placeholder.com/150'"/>
-                        <p>${pin.description || 'No description'}</p>
-                        <div class="actions">
-                            <button onclick="likePin(${pin.id})">
-                                Like ${pin.likes ? `(${pin.likes.length})` : '(0)'}
-                            </button>
-                            <button onclick="toggleCommentForm(${pin.id})">Comment</button>
-                        </div>
-                        <div id="comments-${pin.id}" class="comments">
-                            ${pin.comments && pin.comments.length > 0
-                                ? pin.comments.map(comment =>
-                                    `<p><strong>${comment.user ? comment.user.username : 'Unknown'}:</strong> ${comment.text}</p>`
-                                ).join('')
-                                : ''}
-                        </div>
-                        <div id="comment-form-${pin.id}" class="comment-form" style="display:none;">
-                            <input type="text" id="comment-input-${pin.id}" placeholder="Your comment">
-                            <button onclick="submitComment(${pin.id})">Send</button>
-                        </div>
-                    `;
+                    // Для grid‑ячейки не нужно задавать фиксированную ширину – карточка заполнит всю ячейку
+                    // Пока показываем placeholder
+                    card.innerHTML = '<div class="loading">Loading...</div>';
                     imageGrid.appendChild(card);
+
+                    // Создаем временный объект для определения размеров фотографии
+                    const tempImg = new Image();
+                    tempImg.onload = function() {
+                        const ratio = tempImg.naturalWidth / tempImg.naturalHeight;
+                        let templateHtml = '';
+                        if (ratio >= 1.2) {
+                            // Template B: горизонтальное изображение, aspect-ratio 2:1
+                            templateHtml = `
+                                <div class="image-card-content template-b" style="background: transparent;">
+                                    <img src="${pin.imageUrl}" alt="${pin.description || 'Pin image'}"
+                                         onerror="this.src='https://via.placeholder.com/150'"
+                                         style="width: 100%; aspect-ratio: 2 / 1; object-fit: cover;"/>
+                                    <p>${pin.description || 'No description'}</p>
+                                    <div class="actions">
+                                        <button onclick="likePin(${pin.id})">Like (${pin.likesCount})</button>
+                                        <button onclick="toggleCommentForm(${pin.id})">Comment</button>
+                                    </div>
+                                    <div id="comments-${pin.id}" class="comments">
+                                        ${pin.comments && pin.comments.length > 0
+                                            ? pin.comments.map(comment => `<p><strong>${comment.username}:</strong> ${comment.text}</p>`).join('')
+                                            : ''}
+                                    </div>
+                                    <div id="comment-form-${pin.id}" class="comment-form" style="display:none;">
+                                        <input type="text" id="comment-input-${pin.id}" placeholder="Введите комментарий">
+                                        <button onclick="submitComment(${pin.id})">Send</button>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            // Template A: вертикальное/квадратное изображение, aspect-ratio 1:1
+                            templateHtml = `
+                                <div class="image-card-content template-a" style="background: transparent;">
+                                    <img src="${pin.imageUrl}" alt="${pin.description || 'Pin image'}"
+                                         onerror="this.src='https://via.placeholder.com/150'"
+                                         style="width: 100%; aspect-ratio: 1 / 1; object-fit: cover;"/>
+                                    <p>${pin.description || 'No description'}</p>
+                                    <div class="actions">
+                                        <button onclick="likePin(${pin.id})">Like (${pin.likesCount})</button>
+                                        <button onclick="toggleCommentForm(${pin.id})">Comment</button>
+                                    </div>
+                                    <div id="comments-${pin.id}" class="comments">
+                                        ${pin.comments && pin.comments.length > 0
+                                            ? pin.comments.map(comment => `<p><strong>${comment.username}:</strong> ${comment.text}</p>`).join('')
+                                            : ''}
+                                    </div>
+                                    <div id="comment-form-${pin.id}" class="comment-form" style="display:none;">
+                                        <input type="text" id="comment-input-${pin.id}" placeholder="Введите комментарий">
+                                        <button onclick="submitComment(${pin.id})">Send</button>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        card.innerHTML = templateHtml;
+                    };
+                    tempImg.onerror = function() {
+                        // Если не удалось загрузить изображение, используем шаблон A по умолчанию
+                        card.innerHTML = `
+                            <div class="image-card-content template-a" style="background: transparent;">
+                                <img src="https://via.placeholder.com/150" alt="Image not available"
+                                     style="width: 100%; aspect-ratio: 1 / 1; object-fit: cover;"/>
+                                <p>${pin.description || 'No description'}</p>
+                                <div class="actions">
+                                    <button onclick="likePin(${pin.id})">Like (${pin.likesCount})</button>
+                                    <button onclick="toggleCommentForm(${pin.id})">Comment</button>
+                                </div>
+                                <div id="comments-${pin.id}" class="comments">
+                                    ${pin.comments && pin.comments.length > 0
+                                        ? pin.comments.map(comment => `<p><strong>${comment.username}:</strong> ${comment.text}</p>`).join('')
+                                        : ''}
+                                </div>
+                                <div id="comment-form-${pin.id}" class="comment-form" style="display:none;">
+                                    <input type="text" id="comment-input-${pin.id}" placeholder="Введите комментарий">
+                                    <button onclick="submitComment(${pin.id})">Send</button>
+                                </div>
+                            </div>
+                        `;
+                    };
+                    tempImg.src = pin.imageUrl;
                 });
             } else {
                 imageGrid.innerHTML = '<p>No pins found</p>';
@@ -292,6 +357,7 @@ async function likePin(pinId) {
         if (response.ok) {
             const data = await response.json();
             alert(data.liked ? 'Лайк поставлен!' : 'Лайк удалён!');
+            loadPins();
         } else {
             const errorData = await response.json();
             alert(`Ошибка: ${errorData.message}`);
@@ -323,6 +389,51 @@ async function addComment(pinId, text) {
         }
     } catch (error) {
         console.error(error);
+        alert('Ошибка соединения с сервером');
+    }
+}
+
+function toggleCommentForm(pinId) {
+    const formElem = document.getElementById(`comment-form-${pinId}`);
+    if (formElem.style.display === 'none' || formElem.style.display === '') {
+        formElem.style.display = 'flex';
+    } else {
+        formElem.style.display = 'none';
+    }
+}
+
+// Функция для отправки комментария
+async function submitComment(pinId) {
+    const token = localStorage.getItem('token');
+    const commentInput = document.getElementById(`comment-input-${pinId}`);
+    const text = commentInput.value.trim();
+    if (!text) {
+        alert('Введите комментарий');
+        return;
+    }
+
+    try {
+        const response = await fetch(`http://localhost:8081/api/pins/${pinId}/comments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ text })
+        });
+        if(response.ok) {
+            const newComment = await response.json();
+            alert('Комментарий добавлен!');
+            commentInput.value = "";
+            const commentContainer = document.getElementById(`comments-${pinId}`);
+            commentContainer.innerHTML += `<p><strong>${newComment.username}:</strong> ${newComment.text}</p>`;
+            document.getElementById(`comment-form-${pinId}`).style.display = 'none';
+        } else {
+            const errorData = await response.json();
+            alert(`Ошибка: ${errorData.message}`);
+        }
+    } catch(err) {
+        console.error(err);
         alert('Ошибка соединения с сервером');
     }
 }

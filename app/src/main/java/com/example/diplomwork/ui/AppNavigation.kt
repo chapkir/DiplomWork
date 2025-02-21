@@ -1,10 +1,10 @@
 package com.example.diplomwork.ui
-import ImageDetailScreen
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.diplomwork.ui.screens.main_screen.MainScreen
+import com.example.diplomwork.ui.screens.image_detail_screen.ImageDetailScreen
 
 
 
@@ -22,9 +22,13 @@ fun AppNavigation(navController: NavHostController) {
             val imageUrl = backStackEntry.arguments?.getString("imageUrl") ?: ""
             ImageDetailScreen(
                 imageUrl = imageUrl,
-                likesCount = 0,
-                comments = listOf("Комментарий 1", "Комментарий 2"),
-                onLikeClick = { /* Добавить обработку лайка */ }
+                initialLikesCount = 0,
+                initialComments = listOf("Комментарий 1", "Комментарий 2"),
+                onLikeClick = { /* Здесь можно добавить обработку лайка — например, вызов API */ },
+                onCommentSubmit = { comment ->
+                    // Здесь можно добавить обработку отправки комментария, например, вызов API.
+                    println("Новый комментарий: $comment")
+                }
             )
         }
     }

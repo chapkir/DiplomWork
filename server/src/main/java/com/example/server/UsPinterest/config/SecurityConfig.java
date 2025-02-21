@@ -40,6 +40,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/images/**", "/profile.html", "/favicon.ico").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/pins/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/pins/*/like").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/pins/*/comments").authenticated()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )

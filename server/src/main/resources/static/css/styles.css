@@ -325,67 +325,59 @@ body {
 .actions {
     display: flex;
     justify-content: space-around;
-    border-top: 1px solid #f1f1f1;
-    padding: 5px 0;
+    padding: 10px;
+    border-top: 1px solid #eee;
 }
 
 .actions button {
-    background-color: #ff5555;
-    color: #fff;
-    border: none;
     padding: 5px 10px;
-    border-radius: 5px;
+    border: none;
+    border-radius: 4px;
+    background: var(--primary);
     cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.3s ease;
+    transition: background 0.2s;
 }
 
 .actions button:hover {
-    background-color: #ff3333;
-}
-
-/* Стили для формы комментария */
-.comment-form {
-    padding: 10px;
-    position: relative;
-    z-index: 1000;
-    background: #fff;
-}
-
-.comment-form input {
-    width: 80%;
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    position: relative;
-    z-index: 1001;
-    pointer-events: auto;
-}
-
-.comment-form button {
-    background-color: #0066ff;
-    color: #fff;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 5px;
-    margin-left: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.comment-form button:hover {
-    background-color: #0055cc;
+    background: var(--primary-hover);
 }
 
 /* Стили для блока комментариев */
 .comments {
     padding: 10px;
-    background: #fafafa;
+    background: #f8f8f8;
+    border-top: 1px solid #eee;
 }
 
 .comments p {
-    font-size: 13px;
     margin: 5px 0;
+    font-size: 0.9em;
+}
+
+/* Стили для формы комментария */
+.comment-form {
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+.comment-form input {
+    flex: 1;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.comment-form button {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    background: var(--primary);
+    cursor: pointer;
+}
+
+.comment-form button:hover {
+    background: var(--primary-hover);
 }
 
 /* Стили для пинов — задаём фиксированные размеры и центрирование изображений */

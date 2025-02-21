@@ -1,6 +1,7 @@
 package com.example.server.UsPinterest.controller;
 
 import com.example.server.UsPinterest.dto.CommentRequest;
+import com.example.server.UsPinterest.dto.CommentResponse;
 import com.example.server.UsPinterest.dto.MessageResponse;
 import com.example.server.UsPinterest.dto.PinRequest;
 import com.example.server.UsPinterest.dto.PinResponse;
@@ -22,8 +23,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/pins")
@@ -59,6 +62,17 @@ public class PinController {
             pr.setId(pin.getId());
             pr.setImageUrl(pin.getImageUrl());
             pr.setDescription(pin.getDescription());
+            pr.setLikesCount(pin.getLikes() != null ? pin.getLikes().size() : 0);
+
+            pr.setComments(
+                    pin.getComments().stream().map(comment -> {
+                        CommentResponse cr = new CommentResponse();
+                        cr.setId(comment.getId());
+                        cr.setText(comment.getText());
+                        cr.setUsername(comment.getUser() != null ? comment.getUser().getUsername() : "Unknown");
+                        return cr;
+                    }).collect(Collectors.toList())
+            );
             return pr;
         }).collect(Collectors.toList());
         return ResponseEntity.ok(responses);
@@ -72,23 +86,28 @@ public class PinController {
     }
 
     @PostMapping("/{pinId}/like")
-    public ResponseEntity<MessageResponse> likePin(@PathVariable Long pinId, Authentication authentication) {
+    public ResponseEntity<?> likePin(@PathVariable Long pinId, Authentication authentication) {
         User user = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
         Pin pin = pinRepository.findById(pinId)
                 .orElseThrow(() -> new ResourceNotFoundException("Пин не найден"));
 
         Optional<Like> likeOptional = likeRepository.findByPinAndUser(pin, user);
+        Map<String, Object> responseMap = new HashMap<>();
         if (likeOptional.isPresent()) {
             likeRepository.delete(likeOptional.get());
-            return ResponseEntity.ok(new MessageResponse("Лайк удалён"));
+            responseMap.put("message", "Лайк удалён");
+            responseMap.put("liked", false);
+            return ResponseEntity.ok(responseMap);
         } else {
             Like like = new Like();
             like.setUser(user);
             like.setPin(pin);
             like.setCreatedAt(LocalDateTime.now());
             likeRepository.save(like);
-            return ResponseEntity.ok(new MessageResponse("Лайк поставлен"));
+            responseMap.put("message", "Лайк поставлен");
+            responseMap.put("liked", true);
+            return ResponseEntity.ok(responseMap);
         }
     }
 

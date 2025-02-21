@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,10 +22,8 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun ContentGrid(modifier: Modifier = Modifier, onImageClick: (String) -> Unit) {
-    // Состояние для списка пинов, получаемых из API
     var pins by remember { mutableStateOf<List<Pin>>(emptyList()) }
 
-    // Запускаем корутину для получения данных
     LaunchedEffect(Unit) {
         try {
             pins = ApiClient.apiService.getPins()
@@ -38,17 +37,14 @@ fun ContentGrid(modifier: Modifier = Modifier, onImageClick: (String) -> Unit) {
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(2),
         modifier = modifier
-            .padding(
-                top = TopBarHeight + SystemInsetHeight(WindowInsetsCompat.Type.statusBars()).value,
-                bottom = BottomMenuHeight + SystemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value
-            )
             .background(ColorForBottomMenu),
         contentPadding = PaddingValues(8.dp)
     ) {
-        items(pins) { pin ->
+        itemsIndexed(pins) { index, pin ->
             ImageCard(
                 imageUrl = pin.imageUrl,
-                onClick = { onImageClick(pin.imageUrl) }
+                onClick = { onImageClick(pin.imageUrl) },
+                templateType = index % 2 // чередуем шаблоны: 0 и 1
             )
         }
     }
