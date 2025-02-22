@@ -3,6 +3,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.diplomwork.model.Comment
 import com.example.diplomwork.ui.screens.main_screen.MainScreen
 import com.example.diplomwork.ui.screens.image_detail_screen.ImageDetailScreen
 
@@ -23,10 +24,15 @@ fun AppNavigation(navController: NavHostController) {
             ImageDetailScreen(
                 imageUrl = imageUrl,
                 initialLikesCount = 0,
-                initialComments = listOf("Комментарий 1", "Комментарий 2"),
-                onLikeClick = { /* Здесь можно добавить обработку лайка — например, вызов API */ },
+                initialComments = listOf(
+                    Comment(id = 1, text = "Комментарий 1", username = "User1"),
+                    Comment(id = 2, text = "Комментарий 2", username = "User2")
+                ),
+                onLikeClick = {
+                    // Реализуйте вызов API для лайка здесь, если необходимо
+                },
                 onCommentSubmit = { comment ->
-                    // Здесь можно добавить обработку отправки комментария, например, вызов API.
+                    // Реализуйте вызов API для отправки комментария здесь
                     println("Новый комментарий: $comment")
                 }
             )

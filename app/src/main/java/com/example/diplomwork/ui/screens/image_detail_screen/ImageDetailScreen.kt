@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -22,168 +23,173 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.Button
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
 import com.example.diplomwork.R
+import com.example.diplomwork.model.Comment
 import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-
-//@Composable
-//fun ImageDetailScreen1(
-//    imageUrl: String,
-//    initialLikesCount: Int,
-//    initialComments: List<String>,
-//    onLikeClick: () -> Unit,
-//    onCommentSubmit: (String) -> Unit
-//) {
-//    var commentText by remember { mutableStateOf("") }
-//    var showCommentInput by remember { mutableStateOf(false) }
-//    var liked by remember { mutableStateOf(false) }
-//    val likeCount = remember { mutableStateOf(initialLikesCount) }
-//    val commentsList = remember { mutableStateOf(initialComments) }
-//
-//    val finalUrl = if (imageUrl.startsWith("http")) imageUrl else ApiClient.BASE_URL + imageUrl
-//
-//    Column(
-//        modifier = Modifier
-//            .fillMaxSize()
-//            .padding(16.dp)
-//    ) {
-//        AsyncImage(
-//            model = finalUrl,
-//            contentDescription = null,
-//            contentScale = ContentScale.Crop,
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .height(300.dp)
-//        )
-//
-//        Spacer(modifier = Modifier.height(16.dp))
-//        Text(
-//            text = "❤️ ${likeCount.value} лайков",
-//            style = MaterialTheme.typography.bodyLarge
-//        )
-//        Button(onClick = {
-//            liked = !liked
-//            if (liked) {
-//                likeCount.value += 1
-//            } else {
-//                likeCount.value = maxOf(likeCount.value - 1, 0)
-//            }
-//            onLikeClick()
-//        }) {
-//            Text(text = if (liked) "Отменить лайк" else "Лайк")
-//        }
-//
-//        Spacer(modifier = Modifier.height(16.dp))
-//        Text(text = "Комментарии:", style = MaterialTheme.typography.bodyMedium)
-//        commentsList.value.forEach { comment ->
-//            Text(text = comment, style = MaterialTheme.typography.bodySmall)
-//        }
-//
-//        Spacer(modifier = Modifier.height(16.dp))
-//        Button(onClick = { showCommentInput = !showCommentInput }) {
-//            Text(text = if (showCommentInput) "Скрыть комментарий" else "Добавить комментарий")
-//        }
-//        if (showCommentInput) {
-//            Box(modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(top = 8.dp)
-//                .zIndex(1f)
-//            ) {
-//                BasicTextField(
-//                    value = commentText,
-//                    onValueChange = { commentText = it },
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .border(1.dp, Color.Gray)
-//                        .padding(8.dp),
-//                    textStyle = TextStyle(color = Color.Black)
-//                )
-//                Spacer(modifier = Modifier.height(8.dp))
-//                Button(
-//                    onClick = {
-//                        if (commentText.isNotBlank()) {
-//                            commentsList.value = commentsList.value + commentText
-//                            onCommentSubmit(commentText)
-//                            commentText = ""
-//                            showCommentInput = false
-//                        }
-//                    },
-//                    modifier = Modifier.padding(top = 8.dp)
-//                ) {
-//                    Text(text = "Отправить")
-//                }
-//            }
-//        }
-//    }
-//}
-
-
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.material3.Scaffold
 
 @Composable
 fun ImageDetailScreen(
     imageUrl: String,
     initialLikesCount: Int,
-    initialComments: List<String>,
+    initialComments: List<Comment>,
     onLikeClick: () -> Unit,
     onCommentSubmit: (String) -> Unit
 ) {
+    var pinDescription by remember { mutableStateOf("") }
+    val likesCountState = remember { mutableStateOf(initialLikesCount) }
+    var comments by remember { mutableStateOf(initialComments) }
+    var isLoading by remember { mutableStateOf(true) }
     var commentText by remember { mutableStateOf("") }
-    var showCommentInput by remember { mutableStateOf(false) }
-    var liked by remember { mutableStateOf(false) }
-    val likeCount = remember { mutableStateOf(initialLikesCount) }
-    val commentsList = remember { mutableStateOf(initialComments) }
+    val scope = rememberCoroutineScope()
 
-    val finalUrl = if (imageUrl.startsWith("http")) imageUrl else ApiClient.BASE_URL + imageUrl
-    val systemUiController = rememberSystemUiController()
-    systemUiController.setStatusBarColor(ColorForBottomMenu)
-
-    var aspectRatio by remember { mutableStateOf(1f) }
-
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(ColorForBottomMenu)
-    ) {
-
-        item {
-            ImageView(imageRes = finalUrl, aspectRatio = aspectRatio)
+    LaunchedEffect(imageUrl) {
+        try {
+            val pins = ApiClient.apiService.getPins()
+            val pin = pins.find { it.imageUrl == imageUrl }
+            pin?.let {
+                pinDescription = it.description
+                likesCountState.value = it.likesCount
+                comments = it.comments
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            isLoading = false
         }
+    }
 
-        item {
-            LikeSection(likeCount)
+    if (isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
         }
+    } else {
+        val finalUrl = if (imageUrl.startsWith("http")) imageUrl else ApiClient.BASE_URL + imageUrl
 
-        item {
-            CommentSection()
-            Spacer(modifier = Modifier.size(30.dp))
+        val systemUiController = rememberSystemUiController()
+        systemUiController.setStatusBarColor(ColorForBottomMenu)
+
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(ColorForBottomMenu)
+        ) {
+            item {
+                ImageView(imageRes = finalUrl, aspectRatio = 1f)
+            }
+            item {
+                LikeSection(
+                    description = pinDescription,
+                    likesCount = likesCountState,
+                    onLikeClick = onLikeClick
+                )
+            }
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "Комментарии",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Card(
+                        shape = RoundedCornerShape(12.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                        colors = CardDefaults.cardColors(containerColor = ColorForBottomMenu.copy(alpha = 0.8f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(150.dp)
+                                .verticalScroll(rememberScrollState())
+                                .padding(10.dp)
+                        ) {
+                            comments.forEach { comment ->
+                                CommentItem(username = comment.username, comment = comment.text)
+                                Spacer(modifier = Modifier.height(4.dp))
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = commentText,
+                            onValueChange = { commentText = it },
+                            modifier = Modifier.weight(1f),
+                            placeholder = { Text("Добавить комментарий", color = Color.Gray) },
+                            textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        IconButton(
+                            onClick = {
+                                if (commentText.isNotBlank()) {
+                                    onCommentSubmit(commentText)
+                                    comments = comments + Comment(
+                                        id = System.currentTimeMillis(),
+                                        text = commentText,
+                                        username = "CurrentUser"
+                                    )
+                                    commentText = ""
+                                }
+                            },
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Color.Gray)
+                                .padding(4.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_uparrow),
+                                contentDescription = "Отправить комментарий",
+                                tint = Color.White
+                            )
+                        }
+                    }
+                }
+            }
+            item {
+                Spacer(modifier = Modifier.height(30.dp))
+            }
         }
-
     }
 }
 
 @Composable
 fun ImageView(imageRes: String, aspectRatio: Float) {
-
     var currentAspectRatio by remember { mutableStateOf(aspectRatio) }
 
     Card(
@@ -226,13 +232,17 @@ fun ImageView(imageRes: String, aspectRatio: Float) {
 }
 
 @Composable
-fun LikeSection(likesCount: MutableState<Int>) {
-
+fun LikeSection(description: String, likesCount: MutableState<Int>, onLikeClick: () -> Unit) {
     var isLiked by remember { mutableStateOf(false) }
-    val toggleLike = { isLiked = !isLiked }
-    val likedIcon = if (isLiked) painterResource(id = R.drawable.ic_favs_filled)
-    else painterResource(id = R.drawable.ic_favs)
-
+    val toggleLike = {
+        isLiked = !isLiked
+        if (isLiked) {
+            likesCount.value++
+        } else {
+            likesCount.value = maxOf(likesCount.value - 1, 0)
+        }
+        onLikeClick()
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -244,27 +254,27 @@ fun LikeSection(likesCount: MutableState<Int>) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "*Название изображения*",
+                text = description,
                 style = MaterialTheme.typography.titleMedium,
                 color = Color.White,
                 modifier = Modifier.weight(1f)
             )
-
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = toggleLike) {
                     Icon(
-                        painter = likedIcon,
+                        painter = if (isLiked)
+                            painterResource(id = R.drawable.ic_favs_filled)
+                        else painterResource(id = R.drawable.ic_favs),
                         contentDescription = "Лайк",
                         tint = if (isLiked) Color.Red else Color.Gray,
                         modifier = Modifier.size(26.dp)
                     )
                 }
-
                 Text(
-                    text = "$likesCount",
+                    text = "${likesCount.value}",
                     style = MaterialTheme.typography.titleMedium,
                     fontSize = 13.sp,
                     color = Color.White,
@@ -275,50 +285,19 @@ fun LikeSection(likesCount: MutableState<Int>) {
     }
 }
 
-@Composable
-fun CommentSection() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "Комментарии",
-            style = MaterialTheme.typography.titleMedium,
-            color = Color.White
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp, 0.dp)
-                .height(150.dp)
-                .background(Color.Black)
-        ) {
-            item {
-                CommentItem(username = "Пользователь 1", comment = "Это отличный снимок!")
-                CommentItem(username = "Пользователь 1", comment = "Это отличный снимок!")
-                CommentItem(username = "Пользователь 1", comment = "Это отличный снимок!")
-                CommentItem(username = "Пользователь 1", comment = "Это отличный снимок!")
-                CommentItem(username = "Пользователь 2", comment = "Очень красиво!")
-                CommentItem(username = "Пользователь 2", comment = "Очень красиво!")
-                CommentItem(username = "Пользователь 2", comment = "Очень красиво!")
-            }
-        }
 
-        AddCommentField()
-    }
-}
 
 @Composable
 fun CommentItem(username: String, comment: String) {
     Column(modifier = Modifier.padding(5.dp)) {
         Text(
-            text = username, style = MaterialTheme.typography.labelMedium,
+            text = username,
+            style = MaterialTheme.typography.labelMedium,
             color = Color.White
         )
         Text(
-            text = comment, style = MaterialTheme.typography.bodyMedium,
+            text = comment,
+            style = MaterialTheme.typography.bodyMedium,
             color = Color.White
         )
     }
@@ -367,4 +346,9 @@ fun AddCommentField() {
             )
         }
     }
+}
+
+@Composable
+private fun LocalTextStyleCompat(): TextStyle {
+    return MaterialTheme.typography.bodyMedium
 }
