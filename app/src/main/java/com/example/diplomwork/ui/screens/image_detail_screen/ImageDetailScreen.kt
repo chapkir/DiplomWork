@@ -90,10 +90,9 @@ fun ImageDetailScreen(
             CircularProgressIndicator()
         }
     } else {
-        val finalUrl = if (imageUrl.startsWith("http")) imageUrl else ApiClient.BASE_URL + imageUrl
+        val finalUrl =
+            if (imageUrl.startsWith("http")) imageUrl else ApiClient.baseUrl + imageUrl
 
-        val systemUiController = rememberSystemUiController()
-        systemUiController.setStatusBarColor(ColorForBottomMenu)
 
         LazyColumn(
             modifier = Modifier

@@ -43,8 +43,7 @@ fun ContentGrid(modifier: Modifier = Modifier, onImageClick: (String) -> Unit) {
         itemsIndexed(pins) { index, pin ->
             ImageCard(
                 imageUrl = pin.imageUrl,
-                onClick = { onImageClick(pin.imageUrl) },
-                templateType = index % 2 // чередуем шаблоны: 0 и 1
+                onClick = { onImageClick(pin.imageUrl) }
             )
         }
     }

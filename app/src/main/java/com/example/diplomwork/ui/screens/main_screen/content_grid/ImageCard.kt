@@ -25,62 +25,54 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.graphics.Color
+import coil.request.ImageRequest
 
 @Composable
 fun ImageCard(
     imageUrl: String,
-    onClick: () -> Unit,
-    templateType: Int = 0
+    onClick: () -> Unit
+
 ) {
-    when (templateType) {
-        0 -> {
-            // Шаблон А: по умолчанию (прямоугольная карточка 1:1)
-            Card(
-                shape = RoundedCornerShape(12.dp),
-                elevation = CardDefaults.cardElevation(5.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+
+    var aspectRatio by remember { mutableStateOf(1f) }
+
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(5.dp),
+        modifier = Modifier
+            .padding(6.dp)
+            .fillMaxWidth()
+            .clickable { onClick() } // Ну и тут тоже переход получается
+    ) {
+        Box(
+            modifier = Modifier.clip(RoundedCornerShape(12.dp))
+        ) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(if (imageUrl.startsWith("http")) imageUrl else ApiClient.baseUrl + imageUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = null,
+                onState = { state ->
+                    if (state is AsyncImagePainter.State.Success) {
+                        val size = state.painter.intrinsicSize
+                        if (size.width > 0 && size.height > 0) {
+                            aspectRatio =
+                                size.width / size.height
+                        }
+                    }
+                },
                 modifier = Modifier
-                    .padding(6.dp)
                     .fillMaxWidth()
-                    .clickable { onClick() }
-            ) {
-                Box(modifier = Modifier.clip(RoundedCornerShape(12.dp))) {
-                    AsyncImage(
-                        model = if (imageUrl.startsWith("http")) imageUrl else ApiClient.BASE_URL + imageUrl,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(1f)
-                            .clip(RoundedCornerShape(12.dp))
-                    )
-                }
-            }
-        }
-        1 -> {
-            // Шаблон B: альтернативный, прямоугольная карточка с соотношением сторон 2:1
-            Card(
-                shape = RoundedCornerShape(12.dp),
-                elevation = CardDefaults.cardElevation(8.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                modifier = Modifier
-                    .padding(6.dp)
-                    .fillMaxWidth()
-                    .clickable { onClick() }
-            ) {
-                AsyncImage(
-                    model = if (imageUrl.startsWith("http")) imageUrl else ApiClient.BASE_URL + imageUrl,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(2f)
-                        .clip(RoundedCornerShape(12.dp))
+                    .aspectRatio(aspectRatio)
+                    .clip(RoundedCornerShape(12.dp))
+            )
+
+            if (aspectRatio == 0f) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
                 )
             }
-        }
-        else -> {
-            ImageCard(imageUrl = imageUrl, onClick = onClick, templateType = 0)
         }
     }
 }
