@@ -29,10 +29,9 @@ fun MainScreen(navController: NavHostController) {
             TopBar()
         },
         bottomBar = {
-            BottomMenu()
+            BottomMenu(navController)
         }
     ) { paddingValues ->
-// При клике мы передаём URL изображения, корректно закодированный URI
         ContentGrid(
             modifier = Modifier.padding(paddingValues),
             onImageClick = { imageUrl ->

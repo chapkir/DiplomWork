@@ -6,7 +6,7 @@ import androidx.navigation.compose.composable
 import com.example.diplomwork.model.Comment
 import com.example.diplomwork.ui.screens.main_screen.MainScreen
 import com.example.diplomwork.ui.screens.image_detail_screen.ImageDetailScreen
-
+import com.example.diplomwork.ui.screens.login_screen.LoginScreen
 
 
 @Composable
@@ -18,7 +18,7 @@ fun AppNavigation(navController: NavHostController) {
         composable("main_screen") {
             MainScreen(navController = navController)
         }
-// Маршрут для экрана деталей – принимает строковый параметр imageUrl
+
         composable("image_detail_screen?imageUrl={imageUrl}") { backStackEntry ->
             val imageUrl = backStackEntry.arguments?.getString("imageUrl") ?: ""
             ImageDetailScreen(
@@ -29,13 +29,34 @@ fun AppNavigation(navController: NavHostController) {
                     Comment(id = 2, text = "Комментарий 2", username = "User2")
                 ),
                 onLikeClick = {
-                    // Реализуйте вызов API для лайка здесь, если необходимо
                 },
                 onCommentSubmit = { comment ->
-                    // Реализуйте вызов API для отправки комментария здесь
                     println("Новый комментарий: $comment")
                 }
             )
+        }
+
+        composable("home_screen") {
+            MainScreen(navController = navController)
+        }
+
+        composable("info_screen") {
+            //InfoScreen(navController = navController)
+        }
+
+        composable("add_screen") {
+            //AddScreen(navController = navController)
+        }
+
+        composable("favs_screen") {
+            //FavsScreen(navController = navController)
+        }
+
+        composable("login_screen") {
+            LoginScreen(onLoginClick = { login, password ->
+                // Здесь надо добавить логику аутентификации
+                println("Вход: $login, $password")
+            }, navController = navController)
         }
     }
 }
