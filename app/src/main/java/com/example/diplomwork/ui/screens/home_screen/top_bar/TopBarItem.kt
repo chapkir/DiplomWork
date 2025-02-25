@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.screens.main_screen.top_bar
+package com.example.diplomwork.ui.screens.home_screen.top_bar
 
 import com.example.diplomwork.R
 

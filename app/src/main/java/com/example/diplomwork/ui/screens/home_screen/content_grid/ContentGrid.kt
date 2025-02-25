@@ -1,24 +1,16 @@
-package com.example.diplomwork.ui.screens.main_screen.content_grid
+package com.example.diplomwork.ui.screens.home_screen.content_grid
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.core.view.WindowInsetsCompat
 import com.example.diplomwork.model.Pin
 import com.example.diplomwork.network.ApiClient
-import com.example.diplomwork.system_settings.SystemInsetHeight
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
-import com.example.diplomwork.ui.theme.Dimens.BottomMenuHeight
-import com.example.diplomwork.ui.theme.Dimens.TopBarHeight
-import kotlinx.coroutines.launch
 
 @Composable
 fun ContentGrid(modifier: Modifier = Modifier, onImageClick: (String) -> Unit) {

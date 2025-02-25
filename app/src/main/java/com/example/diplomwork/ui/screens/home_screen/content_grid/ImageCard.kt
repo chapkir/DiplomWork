@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.screens.main_screen.content_grid
+package com.example.diplomwork.ui.screens.home_screen.content_grid
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -18,13 +18,6 @@ import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import androidx.compose.ui.platform.LocalContext
 import com.example.diplomwork.network.ApiClient
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.graphics.Color
 import coil.request.ImageRequest
 
 @Composable
