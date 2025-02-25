@@ -1,5 +1,9 @@
 package com.example.diplomwork.ui.screens.home_screen.bottom_menu
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -7,12 +11,15 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.diplomwork.R
 import com.example.diplomwork.system_settings.SystemInsetHeight
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
@@ -20,106 +27,62 @@ import com.example.diplomwork.ui.theme.Dimens.BottomMenuHeight
 
 @Composable
 fun BottomMenu(navController: NavHostController) {
+
+    val items = listOf(
+        BottomNavItem("home_screen", R.drawable.ic_home, "Главная"),
+        BottomNavItem("info_screen", R.drawable.ic_info, "Информация"),
+        BottomNavItem("add_screen", R.drawable.ic_add, "Добавить"),
+        BottomNavItem("favs_screen", R.drawable.ic_favs, "Избранное"),
+        BottomNavItem("login_screen", R.drawable.ic_user, "Профиль")
+    )
+
     NavigationBar(
         containerColor = ColorForBottomMenu,
         contentColor = Color.White,
-        modifier = Modifier
-            .height(
-                BottomMenuHeight +
-                        SystemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value
-            )
+        modifier = Modifier.height(
+            BottomMenuHeight + SystemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value
+        )
     ) {
-        // Главная
-        NavigationBarItem(
-            selected = false,
-            onClick = { navController.navigate("home_screen") },
-            icon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_home),
-                    contentDescription = "Главная",
-                    modifier = Modifier.size(25.dp)
-                )
-            },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Color.White,
-                unselectedIconColor = Color.Gray,
-                indicatorColor = Color.Transparent
-            )
-        )
+        val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
-        // Информация
-        NavigationBarItem(
-            selected = false,
-            onClick = { navController.navigate("info_screen") },
-            icon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_info),
-                    contentDescription = "Информация",
-                    modifier = Modifier.size(25.dp)
-                )
-            },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Color.White,
-                unselectedIconColor = Color.Gray,
-                indicatorColor = Color.Transparent
-            )
-        )
+        items.forEach { item ->
+            val isSelected = currentRoute == item.route
 
-        // Добавить (добавление нового поста, например)
-        NavigationBarItem(
-            selected = false,
-            onClick = { navController.navigate("add_screen") },
-            icon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_add),
-                    contentDescription = "Добавить",
-                    modifier = Modifier.size(25.dp)
-                )
-            },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Color.White,
-                unselectedIconColor = Color.Gray,
-                indicatorColor = Color.Transparent
-            )
-        )
+            val size = animateDpAsState(
+                targetValue = if (isSelected) 27.dp else 25.dp, // Увеличиваем размер при выборе
+                animationSpec = tween(durationMillis = 300) // Плавная анимация
+            ).value
 
-        // Избранное
-        NavigationBarItem(
-            selected = false,
-            onClick = { navController.navigate("favs_screen") },
-            icon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_favs),
-                    contentDescription = "Избранное",
-                    modifier = Modifier.size(25.dp)
-                )
-            },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Color.White,
-                unselectedIconColor = Color.Gray,
-                indicatorColor = Color.Transparent
-            )
-        )
 
-        // Профиль (переход на экран авторизации)
-        NavigationBarItem(
-            selected = false,
-            onClick = { navController.navigate("login_screen") },
-            icon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_user),
-                    contentDescription = "Профиль",
-                    modifier = Modifier.size(25.dp)
-                )
-            },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Color.White,
-                unselectedIconColor = Color.Gray,
-                indicatorColor = Color.Transparent
+            NavigationBarItem(
+                selected = isSelected,
+                onClick = {
+                    if (!isSelected) navController.navigate(item.route)
+                },
+                icon = {
+                    Icon(
+                        painter = painterResource(id = item.icon),
+                        contentDescription = item.label,
+                        modifier = Modifier.size(size)
+                    )
+                },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Color.White, // Цвет активного значка
+                    unselectedIconColor = Color.Gray, // Цвет неактивного значка
+                    selectedTextColor = Color.Blue, // Цвет активного текста
+                    unselectedTextColor = Color.Gray, // Цвет неактивного текста
+                    indicatorColor = Color.Transparent // Отключает серый овал
+                ),
+                alwaysShowLabel = false
             )
-        )
+        }
     }
 }
+
+data class BottomNavItem(val route: String, val icon: Int, val label: String)
+
+
+
 
 
 
