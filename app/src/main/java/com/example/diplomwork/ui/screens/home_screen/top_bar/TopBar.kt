@@ -66,10 +66,17 @@ fun getTopBarForScreen(currentRoute: String?): @Composable () -> Unit {
             }
         }
 
-        "login_screen" -> {
+        "profile_screen" -> {
             {
                 CustomTopBar(
                     title = "Профиль"
+                    )
+            }
+        }
+        "login_screen" -> {
+            {
+                CustomTopBar(
+                    title = "Авторизация"
                     )
             }
         }

@@ -29,7 +29,7 @@ fun BottomMenu(navController: NavHostController) {
         BottomNavItem("info_screen", R.drawable.ic_info, "Информация"),
         BottomNavItem("add_screen", R.drawable.ic_add, "Добавить"),
         BottomNavItem("favs_screen", R.drawable.ic_favs, "Избранное"),
-        BottomNavItem("login_screen", R.drawable.ic_user, "Профиль")
+        BottomNavItem("profile_screen", R.drawable.ic_user, "Профиль")
     )
 
     NavigationBar(

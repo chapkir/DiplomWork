@@ -13,12 +13,14 @@ import com.example.diplomwork.ui.screens.home_screen.bottom_menu.BottomMenu
 import com.example.diplomwork.ui.screens.home_screen.top_bar.getTopBarForScreen
 import com.example.diplomwork.ui.screens.image_detail_screen.ImageDetailScreen
 import com.example.diplomwork.ui.screens.login_screen.LoginScreen
+import com.example.diplomwork.ui.screens.profile_screen.ProfileScreen
 
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
     val screensWithBottomBar = listOf(
-        "home_screen", "info_screen", "add_screen", "favs_screen", "login_screen"
+        "home_screen", "info_screen", "add_screen",
+        "favs_screen", "profile_screen", "login_screen"
     )
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     val topBar = getTopBarForScreen(currentRoute)
@@ -38,7 +40,10 @@ fun AppNavigation(navController: NavHostController) {
             startDestination = "home_screen",
             modifier = Modifier.padding(paddingValues)
         ) {
-            composable("home_screen") { HomeScreen(navController) }
+            composable("home_screen") {
+                HomeScreen(navController)
+            }
+
             composable("image_detail_screen?imageUrl={imageUrl}") { backStackEntry ->
                 val imageUrl = backStackEntry.arguments?.getString("imageUrl") ?: ""
                 ImageDetailScreen(
@@ -58,6 +63,11 @@ fun AppNavigation(navController: NavHostController) {
             composable("info_screen") { /* InfoScreen(navController) */ }
             composable("add_screen") { /* AddScreen(navController) */ }
             composable("favs_screen") { /* FavsScreen(navController) */ }
+
+            composable("profile_screen") {
+                ProfileScreen(navController = navController,
+                    username = "Имя пользователя")
+            }
 
             composable("login_screen") {
                 LoginScreen(onLoginClick = { login, password ->
