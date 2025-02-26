@@ -26,7 +26,6 @@ fun ImageCard(
     onClick: () -> Unit
 
 ) {
-
     var aspectRatio by remember { mutableStateOf(1f) }
 
     Card(
@@ -35,14 +34,17 @@ fun ImageCard(
         modifier = Modifier
             .padding(6.dp)
             .fillMaxWidth()
-            .clickable { onClick() } // Ну и тут тоже переход получается
+            .clickable { onClick() }
     ) {
         Box(
             modifier = Modifier.clip(RoundedCornerShape(12.dp))
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(if (imageUrl.startsWith("http")) imageUrl else ApiClient.baseUrl + imageUrl)
+                    .data(
+                        if (imageUrl.startsWith("http")) imageUrl
+                        else ApiClient.baseUrl + imageUrl
+                    )
                     .crossfade(true)
                     .build(),
                 contentDescription = null,

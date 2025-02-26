@@ -12,7 +12,6 @@ import androidx.navigation.NavHostController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.example.diplomwork.ui.screens.home_screen.bottom_menu.BottomMenu
 import com.example.diplomwork.ui.screens.home_screen.content_grid.ContentGrid
-import com.example.diplomwork.ui.screens.home_screen.top_bar.TopBar
 
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")

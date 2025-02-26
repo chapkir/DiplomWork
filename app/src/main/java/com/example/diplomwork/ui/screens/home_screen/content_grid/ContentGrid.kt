@@ -30,7 +30,6 @@ fun ContentGrid(modifier: Modifier = Modifier, onImageClick: (String) -> Unit) {
         columns = StaggeredGridCells.Fixed(2),
         modifier = modifier
             .background(ColorForBottomMenu),
-        contentPadding = PaddingValues(8.dp)
     ) {
         itemsIndexed(pins) { index, pin ->
             ImageCard(

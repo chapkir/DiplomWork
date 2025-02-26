@@ -1,4 +1,5 @@
 package com.example.diplomwork.ui
+
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -7,10 +8,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.diplomwork.model.Comment
 import com.example.diplomwork.ui.screens.home_screen.HomeScreen
 import com.example.diplomwork.ui.screens.home_screen.bottom_menu.BottomMenu
-import com.example.diplomwork.ui.screens.home_screen.top_bar.TopBar
+import com.example.diplomwork.ui.screens.home_screen.top_bar.getTopBarForScreen
 import com.example.diplomwork.ui.screens.image_detail_screen.ImageDetailScreen
 import com.example.diplomwork.ui.screens.login_screen.LoginScreen
 
@@ -18,14 +18,14 @@ import com.example.diplomwork.ui.screens.login_screen.LoginScreen
 @Composable
 fun AppNavigation(navController: NavHostController) {
     val screensWithBottomBar = listOf(
-        "home_screen", "info_screen", "add_screen", "favs_screen", "login_screen")
+        "home_screen", "info_screen", "add_screen", "favs_screen", "login_screen"
+    )
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+    val topBar = getTopBarForScreen(currentRoute)
 
     Scaffold(
         topBar = {
-            if (currentRoute != "image_detail_screen?imageUrl={imageUrl}") {
-                TopBar()
-            }
+            topBar()
         },
         bottomBar = {
             if (currentRoute in screensWithBottomBar) {
@@ -61,9 +61,10 @@ fun AppNavigation(navController: NavHostController) {
 
             composable("login_screen") {
                 LoginScreen(onLoginClick = { login, password ->
-                // Здесь надо добавить логику аутентификации
-                println("Вход: $login, $password")
-            }, navController = navController) }
+                    // Здесь надо добавить логику аутентификации
+                    println("Вход: $login, $password")
+                }, navController = navController)
+            }
         }
     }
 }

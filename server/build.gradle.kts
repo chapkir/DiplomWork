@@ -15,7 +15,12 @@ java {
 }
 
 tasks.withType<JavaCompile> {
-    options.compilerArgs.addAll(listOf("--add-opens", "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED"))
+    options.compilerArgs.addAll(
+        listOf(
+            "--add-opens",
+            "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED"
+        )
+    )
 }
 
 dependencies {

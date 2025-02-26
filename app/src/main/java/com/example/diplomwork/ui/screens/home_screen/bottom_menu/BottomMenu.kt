@@ -2,8 +2,6 @@ package com.example.diplomwork.ui.screens.home_screen.bottom_menu
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.indication
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -11,10 +9,8 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
@@ -49,10 +45,9 @@ fun BottomMenu(navController: NavHostController) {
             val isSelected = currentRoute == item.route
 
             val size = animateDpAsState(
-                targetValue = if (isSelected) 27.dp else 25.dp, // Увеличиваем размер при выборе
-                animationSpec = tween(durationMillis = 300) // Плавная анимация
+                targetValue = if (isSelected) 27.dp else 25.dp,
+                animationSpec = tween(durationMillis = 300)
             ).value
-
 
             NavigationBarItem(
                 selected = isSelected,
