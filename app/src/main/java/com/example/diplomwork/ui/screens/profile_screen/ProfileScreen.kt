@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -15,6 +16,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Tab
@@ -30,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -37,9 +40,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
 import coil.compose.rememberImagePainter
+import coil.request.ImageRequest
 import com.example.diplomwork.R
+import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
+import androidx.compose.runtime.*
+
 
 
 @Composable
@@ -56,10 +64,9 @@ fun ProfileScreen(navController: NavHostController, username: String) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceAround
         ) {
-
-            Spacer(Modifier.weight(1f))
             Text(
                 text = username,
                 fontSize = 22.sp,
@@ -67,10 +74,8 @@ fun ProfileScreen(navController: NavHostController, username: String) {
                 color = Color.White,
                 textAlign = TextAlign.Center
             )
-            Spacer(Modifier.weight(1f))
             IconButton(
                 onClick = { navController.navigate("login_screen") },
-                modifier = Modifier.padding(start = 16.dp)
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_login),
@@ -79,12 +84,9 @@ fun ProfileScreen(navController: NavHostController, username: String) {
                     modifier = Modifier.size(20.dp)
                 )
             }
-
-            Spacer(Modifier.weight(1f))
         }
         TabRow(
             selectedTabIndex = selectedTabIndex,
-            modifier = Modifier.background(ColorForBottomMenu),
             contentColor = Color.White,
             containerColor = ColorForBottomMenu
         ) {
@@ -121,14 +123,27 @@ fun ImageGrid(images: List<String>) {
 
 @Composable
 fun ImageItem(imageUrl: String) {
+
+    var aspectRatio by remember { mutableStateOf(1f) }
+
     AsyncImage(
         model = imageUrl,
         contentDescription = "Изображение",
+        onState = { state ->
+            if (state is AsyncImagePainter.State.Success) {
+                val size = state.painter.intrinsicSize
+                if (size.width > 0 && size.height > 0) {
+                    aspectRatio =
+                        size.width / size.height
+                }
+            }
+        },
         modifier = Modifier
-            .size(120.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(Color.DarkGray),
-        contentScale = ContentScale.Crop
+            .fillMaxWidth()
+            .padding(2.dp)
+            .aspectRatio(aspectRatio)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color.DarkGray)
     )
 }
 
