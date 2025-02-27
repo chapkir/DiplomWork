@@ -1,10 +1,8 @@
 package com.example.diplomwork.ui.screens.login_screen
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.*
@@ -12,9 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.resolveDefaults
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -24,7 +19,6 @@ import com.example.diplomwork.R
 fun LoginScreen(onLoginClick: (String, String) -> Unit, navController: NavHostController) {
     var login by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -63,7 +57,6 @@ fun LoginScreen(onLoginClick: (String, String) -> Unit, navController: NavHostCo
             onValueChange = { password = it },
             label = { Text("Пароль") },
             leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
-            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
 
             },

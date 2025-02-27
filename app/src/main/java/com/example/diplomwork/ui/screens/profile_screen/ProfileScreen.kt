@@ -41,13 +41,11 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
-import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import com.example.diplomwork.R
 import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 import androidx.compose.runtime.*
-
 
 
 @Composable
@@ -125,7 +123,6 @@ fun ImageGrid(images: List<String>) {
 fun ImageItem(imageUrl: String) {
 
     var aspectRatio by remember { mutableStateOf(1f) }
-
     AsyncImage(
         model = imageUrl,
         contentDescription = "Изображение",
