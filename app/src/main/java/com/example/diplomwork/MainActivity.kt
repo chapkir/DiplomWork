@@ -10,10 +10,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
+import com.example.diplomwork.network.ApiClient
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Initialize ApiClient
+        ApiClient.init(this)
+
         enableEdgeToEdge()
         setContent {
             MaterialTheme {
@@ -21,6 +26,7 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     AppNavigation(navController = navController)
                 }
+            }
         }
     }
-}}
+}

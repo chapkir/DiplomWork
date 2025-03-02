@@ -85,29 +85,39 @@ public class PinController {
         return ResponseEntity.ok(createdPin);
     }
 
-    @PostMapping("/{pinId}/like")
+    @PostMapping("/{pinId}/likes")
     public ResponseEntity<?> likePin(@PathVariable Long pinId, Authentication authentication) {
-        User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
-        Pin pin = pinRepository.findById(pinId)
-                .orElseThrow(() -> new ResourceNotFoundException("Пин не найден"));
+        System.out.println("Received like request for pin: " + pinId + " from user: " + authentication.getName());
 
-        Optional<Like> likeOptional = likeRepository.findByPinAndUser(pin, user);
-        Map<String, Object> responseMap = new HashMap<>();
-        if (likeOptional.isPresent()) {
-            likeRepository.delete(likeOptional.get());
-            responseMap.put("message", "Лайк удалён");
-            responseMap.put("liked", false);
-            return ResponseEntity.ok(responseMap);
-        } else {
-            Like like = new Like();
-            like.setUser(user);
-            like.setPin(pin);
-            like.setCreatedAt(LocalDateTime.now());
-            likeRepository.save(like);
-            responseMap.put("message", "Лайк поставлен");
-            responseMap.put("liked", true);
-            return ResponseEntity.ok(responseMap);
+        try {
+            User user = userRepository.findByUsername(authentication.getName())
+                    .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+            Pin pin = pinRepository.findById(pinId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Пин не найден"));
+
+            Optional<Like> likeOptional = likeRepository.findByPinAndUser(pin, user);
+            Map<String, Object> responseMap = new HashMap<>();
+            if (likeOptional.isPresent()) {
+                likeRepository.delete(likeOptional.get());
+                responseMap.put("message", "Лайк удалён");
+                responseMap.put("liked", false);
+                System.out.println("Like removed for pin: " + pinId + " by user: " + user.getUsername());
+                return ResponseEntity.ok(responseMap);
+            } else {
+                Like like = new Like();
+                like.setUser(user);
+                like.setPin(pin);
+                like.setCreatedAt(LocalDateTime.now());
+                likeRepository.save(like);
+                responseMap.put("message", "Лайк поставлен");
+                responseMap.put("liked", true);
+                System.out.println("Like added for pin: " + pinId + " by user: " + user.getUsername());
+                return ResponseEntity.ok(responseMap);
+            }
+        } catch (Exception e) {
+            System.err.println("Error processing like for pin: " + pinId + ": " + e.getMessage());
+            e.printStackTrace();
+            throw e;
         }
     }
 
@@ -115,17 +125,67 @@ public class PinController {
     public ResponseEntity<MessageResponse> addComment(@PathVariable Long pinId,
                                                       @RequestBody CommentRequest commentRequest,
                                                       Authentication authentication) {
-        User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+        System.out.println("Received comment request for pin: " + pinId + " from user: " + authentication.getName());
+        System.out.println("Comment text: " + commentRequest.getText());
+
+        try {
+            User user = userRepository.findByUsername(authentication.getName())
+                    .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+            Pin pin = pinRepository.findById(pinId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Пин не найден"));
+
+            Comment comment = new Comment();
+            comment.setText(commentRequest.getText());
+            comment.setPin(pin);
+            comment.setUser(user);
+            comment.setCreatedAt(LocalDateTime.now());
+            Comment savedComment = commentRepository.save(comment);
+
+            System.out.println("Comment added successfully with ID: " + savedComment.getId());
+            return ResponseEntity.ok(new MessageResponse("Комментарий добавлен"));
+        } catch (Exception e) {
+            System.err.println("Error adding comment for pin: " + pinId + ": " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    @GetMapping("/{pinId}")
+    public ResponseEntity<PinResponse> getPinById(@PathVariable Long pinId) {
         Pin pin = pinRepository.findById(pinId)
                 .orElseThrow(() -> new ResourceNotFoundException("Пин не найден"));
 
-        Comment comment = new Comment();
-        comment.setText(commentRequest.getText());
-        comment.setPin(pin);
-        comment.setUser(user);
-        comment.setCreatedAt(LocalDateTime.now());
-        commentRepository.save(comment);
-        return ResponseEntity.ok(new MessageResponse("Комментарий добавлен"));
+        PinResponse response = new PinResponse();
+        response.setId(pin.getId());
+        response.setImageUrl(pin.getImageUrl());
+        response.setDescription(pin.getDescription());
+        response.setLikesCount(pin.getLikes() != null ? pin.getLikes().size() : 0);
+        response.setComments(
+                pin.getComments().stream().map(comment -> {
+                    CommentResponse cr = new CommentResponse();
+                    cr.setId(comment.getId());
+                    cr.setText(comment.getText());
+                    cr.setUsername(comment.getUser() != null ? comment.getUser().getUsername() : "Unknown");
+                    return cr;
+                }).collect(Collectors.toList())
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{pinId}/comments")
+    public ResponseEntity<List<CommentResponse>> getPinComments(@PathVariable Long pinId) {
+        Pin pin = pinRepository.findById(pinId)
+                .orElseThrow(() -> new ResourceNotFoundException("Пин не найден"));
+
+        List<CommentResponse> comments = pin.getComments().stream()
+                .map(comment -> {
+                    CommentResponse cr = new CommentResponse();
+                    cr.setId(comment.getId());
+                    cr.setText(comment.getText());
+                    cr.setUsername(comment.getUser() != null ? comment.getUser().getUsername() : "Unknown");
+                    return cr;
+                }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(comments);
     }
 }

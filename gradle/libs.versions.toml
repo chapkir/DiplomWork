@@ -15,6 +15,7 @@ material = "1.12.0"
 retrofit = "2.11.0"
 volley = "1.2.1"
 accompanist = "0.36.0"
+uiTestAndroid = "1.7.8"
 
 
 
@@ -46,6 +47,7 @@ squareup-converter = { group = "com.squareup.retrofit2", name = "converter-gson"
 volley = { group = "com.android.volley", name = "volley", version.ref = "volley" }
 accompanist-pager = { group = "com.google.accompanist", name = "accompanist-pager", version.ref = "accompanist" }
 accompanist-pager-indicators = { group = "com.google.accompanist", name = "accompanist-pager-indicators", version.ref = "accompanist" }
+androidx-ui-test-android = { group = "androidx.compose.ui", name = "ui-test-android", version.ref = "uiTestAndroid" }
 
 
 

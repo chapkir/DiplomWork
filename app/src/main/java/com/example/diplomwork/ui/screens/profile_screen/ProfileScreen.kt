@@ -1,32 +1,18 @@
 package com.example.diplomwork.ui.screens.profile_screen
 
+import android.net.Uri
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,69 +29,257 @@ import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
 import com.example.diplomwork.R
+import com.example.diplomwork.auth.SessionManager
+import com.example.diplomwork.model.Pin
+import com.example.diplomwork.model.ProfileResponse
 import com.example.diplomwork.network.ApiClient
+import com.example.diplomwork.ui.screens.home_screen.content_grid.ImageCard
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
-import androidx.compose.runtime.*
-
+import kotlinx.coroutines.launch
+import retrofit2.HttpException
 
 @Composable
-fun ProfileScreen(navController: NavHostController, username: String) {
+fun ProfileScreen(navController: NavHostController) {
+    val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
+    val scope = rememberCoroutineScope()
+
+    var profileData by remember { mutableStateOf<ProfileResponse?>(null) }
+    var likedPins by remember { mutableStateOf<List<Pin>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf<String?>(null) }
     var selectedTabIndex by remember { mutableStateOf(0) }
     val tabTitles = listOf("Публикации", "Лайки")
+
+    // Функция для загрузки лайкнутых пинов
+    suspend fun loadLikedPins() {
+        try {
+            likedPins = ApiClient.apiService.getLikedPins()
+            Log.d("ProfileScreen", "Загружено ${likedPins.size} лайкнутых пинов")
+        } catch (e: Exception) {
+            Log.e("ProfileScreen", "Ошибка при загрузке лайкнутых пинов: ${e.message}")
+            Toast.makeText(context, "Ошибка при загрузке лайкнутых пинов", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (!sessionManager.isLoggedIn()) {
+            Log.d("ProfileScreen", "Пользователь не авторизован, перенаправление на экран входа")
+            navController.navigate("login_screen") {
+                popUpTo("profile_screen") { inclusive = true }
+            }
+            return@LaunchedEffect
+        }
+
+        try {
+            val token = sessionManager.getAuthToken()
+            if (token == null) {
+                Log.e("ProfileScreen", "Токен авторизации отсутствует")
+                error = "Токен авторизации отсутствует"
+                isLoading = false
+                return@LaunchedEffect
+            }
+
+            Log.d("ProfileScreen", "Загрузка профиля")
+
+            try {
+                profileData = ApiClient.apiService.getProfile()
+                loadLikedPins() // Загружаем лайкнутые пины
+                Log.d("ProfileScreen", "Профиль успешно загружен: ${profileData?.username}")
+                isLoading = false
+            } catch (e: HttpException) {
+                val errorCode = e.code()
+                val errorBody = e.response()?.errorBody()?.string()
+                Log.e("ProfileScreen", "HTTP ошибка при загрузке профиля: $errorCode, тело: $errorBody")
+                error = "Ошибка загрузки профиля (код $errorCode)"
+                isLoading = false
+
+                if (errorCode == 401 || errorCode == 403) {
+                    Log.d("ProfileScreen", "Недействительный токен, перенаправление на экран входа")
+                    sessionManager.clearSession()
+                    Toast.makeText(context, "Сессия истекла. Пожалуйста, войдите снова", Toast.LENGTH_LONG).show()
+                    navController.navigate("login_screen") {
+                        popUpTo("profile_screen") { inclusive = true }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("ProfileScreen", "Ошибка при загрузке профиля: ${e.message}", e)
+            error = "Ошибка: ${e.message}"
+            isLoading = false
+        }
+    }
+
+    // Загружаем лайкнутые пины при переключении на таб "Лайки"
+    LaunchedEffect(selectedTabIndex) {
+        if (selectedTabIndex == 1) {
+            loadLikedPins()
+        }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(ColorForBottomMenu)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceAround
-        ) {
-            Text(
-                text = username,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                textAlign = TextAlign.Center
-            )
-            IconButton(
-                onClick = { navController.navigate("login_screen") },
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_login),
-                    contentDescription = "Войти",
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
+        when {
+            isLoading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color.White)
+                }
             }
-        }
-        TabRow(
-            selectedTabIndex = selectedTabIndex,
-            contentColor = Color.White,
-            containerColor = ColorForBottomMenu
-        ) {
-            tabTitles.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedTabIndex == index,
-                    onClick = { selectedTabIndex = index },
-                    text = { Text(text = title, color = Color.White) }
-                )
-            }
-        }
+            error != null -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Ошибка загрузки: $error",
+                            color = Color.White,
+                            textAlign = TextAlign.Center
+                        )
 
-        when (selectedTabIndex) {
-            0 -> ImageGrid(images = getPublishedImages())
-            1 -> ImageGrid(images = getLikedImages())
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Button(onClick = {
+                            error = null
+                            isLoading = true
+                            scope.launch {
+                                try {
+                                    val token = sessionManager.getAuthToken() ?: run {
+                                        navController.navigate("login_screen")
+                                        return@launch
+                                    }
+                                    profileData = ApiClient.apiService.getProfile()
+                                    loadLikedPins()
+                                    isLoading = false
+                                } catch (e: Exception) {
+                                    Log.e("ProfileScreen", "Ошибка при повторной загрузке: ${e.message}", e)
+                                    error = "Ошибка: ${e.message}"
+                                    isLoading = false
+                                }
+                            }
+                        }) {
+                            Text("Повторить")
+                        }
+                    }
+                }
+            }
+            profileData != null -> {
+                ProfileHeader(
+                    username = profileData!!.username,
+                    onLogout = {
+                        Log.d("ProfileScreen", "Выход из аккаунта")
+                        sessionManager.clearSession()
+                        navController.navigate("home_screen") {
+                            popUpTo("profile_screen") { inclusive = true }
+                        }
+                    }
+                )
+
+                TabRow(
+                    selectedTabIndex = selectedTabIndex,
+                    contentColor = Color.White,
+                    containerColor = ColorForBottomMenu
+                ) {
+                    tabTitles.forEachIndexed { index, title ->
+                        Tab(
+                            selected = selectedTabIndex == index,
+                            onClick = { selectedTabIndex = index },
+                            text = { Text(text = title, color = Color.White) }
+                        )
+                    }
+                }
+
+                when (selectedTabIndex) {
+                    0 -> {
+                        if (profileData!!.pins.isEmpty()) {
+                            EmptyStateMessage(message = "У вас пока нет пинов")
+                        } else {
+                            PinsGrid(
+                                pins = profileData!!.pins,
+                                onPinClick = { pin ->
+                                    val encodedUrl = Uri.encode(pin.imageUrl)
+                                    navController.navigate("image_detail/${pin.id}/$encodedUrl")
+                                }
+                            )
+                        }
+                    }
+                    1 -> {
+                        if (likedPins.isEmpty()) {
+                            EmptyStateMessage(message = "У вас пока нет лайкнутых пинов")
+                        } else {
+                            PinsGrid(
+                                pins = likedPins,
+                                onPinClick = { pin ->
+                                    val encodedUrl = Uri.encode(pin.imageUrl)
+                                    navController.navigate("image_detail/${pin.id}/$encodedUrl")
+                                }
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-fun ImageGrid(images: List<String>) {
+private fun ProfileHeader(
+    username: String,
+    onLogout: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceAround
+    ) {
+        Text(
+            text = username,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            textAlign = TextAlign.Center
+        )
+        IconButton(onClick = onLogout) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_login),
+                contentDescription = "Выйти",
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmptyStateMessage(message: String) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = message,
+            color = Color.White,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun PinsGrid(
+    pins: List<Pin>,
+    onPinClick: (Pin) -> Unit
+) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
         modifier = Modifier.padding(8.dp),
@@ -113,35 +287,21 @@ fun ImageGrid(images: List<String>) {
         verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        items(images) { imageUrl ->
-            ImageItem(imageUrl = imageUrl)
+        items(pins) { pin ->
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(if (pin.imageUrl.startsWith("http")) pin.imageUrl else ApiClient.baseUrl + pin.imageUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = pin.description,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { onPinClick(pin) }
+            )
         }
     }
-}
-
-@Composable
-fun ImageItem(imageUrl: String) {
-
-    var aspectRatio by remember { mutableStateOf(1f) }
-    AsyncImage(
-        model = imageUrl,
-        contentDescription = "Изображение",
-        onState = { state ->
-            if (state is AsyncImagePainter.State.Success) {
-                val size = state.painter.intrinsicSize
-                if (size.width > 0 && size.height > 0) {
-                    aspectRatio =
-                        size.width / size.height
-                }
-            }
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(2.dp)
-            .aspectRatio(aspectRatio)
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color.DarkGray)
-    )
 }
 
 // Заглушки данных

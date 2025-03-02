@@ -9,6 +9,7 @@ import java.util.Date;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 
 @Component
 public class JwtTokenUtil {
@@ -29,8 +30,9 @@ public class JwtTokenUtil {
     }
 
     public String getUsernameFromToken(String token) {
-        return Jwts.parser()
+        return Jwts.parserBuilder()
                 .setSigningKey(Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8)))
+                .build()
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
@@ -38,7 +40,10 @@ public class JwtTokenUtil {
 
     public boolean validateJwtToken(String authToken) {
         try {
-            Jwts.parser().setSigningKey(Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8))).parseClaimsJws(authToken);
+            Jwts.parserBuilder()
+                    .setSigningKey(Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8)))
+                    .build()
+                    .parseClaimsJws(authToken);
             return true;
         } catch (SignatureException e) {
             System.err.println("Неверная JWT подпись: " + e.getMessage());
@@ -50,6 +55,9 @@ public class JwtTokenUtil {
             System.err.println("Неподдерживаемый JWT: " + e.getMessage());
         } catch (IllegalArgumentException e) {
             System.err.println("JWT claims строка пуста: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Непредвиденная ошибка при валидации токена: " + e.getMessage());
+            e.printStackTrace();
         }
         return false;
     }

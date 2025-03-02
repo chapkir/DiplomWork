@@ -63,7 +63,7 @@ fun getTopBarForScreen(currentRoute: String?): @Composable () -> Unit {
             {
                 CustomTopBar(
                     title = "Избранное"
-                    )
+                )
             }
         }
 
@@ -71,14 +71,14 @@ fun getTopBarForScreen(currentRoute: String?): @Composable () -> Unit {
             {
                 CustomTopBar(
                     title = "Профиль"
-                    )
+                )
             }
         }
         "login_screen" -> {
             {
                 CustomTopBar(
                     title = "Авторизация"
-                    )
+                )
             }
         }
 
@@ -93,11 +93,10 @@ fun CustomTopBar(title: String, actions: @Composable RowScope.() -> Unit = {}) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(
-                TopBarHeight + SystemInsetHeight(WindowInsetsCompat.Type.statusBars()).value
-            )
-            .background(ColorForBottomMenu),
-        verticalAlignment = Alignment.Bottom,
+            .background(ColorForBottomMenu)
+            .padding(top = SystemInsetHeight(WindowInsetsCompat.Type.statusBars()).value)
+            .height(TopBarHeight),
+        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
         Spacer(Modifier.weight(1f))
@@ -107,7 +106,7 @@ fun CustomTopBar(title: String, actions: @Composable RowScope.() -> Unit = {}) {
             fontWeight = FontWeight.Bold,
             color = Color.White,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(13.dp)
+            modifier = Modifier.padding(vertical = 13.dp)
         )
         Spacer(Modifier.weight(1f))
         actions()

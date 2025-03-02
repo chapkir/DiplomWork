@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.ui.test.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -77,7 +78,7 @@ dependencies {
     implementation(libs.squareup.retrofit)
     implementation(libs.squareup.converter)
     implementation (libs.android.material)
-
+    implementation("com.squareup.okhttp3:logging-interceptor:4.9.0")
 
 }
 

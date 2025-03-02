@@ -4,6 +4,7 @@ import com.example.server.UsPinterest.model.Photo;
 import com.example.server.UsPinterest.model.Pin;
 import com.example.server.UsPinterest.model.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.time.LocalDateTime;
 
@@ -18,15 +19,16 @@ public class Like {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @JsonIgnoreProperties({"password", "email", "boards", "comments", "likes", "registrationDate", "profileImageUrl", "bio"})
     private User user;
 
     @ManyToOne
     @JoinColumn(name = "photo_id", nullable = true)
     private Photo photo;
 
-    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "pin_id")
+    @JsonIgnoreProperties({"likes", "comments", "board", "user"})
     private Pin pin;
 
     @Column(nullable = false)

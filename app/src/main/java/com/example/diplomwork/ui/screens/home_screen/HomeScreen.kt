@@ -1,4 +1,5 @@
 package com.example.diplomwork.ui.screens.home_screen
+
 import android.net.Uri
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,14 +14,13 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.example.diplomwork.ui.screens.home_screen.bottom_menu.BottomMenu
 import com.example.diplomwork.ui.screens.home_screen.content_grid.ContentGrid
 
-
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(navController: NavHostController) {
     ContentGrid(
         modifier = Modifier.fillMaxSize(),
-        onImageClick = { imageUrl ->
-            navController.navigate("image_detail_screen?imageUrl=${Uri.encode(imageUrl)}")
+        onImageClick = { pin ->
+            navController.navigate("image_detail/${pin.id}/${Uri.encode(pin.imageUrl)}")
         }
     )
 }

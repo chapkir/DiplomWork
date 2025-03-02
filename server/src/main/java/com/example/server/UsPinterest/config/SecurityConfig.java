@@ -40,8 +40,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/images/**", "/profile.html", "/favicon.ico").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/pins/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/pins/*/like").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/pins/*/likes").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/pins/*/likes").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/pins/*/comments").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/profile/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/profile/**").authenticated()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )
@@ -73,10 +76,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:8081", "http://192.168.1.125:8081", "http://localhost:5500"));
+        configuration.setAllowedOrigins(Arrays.asList("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
-        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
