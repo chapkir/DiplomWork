@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit
 import com.example.diplomwork.auth.SessionManager
 
 object ApiClient {
-    const val baseUrl = "http://192.168.1.125:8081/"
+    const val baseUrl = "http://192.168.134.109:8081/"
     private const val TAG = "ApiClient"
     private lateinit var sessionManager: SessionManager
 

@@ -55,7 +55,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 fun ImageDetailScreen(
     pinId: Long,
     imageUrl: String,
-    navController: NavHostController
+    onNavigateBack: () -> Unit,
+    onNavigateToLogin: () -> Unit
 ) {
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
@@ -72,7 +73,7 @@ fun ImageDetailScreen(
     LaunchedEffect(Unit) {
         try {
             val token = sessionManager.getAuthToken() ?: run {
-                navController.navigate("login_screen")
+                onNavigateToLogin()
                 return@LaunchedEffect
             }
 
@@ -148,7 +149,7 @@ fun ImageDetailScreen(
                                 try {
                                     val token = sessionManager.getAuthToken() ?: run {
                                         Toast.makeText(context, "Необходима авторизация", Toast.LENGTH_SHORT).show()
-                                        navController.navigate("login_screen")
+                                        onNavigateToLogin()
                                         return@launch
                                     }
 
@@ -250,7 +251,7 @@ fun ImageDetailScreen(
 
         // Back button - positioned with proper padding for status bar
         IconButton(
-            onClick = { navController.popBackStack() },
+            onClick = { onNavigateBack() },
             modifier = Modifier
                 .padding(
                     top = statusBarPadding.calculateTopPadding() + 16.dp,
@@ -278,7 +279,7 @@ fun ImageDetailScreen(
                     try {
                         val token = sessionManager.getAuthToken() ?: run {
                             Toast.makeText(context, "Необходима авторизация", Toast.LENGTH_SHORT).show()
-                            navController.navigate("login_screen")
+                            onNavigateToLogin()
                             return@launch
                         }
 

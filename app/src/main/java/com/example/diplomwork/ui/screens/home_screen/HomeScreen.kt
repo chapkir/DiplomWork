@@ -16,11 +16,11 @@ import com.example.diplomwork.ui.screens.home_screen.content_grid.ContentGrid
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun HomeScreen(navController: NavHostController) {
+fun HomeScreen(onImageClick: (Long, String) -> Unit) {
     ContentGrid(
         modifier = Modifier.fillMaxSize(),
         onImageClick = { pin ->
-            navController.navigate("image_detail/${pin.id}/${Uri.encode(pin.imageUrl)}")
+            onImageClick(pin.id, pin.imageUrl)
         }
     )
 }

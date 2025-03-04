@@ -14,22 +14,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.diplomwork.R
 import com.example.diplomwork.system_settings.SystemInsetHeight
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 import com.example.diplomwork.ui.theme.Dimens.BottomMenuHeight
 
 @Composable
-fun BottomMenu(navController: NavHostController) {
+fun BottomMenu(
+    currentRoute: String,
+    onNavigate: (String) -> Unit
+) {
 
     val items = listOf(
-        BottomNavItem("home_screen", R.drawable.ic_home, "Главная"),
-        BottomNavItem("info_screen", R.drawable.ic_info, "Информация"),
-        BottomNavItem("add_screen", R.drawable.ic_add, "Добавить"),
-        BottomNavItem("favs_screen", R.drawable.ic_favs, "Избранное"),
-        BottomNavItem("profile_screen", R.drawable.ic_user, "Профиль")
+        BottomNavItem("home_screen", R.drawable.ic_home, "Home"),
+        BottomNavItem("info_screen", R.drawable.ic_info, "Info"),
+        BottomNavItem("add_screen", R.drawable.ic_add, "Add"),
+        BottomNavItem("favs_screen", R.drawable.ic_favs, "Fav"),
+        BottomNavItem("profile_screen", R.drawable.ic_user, "Profile")
     )
 
     NavigationBar(
@@ -39,7 +40,7 @@ fun BottomMenu(navController: NavHostController) {
             BottomMenuHeight + SystemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value
         )
     ) {
-        val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+        //val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
         items.forEach { item ->
             val isSelected = currentRoute == item.route
@@ -52,7 +53,7 @@ fun BottomMenu(navController: NavHostController) {
             NavigationBarItem(
                 selected = isSelected,
                 onClick = {
-                    if (!isSelected) navController.navigate(item.route)
+                    if (!isSelected) onNavigate(item.route)
                 },
                 icon = {
                     Icon(

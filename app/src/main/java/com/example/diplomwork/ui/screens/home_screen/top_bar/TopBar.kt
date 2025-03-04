@@ -32,8 +32,7 @@ import com.example.diplomwork.ui.theme.Dimens.TopBarHeight
 fun getTopBarForScreen(currentRoute: String?): @Composable () -> Unit {
     return when (currentRoute) {
         "home_screen" -> {
-            {
-                CustomTopBar(
+            { CustomTopBar(
                     title = "Лента картинок"
 //                    actions =
 //                    {
@@ -47,8 +46,7 @@ fun getTopBarForScreen(currentRoute: String?): @Composable () -> Unit {
 //                            )
                     //                    }
                     //              }
-                )
-            }
+                ) }
         }
 
         "info_screen" -> {
@@ -60,26 +58,17 @@ fun getTopBarForScreen(currentRoute: String?): @Composable () -> Unit {
         }
 
         "favs_screen" -> {
-            {
-                CustomTopBar(
-                    title = "Избранное"
-                )
-            }
+            { CustomTopBar(title = "Избранное") }
         }
 
         "profile_screen" -> {
-            {
-                CustomTopBar(
-                    title = "Профиль"
-                )
-            }
+            { CustomTopBar(title = "Профиль") }
         }
         "login_screen" -> {
-            {
-                CustomTopBar(
-                    title = "Авторизация"
-                )
-            }
+            { CustomTopBar(title = "Авторизация") }
+        }
+        "image_detail" -> {
+            { CustomTopBar(title = "Авторизация") }
         }
 
         else -> {
@@ -96,7 +85,7 @@ fun CustomTopBar(title: String, actions: @Composable RowScope.() -> Unit = {}) {
             .background(ColorForBottomMenu)
             .padding(top = SystemInsetHeight(WindowInsetsCompat.Type.statusBars()).value)
             .height(TopBarHeight),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Bottom,
         horizontalArrangement = Arrangement.Center
     ) {
         Spacer(Modifier.weight(1f))
@@ -106,7 +95,7 @@ fun CustomTopBar(title: String, actions: @Composable RowScope.() -> Unit = {}) {
             fontWeight = FontWeight.Bold,
             color = Color.White,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(vertical = 13.dp)
+            modifier = Modifier.padding(bottom = 11.dp)
         )
         Spacer(Modifier.weight(1f))
         actions()

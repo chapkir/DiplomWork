@@ -1,5 +1,6 @@
 package com.example.diplomwork.ui
 
+import android.net.Uri
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -24,42 +25,66 @@ import com.example.diplomwork.ui.screens.profile_screen.ProfileScreen
 fun AppNavigation(navController: NavHostController) {
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
-    val screensWithBottomBar = listOf(
-        "home_screen", "info_screen", "add_screen",
-        "favs_screen", "profile_screen", "login_screen"
-    )
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
-    val showBottomBar = currentRoute != null &&
-            !currentRoute.startsWith("image_detail")
+    val showBottomBar = currentRoute != null && !currentRoute.startsWith("image_detail")
     val topBar = getTopBarForScreen(currentRoute)
 
     Scaffold(
-        topBar = {
-            topBar()
-        },
+        topBar = { topBar() },
         bottomBar = {
-            if (showBottomBar) {
-                BottomMenu(navController)
-            }
+                if (showBottomBar) BottomMenu(
+                    currentRoute = currentRoute ?: "",
+                    onNavigate = { route ->
+                        navController.navigate(route) {
+                            popUpTo(route) { inclusive = true }
+                        }
+                    })
         }
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = "home_screen",
+            startDestination = if (sessionManager.isLoggedIn()) "home_screen" else "login_screen",
             modifier = Modifier.padding(paddingValues)
         ) {
             composable("home_screen") {
-                HomeScreen(navController)
+                HomeScreen(
+                    onImageClick = { pinId, imageUrl ->
+                        val encodedUrl = Uri.encode(imageUrl)
+                        navController.navigate("image_detail/$pinId/$encodedUrl") {
+                            popUpTo("image_detail/$pinId/$encodedUrl") { inclusive = true }
+                        }
+                    })
             }
-
             composable("login_screen") {
-                LoginScreen(navController)
+                LoginScreen(
+                    onLoginSuccess = {
+                        navController.navigate("profile_screen") {
+                            popUpTo("login_screen") { inclusive = true }
+                        }
+                    },
+                    onNavigateBack = { navController.popBackStack() })
             }
-
             composable("profile_screen") {
-                ProfileScreen(navController)
+                ProfileScreen(
+                    onLogout = {
+                        sessionManager.clearSession()
+                        navController.navigate("home_screen") {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
+                    onNavigateToLogin = {
+                        navController.navigate("login_screen") {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
+                    onImageClick = { pinId, imageUrl ->
+                        val encodedUrl = java.net.URLEncoder.encode(imageUrl, "UTF-8")
+                        navController.navigate("image_detail/$pinId/$encodedUrl") {
+                            popUpTo("image_detail/$pinId/$encodedUrl") { inclusive = true }
+                        }
+                    }
+                )
             }
-
             composable(
                 "image_detail/{pinId}/{imageUrl}",
                 arguments = listOf(
@@ -70,13 +95,19 @@ fun AppNavigation(navController: NavHostController) {
                 ImageDetailScreen(
                     pinId = backStackEntry.arguments?.getLong("pinId") ?: 0,
                     imageUrl = backStackEntry.arguments?.getString("imageUrl") ?: "",
-                    navController = navController
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToLogin = { navController.navigate("login_screen") }
                 )
             }
-
-            composable("info_screen") { /* InfoScreen(navController) */ }
-            composable("add_screen") { /* AddScreen(navController) */ }
-            composable("favs_screen") { /* FavsScreen(navController) */ }
+            composable("info_screen") {
+                /* InfoScreen() */
+            }
+            composable("add_screen") {
+                /* AddScreen() */
+            }
+            composable("favs_screen") {
+                /* FavsScreen() */
+            }
         }
     }
 }

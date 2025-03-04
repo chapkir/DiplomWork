@@ -22,7 +22,10 @@ import com.example.diplomwork.network.ApiClient
 import kotlinx.coroutines.launch
 
 @Composable
-fun LoginScreen(navController: NavHostController) {
+fun LoginScreen(
+    onLoginSuccess: () -> Unit,
+    onNavigateBack: () -> Unit
+) {
     var login by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -39,7 +42,7 @@ fun LoginScreen(navController: NavHostController) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         IconButton(
-            onClick = { navController.popBackStack() }
+            onClick = { onNavigateBack() }
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_arrow_back),
@@ -83,11 +86,14 @@ fun LoginScreen(navController: NavHostController) {
                         isLoading = true
                         val response = ApiClient.apiService.login(LoginRequest(login, password))
                         sessionManager.saveAuthToken(response.token)
-                        navController.navigate("profile_screen") {
-                            popUpTo("login_screen") { inclusive = true }
-                        }
+                        onLoginSuccess()
+//                        navController.navigate("profile_screen") {
+//                           popUpTo("login_screen") { inclusive = true }
+//                        }
                     } catch (e: Exception) {
-                        Toast.makeText(context, "Ошибка авторизации: ${e.message}", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            context, "Ошибка авторизации: ${e.message}",
+                            Toast.LENGTH_LONG).show()
                     } finally {
                         isLoading = false
                     }
