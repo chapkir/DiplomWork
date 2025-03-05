@@ -1,6 +1,6 @@
 package com.example.diplomwork
 
-import com.example.diplomwork.ui.AppNavigation
+import com.example.diplomwork.ui.components.AppNavigation
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent

@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.screens.home_screen.bottom_menu
+package com.example.diplomwork.ui.components.bottom_menu
 
 import com.example.diplomwork.R
 

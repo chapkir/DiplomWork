@@ -1,10 +1,13 @@
-package com.example.diplomwork.ui
+package com.example.diplomwork.ui.components
 
 import android.net.Uri
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
@@ -15,8 +18,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.ui.screens.home_screen.HomeScreen
-import com.example.diplomwork.ui.screens.home_screen.bottom_menu.BottomMenu
-import com.example.diplomwork.ui.screens.home_screen.top_bar.getTopBarForScreen
+import com.example.diplomwork.ui.components.bottom_menu.BottomMenu
+import com.example.diplomwork.ui.components.top_bar.getTopBarForScreen
+import com.example.diplomwork.ui.screens.add_photo_screen.OpenGalleryAndSaveImage
 import com.example.diplomwork.ui.screens.image_detail_screen.ImageDetailScreen
 import com.example.diplomwork.ui.screens.login_screen.LoginScreen
 import com.example.diplomwork.ui.screens.profile_screen.ProfileScreen
@@ -29,6 +33,9 @@ fun AppNavigation(navController: NavHostController) {
     val showBottomBar = currentRoute != null && !currentRoute.startsWith("image_detail")
     val topBar = getTopBarForScreen(currentRoute)
 
+    val isDialogOpen = remember { mutableStateOf(false) }
+    val openDialog = { isDialogOpen.value = true }
+
     Scaffold(
         topBar = { topBar() },
         bottomBar = {
@@ -38,7 +45,8 @@ fun AppNavigation(navController: NavHostController) {
                         navController.navigate(route) {
                             popUpTo(route) { inclusive = true }
                         }
-                    })
+                    },
+                    onAddClicked = openDialog)
         }
     ) { paddingValues ->
         NavHost(
@@ -99,15 +107,19 @@ fun AppNavigation(navController: NavHostController) {
                     onNavigateToLogin = { navController.navigate("login_screen") }
                 )
             }
-            composable("info_screen") {
+            composable("posts_screen") {
                 /* InfoScreen() */
             }
-            composable("add_screen") {
-                /* AddScreen() */
-            }
-            composable("favs_screen") {
+
+//            composable("add_screen") {
+//            }
+
+            composable("notice_screen") {
                 /* FavsScreen() */
             }
         }
+    }
+    if (isDialogOpen.value) {
+        OpenGalleryAndSaveImage(isDialogOpen = isDialogOpen)
     }
 }

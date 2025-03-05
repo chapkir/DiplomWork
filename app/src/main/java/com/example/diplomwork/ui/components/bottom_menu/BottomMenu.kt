@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.screens.home_screen.bottom_menu
+package com.example.diplomwork.ui.components.bottom_menu
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -22,14 +22,15 @@ import com.example.diplomwork.ui.theme.Dimens.BottomMenuHeight
 @Composable
 fun BottomMenu(
     currentRoute: String,
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    onAddClicked: () -> Unit
 ) {
 
     val items = listOf(
         BottomNavItem("home_screen", R.drawable.ic_home, "Home"),
-        BottomNavItem("info_screen", R.drawable.ic_info, "Info"),
-        BottomNavItem("add_screen", R.drawable.ic_add, "Add"),
-        BottomNavItem("favs_screen", R.drawable.ic_favs, "Fav"),
+        BottomNavItem("posts_screen", R.drawable.ic_picture, "Posts"),
+        BottomNavItem("add_screen", R.drawable.ic_add, "Add", isAddButton = true),
+        BottomNavItem("notice_screen", R.drawable.ic_bell, "Notice"),
         BottomNavItem("profile_screen", R.drawable.ic_user, "Profile")
     )
 
@@ -40,8 +41,6 @@ fun BottomMenu(
             BottomMenuHeight + SystemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value
         )
     ) {
-        //val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
-
         items.forEach { item ->
             val isSelected = currentRoute == item.route
 
@@ -53,7 +52,13 @@ fun BottomMenu(
             NavigationBarItem(
                 selected = isSelected,
                 onClick = {
-                    if (!isSelected) onNavigate(item.route)
+                    if (!isSelected){
+                        if (item.isAddButton) {
+                            onAddClicked()
+                        } else {
+                            onNavigate(item.route)
+                        }
+                    }
                 },
                 icon = {
                     Icon(
@@ -75,7 +80,13 @@ fun BottomMenu(
     }
 }
 
-data class BottomNavItem(val route: String, val icon: Int, val label: String)
+
+data class BottomNavItem(
+    val route: String,
+    val icon: Int,
+    val label: String,
+    val isAddButton: Boolean = false
+)
 
 
 

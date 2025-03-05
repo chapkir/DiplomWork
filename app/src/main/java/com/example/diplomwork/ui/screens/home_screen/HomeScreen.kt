@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavHostController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.example.diplomwork.ui.screens.home_screen.bottom_menu.BottomMenu
+import com.example.diplomwork.ui.components.bottom_menu.BottomMenu
 import com.example.diplomwork.ui.screens.home_screen.content_grid.ContentGrid
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
