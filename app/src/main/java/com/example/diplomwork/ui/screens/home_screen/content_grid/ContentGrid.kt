@@ -13,18 +13,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.diplomwork.model.Pin
+import com.example.diplomwork.model.PinResponse
 import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 import kotlinx.coroutines.delay
 
 @Composable
-fun ContentGrid(modifier: Modifier = Modifier, onImageClick: (Pin) -> Unit) {
-    var pins by remember { mutableStateOf<List<Pin>>(emptyList()) }
+fun ContentGrid(
+    modifier: Modifier = Modifier,
+    onImageClick: (PinResponse) -> Unit,
+    shouldRefresh: Boolean = false,
+    onRefreshComplete: () -> Unit = {}
+) {
+    var pins by remember { mutableStateOf<List<PinResponse>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(Unit) {
+    // Функция для загрузки данных
+    suspend fun loadPins() {
         try {
             isLoading = true
             pins = ApiClient.apiService.getPins()
@@ -33,6 +39,19 @@ fun ContentGrid(modifier: Modifier = Modifier, onImageClick: (Pin) -> Unit) {
         } catch (e: Exception) {
             error = "Ошибка загрузки данных: ${e.message}"
             isLoading = false
+        }
+    }
+
+    // Начальная загрузка
+    LaunchedEffect(Unit) {
+        loadPins()
+    }
+
+    // Обработка обновления
+    LaunchedEffect(shouldRefresh) {
+        if (shouldRefresh) {
+            loadPins()
+            onRefreshComplete()
         }
     }
 

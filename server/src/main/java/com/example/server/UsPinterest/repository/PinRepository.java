@@ -4,9 +4,11 @@ import com.example.server.UsPinterest.model.Pin;
 import com.example.server.UsPinterest.model.User;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Repository
 public interface PinRepository extends JpaRepository<Pin, Long> {
     List<Pin> findByBoardId(Long boardId);
     List<Pin> findByDescriptionContainingIgnoreCase(String keyword);

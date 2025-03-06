@@ -22,6 +22,7 @@ public class Pin {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(length = 1000)
     private String imageUrl;
 
     @Column(length = 1024)

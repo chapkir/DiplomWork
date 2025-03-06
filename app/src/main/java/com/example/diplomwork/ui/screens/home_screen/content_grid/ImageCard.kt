@@ -44,7 +44,7 @@ fun ImageCard(
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(
-                        if (imageUrl.startsWith("http")) imageUrl
+                        if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) imageUrl
                         else ApiClient.baseUrl + imageUrl
                     )
                     .crossfade(true)

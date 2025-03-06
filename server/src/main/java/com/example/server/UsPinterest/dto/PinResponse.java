@@ -10,6 +10,7 @@ public class PinResponse {
 
     private int likesCount;
     private List<CommentResponse> comments;
+    private boolean isLikedByCurrentUser;
 
     public Long getId() {
         return id;
@@ -49,5 +50,13 @@ public class PinResponse {
 
     public void setComments(List<CommentResponse> comments) {
         this.comments = comments;
+    }
+
+    public boolean getIsLikedByCurrentUser() {
+        return isLikedByCurrentUser;
+    }
+
+    public void setIsLikedByCurrentUser(boolean isLikedByCurrentUser) {
+        this.isLikedByCurrentUser = isLikedByCurrentUser;
     }
 }

@@ -3,9 +3,18 @@ package com.example.server.UsPinterest.dto;
 import java.util.List;
 
 public class ProfileResponse {
+    private Long id;
     private String username;
     private String email;
     private List<PinResponse> pins;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getUsername() {
         return username;

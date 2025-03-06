@@ -39,6 +39,12 @@ dependencies {
     compileOnly("org.projectlombok:lombok:1.18.28")
     annotationProcessor("org.projectlombok:lombok:1.18.28")
 
+    // зависимости для работы с HTTP и JSON
+    implementation("com.squareup.okhttp3:okhttp:4.9.1")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("org.apache.httpcomponents:httpclient:4.5.13")
+    implementation("org.apache.httpcomponents:httpmime:4.5.13")
 }
 
 tasks.test {

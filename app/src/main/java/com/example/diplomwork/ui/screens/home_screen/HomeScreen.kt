@@ -16,11 +16,17 @@ import com.example.diplomwork.ui.screens.home_screen.content_grid.ContentGrid
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun HomeScreen(onImageClick: (Long, String) -> Unit) {
+fun HomeScreen(
+    onImageClick: (Long, String) -> Unit,
+    shouldRefresh: Boolean = false,
+    onRefreshComplete: () -> Unit = {}
+) {
     ContentGrid(
         modifier = Modifier.fillMaxSize(),
         onImageClick = { pin ->
             onImageClick(pin.id, pin.imageUrl)
-        }
+        },
+        shouldRefresh = shouldRefresh,
+        onRefreshComplete = onRefreshComplete
     )
 }

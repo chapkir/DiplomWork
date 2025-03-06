@@ -36,17 +36,20 @@ fun AppNavigation(navController: NavHostController) {
     val isDialogOpen = remember { mutableStateOf(false) }
     val openDialog = { isDialogOpen.value = true }
 
+    var shouldRefresh by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = { topBar() },
         bottomBar = {
-                if (showBottomBar) BottomMenu(
-                    currentRoute = currentRoute ?: "",
-                    onNavigate = { route ->
-                        navController.navigate(route) {
-                            popUpTo(route) { inclusive = true }
-                        }
-                    },
-                    onAddClicked = openDialog)
+            if (showBottomBar) BottomMenu(
+                currentRoute = currentRoute ?: "",
+                onNavigate = { route ->
+                    navController.navigate(route) {
+                        popUpTo(route) { inclusive = true }
+                    }
+                },
+                onAddClicked = openDialog
+            )
         }
     ) { paddingValues ->
         NavHost(
@@ -61,7 +64,10 @@ fun AppNavigation(navController: NavHostController) {
                         navController.navigate("image_detail/$pinId/$encodedUrl") {
                             popUpTo("image_detail/$pinId/$encodedUrl") { inclusive = true }
                         }
-                    })
+                    },
+                    shouldRefresh = shouldRefresh,
+                    onRefreshComplete = { shouldRefresh = false }
+                )
             }
             composable("login_screen") {
                 LoginScreen(
@@ -120,6 +126,10 @@ fun AppNavigation(navController: NavHostController) {
         }
     }
     if (isDialogOpen.value) {
-        OpenGalleryAndSaveImage(isDialogOpen = isDialogOpen)
+        OpenGalleryAndSaveImage(
+            isDialogOpen = isDialogOpen,
+            context = context,
+            onRefresh = { shouldRefresh = true }
+        )
     }
 }

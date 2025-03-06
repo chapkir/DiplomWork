@@ -1,0 +1,14 @@
+package com.example.diplomwork
+
+import android.app.Application
+import coil.Coil
+import com.example.diplomwork.network.ApiClient
+
+class DiplomWorkApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+
+        // Инициализация Coil с нашими настройками
+        Coil.setImageLoader(ApiClient.createImageLoader(this))
+    }
+}

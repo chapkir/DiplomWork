@@ -7,18 +7,20 @@ import com.example.diplomwork.model.ProfileResponse
 import com.example.diplomwork.model.Comment
 import com.example.diplomwork.model.CommentRequest
 import com.example.diplomwork.model.CommentResponse
+import com.example.diplomwork.model.PinResponse
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.*
 
 interface ApiService {
     @GET("api/pins/all")
-    suspend fun getPins(): List<Pin>
+    suspend fun getPins(): List<PinResponse>
 
     @GET("api/pins/{id}")
-    suspend fun getPin(@Path("id") id: Long): Pin
+    suspend fun getPin(@Path("id") id: Long): PinResponse
 
     @GET("api/pins/search")
-    suspend fun searchPins(@Query("query") query: String): List<Pin>
+    suspend fun searchPins(@Query("query") query: String): List<PinResponse>
 
     @POST("api/auth/login")
     suspend fun login(@Body loginRequest: LoginRequest): LoginResponse
@@ -42,5 +44,12 @@ interface ApiService {
     ): CommentResponse
 
     @GET("api/profile/liked-pins")
-    suspend fun getLikedPins(): List<Pin>
+    suspend fun getLikedPins(): List<PinResponse>
+
+    @Multipart
+    @POST("api/pins/upload")
+    suspend fun uploadImage(
+        @Part file: MultipartBody.Part,
+        @Part("description") description: String
+    ): PinResponse
 }

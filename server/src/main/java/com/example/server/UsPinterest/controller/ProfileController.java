@@ -2,6 +2,7 @@ package com.example.server.UsPinterest.controller;
 
 import com.example.server.UsPinterest.dto.PinResponse;
 import com.example.server.UsPinterest.dto.ProfileResponse;
+import com.example.server.UsPinterest.dto.CommentResponse;
 import com.example.server.UsPinterest.exception.ResourceNotFoundException;
 import com.example.server.UsPinterest.model.Pin;
 import com.example.server.UsPinterest.model.User;
@@ -57,25 +58,38 @@ public class ProfileController {
 
             System.out.println("Пользователь найден: " + user.getUsername());
 
-            // Check if user has liked pins and fetch them
-            List<Pin> likedPins = pinRepository.findByUser(user);
-            System.out.println("Найдено пинов пользователя: " + likedPins.size());
+            // Получаем пины пользователя через репозиторий
+            List<Pin> userPins = pinRepository.findByUser(user);
+            List<PinResponse> pinResponses = userPins.stream()
+                    .map(pin -> {
+                        PinResponse pr = new PinResponse();
+                        pr.setId(pin.getId());
+                        pr.setImageUrl(pin.getImageUrl());
+                        pr.setDescription(pin.getDescription());
+                        pr.setLikesCount(pin.getLikes() != null ? pin.getLikes().size() : 0);
+                        pr.setIsLikedByCurrentUser(pin.getLikes().stream()
+                                .anyMatch(like -> like.getUser().getId().equals(user.getId())));
+                        pr.setComments(
+                                pin.getComments().stream().map(comment -> {
+                                    CommentResponse cr = new CommentResponse();
+                                    cr.setId(comment.getId());
+                                    cr.setText(comment.getText());
+                                    cr.setUsername(comment.getUser() != null ? comment.getUser().getUsername() : "Unknown");
+                                    return cr;
+                                }).collect(Collectors.toList())
+                        );
+                        return pr;
+                    })
+                    .collect(Collectors.toList());
 
-            List<PinResponse> pinResponses = likedPins.stream().map(pin -> {
-                PinResponse pr = new PinResponse();
-                pr.setId(pin.getId());
-                pr.setImageUrl(pin.getImageUrl());
-                pr.setDescription(pin.getDescription());
-                return pr;
-            }).collect(Collectors.toList());
-
-            ProfileResponse profileResponse = new ProfileResponse();
-            profileResponse.setUsername(user.getUsername());
-            profileResponse.setEmail(user.getEmail());
-            profileResponse.setPins(pinResponses);
+            ProfileResponse response = new ProfileResponse();
+            response.setId(user.getId());
+            response.setUsername(user.getUsername());
+            response.setEmail(user.getEmail());
+            response.setPins(pinResponses);
 
             System.out.println("Профиль успешно сформирован и отправлен");
-            return ResponseEntity.ok(profileResponse);
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             System.err.println("Ошибка при получении профиля: " + e.getMessage());
             e.printStackTrace();

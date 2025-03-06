@@ -10,9 +10,15 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 import com.example.diplomwork.auth.SessionManager
+import java.net.SocketTimeoutException
+import java.io.IOException
+import coil.ImageLoader
+import coil.disk.DiskCache
+import coil.memory.MemoryCache
+import coil.request.CachePolicy
 
 object ApiClient {
-    const val baseUrl = "http://192.168.134.109:8081/"
+    const val baseUrl = "http://192.168.1.125:8081/"
     private const val TAG = "ApiClient"
     private lateinit var sessionManager: SessionManager
 
@@ -24,6 +30,20 @@ object ApiClient {
         level = HttpLoggingInterceptor.Level.BODY
     }
 
+    private val corsInterceptor = Interceptor { chain ->
+        val original = chain.request()
+        val requestBuilder = original.newBuilder()
+            .header("Accept", "*/*")
+            .header("Connection", "keep-alive")
+            .header("Accept-Encoding", "gzip, deflate, br")
+            .header("Origin", "http://192.168.1.125:8081")
+            .header("Access-Control-Request-Method", original.method)
+            .header("Access-Control-Request-Headers", "Authorization, Content-Type")
+            .method(original.method, original.body)
+
+        chain.proceed(requestBuilder.build())
+    }
+
     // Добавляем свой интерцептор для отслеживания запросов
     private val authInterceptor = Interceptor { chain ->
         val original = chain.request()
@@ -31,34 +51,56 @@ object ApiClient {
 
         // Логируем информацию о запросе
         Log.d(TAG, "Отправка запроса: ${original.method} ${original.url}")
+        Log.d(TAG, "Заголовки запроса: ${original.headers}")
 
         // Получаем токен и добавляем его в заголовок, если он существует
         if (::sessionManager.isInitialized) {
             sessionManager.getAuthToken()?.let { token ->
                 requestBuilder.addHeader("Authorization", "Bearer $token")
-                Log.d(TAG, "Добавлен токен авторизации")
+                Log.d(TAG, "Добавлен токен авторизации: Bearer ${token.take(10)}...")
             }
         }
 
         val request = requestBuilder.build()
-        val response = chain.proceed(request)
+        try {
+            val response = chain.proceed(request)
 
-        // Логируем информацию об ответе
-        Log.d(TAG, "Получен ответ: ${response.code} для ${request.url}")
+            // Логируем информацию об ответе
+            Log.d(TAG, "Получен ответ: ${response.code} для ${request.url}")
+            Log.d(TAG, "Заголовки ответа: ${response.headers}")
 
-        if (!response.isSuccessful) {
-            Log.e(TAG, "Ошибка запроса: ${response.code} ${response.message}")
+            val responseBody = response.peekBody(Long.MAX_VALUE).string()
+            Log.d(TAG, "Тело ответа: $responseBody")
+
+            if (!response.isSuccessful) {
+                Log.e(TAG, "Ошибка запроса: ${response.code} ${response.message}")
+                Log.e(TAG, "Тело ответа с ошибкой: $responseBody")
+            }
+
+            response
+        } catch (e: SocketTimeoutException) {
+            Log.e(TAG, "Таймаут соединения: ${e.message}")
+            Log.e(TAG, "Стек вызовов: ${e.stackTraceToString()}")
+            throw e
+        } catch (e: IOException) {
+            Log.e(TAG, "Ошибка сети: ${e.message}")
+            Log.e(TAG, "Стек вызовов: ${e.stackTraceToString()}")
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "Неожиданная ошибка: ${e.message}")
+            Log.e(TAG, "Стек вызовов: ${e.stackTraceToString()}")
+            throw e
         }
-
-        response
     }
 
     private val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
         .addInterceptor(authInterceptor)
+        .addInterceptor(corsInterceptor)
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
+        .retryOnConnectionFailure(true)
         .build()
 
     private val retrofit = Retrofit.Builder()
@@ -68,4 +110,26 @@ object ApiClient {
         .build()
 
     val apiService: ApiService = retrofit.create(ApiService::class.java)
+    val imageUploadService: ImageUploadService = retrofit.create(ImageUploadService::class.java)
+
+    fun createImageLoader(context: Context): ImageLoader {
+        return ImageLoader.Builder(context)
+            .okHttpClient(okHttpClient)
+            .memoryCachePolicy(CachePolicy.ENABLED)
+            .memoryCache {
+                MemoryCache.Builder(context)
+                    .maxSizePercent(0.25)
+                    .build()
+            }
+            .diskCachePolicy(CachePolicy.ENABLED)
+            .diskCache {
+                DiskCache.Builder()
+                    .directory(context.cacheDir.resolve("image_cache"))
+                    .maxSizePercent(0.02)
+                    .build()
+            }
+            .respectCacheHeaders(false)
+            .crossfade(true)
+            .build()
+    }
 }
