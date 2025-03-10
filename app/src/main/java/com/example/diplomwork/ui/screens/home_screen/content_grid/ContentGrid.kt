@@ -29,7 +29,6 @@ fun ContentGrid(
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    // Функция для загрузки данных
     suspend fun loadPins() {
         try {
             isLoading = true
@@ -42,12 +41,10 @@ fun ContentGrid(
         }
     }
 
-    // Начальная загрузка
     LaunchedEffect(Unit) {
         loadPins()
     }
 
-    // Обработка обновления
     LaunchedEffect(shouldRefresh) {
         if (shouldRefresh) {
             loadPins()

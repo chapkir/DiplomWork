@@ -90,8 +90,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:8081",
-                "http://192.168.1.125:8081",
-                "http://127.0.0.1:8081",
+                "http://192.168.205.109:8081",
                 "capacitor://localhost",
                 "ionic://localhost",
                 "http://localhost",

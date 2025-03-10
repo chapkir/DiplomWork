@@ -87,9 +87,6 @@ fun LoginScreen(
                         val response = ApiClient.apiService.login(LoginRequest(login, password))
                         sessionManager.saveAuthToken(response.token)
                         onLoginSuccess()
-//                        navController.navigate("profile_screen") {
-//                           popUpTo("login_screen") { inclusive = true }
-//                        }
                     } catch (e: Exception) {
                         Toast.makeText(
                             context, "Ошибка авторизации: ${e.message}",
