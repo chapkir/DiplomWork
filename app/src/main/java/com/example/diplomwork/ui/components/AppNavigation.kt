@@ -24,6 +24,7 @@ import com.example.diplomwork.ui.screens.add_photo_screen.OpenGalleryAndSaveImag
 import com.example.diplomwork.ui.screens.image_detail_screen.ImageDetailScreen
 import com.example.diplomwork.ui.screens.login_screen.LoginScreen
 import com.example.diplomwork.ui.screens.profile_screen.ProfileScreen
+import com.example.diplomwork.ui.screens.registration_screen.RegisterScreen
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
@@ -76,7 +77,9 @@ fun AppNavigation(navController: NavHostController) {
                             popUpTo("login_screen") { inclusive = true }
                         }
                     },
-                    onNavigateBack = { navController.popBackStack() })
+                    onNavigateToRegister = { navController.navigate("registration_screen") },
+                    onNavigateBack = { navController.popBackStack() }
+                )
             }
             composable("profile_screen") {
                 ProfileScreen(
@@ -117,11 +120,13 @@ fun AppNavigation(navController: NavHostController) {
                 /* InfoScreen() */
             }
 
-//            composable("add_screen") {
-//            }
-
             composable("notice_screen") {
                 /* FavsScreen() */
+            }
+            composable("registration_screen") {
+                RegisterScreen(onCompleteRegistration = {
+                    navController.navigate("home_screen")
+                })
             }
         }
     }

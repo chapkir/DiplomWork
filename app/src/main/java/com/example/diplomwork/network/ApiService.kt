@@ -8,6 +8,7 @@ import com.example.diplomwork.model.Comment
 import com.example.diplomwork.model.CommentRequest
 import com.example.diplomwork.model.CommentResponse
 import com.example.diplomwork.model.PinResponse
+import com.example.diplomwork.model.UserExistsResponse
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.*
@@ -52,4 +53,8 @@ interface ApiService {
         @Part file: MultipartBody.Part,
         @Part("description") description: String
     ): PinResponse
+
+    @GET("api/auth/check-user")
+    suspend fun checkUserExists(@Query("login") login: String): Response<Boolean>
+
 }
