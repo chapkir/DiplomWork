@@ -1,16 +1,45 @@
 package com.example.diplomwork.ui.screens.profile_screen
 
+import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,6 +52,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
 import com.example.diplomwork.R
 import com.example.diplomwork.auth.SessionManager
@@ -48,6 +78,7 @@ fun ProfileScreen(
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var selectedTabIndex by remember { mutableStateOf(0) }
+    var profileImageUrl by remember { mutableStateOf<String?>(null) }
     val tabTitles = listOf("Публикации", "Лайки")
 
     suspend fun loadLikedPins() {
@@ -103,6 +134,24 @@ fun ProfileScreen(
         }
     }
 
+    val pickImageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            profileImageUrl = it.toString()
+            //uploadAvatarToServer(it, context) // TODO САШКА ДЛЯ ТЕБЯ
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        try {
+            // profileData = ApiClient.apiService.getProfile()
+            //profileImageUrl = profileData?.profileImageUrl  // TODO САШКА ДЛЯ ТЕБЯ
+        } catch (e: Exception) {
+            error = "Ошибка: ${e.message}"
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -148,7 +197,12 @@ fun ProfileScreen(
             }
 
             profileData != null -> {
-                ProfileHeader(username = profileData!!.username, onLogout = onLogout)
+                ProfileHeader(
+                    username = profileData?.username ?: "Неизвестный",
+                    avatarUrl = profileImageUrl,
+                    onAvatarClick = { pickImageLauncher.launch("image/*") },
+                    onLogout = onLogout
+                )
 
                 TabRow(
                     selectedTabIndex = selectedTabIndex,
@@ -187,14 +241,53 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun ProfileHeader(username: String, onLogout: () -> Unit) {
-    Row(
+private fun ProfileHeader(
+    username: String,
+    avatarUrl: String?,
+    onAvatarClick: () -> Unit,
+    onLogout: () -> Unit
+) {
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceAround
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(5.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Spacer(Modifier.size(40.dp))
+            Box(
+                modifier = Modifier
+                    .size(130.dp)
+                    .clip(RoundedCornerShape(50))
+                    .clickable { onAvatarClick() },
+                contentAlignment = Alignment.Center
+            ) {
+                AsyncImage(
+                    model = avatarUrl ?: R.drawable.default_avatar,
+                    contentDescription = "Avatar",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.matchParentSize()
+                )
+            }
+            Box(modifier = Modifier.size(40.dp))
+            {
+                IconButton(onClick = onLogout) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_login),
+                        contentDescription = "Exit",
+                        tint = Color.White,
+                        modifier = Modifier.size(25.dp)
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.size(10.dp))
         Text(
             text = username,
             fontSize = 22.sp,
@@ -202,16 +295,10 @@ private fun ProfileHeader(username: String, onLogout: () -> Unit) {
             color = Color.White,
             textAlign = TextAlign.Center
         )
-        IconButton(onClick = onLogout) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_login),
-                contentDescription = "Exit",
-                tint = Color.White,
-                modifier = Modifier.size(20.dp)
-            )
-        }
+        Spacer(Modifier.size(10.dp))
     }
 }
+
 
 @Composable
 private fun EmptyStateMessage(message: String) {
@@ -222,12 +309,15 @@ private fun EmptyStateMessage(message: String) {
 
 @Composable
 private fun PinsGrid(pins: List<PinResponse>, onPinClick: (Long, String) -> Unit) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(3),
-        modifier = Modifier.padding(8.dp),
+
+    var aspectRatio by remember { mutableStateOf(1f) }
+
+    LazyVerticalStaggeredGrid(
+        columns = StaggeredGridCells.Fixed(3),
+        modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(4.dp)
     ) {
-        items(pins) { pin ->
+        itemsIndexed(pins) { _, pin ->
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(pin.imageUrl)
@@ -235,10 +325,21 @@ private fun PinsGrid(pins: List<PinResponse>, onPinClick: (Long, String) -> Unit
                     .build(),
                 contentDescription = pin.description,
                 contentScale = ContentScale.Crop,
+                onState = { state ->
+                    //isLoading = state is AsyncImagePainter.State.Loading
+                    //isError = state is AsyncImagePainter.State.Error
+                    if (state is AsyncImagePainter.State.Success) {
+                        val size = state.painter.intrinsicSize
+                        if (size.width > 0 && size.height > 0) {
+                            aspectRatio = size.width / size.height
+                        }
+                    }
+                },
                 modifier = Modifier
-                    .aspectRatio(1f)
+                    .fillMaxWidth()
                     .padding(4.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .aspectRatio(aspectRatio)
+                    .clip(RoundedCornerShape(12.dp))
                     .clickable { onPinClick(pin.id, pin.imageUrl) }
             )
         }
