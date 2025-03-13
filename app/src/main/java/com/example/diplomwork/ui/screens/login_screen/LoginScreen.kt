@@ -2,14 +2,37 @@ package com.example.diplomwork.ui.screens.login_screen
 
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -18,6 +41,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.diplomwork.R
@@ -37,10 +62,12 @@ fun LoginScreen(
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
     }
+    var step by rememberSaveable { mutableIntStateOf(0) }
+    var username by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
+    var isLoading by rememberSaveable { mutableStateOf(false) }
 
-    var login by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
+    var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
@@ -59,13 +86,20 @@ fun LoginScreen(
             text = "Введите данные для входа",
             color = Color.White.copy(alpha = 0.9f),
             fontSize = 24.sp,
-            fontWeight = FontWeight.Bold)
+            fontWeight = FontWeight.Bold
+        )
 
         Spacer(modifier = Modifier.height(25.dp))
 
+
         OutlinedTextField(
-            value = login,
-            onValueChange = { login = it },
+            value = username,
+            onValueChange =
+            {
+                username = it
+                    .replace(" ", "")
+                    .filter { c -> c.code in 32..126 }
+            },
             label = { Text("Логин") },
             leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
             modifier = Modifier
@@ -91,9 +125,29 @@ fun LoginScreen(
 
         OutlinedTextField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange =
+            {
+                password = it
+                    .replace(" ", "")
+                    .filter { c -> c.code in 32..126 }
+            },
             label = { Text("Пароль") },
             leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+            visualTransformation =
+            if (!passwordVisible) PasswordVisualTransformation()
+            else VisualTransformation.None,
+            trailingIcon = {
+                val image = if (passwordVisible) R.drawable.ic_eye_crossed else R.drawable.ic_eye
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(
+                        painter = painterResource(image),
+                        modifier = Modifier
+                            .size(26.dp)
+                            .padding(end = 4.dp),
+                        contentDescription = "Toggle password visibility"
+                    )
+                }
+            },
             modifier = Modifier.fillMaxWidth(0.85f),
             enabled = !isLoading,
             maxLines = 1,
@@ -107,8 +161,10 @@ fun LoginScreen(
                 unfocusedLeadingIconColor = Color.Gray,
                 focusedTextColor = Color.White,
                 unfocusedTextColor = Color.Gray,
-                cursorColor = Color.White
-                )
+                cursorColor = Color.White,
+                focusedTrailingIconColor = Color.Gray,
+                unfocusedTrailingIconColor = Color.Gray,
+            )
         )
 
         Spacer(modifier = Modifier.height(18.dp))
@@ -118,7 +174,7 @@ fun LoginScreen(
                 scope.launch {
                     try {
                         isLoading = true
-                        val response = ApiClient.apiService.login(LoginRequest(login, password))
+                        val response = ApiClient.apiService.login(LoginRequest(username, password))
                         sessionManager.saveAuthToken(response.token)
                         onLoginSuccess()
                     } catch (e: Exception) {
@@ -139,7 +195,7 @@ fun LoginScreen(
                 disabledContentColor = Color.White
 
             ),
-            enabled = !isLoading && login.isNotBlank() && password.isNotBlank()
+            enabled = !isLoading && username.isNotBlank() && password.isNotBlank()
         ) {
             if (isLoading) {
                 CircularProgressIndicator(
@@ -158,9 +214,7 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         TextButton(onClick = { onNavigateToRegister() }) {
-            Text("Нет аккаунта? Зарегистрируйтесь", color = Color.White)
+            Text("Нет аккаунта? Зарегистрируйтесь!", color = Color.White)
         }
     }
 }
-
-

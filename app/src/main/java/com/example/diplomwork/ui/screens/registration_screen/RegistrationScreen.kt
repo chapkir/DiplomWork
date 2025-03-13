@@ -17,6 +17,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -34,11 +36,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.diplomwork.R
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 
 
@@ -66,7 +72,9 @@ fun RegisterScreen(onCompleteRegistration: () -> Unit) {
                 "Введите имя пользователя",
                 "Логин",
                 username,
-                { username = it.replace(" ", "").filter { c -> c.code in 32..126 } })
+                { username = it.replace(" ", "")
+                    .filter { c -> c.code in 32..126 } }
+            )
 
             1 -> StepField(
                 "Введите email",
@@ -81,7 +89,8 @@ fun RegisterScreen(onCompleteRegistration: () -> Unit) {
                 "Пароль",
                 password,
                 { password = it.replace(" ", "") },
-                KeyboardType.Password
+                KeyboardType.Password,
+                isPassword = true
             )
         }
 
@@ -155,7 +164,8 @@ fun StepField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
-    keyboardType: KeyboardType = KeyboardType.Text
+    keyboardType: KeyboardType = KeyboardType.Text,
+    isPassword: Boolean = false
 ) {
     val focusRequester = remember { FocusRequester() }
 
@@ -175,7 +185,8 @@ fun StepField(
         )
         Spacer(modifier = Modifier.height(25.dp))
 
-        CustomOutlinedTextField(value, onValueChange, label, keyboardType, focusRequester)
+        CustomOutlinedTextField(
+            value, onValueChange, label, keyboardType, focusRequester, isPassword)
     }
 }
 
@@ -185,14 +196,32 @@ fun CustomOutlinedTextField(
     onValueChange: (String) -> Unit,
     label: String,
     keyboardType: KeyboardType,
-    focusRequester: FocusRequester
+    focusRequester: FocusRequester,
+    isPassword: Boolean = false
 ) {
+    var passwordVisible by rememberSaveable { mutableStateOf(false) }
+
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
         singleLine = true,
         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = keyboardType),
+        visualTransformation =
+        if (isPassword && !passwordVisible) PasswordVisualTransformation()
+        else VisualTransformation.None,
+        trailingIcon = {
+            if (isPassword) {
+                val image = if (passwordVisible) R.drawable.ic_eye_crossed else R.drawable.ic_eye
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(
+                        painter = painterResource(image),
+                        modifier = Modifier.size(26.dp).padding(end = 4.dp),
+                        contentDescription = "Toggle password visibility"
+                    )
+                }
+            }
+        },
         modifier = Modifier
             .fillMaxWidth(0.85f)
             .focusRequester(focusRequester),
@@ -205,7 +234,9 @@ fun CustomOutlinedTextField(
             unfocusedLabelColor = Color.Gray,
             focusedTextColor = Color.White,
             unfocusedTextColor = Color.Gray,
-            cursorColor = Color.White
+            cursorColor = Color.White,
+            focusedTrailingIconColor = Color.Gray,
+            unfocusedTrailingIconColor = Color.Gray,
         )
     )
 }

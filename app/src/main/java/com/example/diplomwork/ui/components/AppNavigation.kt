@@ -17,10 +17,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import com.example.diplomwork.auth.SessionManager
-import com.example.diplomwork.ui.screens.home_screen.HomeScreen
 import com.example.diplomwork.ui.components.bottom_menu.BottomMenu
 import com.example.diplomwork.ui.components.top_bar.getTopBarForScreen
 import com.example.diplomwork.ui.screens.add_photo_screen.OpenGalleryAndSaveImage
+import com.example.diplomwork.ui.screens.home_screen.HomeScreen
 import com.example.diplomwork.ui.screens.image_detail_screen.ImageDetailScreen
 import com.example.diplomwork.ui.screens.login_screen.LoginScreen
 import com.example.diplomwork.ui.screens.profile_screen.ProfileScreen
@@ -31,7 +31,9 @@ fun AppNavigation(navController: NavHostController) {
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
-    val showBottomBar = currentRoute != null && !currentRoute.startsWith("image_detail")
+
+    val hiddenScreens = listOf("image_detail", "login_screen", "registration_screen")
+    val showBottomBar = currentRoute != null && hiddenScreens.none { currentRoute.startsWith(it)}
     val topBar = getTopBarForScreen(currentRoute)
 
     val isDialogOpen = remember { mutableStateOf(false) }
@@ -125,7 +127,9 @@ fun AppNavigation(navController: NavHostController) {
             }
             composable("registration_screen") {
                 RegisterScreen(onCompleteRegistration = {
-                    navController.navigate("home_screen")
+                    navController.navigate("home_screen"){
+                        popUpTo("registration_screen") { inclusive = true }
+                    }
                 })
             }
         }
