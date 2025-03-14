@@ -9,6 +9,8 @@ import com.example.diplomwork.model.CommentRequest
 import com.example.diplomwork.model.CommentResponse
 import com.example.diplomwork.model.PinResponse
 import com.example.diplomwork.model.UserExistsResponse
+import com.example.diplomwork.model.RegisterRequest
+import com.example.diplomwork.model.RegisterResponse
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.*
@@ -56,5 +58,8 @@ interface ApiService {
 
     @GET("api/auth/check-user")
     suspend fun checkUserExists(@Query("login") login: String): Response<Boolean>
+
+    @POST("api/auth/register")
+    suspend fun register(@Body registerRequest: RegisterRequest): RegisterResponse
 
 }

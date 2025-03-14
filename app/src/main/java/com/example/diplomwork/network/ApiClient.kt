@@ -18,7 +18,7 @@ import coil.memory.MemoryCache
 import coil.request.CachePolicy
 
 object ApiClient {
-    const val baseUrl = "http://192.168.205.109:8081/"
+    const val baseUrl = "http://192.168.1.125:8081/"
     private const val TAG = "ApiClient"
     private lateinit var sessionManager: SessionManager
 
@@ -36,7 +36,7 @@ object ApiClient {
             .header("Accept", "*/*")
             .header("Connection", "keep-alive")
             .header("Accept-Encoding", "gzip, deflate, br")
-            .header("Origin", "http://192.168.205.109:8081")
+            .header("Origin", "http://192.168.1.125:8081")
             .header("Access-Control-Request-Method", original.method)
             .header("Access-Control-Request-Headers", "Authorization, Content-Type")
             .method(original.method, original.body)

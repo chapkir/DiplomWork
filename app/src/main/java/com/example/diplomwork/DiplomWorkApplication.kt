@@ -8,7 +8,7 @@ class DiplomWorkApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // Инициализация Coil с нашими настройками
+        // Инициализация Coil с настройками
         Coil.setImageLoader(ApiClient.createImageLoader(this))
     }
 }

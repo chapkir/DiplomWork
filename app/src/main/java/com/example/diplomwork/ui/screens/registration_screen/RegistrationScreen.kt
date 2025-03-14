@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -36,6 +37,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -46,7 +49,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.diplomwork.R
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
+import com.example.diplomwork.network.ApiClient
+import com.example.diplomwork.model.RegisterRequest
+import com.example.diplomwork.model.LoginRequest
+import com.example.diplomwork.auth.SessionManager
+import android.app.Activity
+import android.content.Context
+import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 
+fun hideKeyboard(context: Context) {
+    val inputMethodManager = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+    val activity = context as Activity
+    val currentFocus = activity.currentFocus
+    if (currentFocus != null) {
+        inputMethodManager.hideSoftInputFromWindow(currentFocus.windowToken, 0)
+    }
+}
 
 @Composable
 fun RegisterScreen(onCompleteRegistration: () -> Unit) {
@@ -54,6 +75,12 @@ fun RegisterScreen(onCompleteRegistration: () -> Unit) {
     var username by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val sessionManager = remember { SessionManager(context) }
+    val focusManager = LocalFocusManager.current
 
     Column(
         modifier = Modifier
@@ -121,9 +148,41 @@ fun RegisterScreen(onCompleteRegistration: () -> Unit) {
 
             Button(
                 onClick = {
-                    if (step < 2) step++ else onCompleteRegistration()
+                    if (step < 2) {
+                        step++
+                    } else {
+                        scope.launch {
+                            try {
+                                isLoading = true
+
+                                // Регистрация
+                                val registerResponse = ApiClient.apiService.register(
+                                    RegisterRequest(username, email, password)
+                                )
+
+                                // Автоматическая авторизация
+                                val loginResponse = ApiClient.apiService.login(
+                                    LoginRequest(username, password)
+                                )
+
+                                // Сохранение токена
+                                sessionManager.saveAuthToken(loginResponse.token)
+
+                                // Очистка фокуса и скрытие клавиатуры
+                                focusManager.clearFocus()
+                                hideKeyboard(context)
+
+                                Toast.makeText(context, "Регистрация успешна!", Toast.LENGTH_SHORT).show()
+                                onCompleteRegistration()
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Ошибка: ${e.message}", Toast.LENGTH_LONG).show()
+                            } finally {
+                                isLoading = false
+                            }
+                        }
+                    }
                 },
-                enabled = isNextEnabled,
+                enabled = isNextEnabled && !isLoading,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.Red.copy(alpha = 0.9f),
                     contentColor = Color.White,
@@ -131,12 +190,18 @@ fun RegisterScreen(onCompleteRegistration: () -> Unit) {
                     disabledContentColor = Color.White
                 )
             ) {
-                Text(
-                    text = if (step < 2) "Далее" else "Завершить"
-                )
+                if (isLoading && step == 2) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White
+                    )
+                } else {
+                    Text(
+                        text = if (step < 2) "Далее" else "Завершить"
+                    )
+                }
             }
         }
-
 
         Text(
             text = "Подсказка:",
