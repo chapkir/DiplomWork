@@ -60,21 +60,25 @@ public class PinService {
 
     @Cacheable(value = "pins", key = "#id")
     public Optional<Pin> getPinById(Long id) {
+        logger.info("Загрузка пина с ID {} из базы данных (не из кэша)", id);
         return pinRepository.findById(id);
     }
 
     @Cacheable(value = "pins", key = "'board_' + #boardId")
     public List<Pin> getPinsByBoardId(Long boardId) {
+        logger.info("Загрузка пинов для доски с ID {} из базы данных (не из кэша)", boardId);
         return pinRepository.findByBoardId(boardId);
     }
 
     @Cacheable(value = "pins", key = "'search_' + #keyword")
     public List<Pin> searchPinsByDescription(String keyword) {
+        logger.info("Поиск пинов по ключевому слову '{}' в базе данных (не из кэша)", keyword);
         return pinRepository.findByDescriptionContainingIgnoreCase(keyword);
     }
 
     @CacheEvict(value = "pins", allEntries = true)
     public void deletePin(Long id) {
+        logger.info("Удаление пина с ID {} и очистка всего кэша пинов", id);
         pinRepository.deleteById(id);
     }
 

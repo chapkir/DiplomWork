@@ -47,6 +47,7 @@ public class SecurityConfig {
                             .requestMatchers("/api/auth/**").permitAll()
                             .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/images/**", "/profile.html", "/favicon.ico").permitAll()
                             .requestMatchers(HttpMethod.GET, "/api/pins/**").permitAll()
+                            .requestMatchers(HttpMethod.GET, "/api/test/**").permitAll()
                             .requestMatchers(HttpMethod.POST, "/api/pins/upload").authenticated()
                             .requestMatchers(HttpMethod.POST, "/api/pins/*/likes").authenticated()
                             .requestMatchers(HttpMethod.DELETE, "/api/pins/*/likes").authenticated()
