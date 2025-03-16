@@ -38,6 +38,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     compileOnly("org.projectlombok:lombok:1.18.28")
     annotationProcessor("org.projectlombok:lombok:1.18.28")
+    implementation ("com.github.vladimir-bukhtoyarov:bucket4j-core:7.6.0")
 
     // зависимости для работы с HTTP и JSON
     implementation("com.squareup.okhttp3:okhttp:4.9.1")

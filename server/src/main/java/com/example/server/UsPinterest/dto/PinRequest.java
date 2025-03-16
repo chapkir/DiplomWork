@@ -2,15 +2,16 @@ package com.example.server.UsPinterest.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 public class PinRequest {
 
     @NotBlank(message = "URL изображения не может быть пустым")
     private String imageUrl;
 
-    @NotBlank(message = "Описание не может быть пустым")
+    @Size(max = 500, message = "Описание не может быть длиннее 500 символов")
     private String description;
-    
+
     @NotNull(message = "Выбор доски обязателен")
     private Long boardId;
 
@@ -29,7 +30,7 @@ public class PinRequest {
     public void setDescription(String description) {
         this.description = description;
     }
-    
+
     public Long getBoardId() {
         return boardId;
     }
