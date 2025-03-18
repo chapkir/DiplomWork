@@ -45,4 +45,37 @@ public class AuthController {
         response.put("token", token);
         return ResponseEntity.ok(response);
     }
-} 
+
+    @GetMapping("/check")
+    public ResponseEntity<?> checkAuth() {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", currentUser.getId());
+        response.put("username", currentUser.getUsername());
+        response.put("email", currentUser.getEmail());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser() {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", currentUser.getId());
+        response.put("username", currentUser.getUsername());
+        response.put("email", currentUser.getEmail());
+        response.put("profileImageUrl", currentUser.getProfileImageUrl());
+        response.put("bio", currentUser.getBio());
+        response.put("registrationDate", currentUser.getRegistrationDate());
+
+        return ResponseEntity.ok(response);
+    }
+}

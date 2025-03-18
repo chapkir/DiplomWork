@@ -66,5 +66,19 @@ public class UserService {
         return userRepository.findById(id);
     }
 
+    public User getCurrentUser() {
+        try {
+            org.springframework.security.core.Authentication auth =
+                    org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
 
+            if (auth == null || auth.getPrincipal().equals("anonymousUser")) {
+                return null;
+            }
+
+            UserDetails userDetails = (UserDetails) auth.getPrincipal();
+            return findByUsername(userDetails.getUsername()).orElse(null);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 } 

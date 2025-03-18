@@ -1,0 +1,431 @@
+:root {
+    /* New color palette */
+    --bg-color: #0D0D0D;
+    --primary-color: #E16C5B;
+    --text-color: #EDE9D8;
+    --white-color: #FFFFFF;
+    --accent-color: #1A1A1A;
+    --secondary-color: #A9A295;
+
+    /* Additional derived colors */
+    --hover-color: #F27D6C;
+    --light-hover: #2A2A2A;
+    --border-color: #2A2A2A;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --error-color: #E74C3C;
+    --success-color: #2ECC71;
+    --warning-color: #F39C12;
+    --info-color: #3498DB;
+    --transition-speed: 0.3s;
+    --border-radius: 8px;
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* Light mode colors */
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg-color: #F5F5F5;
+        --primary-color: #E16C5B;
+        --text-color: #1A1A1A;
+        --white-color: #FFFFFF;
+        --accent-color: #F8F0E3;
+        --secondary-color: #90A4AE;
+        --hover-color: #D15A49;
+        --light-hover: #F0E6D9;
+        --border-color: #D1D5DB;
+        --shadow-color: rgba(0, 0, 0, 0.1);
+    }
+}
+
+/* Основные стили для страницы о нас */
+main {
+    background-color: var(--bg-color);
+    padding-bottom: 3rem;
+    animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Баннер */
+.about-banner {
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    color: var(--white-color);
+    padding: 4rem 0;
+    text-align: center;
+    margin-bottom: 3rem;
+    animation: fadeIn 1s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.about-banner h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.about-banner p {
+    font-size: 1.2rem;
+    max-width: 600px;
+    margin: 0 auto;
+    opacity: 0.9;
+}
+
+/* Секция о нас */
+.about-section {
+    padding: 4rem 0;
+    background-color: var(--background-color);
+}
+
+.about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+}
+
+.about-content {
+    animation: slideInLeft 0.6s ease-out;
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.about-content h2 {
+    color: var(--primary-color);
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.about-content p {
+    color: var(--text-color);
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+    line-height: 1.7;
+}
+
+.about-image {
+    position: relative;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px var(--shadow-color), 0 10px 10px -5px var(--shadow-color);
+    animation: slideInRight 0.6s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.about-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: transform var(--transition-speed);
+}
+
+.about-image:hover img {
+    transform: scale(1.03);
+}
+
+/* Список ценностей */
+.values-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.values-list li {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+    background-color: var(--white-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 6px var(--shadow-color);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.values-list li:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px var(--shadow-color);
+}
+
+.values-list i {
+    color: var(--primary-color);
+    font-size: 2rem;
+    margin-right: 1rem;
+}
+
+.values-list h3 {
+    color: var(--primary-color);
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+}
+
+.values-list p {
+    color: var(--text-color);
+    margin-bottom: 0;
+}
+
+/* Секция команды */
+.team-section {
+    padding: 4rem 0;
+    background-color: var(--white-color);
+    text-align: center;
+}
+
+.team-section h2 {
+    color: var(--primary-color);
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.section-description {
+    font-size: 1.1rem;
+    color: var(--text-light);
+    max-width: 700px;
+    margin: 0 auto 3rem;
+}
+
+.team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.team-member {
+    background-color: var(--white-color);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    box-shadow: 0 4px 6px var(--shadow-color);
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    animation: fadeInUp 0.5s ease-out forwards;
+    opacity: 0;
+}
+
+.team-member:nth-child(1) { animation-delay: 0.1s; }
+.team-member:nth-child(2) { animation-delay: 0.2s; }
+.team-member:nth-child(3) { animation-delay: 0.3s; }
+.team-member:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.team-member:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px var(--shadow-color);
+}
+
+.member-avatar {
+    width: 100%;
+    height: 250px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.member-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-speed);
+}
+
+.team-member:hover .member-avatar img {
+    transform: scale(1.05);
+}
+
+.team-member h3 {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    margin: 1rem 0 0.5rem;
+}
+
+.member-role {
+    color: var(--secondary-color);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.member-description {
+    color: var(--text-color);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.member-social {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.member-social a {
+    color: var(--text-light);
+    font-size: 1.2rem;
+    transition: color var(--transition-speed);
+}
+
+.member-social a:hover {
+    color: var(--primary-color);
+}
+
+/* Секция присоединения */
+.join-section {
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    color: var(--white-color);
+    padding: 4rem 0;
+    text-align: center;
+}
+
+.join-content {
+    max-width: 700px;
+    margin: 0 auto;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.join-section h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.join-section p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+}
+
+.join-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.join-buttons .btn {
+    padding: 0.75rem 2rem;
+    font-size: 1.1rem;
+}
+
+.join-buttons .btn-outline {
+    background-color: transparent;
+    color: var(--white-color);
+    border: 2px solid var(--white-color);
+}
+
+.join-buttons .btn-outline:hover {
+    background-color: var(--white-color);
+    color: var(--primary-color);
+}
+
+/* Адаптивность */
+@media (max-width: 992px) {
+    .about-grid {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+    }
+
+    .about-image {
+        order: -1;
+    }
+
+    .values-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .about-banner {
+        padding: 4rem 0;
+    }
+
+    .about-banner h1 {
+        font-size: 2.5rem;
+    }
+
+    .about-content h2 {
+        font-size: 1.8rem;
+    }
+
+    .team-section h2 {
+        font-size: 2rem;
+    }
+
+    .join-section h2 {
+        font-size: 2rem;
+    }
+
+    .join-buttons {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .about-banner h1 {
+        font-size: 2rem;
+    }
+
+    .about-banner p {
+        font-size: 1rem;
+    }
+
+    .about-content p {
+        font-size: 1rem;
+    }
+
+    .values-list li {
+        padding: 1rem;
+    }
+}

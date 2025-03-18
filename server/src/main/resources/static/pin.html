@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Просмотр идеи | KiruhaChlen</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/pin.css">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/8364/8364357.png">
+</head>
+<body>
+<!-- Шапка сайта -->
+<header class="header">
+    <div class="container header-content">
+        <div class="logo">
+            <a href="/">
+                <i class="fas fa-lightbulb"></i>
+                <span>KiruhaChlen</span>
+            </a>
+        </div>
+        <nav class="nav">
+            <a href="/" class="nav-link">Главная</a>
+            <a href="/explore.html" class="nav-link">Обзор</a>
+            <a href="/categories.html" class="nav-link">Категории</a>
+            <a href="/about.html" class="nav-link">О нас</a>
+        </nav>
+        <div class="auth-buttons">
+            <button id="loginBtn" class="btn btn-outline" style="margin-right: 10px; display: none;">
+                <i class="fas fa-sign-in-alt"></i> Войти
+            </button>
+            <button id="registerBtn" class="btn btn-primary" style="display: none;">
+                <i class="fas fa-user-plus"></i> Регистрация
+            </button>
+            <a href="#" id="profileBtn" class="btn btn-outline" style="display: none; margin-right: 10px;">
+                <i class="fas fa-user"></i> Личный кабинет
+            </a>
+            <button id="logoutBtn" class="btn btn-primary" style="display: none;">
+                <i class="fas fa-sign-out-alt"></i> Выйти
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- Основное содержимое -->
+<main class="container">
+    <div class="pin-container">
+        <div class="pin-image-container">
+            <img id="pinImage" src="" alt="Изображение идеи">
+            <div class="pin-overlay">
+                <div class="pin-overlay-actions">
+                    <button id="likeBtn" class="overlay-btn">
+                        <i class="far fa-heart"></i>
+                        <span>Нравится</span>
+                    </button>
+                    <button id="saveBtn" class="overlay-btn">
+                        <i class="far fa-bookmark"></i>
+                        <span>Сохранить</span>
+                    </button>
+                    <button id="shareBtn" class="overlay-btn">
+                        <i class="fas fa-share-alt"></i>
+                        <span>Поделиться</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="pin-details">
+            <div class="pin-header">
+                <h1 id="pinTitle">Загрузка...</h1>
+                <p id="pinDescription" class="pin-description">Загрузка описания...</p>
+                <div class="pin-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-heart"></i>
+                        <span id="likesCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-comment"></i>
+                        <span id="commentsCount">0</span>
+                    </div>
+                    <div class="stat-item pin-date">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span id="createdAt">Недавно</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pin-author">
+                <div class="author-avatar">
+                    <img id="authorAvatar" src="https://via.placeholder.com/100" alt="Аватар автора">
+                </div>
+                <div class="author-info">
+                    <h3 id="authorName">Автор</h3>
+                    <p class="author-bio" id="authorBio">Загрузка информации...</p>
+                </div>
+                <button id="followBtn" class="follow-btn">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Подписаться</span>
+                </button>
+            </div>
+
+            <div class="pin-comments">
+                <h3>Комментарии <span id="commentCountLabel">0</span></h3>
+                <div id="loginForComments" class="login-prompt">
+                    <p>Войдите, чтобы добавить комментарий</p>
+                    <a href="#" id="commentLoginBtn">Войти</a>
+                </div>
+                <form id="commentForm" class="comment-form">
+                    <div class="input-wrapper">
+                        <input type="text" id="commentInput" placeholder="Добавьте комментарий...">
+                        <button type="submit" id="submitCommentBtn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </form>
+                <div id="commentsList" class="comments-list">
+                    <!-- Здесь будут комментарии -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Похожие пины -->
+    <section class="related-pins">
+        <div class="container">
+            <h2>Похожие идеи</h2>
+            <div class="grid" id="relatedPins">
+                <!-- Здесь будут похожие пины -->
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- Подвал сайта -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-column">
+                <h3>О проекте</h3>
+                <ul class="footer-links">
+                    <li><a href="/about.html">О нас</a></li>
+                    <li><a href="#">Блог</a></li>
+                    <li><a href="#">Карьера</a></li>
+                    <li><a href="#">Контакты</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Сообщество</h3>
+                <ul class="footer-links">
+                    <li><a href="#">Правила</a></li>
+                    <li><a href="#">Помощь</a></li>
+                    <li><a href="#">Форум</a></li>
+                    <li><a href="#">Партнеры</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Правовая информация</h3>
+                <ul class="footer-links">
+                    <li><a href="#">Условия использования</a></li>
+                    <li><a href="#">Политика конфиденциальности</a></li>
+                    <li><a href="#">Cookies</a></li>
+                    <li><a href="#">Авторские права</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Kiruha Chlen. Все права защищены.</p>
+            <div class="social-icons">
+                <a href="#"><i class="fab fa-facebook"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="js/pin.js"></script>
+</body>
+</html>

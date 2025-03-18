@@ -15,6 +15,7 @@ import com.example.server.UsPinterest.repository.CommentRepository;
 import com.example.server.UsPinterest.repository.LikeRepository;
 import com.example.server.UsPinterest.repository.PinRepository;
 import com.example.server.UsPinterest.repository.UserRepository;
+import com.example.server.UsPinterest.service.NotificationService;
 import com.example.server.UsPinterest.service.PinService;
 import com.example.server.UsPinterest.service.YandexDiskService;
 import io.github.bucket4j.Bucket;
@@ -22,7 +23,9 @@ import io.github.bucket4j.ConsumptionProbe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
@@ -31,6 +34,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +68,9 @@ public class PinController {
 
     @Autowired
     private YandexDiskService yandexDiskService;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @Autowired
     private Bucket bucket;
@@ -125,6 +133,15 @@ public class PinController {
         logger.info("Received like request for pin: {} from user: {}", pinId, authentication.getName());
         try {
             Map<String, Object> response = pinService.likePin(pinId, authentication.getName());
+
+            // Создаем уведомление о лайке
+            User user = userRepository.findByUsername(authentication.getName())
+                    .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+            Pin pin = pinRepository.findById(pinId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Пин не найден"));
+
+            notificationService.createLikeNotification(user, pin);
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("Error processing like for pin: {}: {}", pinId, e.getMessage());
@@ -179,13 +196,16 @@ public class PinController {
             comment.setPin(pin);
             comment.setUser(user);
             comment.setCreatedAt(LocalDateTime.now());
-            Comment savedComment = commentRepository.save(comment);
+            commentRepository.save(comment);
 
-            logger.info("Comment added successfully with ID: {}", savedComment.getId());
-            return ResponseEntity.ok(new MessageResponse("Комментарий добавлен"));
+            // Создаем уведомление о комментарии
+            notificationService.createCommentNotification(user, pin, commentRequest.getText());
+
+            return ResponseEntity.ok(new MessageResponse("Комментарий успешно добавлен"));
         } catch (Exception e) {
-            logger.error("Error adding comment for pin: {}: {}", pinId, e.getMessage());
-            throw e;
+            logger.error("Error adding comment to pin: {}: {}", pinId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResponse("Ошибка при добавлении комментария: " + e.getMessage()));
         }
     }
 
@@ -313,5 +333,42 @@ public class PinController {
                 pins.size(), updatedCount, failedCount);
 
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Прокси-метод для загрузки изображений с Яндекс Диска
+     * Решает проблему с CORS при загрузке изображений напрямую с Яндекс Диска
+     */
+    @GetMapping("/proxy-image")
+    public ResponseEntity<byte[]> proxyImage(@RequestParam("url") String imageUrl) {
+        try {
+            logger.info("Проксирование изображения: {}", imageUrl);
+
+            // Если это URL с Яндекс Диска, пробуем обновить его, чтобы получить прямую ссылку
+            if (imageUrl.contains("yandex") || imageUrl.contains("disk.")) {
+                imageUrl = yandexDiskService.updateImageUrl(imageUrl);
+                logger.info("Обновленный URL изображения: {}", imageUrl);
+            }
+
+            URL url = new URL(imageUrl);
+            URLConnection connection = url.openConnection();
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0");
+
+            String contentType = connection.getContentType();
+            if (contentType == null) {
+                contentType = MediaType.IMAGE_JPEG_VALUE; // Значение по умолчанию
+            }
+
+            byte[] imageData = connection.getInputStream().readAllBytes();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType(contentType));
+            headers.setCacheControl("max-age=31536000"); // Кэширование на 1 год
+
+            return new ResponseEntity<>(imageData, headers, HttpStatus.OK);
+        } catch (IOException e) {
+            logger.error("Ошибка при проксировании изображения: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
     }
 }

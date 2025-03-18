@@ -1,446 +1,1080 @@
-// Modal functionality
-const loginBtn = document.getElementById('loginBtn');
-const registerBtn = document.getElementById('registerBtn');
+// Глобальные переменные
+let currentPage = 0;
+let isLoading = false;
+let hasMorePins = true;
+let searchQuery = '';
+let currentUser = null;
+let isIntersectionObserverSupported = 'IntersectionObserver' in window;
+
+// DOM элементы
+const imageGrid = document.querySelector('.image-grid');
+const searchInput = document.querySelector('.search-bar input');
 const loginModal = document.getElementById('loginModal');
 const registerModal = document.getElementById('registerModal');
+const loginForm = document.getElementById('loginForm');
+const registerForm = document.getElementById('registerForm');
+const loginBtn = document.getElementById('loginBtn');
+const registerBtn = document.getElementById('registerBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const profileBtn = document.getElementById('profileBtn');
+const addPinBtn = document.getElementById('addPinBtn');
+const addPinModal = document.getElementById('addPinModal');
+const addPinForm = document.getElementById('addPinForm');
 const closeBtns = document.querySelectorAll('.close-btn');
+const loadingIndicator = document.createElement('div');
 
-// Open modals
-loginBtn.addEventListener('click', () => {
-    loginModal.classList.add('active');
+// Настройка индикатора загрузки
+loadingIndicator.className = 'loading-indicator';
+loadingIndicator.innerHTML = `
+    <div class="spinner">
+        <div class="bounce1"></div>
+        <div class="bounce2"></div>
+        <div class="bounce3"></div>
+    </div>
+    <p>Загрузка...</p>
+`;
+
+// Инициализация
+document.addEventListener('DOMContentLoaded', () => {
+    initApp();
+    setupEventListeners();
+    checkAuthStatus();
+
+    // Добавляем анимацию появления для элементов героя
+    animateHeroElements();
 });
 
-registerBtn.addEventListener('click', () => {
-    registerModal.classList.add('active');
-});
+// Функция инициализации приложения
+function initApp() {
+    // Загрузка первой страницы пинов
+    loadPins();
 
-// Close modals
-closeBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        loginModal.classList.remove('active');
-        registerModal.classList.remove('active');
-    });
-});
-
-// Close modal when clicking outside
-window.addEventListener('click', (e) => {
-    if (e.target === loginModal) {
-        loginModal.classList.remove('active');
+    // Настройка Intersection Observer для бесконечной прокрутки
+    if (isIntersectionObserverSupported) {
+        setupInfiniteScroll();
     }
-    if (e.target === registerModal) {
-        registerModal.classList.remove('active');
+
+    // Добавляем темную тему, если пользователь предпочитает ее
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark-theme');
     }
-});
 
-// Form submission (prevent default for demo)
-const forms = document.querySelectorAll('.auth-form');
-forms.forEach(form => {
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        console.log('Form submitted');
-    });
-});
+    // Анимация появления элементов при загрузке
+    animateOnScroll();
+}
 
-// Image Grid Demo
-const imageGrid = document.getElementById('imageGrid');
+// Настройка обработчиков событий
+function setupEventListeners() {
+    // Модальные окна
+    document.getElementById('loginBtn')?.addEventListener('click', () => openModal(document.getElementById('loginModal')));
+    document.getElementById('registerBtn')?.addEventListener('click', () => openModal(document.getElementById('registerModal')));
+    document.querySelectorAll('.close-btn').forEach(btn => btn.addEventListener('click', closeModal));
 
-// Добавим вызов функции loadPins при загрузке страницы
-document.addEventListener('DOMContentLoaded', function() {
-    loadPins(); // Загружаем пины при старте
-
-    // Добавим логирование для отладки
-    console.log("Начинаем загрузку пинов...");
-});
-
-// Обновленная функция загрузки пинов
-async function loadPins() {
-    try {
-        console.log("Отправляем запрос на получение пинов...");
-        const response = await fetch('http://localhost:8081/api/pins/all'); // Используем эндпоинт /all
-
-        if (response.ok) {
-            const pins = await response.json();
-            console.log("Получены пины:", pins);
-
-            const imageGrid = document.getElementById('imageGrid');
-            imageGrid.innerHTML = ''; // Очищаем сетку
-            // Задаем контейнеру сетки стиль grid с 3 колонками и зазором 12px
-            imageGrid.style.display = 'grid';
-            imageGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
-            imageGrid.style.gap = '12px';
-
-            if (pins && pins.length > 0) {
-                // Перебираем пины и определяем шаблон по размерам изображения
-                pins.forEach((pin) => {
-                    const card = document.createElement('div');
-                    card.className = 'image-card';
-                    // Для grid‑ячейки не нужно задавать фиксированную ширину – карточка заполнит всю ячейку
-                    // Пока показываем placeholder
-                    card.innerHTML = '<div class="loading">Loading...</div>';
-                    imageGrid.appendChild(card);
-
-                    // Создаем временный объект для определения размеров фотографии
-                    const tempImg = new Image();
-                    tempImg.onload = function() {
-                        const ratio = tempImg.naturalWidth / tempImg.naturalHeight;
-                        let templateHtml = '';
-                        if (ratio >= 1.2) {
-                            // Template B: горизонтальное изображение, aspect-ratio 2:1
-                            templateHtml = `
-                                <div class="image-card-content template-b" style="background: transparent;">
-                                    <img src="${pin.imageUrl}" alt="${pin.description || 'Pin image'}"
-                                         onerror="this.src='https://via.placeholder.com/150'"
-                                         style="width: 100%; aspect-ratio: 2 / 1; object-fit: cover;"/>
-                                    <p>${pin.description || 'No description'}</p>
-                                    <div class="actions">
-                                        <button onclick="likePin(${pin.id})">Like (${pin.likesCount})</button>
-                                        <button onclick="toggleCommentForm(${pin.id})">Comment</button>
-                                    </div>
-                                    <div id="comments-${pin.id}" class="comments">
-                                        ${pin.comments && pin.comments.length > 0
-                                            ? pin.comments.map(comment => `<p><strong>${comment.username}:</strong> ${comment.text}</p>`).join('')
-                                            : ''}
-                                    </div>
-                                    <div id="comment-form-${pin.id}" class="comment-form" style="display:none;">
-                                        <input type="text" id="comment-input-${pin.id}" placeholder="Введите комментарий">
-                                        <button onclick="submitComment(${pin.id})">Send</button>
-                                    </div>
-                                </div>
-                            `;
-                        } else {
-                            // Template A: вертикальное/квадратное изображение, aspect-ratio 1:1
-                            templateHtml = `
-                                <div class="image-card-content template-a" style="background: transparent;">
-                                    <img src="${pin.imageUrl}" alt="${pin.description || 'Pin image'}"
-                                         onerror="this.src='https://via.placeholder.com/150'"
-                                         style="width: 100%; aspect-ratio: 1 / 1; object-fit: cover;"/>
-                                    <p>${pin.description || 'No description'}</p>
-                                    <div class="actions">
-                                        <button onclick="likePin(${pin.id})">Like (${pin.likesCount})</button>
-                                        <button onclick="toggleCommentForm(${pin.id})">Comment</button>
-                                    </div>
-                                    <div id="comments-${pin.id}" class="comments">
-                                        ${pin.comments && pin.comments.length > 0
-                                            ? pin.comments.map(comment => `<p><strong>${comment.username}:</strong> ${comment.text}</p>`).join('')
-                                            : ''}
-                                    </div>
-                                    <div id="comment-form-${pin.id}" class="comment-form" style="display:none;">
-                                        <input type="text" id="comment-input-${pin.id}" placeholder="Введите комментарий">
-                                        <button onclick="submitComment(${pin.id})">Send</button>
-                                    </div>
-                                </div>
-                            `;
-                        }
-                        card.innerHTML = templateHtml;
-                    };
-                    tempImg.onerror = function() {
-                        // Если не удалось загрузить изображение, используем шаблон A по умолчанию
-                        card.innerHTML = `
-                            <div class="image-card-content template-a" style="background: transparent;">
-                                <img src="https://via.placeholder.com/150" alt="Image not available"
-                                     style="width: 100%; aspect-ratio: 1 / 1; object-fit: cover;"/>
-                                <p>${pin.description || 'No description'}</p>
-                                <div class="actions">
-                                    <button onclick="likePin(${pin.id})">Like (${pin.likesCount})</button>
-                                    <button onclick="toggleCommentForm(${pin.id})">Comment</button>
-                                </div>
-                                <div id="comments-${pin.id}" class="comments">
-                                    ${pin.comments && pin.comments.length > 0
-                                        ? pin.comments.map(comment => `<p><strong>${comment.username}:</strong> ${comment.text}</p>`).join('')
-                                        : ''}
-                                </div>
-                                <div id="comment-form-${pin.id}" class="comment-form" style="display:none;">
-                                    <input type="text" id="comment-input-${pin.id}" placeholder="Введите комментарий">
-                                    <button onclick="submitComment(${pin.id})">Send</button>
-                                </div>
-                            </div>
-                        `;
-                    };
-                    tempImg.src = pin.imageUrl;
-                });
-            } else {
-                imageGrid.innerHTML = '<p>No pins found</p>';
+    // Обработка кликов вне модального окна
+    window.addEventListener('click', (e) => {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            if (e.target === modal) {
+                closeModal();
             }
-        } else {
-            console.error('Error loading pins:', response.status);
-            const errorData = await response.text();
-            console.error('Error details:', errorData);
-        }
-    } catch (error) {
-        console.error('Error:', error);
+        });
+    });
+
+    // Поиск
+    const searchInput = document.getElementById('searchInput');
+    const searchButton = document.getElementById('searchButton');
+
+    if (searchInput && searchButton) {
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleSearch(e);
+            }
+        });
+        searchButton.addEventListener('click', handleSearch);
+    }
+
+    // Обработчики для тегов
+    document.querySelectorAll('.tag').forEach(tag => {
+        tag.addEventListener('click', () => {
+            if (searchInput) {
+                searchInput.value = tag.textContent;
+                handleSearch();
+            }
+        });
+    });
+
+    // Плавающая кнопка
+    document.getElementById('addPinBtn')?.addEventListener('click', () => openModal(document.getElementById('addPinModal')));
+
+    // Формы
+    document.getElementById('loginForm')?.addEventListener('submit', handleLogin);
+    document.getElementById('registerForm')?.addEventListener('submit', handleRegister);
+    document.getElementById('addPinForm')?.addEventListener('submit', handleAddPin);
+
+    // Кнопка выхода
+    document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
+
+    // Обработчик прокрутки для анимации элементов
+    window.addEventListener('scroll', debounce(() => {
+        animateOnScroll();
+    }, 100));
+}
+
+// Функция для анимации элементов героя
+function animateHeroElements() {
+    const heroTitle = document.querySelector('.hero h1');
+    const heroText = document.querySelector('.hero p');
+    const searchBar = document.querySelector('.search-bar');
+
+    if (heroTitle) {
+        heroTitle.style.opacity = '0';
+        heroTitle.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            heroTitle.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+            heroTitle.style.opacity = '1';
+            heroTitle.style.transform = 'translateY(0)';
+        }, 100);
+    }
+
+    if (heroText) {
+        heroText.style.opacity = '0';
+        heroText.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            heroText.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+            heroText.style.opacity = '1';
+            heroText.style.transform = 'translateY(0)';
+        }, 300);
+    }
+
+    if (searchBar) {
+        searchBar.style.opacity = '0';
+        searchBar.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            searchBar.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+            searchBar.style.opacity = '1';
+            searchBar.style.transform = 'translateY(0)';
+        }, 500);
     }
 }
 
-// Floating button click handler
-const floatingBtn = document.querySelector('.floating-btn');
-floatingBtn.addEventListener('click', () => {
-    console.log('Add new pin clicked');
-});
+// Функция для анимации элементов при прокрутке
+function animateOnScroll() {
+    const animatedElements = document.querySelectorAll('.animate-on-scroll:not(.animated)');
 
-// Search functionality
-const searchInput = document.querySelector('.search-bar input');
-searchInput.addEventListener('input', (e) => {
-    console.log('Searching for:', e.target.value);
-});
+    animatedElements.forEach(element => {
+        const elementPosition = element.getBoundingClientRect().top;
+        const windowHeight = window.innerHeight;
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Если пользователь авторизован, заменить кнопки Login/Register на ссылку "Профиль"
-    const token = localStorage.getItem('token');
-    const authButtons = document.getElementById('authButtons');
-    if (token) {
-        authButtons.innerHTML = '<a href="profile.html" class="btn btn-outline">Профиль</a>';
-    }
-
-    // Элементы кнопок и модальных окон
-    const loginBtn = document.getElementById('loginBtn');
-    const registerBtn = document.getElementById('registerBtn');
-    const loginModal = document.getElementById('loginModal');
-    const registerModal = document.getElementById('registerModal');
-    const closeBtns = document.querySelectorAll('.close-btn');
-
-    // Функция открытия модального окна
-    function openModal(modal) {
-        modal.style.display = 'block';
-    }
-
-    // Функция закрытия модального окна
-    function closeModal(modal) {
-        modal.style.display = 'none';
-    }
-
-    // Открытие модального окна при клике на кнопку "Login" или "Register"
-    if (loginBtn) {
-        loginBtn.addEventListener('click', function() {
-            openModal(loginModal);
-        });
-    }
-
-    if (registerBtn) {
-        registerBtn.addEventListener('click', function() {
-            openModal(registerModal);
-        });
-    }
-
-    // Закрытие модального окна при клике на кнопку "Закрыть"
-    closeBtns.forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            const modal = btn.closest('.modal');
-            closeModal(modal);
-        });
+        if (elementPosition < windowHeight - 100) {
+            element.classList.add('animated');
+            element.style.opacity = '1';
+            element.style.transform = 'translateY(0)';
+        }
     });
+}
 
-    // Обработка отправки формы для логина
-    const loginForm = loginModal.querySelector('form.auth-form');
-    if (loginForm) {
-        loginForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const username = document.getElementById('loginUsername').value;
-            const password = document.getElementById('loginPassword').value;
+// Настройка бесконечной прокрутки с Intersection Observer
+function setupInfiniteScroll() {
+    const options = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.1
+    };
 
-            try {
-                const response = await fetch('http://localhost:8081/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    // Сохраняем токен и выводим сообщение об успехе
-                    localStorage.setItem('token', data.token);
-                    alert('Вход выполнен успешно!');
-                    closeModal(loginModal);
-                    // Редирект или обновление страницы
-                    window.location.reload();
-                } else {
-                    const errorData = await response.json();
-                    alert(`Ошибка входа: ${errorData.message}`);
-                }
-            } catch (error) {
-                console.error(error);
-                alert('Ошибка соединения с сервером');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !isLoading && hasMorePins) {
+                loadMorePins();
             }
         });
+    }, options);
+
+    // Создаем и добавляем сентинел-элемент в конец сетки
+    const sentinel = document.createElement('div');
+    sentinel.className = 'sentinel';
+    imageGrid.appendChild(sentinel);
+
+    // Наблюдаем за сентинел-элементом
+    observer.observe(sentinel);
+}
+
+// Функция загрузки пинов
+async function loadPins(page = 0, size = 12, search = '') {
+    if (isLoading || !hasMorePins) return;
+
+    isLoading = true;
+    showLoading();
+
+    try {
+        const url = search
+            ? `/api/pins?page=${page}&size=${size}&search=${encodeURIComponent(search)}`
+            : `/api/pins?page=${page}&size=${size}`;
+
+        console.log('Загрузка пинов: ' + url);
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Получено пинов: ' + (data.content?.length || 0));
+
+        if (data.content.length === 0) {
+            hasMorePins = false;
+            hideLoading();
+
+            if (page === 0) {
+                showNoResultsMessage(search);
+            }
+
+            return;
+        }
+
+        // Обработка URL изображений для каждого пина
+        const processedPins = data.content.map(pin => {
+            // Если URL изображения битый или содержит Яндекс Диск, заменяем на прокси
+            if (pin.imageUrl && (pin.imageUrl.includes('yandex') || pin.imageUrl.includes('disk.'))) {
+                pin.imageUrl = `/api/pins/proxy-image?url=${encodeURIComponent(pin.imageUrl)}`;
+                console.log('Обработанный URL изображения: ' + pin.imageUrl);
+            }
+            return pin;
+        });
+
+        renderPins(processedPins);
+        currentPage = page + 1;
+        hasMorePins = !data.last;
+
+    } catch (error) {
+        console.error('Error loading pins:', error);
+        showErrorMessage('Не удалось загрузить пины. Пожалуйста, попробуйте позже.');
+    } finally {
+        isLoading = false;
+        hideLoading();
+    }
+}
+
+// Функция для загрузки дополнительных пинов
+function loadMorePins() {
+    loadPins();
+}
+
+// Функция отображения пинов
+function renderPins(pins) {
+    pins.forEach(pin => {
+        const pinElement = createPinElement(pin);
+        imageGrid.appendChild(pinElement);
+    });
+}
+
+// Создание элемента пина
+function createPinElement(pin) {
+    const pinElement = document.createElement('div');
+    pinElement.className = 'image-card';
+    pinElement.setAttribute('data-id', pin.id);
+
+    // Проверяем и обрабатываем URL изображения
+    let imageUrl = pin.imageUrl || '';
+
+    // Добавляем логгинг для отладки изображений
+    console.log('Pin ID: ' + pin.id + ', Image URL: ' + imageUrl);
+
+    // Если ссылка битая или отсутствует, заменяем на заглушку
+    if (!imageUrl || imageUrl === 'null' || imageUrl === 'undefined') {
+        imageUrl = 'https://via.placeholder.com/300x400?text=Изображение+отсутствует';
     }
 
-    // Обработка отправки формы для регистрации
-    const registerForm = registerModal ? registerModal.querySelector('form.auth-form') : null;
-    if (registerForm) {
-        registerForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const username = document.getElementById('registerUsername').value;
-            const email = document.getElementById('registerEmail').value;
-            const password = document.getElementById('registerPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
+    pinElement.innerHTML = `
+        <a href="/pin.html?id=${pin.id}" class="image-link">
+            <div class="image-container">
+                <img src="${imageUrl}" alt="${pin.title}" loading="lazy" onerror="this.src='https://via.placeholder.com/300x400?text=Ошибка+загрузки'">
+                <div class="image-overlay">
+                    <div class="image-actions">
+                        <button class="save-btn" title="Сохранить">
+                            <i class="fas fa-bookmark"></i>
+                        </button>
+                        <button class="like-btn" title="Нравится">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                        <button class="share-btn" title="Поделиться">
+                            <i class="fas fa-share"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="image-info">
+                <h3>${pin.title}</h3>
+                ${pin.description ? `<p class="pin-description">${pin.description.substring(0, 100)}${pin.description.length > 100 ? '...' : ''}</p>` : ''}
+                <p class="pin-author">
+                    <i class="fas fa-user"></i> ${pin.user ? pin.user.username : 'Пользователь'}
+                </p>
+            </div>
+        </a>
+    `;
 
-            if (password !== confirmPassword) {
-                alert('Пароли не совпадают');
+    // Добавляем обработчики событий
+    const saveBtn = pinElement.querySelector('.save-btn');
+    const likeBtn = pinElement.querySelector('.like-btn');
+    const shareBtn = pinElement.querySelector('.share-btn');
+
+    saveBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleSavePin(pin.id);
+    });
+
+    likeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleLike(pin.id);
+    });
+
+    shareBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleShare(pin.id);
+    });
+
+    return pinElement;
+}
+
+// Обработка поиска
+function handleSearch(e) {
+    if (e) e.preventDefault();
+    const searchQuery = document.getElementById('searchInput').value.trim();
+
+    if (searchQuery) {
+        resetPinGrid();
+        showLoading();
+
+        // Добавляем класс, показывающий активный поиск
+        document.querySelector('.search-bar').classList.add('active-search');
+
+        // Меняем заголовок секции
+        const sectionTitle = document.querySelector('.section-title h2');
+        if (sectionTitle) {
+            sectionTitle.textContent = `Результаты поиска: "${searchQuery}"`;
+        }
+
+        // Вызываем загрузку с поисковым запросом
+        loadPins(0, 20, searchQuery)
+            .then(() => {
+                if (document.querySelector('.image-grid').children.length === 0) {
+                    showNoResultsMessage(searchQuery);
+                }
+                hideLoading();
+            })
+            .catch(err => {
+                console.error('Ошибка при поиске:', err);
+                showErrorMessage('Произошла ошибка при поиске идей. Пожалуйста, попробуйте еще раз.');
+                hideLoading();
+            });
+    } else {
+        // Если поле поиска пустое, просто обновляем все пины
+        resetPinGrid();
+        document.querySelector('.search-bar').classList.remove('active-search');
+
+        // Возвращаем исходный заголовок
+        const sectionTitle = document.querySelector('.section-title h2');
+        if (sectionTitle) {
+            sectionTitle.textContent = 'Последние идеи';
+        }
+
+        loadPins();
+    }
+}
+
+// Сброс сетки пинов
+function resetPinGrid() {
+    imageGrid.innerHTML = '';
+    currentPage = 0;
+    hasMorePins = true;
+}
+
+// Показать индикатор загрузки
+function showLoading() {
+    if (!document.querySelector('.loading-indicator')) {
+        imageGrid.appendChild(loadingIndicator);
+    }
+}
+
+// Скрыть индикатор загрузки
+function hideLoading() {
+    const indicator = document.querySelector('.loading-indicator');
+    if (indicator) {
+        indicator.remove();
+    }
+}
+
+// Показать сообщение об отсутствии результатов
+function showNoResultsMessage(searchQuery) {
+    const message = document.createElement('div');
+    message.className = 'no-results';
+    message.innerHTML = `
+        <i class="fas fa-search"></i>
+        <h3>Ничего не найдено</h3>
+        <p>Попробуйте изменить поисковый запрос: "${searchQuery}"</p>
+    `;
+    imageGrid.appendChild(message);
+
+    // Анимация появления сообщения
+    message.style.opacity = '0';
+    message.style.transform = 'translateY(20px)';
+
+    setTimeout(() => {
+        message.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        message.style.opacity = '1';
+        message.style.transform = 'translateY(0)';
+    }, 100);
+}
+
+// Показать сообщение об ошибке
+function showErrorMessage(message) {
+    const errorElement = document.createElement('div');
+    errorElement.className = 'error-message';
+    errorElement.textContent = message;
+
+    document.body.appendChild(errorElement);
+
+    // Анимация появления и исчезновения
+    setTimeout(() => {
+        errorElement.classList.add('show');
+    }, 10);
+
+    setTimeout(() => {
+        errorElement.classList.remove('show');
+        setTimeout(() => {
+            errorElement.remove();
+        }, 300);
+    }, 3000);
+}
+
+// Открытие модального окна
+function openModal(modal) {
+    closeModal(); // Закрываем все открытые модальные окна
+
+    if (modal) {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Блокируем прокрутку страницы
+
+        // Анимация появления модального окна
+        const modalContent = modal.querySelector('.modal-content');
+        if (modalContent) {
+            modalContent.style.opacity = '0';
+            modalContent.style.transform = 'translateY(20px)';
+
+            setTimeout(() => {
+                modalContent.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                modalContent.style.opacity = '1';
+                modalContent.style.transform = 'translateY(0)';
+            }, 10);
+        }
+    }
+}
+
+// Закрытие модального окна
+function closeModal() {
+    const activeModals = document.querySelectorAll('.modal.active');
+
+    activeModals.forEach(modal => {
+        const modalContent = modal.querySelector('.modal-content');
+
+        if (modalContent) {
+            modalContent.style.opacity = '0';
+            modalContent.style.transform = 'translateY(20px)';
+
+            setTimeout(() => {
+                modal.classList.remove('active');
+                document.body.style.overflow = ''; // Разблокируем прокрутку страницы
+            }, 300);
+        } else {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+}
+
+// Обработка входа
+async function handleLogin(e) {
+    e.preventDefault();
+
+    const username = document.getElementById('loginUsername').value;
+    const password = document.getElementById('loginPassword').value;
+
+    if (!username || !password) {
+        showErrorMessage('Пожалуйста, заполните все поля');
+        return;
+    }
+
+    try {
+        // Добавим логирование для отладки
+        console.log('Отправка запроса на аутентификацию...');
+
+        // Показываем индикатор загрузки в кнопке
+        const submitButton = document.querySelector('#loginForm button[type="submit"]');
+        const originalButtonText = submitButton.innerHTML;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Вход...';
+        submitButton.disabled = true;
+
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        });
+
+        console.log('Статус ответа:', response.status);
+
+        // Восстанавливаем кнопку
+        submitButton.innerHTML = originalButtonText;
+        submitButton.disabled = false;
+
+        if (!response.ok) {
+            let errorMessage = 'Ошибка при входе';
+
+            try {
+                const errorData = await response.json();
+                console.error('Данные ошибки:', errorData);
+                errorMessage = errorData.message || 'Неверное имя пользователя или пароль';
+            } catch (e) {
+                console.error('Не удалось разобрать JSON ответ:', e);
+
+                if (response.status === 403) {
+                    errorMessage = 'Доступ запрещен. Проверьте правильность учетных данных.';
+                } else if (response.status === 401) {
+                    errorMessage = 'Неверное имя пользователя или пароль';
+                } else if (response.status === 500) {
+                    errorMessage = 'Внутренняя ошибка сервера. Пожалуйста, попробуйте позже.';
+                }
+            }
+
+            showErrorMessage(errorMessage);
+            return;
+        }
+
+        const data = await response.json();
+        console.log('Успешный вход, токен получен');
+
+        // Сохраняем токен в localStorage
+        localStorage.setItem('token', data.token);
+        console.log('Токен сохранен в localStorage');
+
+        // Закрываем модальное окно
+        closeModal();
+
+        // Обновляем UI
+        await checkAuthStatus();
+
+        showSuccessMessage('Вы успешно вошли в систему');
+
+    } catch (error) {
+        console.error('Ошибка входа:', error);
+        showErrorMessage('Произошла ошибка при соединении с сервером. Пожалуйста, проверьте соединение и попробуйте снова.');
+    }
+}
+
+// Обработчик регистрации
+async function handleRegister(e) {
+    e.preventDefault();
+
+    const username = document.getElementById('registerUsername').value;
+    const email = document.getElementById('registerEmail').value;
+    const password = document.getElementById('registerPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+
+    if (!username || !email || !password || !confirmPassword) {
+        showErrorMessage('Пожалуйста, заполните все поля');
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        showErrorMessage('Пароли не совпадают');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, email, password })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Ошибка при регистрации');
+        }
+
+        closeModal();
+        showSuccessMessage('Вы успешно зарегистрировались! Теперь вы можете войти в аккаунт.');
+
+        // Открываем модальное окно входа
+        setTimeout(() => {
+            openModal(loginModal);
+        }, 1500);
+
+    } catch (error) {
+        console.error('Register error:', error);
+        showErrorMessage(error.message || 'Ошибка при регистрации');
+    }
+}
+
+// Обработка выхода из аккаунта
+async function handleLogout() {
+    try {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            updateUIForGuest();
+            return;
+        }
+
+        const response = await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        // Удаляем токен из localStorage
+        localStorage.removeItem('token');
+
+        // Обновляем UI
+        updateUIForGuest();
+
+        showSuccessMessage('Вы успешно вышли из системы');
+
+    } catch (error) {
+        console.error('Logout error:', error);
+        // Даже если произошла ошибка, все равно удаляем токен и обновляем UI
+        localStorage.removeItem('token');
+        updateUIForGuest();
+    }
+}
+
+// Проверка статуса аутентификации
+async function checkAuthStatus() {
+    try {
+        // Получаем токен из localStorage
+        const token = localStorage.getItem('token');
+        console.log('Проверка аутентификации...');
+
+        if (!token) {
+            console.log('Токен не найден, пользователь не аутентифицирован');
+            updateUIForGuest();
+            return;
+        }
+
+        console.log('Токен найден, проверяем валидность...');
+
+        const response = await fetch('/api/auth/check', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        console.log('Статус ответа проверки аутентификации:', response.status);
+
+        if (!response.ok) {
+            // Если статус указывает на проблемы с авторизацией
+            if (response.status === 401 || response.status === 403) {
+                console.log('Токен недействителен или просрочен');
+                localStorage.removeItem('token'); // Удаляем невалидный токен
+                updateUIForGuest();
                 return;
             }
 
-            try {
-                const response = await fetch('http://localhost:8081/api/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, email, password })
-                });
+            // Для других ошибок пробуем продолжить работу
+            console.error('Ошибка проверки авторизации:', response.statusText);
+            return;
+        }
 
-                if (response.ok) {
-                    alert('Регистрация прошла успешно! Теперь выполните вход.');
-                    closeModal(registerModal);
-                } else {
-                    const errorData = await response.json();
-                    alert(`Ошибка регистрации: ${errorData.message}`);
-                }
-            } catch (error) {
-                console.error(error);
-                alert('Ошибка соединения с сервером');
+        const userData = await response.json();
+        console.log('Пользователь аутентифицирован:', userData.username);
+        currentUser = userData;
+
+        updateUIForUser(userData);
+
+    } catch (error) {
+        console.error('Ошибка при проверке аутентификации:', error);
+
+        // В случае проблем с сетью, сохраняем состояние на основе наличия токена
+        if (localStorage.getItem('token')) {
+            console.log('Сохраняем предыдущее состояние аутентификации из-за ошибки сети');
+            // Если есть сохраненное состояние пользователя, используем его
+            if (currentUser) {
+                updateUIForUser(currentUser);
             }
-        });
+        } else {
+            updateUIForGuest();
+        }
     }
-
-    // Закрытие модального окна при клике вне его области
-    window.addEventListener('click', function(e) {
-        if (e.target.classList.contains('modal')) {
-            closeModal(e.target);
-        }
-    });
-});
-
-const addPinForm = document.getElementById('addPinForm');
-if (addPinForm) {
-    addPinForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const imageUrl = document.getElementById('pinImageUrl').value;
-        const description = document.getElementById('pinDescription').value;
-        const token = localStorage.getItem('token');
-
-        try {
-            const response = await fetch('http://localhost:8081/api/pins', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ imageUrl, description })
-            });
-            if (response.ok) {
-                alert('Пин успешно добавлен!');
-                loadPins();
-            } else {
-                const errorData = await response.json();
-                alert(`Ошибка: ${errorData.message}`);
-            }
-        } catch (error) {
-            console.error(error);
-            alert('Ошибка соединения с сервером');
-        }
-    });
 }
 
-// Лайк пина
-async function likePin(pinId) {
+// Обновление UI для гостя
+function updateUIForGuest() {
+    currentUser = null;
+
+    if (loginBtn) loginBtn.style.display = 'inline-flex';
+    if (registerBtn) registerBtn.style.display = 'inline-flex';
+    if (logoutBtn) logoutBtn.style.display = 'none';
+    if (profileBtn) profileBtn.style.display = 'none';
+    if (addPinBtn) addPinBtn.style.display = 'none';
+}
+
+// Обновление UI для авторизованного пользователя
+function updateUIForUser(user) {
+    if (loginBtn) loginBtn.style.display = 'none';
+    if (registerBtn) registerBtn.style.display = 'none';
+    if (logoutBtn) logoutBtn.style.display = 'inline-flex';
+    if (profileBtn) {
+        profileBtn.style.display = 'inline-flex';
+        profileBtn.href = `/profile.html?username=${user.username}`;
+        profileBtn.innerHTML = '<i class="fas fa-user"></i> Личный кабинет';
+    }
+    if (addPinBtn) addPinBtn.style.display = 'inline-flex';
+}
+
+// Обработчик добавления пина
+async function handleAddPin(e) {
+    e.preventDefault();
+
+    const title = document.getElementById('pinTitle').value;
+    const description = document.getElementById('pinDescription').value;
+    const imageFile = document.getElementById('pinImage').files[0];
+
+    if (!imageFile) {
+        showErrorMessage('Пожалуйста, выберите изображение');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('description', description);
+    formData.append('image', imageFile);
+
     const token = localStorage.getItem('token');
+
     if (!token) {
-        alert("Пожалуйста, войдите, чтобы лайкать.");
+        showErrorMessage('Вы должны войти в систему, чтобы добавить пин');
         return;
     }
+
     try {
-        const response = await fetch(`http://localhost:8081/api/pins/${pinId}/like`, {
+        showLoading();
+
+        const response = await fetch('/api/pins', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            alert(data.liked ? 'Лайк поставлен!' : 'Лайк удалён!');
-            loadPins();
-        } else {
-            const errorData = await response.json();
-            alert(`Ошибка: ${errorData.message}`);
-        }
-    } catch (error) {
-        console.error(error);
-        alert('Ошибка соединения с сервером');
-    }
-}
-
-// Добавление комментария
-async function addComment(pinId, text) {
-    try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:8081/api/pins/${pinId}/comments`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ text, userId: 1 }) // Замените на реальный ID пользователя
+            body: formData
         });
 
-        if (response.ok) {
-            alert('Комментарий добавлен!');
-        } else {
-            const errorData = await response.json();
-            alert(`Ошибка: ${errorData.message}`);
+        if (!response.ok) {
+            throw new Error('Не удалось добавить пин');
         }
+
+        // Сбрасываем форму
+        addPinForm.reset();
+
+        // Закрываем модальное окно
+        closeModal();
+
+        // Обновляем сетку пинов
+        resetPinGrid();
+        loadPins();
+
+        showSuccessMessage('Пин успешно добавлен!');
+
     } catch (error) {
-        console.error(error);
-        alert('Ошибка соединения с сервером');
+        console.error('Add pin error:', error);
+        showErrorMessage(error.message);
+    } finally {
+        hideLoading();
     }
 }
 
-function toggleCommentForm(pinId) {
-    const formElem = document.getElementById(`comment-form-${pinId}`);
-    if (formElem.style.display === 'none' || formElem.style.display === '') {
-        formElem.style.display = 'flex';
+// Обработчик лайка пина
+async function handleLike(pinId) {
+    if (!currentUser) {
+        showErrorMessage('Для лайка пина необходимо войти в аккаунт');
+        openModal(loginModal);
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/pins/${pinId}/likes`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error('Ошибка при лайке пина');
+        }
+
+        showSuccessMessage('Лайк успешно добавлен');
+
+        // Обновляем счетчик лайков на странице
+        const likeBtn = document.querySelector(`.image-card[data-id="${pinId}"] .like-btn`);
+        if (likeBtn) {
+            const icon = likeBtn.querySelector('i');
+            icon.classList.add('liked');
+
+            // Анимация лайка
+            icon.classList.add('pulse');
+            setTimeout(() => {
+                icon.classList.remove('pulse');
+            }, 500);
+        }
+
+    } catch (error) {
+        console.error('Like pin error:', error);
+        showErrorMessage(error.message || 'Ошибка при лайке пина');
+    }
+}
+
+// Открытие деталей пина
+function openPinDetails(pinId) {
+    window.location.href = `/pin.html?id=${pinId}`;
+}
+
+// Обработчик поделиться пином
+function handleShare(pinId) {
+    const url = `${window.location.origin}/pin.html?id=${pinId}`;
+
+    if (navigator.share) {
+        navigator.share({
+            title: 'Поделиться пином',
+            url: url
+        })
+        .then(() => {
+            console.log('Успешно поделились');
+        })
+        .catch(error => {
+            console.error('Ошибка при попытке поделиться:', error);
+            copyToClipboard(url);
+        });
     } else {
-        formElem.style.display = 'none';
+        copyToClipboard(url);
     }
 }
 
-// Функция для отправки комментария
-async function submitComment(pinId) {
-    const token = localStorage.getItem('token');
-    const commentInput = document.getElementById(`comment-input-${pinId}`);
-    const text = commentInput.value.trim();
-    if (!text) {
-        alert('Введите комментарий');
+// Функция копирования в буфер обмена
+function copyToClipboard(text) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    try {
+        document.execCommand('copy');
+        showSuccessMessage('Ссылка скопирована в буфер обмена');
+    } catch (err) {
+        console.error('Не удалось скопировать ссылку:', err);
+        showErrorMessage('Не удалось скопировать ссылку');
+    }
+
+    document.body.removeChild(textarea);
+}
+
+// Показать сообщение об успехе
+function showSuccessMessage(message) {
+    const successElement = document.createElement('div');
+    successElement.className = 'success-message';
+    successElement.innerHTML = `
+        <i class="fas fa-check-circle"></i>
+        <span>${message}</span>
+    `;
+
+    document.body.appendChild(successElement);
+
+    // Анимация появления и исчезновения
+    setTimeout(() => {
+        successElement.classList.add('show');
+    }, 10);
+
+    setTimeout(() => {
+        successElement.classList.remove('show');
+        setTimeout(() => {
+            successElement.remove();
+        }, 300);
+    }, 3000);
+}
+
+// Функция debounce для предотвращения слишком частых вызовов функции
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
+// Добавляем стили для новых элементов
+function addDynamicStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .loading-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            width: 100%;
+        }
+
+        .spinner {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .spinner > div {
+            width: 12px;
+            height: 12px;
+            background-color: var(--primary-color);
+            border-radius: 100%;
+            display: inline-block;
+            animation: bounce 1.4s infinite ease-in-out both;
+            margin: 0 3px;
+        }
+
+        .spinner .bounce1 {
+            animation-delay: -0.32s;
+        }
+
+        .spinner .bounce2 {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            } 40% {
+                transform: scale(1.0);
+            }
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            width: 100%;
+        }
+
+        .no-results i {
+            font-size: 3rem;
+            color: var(--text-light);
+            margin-bottom: 1rem;
+        }
+
+        .no-results h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+
+        .no-results p {
+            color: var(--text-light);
+        }
+
+        .error-message, .success-message {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            padding: 12px 20px;
+            border-radius: var(--border-radius);
+            color: white;
+            font-size: 0.9rem;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .error-message {
+            background-color: var(--error-color);
+        }
+
+        .success-message {
+            background-color: var(--success-color);
+        }
+
+        .error-message.show, .success-message.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .animate-on-scroll.animated {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .like-btn.liked {
+            animation: pulse 0.5s ease-out;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .sentinel {
+            width: 100%;
+            height: 20px;
+        }
+    `;
+
+    document.head.appendChild(style);
+}
+
+// Вызываем функцию добавления стилей
+addDynamicStyles();
+
+// Обработчик сохранения пина
+async function handleSavePin(pinId) {
+    if (!currentUser) {
+        showErrorMessage('Для сохранения пина необходимо войти в аккаунт');
+        openModal(loginModal);
         return;
     }
 
     try {
-        const response = await fetch(`http://localhost:8081/api/pins/${pinId}/comments`, {
+        const response = await fetch(`/api/pins/${pinId}/save`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ text })
+            credentials: 'include'
         });
-        if(response.ok) {
-            const newComment = await response.json();
-            alert('Комментарий добавлен!');
-            commentInput.value = "";
-            const commentContainer = document.getElementById(`comments-${pinId}`);
-            commentContainer.innerHTML += `<p><strong>${newComment.username}:</strong> ${newComment.text}</p>`;
-            document.getElementById(`comment-form-${pinId}`).style.display = 'none';
-        } else {
-            const errorData = await response.json();
-            alert(`Ошибка: ${errorData.message}`);
+
+        if (!response.ok) {
+            throw new Error('Ошибка при сохранении пина');
         }
-    } catch(err) {
-        console.error(err);
-        alert('Ошибка соединения с сервером');
+
+        showSuccessMessage('Пин успешно сохранен');
+
+    } catch (error) {
+        console.error('Save pin error:', error);
+        showErrorMessage(error.message || 'Ошибка при сохранении пина');
     }
 }
-
-const token = localStorage.getItem('token');
-fetch('http://localhost:8081/api/profile', {
-    headers: {
-        'Authorization': `Bearer ${token}`
-    }
-});

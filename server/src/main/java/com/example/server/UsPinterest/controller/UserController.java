@@ -26,4 +26,23 @@ public class UserController {
     }
 
     // Эндпоинт ... в будущем добавить нужно
-} 
+    @GetMapping("/{username}")
+    public ResponseEntity<?> getUserByUsername(@PathVariable String username) {
+        return userService.findByUsername(username)
+                .map(user -> {
+                    // Создаем объект с информацией о пользователе
+                    java.util.Map<String, Object> response = new java.util.HashMap<>();
+                    response.put("id", user.getId());
+                    response.put("username", user.getUsername());
+                    response.put("email", user.getEmail());
+                    response.put("profileImageUrl", user.getProfileImageUrl());
+                    response.put("bio", user.getBio());
+                    response.put("registrationDate", user.getRegistrationDate());
+
+                    return ResponseEntity.ok(response);
+                })
+                .orElse(ResponseEntity.status(404).body(
+                        java.util.Map.of("message", "Пользователь не найден")
+                ));
+    }
+}

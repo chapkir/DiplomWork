@@ -3,34 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Профиль | ИнспирЭхо</title>
+    <title>Категории | KiruhaChlen</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/profile.css">
+    <link rel="stylesheet" href="css/categories.css">
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/8364/8364357.png">
 </head>
 <body>
 <!-- Шапка сайта -->
 <header class="header">
-    <div class="container">
+    <div class="container header-content">
         <div class="logo">
             <a href="/">
                 <i class="fas fa-lightbulb"></i>
-                <span>ИнспирЭхо</span>
+                <span>KiruhaChlen</span>
             </a>
         </div>
         <nav class="nav">
-            <a href="/">Главная</a>
-            <a href="/explore.html">Обзор</a>
-            <a href="/categories.html">Категории</a>
-            <a href="/about.html">О нас</a>
+            <a href="/" class="nav-link">Главная</a>
+            <a href="/explore.html" class="nav-link">Обзор</a>
+            <a href="/categories.html" class="nav-link active">Категории</a>
+            <a href="/about.html" class="nav-link">О нас</a>
         </nav>
         <div class="auth-buttons">
-            <a href="/" class="btn btn-outline" style="margin-right: 10px;">
-                <i class="fas fa-home"></i> На главную
+            <button id="loginBtn" class="btn btn-outline" style="margin-right: 10px; display: none;">
+                <i class="fas fa-sign-in-alt"></i> Войти
+            </button>
+            <button id="registerBtn" class="btn btn-primary" style="display: none;">
+                <i class="fas fa-user-plus"></i> Регистрация
+            </button>
+            <a href="#" id="profileBtn" class="btn btn-outline" style="display: none; margin-right: 10px;">
+                <i class="fas fa-user"></i> Личный кабинет
             </a>
-            <button id="logoutBtn" class="btn btn-primary">
+            <button id="logoutBtn" class="btn btn-primary" style="display: none;">
                 <i class="fas fa-sign-out-alt"></i> Выйти
             </button>
         </div>
@@ -39,57 +45,13 @@
 
 <!-- Основное содержимое -->
 <main class="container">
-    <!-- Информация о профиле -->
-    <section class="profile-details">
-        <div class="profile-avatar">
-            <i class="fas fa-user-circle"></i>
-        </div>
-        <h2>Имя пользователя</h2>
-        <p>email@example.com</p>
-        <div class="profile-stats">
-            <div class="stat">
-                <span class="stat-value">0</span>
-                <span class="stat-label">Пины</span>
-            </div>
-            <div class="stat">
-                <span class="stat-value">0</span>
-                <span class="stat-label">Подписчики</span>
-            </div>
-            <div class="stat">
-                <span class="stat-value">0</span>
-                <span class="stat-label">Подписки</span>
-            </div>
-        </div>
+    <section class="categories-header">
+        <h1>Категории</h1>
+        <p>Исследуйте различные категории и находите вдохновение</p>
     </section>
 
-    <!-- Форма добавления пина -->
-    <section class="add-pin">
-        <h2>Добавить новый пин</h2>
-        <form id="addPinForm" class="form" enctype="multipart/form-data">
-            <div class="form-group">
-                <label for="pinTitle">Название</label>
-                <input type="text" id="pinTitle" required>
-            </div>
-            <div class="form-group">
-                <label for="pinDescription">Описание</label>
-                <input type="text" id="pinDescription">
-            </div>
-            <div class="form-group">
-                <label for="pinImage">Изображение</label>
-                <input type="file" id="pinImage" accept="image/*" required>
-            </div>
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Добавить пин
-            </button>
-        </form>
-    </section>
-
-    <!-- Список пинов пользователя -->
-    <section class="pins-list">
-        <h2>Мои пины</h2>
-        <div class="grid">
-            <!-- Пины будут добавлены с помощью JavaScript -->
-        </div>
+    <section class="categories-grid" id="categoriesGrid">
+        <!-- Категории будут добавлены с помощью JavaScript -->
     </section>
 </main>
 
@@ -136,6 +98,6 @@
     </div>
 </footer>
 
-<script src="js/profile.js"></script>
+<script src="js/categories.js"></script>
 </body>
 </html>

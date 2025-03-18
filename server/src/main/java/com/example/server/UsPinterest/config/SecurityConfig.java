@@ -21,8 +21,15 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.http.HttpStatus;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
 
 import java.util.Arrays;
+import java.io.IOException;
 
 @Configuration
 public class SecurityConfig {
@@ -35,35 +42,37 @@ public class SecurityConfig {
     @Autowired
     private CustomUserDetailsService userDetailsService;
 
+    // Добавляем AuthenticationEntryPoint для обработки ошибок аутентификации
+    private final AuthenticationEntryPoint authEntryPoint = (request, response, authException) -> {
+        logger.error("Unauthorized error: {}", authException.getMessage());
+        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Ошибка аутентификации: " + authException.getMessage());
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         logger.info("Configuring security filter chain");
 
-        http
+        return http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(authEntryPoint)
+                )
                 .authorizeHttpRequests(auth -> {
-                    auth
-                            .requestMatchers("/api/auth/**").permitAll()
-                            .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/images/**", "/profile.html", "/favicon.ico").permitAll()
-                            .requestMatchers(HttpMethod.GET, "/api/pins/**").permitAll()
-                            .requestMatchers(HttpMethod.GET, "/api/test/**").permitAll()
-                            .requestMatchers(HttpMethod.POST, "/api/pins/upload").authenticated()
-                            .requestMatchers(HttpMethod.POST, "/api/pins/*/likes").authenticated()
-                            .requestMatchers(HttpMethod.DELETE, "/api/pins/*/likes").authenticated()
-                            .requestMatchers(HttpMethod.POST, "/api/pins/*/comments").authenticated()
-                            .requestMatchers(HttpMethod.GET, "/api/profile/**").authenticated()
-                            .requestMatchers(HttpMethod.POST, "/api/profile/**").authenticated()
-                            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                            .anyRequest().authenticated();
-
-                    logger.info("Security configuration applied");
+                    auth.requestMatchers("/api/auth/**").permitAll();
+                    auth.requestMatchers("/api/piner/**").permitAll();
+                    auth.requestMatchers("/api/pins/**").permitAll();
+                    auth.requestMatchers("/api/category/**").permitAll();
+                    auth.requestMatchers("/api/piner/uploadImage/**").permitAll();
+                    auth.requestMatchers("/api/pins/uploadImage/**").permitAll();
+                    auth.requestMatchers("/", "/js/**", "/css/**", "/img/**", "/favicon.ico").permitAll();
+                    auth.requestMatchers("/index.html", "/pin.html", "/profile.html", "/search.html").permitAll();
+                    auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
+                    auth.anyRequest().permitAll(); // Временно разрешён доступ ко всем ресурсам для отладки Я потом уберу)
                 })
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
     }
 
     @Bean
@@ -92,10 +101,13 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:8081",
                 "http://192.168.205.109:8081",
+                "http://192.168.1.125:8081",
+                "http://127.0.0.1:8081",
                 "capacitor://localhost",
                 "ionic://localhost",
                 "http://localhost",
-                "https://localhost"
+                "https://localhost",
+                "*"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList(
@@ -103,10 +115,11 @@ public class SecurityConfig {
                 "Content-Type",
                 "X-Requested-With",
                 "Accept",
-                "Origin"
+                "Origin",
+                "*"
         ));
         configuration.setExposedHeaders(Arrays.asList("Content-Disposition"));
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(false);
         configuration.setMaxAge(3600L);
 
         logger.info("CORS configuration: allowedOrigins={}, allowedMethods={}, allowedHeaders={}",
