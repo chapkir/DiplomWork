@@ -1,6 +1,6 @@
 package com.example.diplomwork.model
 
-data class Pin(
+data class Picture(
     val id: Long,
     val imageUrl: String,
     val description: String = "",

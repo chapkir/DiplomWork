@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.screens.home_screen.content_grid
+package com.example.diplomwork.ui.screens.home_screen
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,11 +22,11 @@ import coil.request.ImageRequest
 import com.example.diplomwork.network.ApiClient
 
 @Composable
-fun ImageCard(
+fun PictureCard(
     imageUrl: String,
     onClick: () -> Unit
 ) {
-    var aspectRatio by remember { mutableStateOf(1f) }
+    var aspectRatio by remember { mutableFloatStateOf(1f) }
     var isLoading by remember { mutableStateOf(true) }
     var isError by remember { mutableStateOf(false) }
 

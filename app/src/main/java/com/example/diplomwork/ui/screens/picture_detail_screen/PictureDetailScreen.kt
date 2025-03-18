@@ -1,7 +1,5 @@
-package com.example.diplomwork.ui.screens.image_detail_screen
+package com.example.diplomwork.ui.screens.picture_detail_screen
 
-import android.util.Log
-import android.widget.Toast
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -38,10 +36,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,66 +55,27 @@ import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
 import com.example.diplomwork.R
-import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.model.Comment
-import com.example.diplomwork.model.CommentRequest
 import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.system_settings.SystemInsetHeight
 import com.example.diplomwork.ui.theme.ColorForArrowBack
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
-import kotlinx.coroutines.launch
 
 @Composable
-fun ImageDetailScreen(
-    pinId: Long,
+fun PictureDetailScreen(
+    pictureId: Long,
     imageUrl: String,
     onNavigateBack: () -> Unit,
-    onNavigateToLogin: () -> Unit
+    onNavigateToLogin: () -> Unit,
+    viewModel: PictureDetailViewModel = remember { PictureDetailViewModel(pictureId) }
 ) {
-    val context = LocalContext.current
-    val sessionManager = remember { SessionManager(context) }
-    val scope = rememberCoroutineScope()
+    val pictureDescription by viewModel.pictureDescription.collectAsState()
+    val likesCount by viewModel.likesCount.collectAsState()
+    val isLiked by viewModel.isLiked.collectAsState()
+    val comments by viewModel.comments.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
 
-    var pinDescription by remember { mutableStateOf("") }
-    var likesCount by remember { mutableStateOf(0) }
-    var comments by remember { mutableStateOf<List<Comment>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
-    var commentText by remember { mutableStateOf("") }
-    var isLiked by remember { mutableStateOf(false) }
     var showCommentsSheet by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        try {
-            val token = sessionManager.getAuthToken() ?: run {
-                onNavigateToLogin()
-                return@LaunchedEffect
-            }
-
-            try {
-                val pin = ApiClient.apiService.getPin(pinId)
-                pinDescription = pin.description
-                likesCount = pin.likesCount
-                isLiked = pin.isLikedByCurrentUser
-            } catch (e: Exception) {
-                Log.e("ImageDetailScreen", "Error loading pin: ${e.message}")
-                Toast.makeText(context, "Ошибка загрузки пина", Toast.LENGTH_SHORT).show()
-            }
-
-            try {
-                comments = ApiClient.apiService.getComments(pinId)
-            } catch (e: Exception) {
-                Log.e("ImageDetailScreen", "Error loading comments: ${e.message}")
-                Toast.makeText(context, "Ошибка загрузки комментариев", Toast.LENGTH_SHORT).show()
-            }
-
-            isLoading = false
-        } catch (e: Exception) {
-            Log.e("ImageDetailScreen", "General error: ${e.message}")
-            Toast.makeText(context, "Ошибка загрузки данных", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-
 
     LazyColumn(
         modifier = Modifier
@@ -127,10 +86,7 @@ fun ImageDetailScreen(
     ) {
         if (isLoading) {
             item {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = Color.White)
                 }
             }
@@ -146,113 +102,12 @@ fun ImageDetailScreen(
 
             item {
                 ActionBar(
-                    description = pinDescription,
+                    description = pictureDescription,
                     likesCount = likesCount,
                     isLiked = isLiked,
                     commentsCount = comments.size,
-                    onLikeClick = {
-                        scope.launch {
-                            try {
-                                val token = sessionManager.getAuthToken() ?: run {
-                                    Toast.makeText(
-                                        context,
-                                        "Необходима авторизация",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    onNavigateToLogin()
-                                    return@launch
-                                }
-
-                                // Update UI state immediately for better UX
-                                val wasLiked = isLiked
-                                isLiked = !wasLiked
-                                likesCount =
-                                    if (!wasLiked) likesCount + 1 else maxOf(0, likesCount - 1)
-
-                                Log.d(
-                                    "ImageDetailScreen",
-                                    "Updating like status with token: Bearer $token"
-                                )
-
-                                try {
-                                    // Make API call
-                                    val response = if (wasLiked) {
-                                        Log.d("ImageDetailScreen", "Unliking pin $pinId")
-                                        ApiClient.apiService.unlikePin(pinId)
-                                    } else {
-                                        Log.d("ImageDetailScreen", "Liking pin $pinId")
-                                        ApiClient.apiService.likePin(pinId)
-                                    }
-
-                                    if (!response.isSuccessful) {
-                                        // Revert UI state if API call fails
-                                        Log.e(
-                                            "ImageDetailScreen",
-                                            "API call failed with code: ${response.code()}"
-                                        )
-                                        isLiked = wasLiked
-                                        likesCount = if (wasLiked) likesCount + 1 else maxOf(
-                                            0,
-                                            likesCount - 1
-                                        )
-                                        Toast.makeText(
-                                            context,
-                                            "Ошибка при обновлении лайка (код ${response.code()})",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    } else {
-                                        Log.d(
-                                            "ImageDetailScreen",
-                                            "Like status updated successfully"
-                                        )
-                                    }
-                                } catch (e: retrofit2.HttpException) {
-                                    // Revert UI state if API call fails
-                                    isLiked = wasLiked
-                                    likesCount =
-                                        if (wasLiked) likesCount + 1 else maxOf(0, likesCount - 1)
-
-                                    val errorCode = e.code()
-                                    val errorBody = e.response()?.errorBody()?.string()
-                                    Log.e(
-                                        "ImageDetailScreen",
-                                        "HTTP Error updating like: $errorCode, Body: $errorBody"
-                                    )
-                                    Toast.makeText(
-                                        context,
-                                        "Ошибка при обновлении лайка (код $errorCode)",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                } catch (e: Exception) {
-                                    // Revert UI state if API call fails
-                                    isLiked = wasLiked
-                                    likesCount =
-                                        if (wasLiked) likesCount + 1 else maxOf(0, likesCount - 1)
-
-                                    Log.e(
-                                        "ImageDetailScreen",
-                                        "Error updating like: ${e.message}",
-                                        e
-                                    )
-                                    Toast.makeText(
-                                        context,
-                                        "Ошибка при обновлении лайка: ${e.message}",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                            } catch (e: Exception) {
-                                Log.e("ImageDetailScreen", "General error: ${e.message}", e)
-                                Toast.makeText(
-                                    context,
-                                    "Общая ошибка: ${e.message}",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        }
-                    },
-                    onCommentClick = {
-                        showCommentsSheet = true
-                    }
+                    onLikeClick = { viewModel.toggleLike() },
+                    onCommentClick = { showCommentsSheet = true }
                 )
             }
 
@@ -262,8 +117,7 @@ fun ImageDetailScreen(
                         .fillMaxWidth()
                         .padding(
                             bottom =
-                            SystemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value
-                        )
+                            SystemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value)
                 ) {
                     if (comments.isNotEmpty()) {
                         Text(
@@ -273,7 +127,6 @@ fun ImageDetailScreen(
                             fontSize = 17.sp,
                             modifier = Modifier.padding(start = 12.dp)
                         )
-
                         Spacer(modifier = Modifier.height(8.dp))
 
                         comments.take(2).forEach { comment ->
@@ -319,39 +172,7 @@ fun ImageDetailScreen(
         show = showCommentsSheet,
         comments = comments,
         onDismiss = { showCommentsSheet = false },
-        onAddComment = { commentText ->
-            scope.launch {
-                try {
-                    val token = sessionManager.getAuthToken() ?: run {
-                        Toast.makeText(context, "Необходима авторизация", Toast.LENGTH_SHORT).show()
-                        onNavigateToLogin()
-                        return@launch
-                    }
-
-                    Log.d("ImageDetailScreen", "Adding comment with token: Bearer $token")
-
-                    try {
-                        val comment = CommentRequest(text = commentText)
-                        val response = ApiClient.apiService.addComment(pinId, comment)
-                        comments = ApiClient.apiService.getComments(pinId)
-                    } catch (e: Exception) {
-                        Log.e("ImageDetailScreen", "Error adding comment: ${e.message}")
-                        Toast.makeText(
-                            context,
-                            "Ошибка при добавлении комментария",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                } catch (e: Exception) {
-                    Log.e("ImageDetailScreen", "General error: ${e.message}", e)
-                    Toast.makeText(
-                        context,
-                        "Общая ошибка: ${e.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-        }
+        onAddComment = { commentText -> viewModel.addComment(commentText) }
     )
 }
 
@@ -425,7 +246,7 @@ fun ActionBar(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
@@ -443,7 +264,7 @@ fun ActionBar(
                     modifier = Modifier.size(24.dp)
                 )
 
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(6.dp))
 
                 Text(
                     text = likesCount.toString(),
@@ -451,19 +272,19 @@ fun ActionBar(
                     color = Color.White
                 )
             }
-
+            Spacer(modifier = Modifier.width(10.dp))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.clickable { onCommentClick() }
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_info),
+                    painter = painterResource(id = R.drawable.ic_comment),
                     contentDescription = "Комментарии",
                     tint = Color.White,
                     modifier = Modifier.size(24.dp)
                 )
 
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(6.dp))
 
                 Text(
                     text = commentsCount.toString(),

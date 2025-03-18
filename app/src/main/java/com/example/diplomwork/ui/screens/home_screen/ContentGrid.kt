@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.screens.home_screen.content_grid
+package com.example.diplomwork.ui.screens.home_screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -13,26 +13,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.diplomwork.model.PinResponse
+import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
-import kotlinx.coroutines.delay
 
 @Composable
 fun ContentGrid(
     modifier: Modifier = Modifier,
-    onImageClick: (PinResponse) -> Unit,
+    onImageClick: (PictureResponse) -> Unit,
     shouldRefresh: Boolean = false,
     onRefreshComplete: () -> Unit = {}
 ) {
-    var pins by remember { mutableStateOf<List<PinResponse>>(emptyList()) }
+    var pictures by remember { mutableStateOf<List<PictureResponse>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    suspend fun loadPins() {
+    suspend fun loadPictures() {
         try {
             isLoading = true
-            pins = ApiClient.apiService.getPins()
+            pictures = ApiClient.apiService.getPictures()
             isLoading = false
             error = null
         } catch (e: Exception) {
@@ -42,12 +41,12 @@ fun ContentGrid(
     }
 
     LaunchedEffect(Unit) {
-        loadPins()
+        loadPictures()
     }
 
     LaunchedEffect(shouldRefresh) {
         if (shouldRefresh) {
-            loadPins()
+            loadPictures()
             onRefreshComplete()
         }
     }
@@ -77,7 +76,7 @@ fun ContentGrid(
                     )
                 }
             }
-            pins.isEmpty() -> {
+            pictures.isEmpty() -> {
                 Text(
                     text = "Нет доступных пинов",
                     color = Color.White,
@@ -90,10 +89,10 @@ fun ContentGrid(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(4.dp)
                 ) {
-                    itemsIndexed(pins) { _, pin ->
-                        ImageCard(
-                            imageUrl = pin.imageUrl,
-                            onClick = { onImageClick(pin) }
+                    itemsIndexed(pictures) { _, picture ->
+                        PictureCard(
+                            imageUrl = picture.imageUrl,
+                            onClick = { onImageClick(picture) }
                         )
                     }
                 }

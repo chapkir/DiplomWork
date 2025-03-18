@@ -78,8 +78,8 @@ dependencies {
     implementation(libs.squareup.retrofit)
     implementation(libs.squareup.converter)
     implementation (libs.android.material)
-    implementation("com.squareup.okhttp3:logging-interceptor:4.9.0")
-    implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation(libs.logging.interceptor)
+    implementation(libs.androidx.lifecycle.viewmodel)
 
 }
 

@@ -19,9 +19,9 @@ import androidx.navigation.navArgument
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.ui.components.bottom_menu.BottomMenu
 import com.example.diplomwork.ui.components.top_bar.getTopBarForScreen
-import com.example.diplomwork.ui.screens.add_photo_screen.OpenGalleryAndSaveImage
+import com.example.diplomwork.ui.screens.add_picture_screen.OpenGalleryAndSavePicture
 import com.example.diplomwork.ui.screens.home_screen.HomeScreen
-import com.example.diplomwork.ui.screens.image_detail_screen.ImageDetailScreen
+import com.example.diplomwork.ui.screens.picture_detail_screen.PictureDetailScreen
 import com.example.diplomwork.ui.screens.login_screen.LoginScreen
 import com.example.diplomwork.ui.screens.profile_screen.ProfileScreen
 import com.example.diplomwork.ui.screens.registration_screen.RegisterScreen
@@ -32,7 +32,7 @@ fun AppNavigation(navController: NavHostController) {
     val sessionManager = remember { SessionManager(context) }
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
-    val hiddenScreens = listOf("image_detail", "login_screen", "registration_screen")
+    val hiddenScreens = listOf("picture_detail", "login_screen", "registration_screen")
     val showBottomBar = currentRoute != null && hiddenScreens.none { currentRoute.startsWith(it)}
     val topBar = getTopBarForScreen(currentRoute)
 
@@ -62,10 +62,10 @@ fun AppNavigation(navController: NavHostController) {
         ) {
             composable("home_screen") {
                 HomeScreen(
-                    onImageClick = { pinId, imageUrl ->
+                    onImageClick = { pictureId, imageUrl ->
                         val encodedUrl = Uri.encode(imageUrl)
-                        navController.navigate("image_detail/$pinId/$encodedUrl") {
-                            popUpTo("image_detail/$pinId/$encodedUrl") { inclusive = true }
+                        navController.navigate("picture_detail/$pictureId/$encodedUrl") {
+                            popUpTo("picture_detail/$pictureId/$encodedUrl") { inclusive = true }
                         }
                     },
                     shouldRefresh = shouldRefresh,
@@ -96,23 +96,23 @@ fun AppNavigation(navController: NavHostController) {
                             popUpTo(0) { inclusive = true }
                         }
                     },
-                    onImageClick = { pinId, imageUrl ->
+                    onImageClick = { pictureId, imageUrl ->
                         val encodedUrl = java.net.URLEncoder.encode(imageUrl, "UTF-8")
-                        navController.navigate("image_detail/$pinId/$encodedUrl") {
-                            popUpTo("image_detail/$pinId/$encodedUrl") { inclusive = true }
+                        navController.navigate("picture_detail/$pictureId/$encodedUrl") {
+                            popUpTo("picture_detail/$pictureId/$encodedUrl") { inclusive = true }
                         }
                     }
                 )
             }
             composable(
-                "image_detail/{pinId}/{imageUrl}",
+                "picture_detail/{pictureId}/{imageUrl}",
                 arguments = listOf(
-                    navArgument("pinId") { type = NavType.LongType },
+                    navArgument("pictureId") { type = NavType.LongType },
                     navArgument("imageUrl") { type = NavType.StringType }
                 )
             ) { backStackEntry ->
-                ImageDetailScreen(
-                    pinId = backStackEntry.arguments?.getLong("pinId") ?: 0,
+                PictureDetailScreen(
+                    pictureId = backStackEntry.arguments?.getLong("pictureId") ?: 0,
                     imageUrl = backStackEntry.arguments?.getString("imageUrl") ?: "",
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToLogin = { navController.navigate("login_screen") }
@@ -135,7 +135,7 @@ fun AppNavigation(navController: NavHostController) {
         }
     }
     if (isDialogOpen.value) {
-        OpenGalleryAndSaveImage(
+        OpenGalleryAndSavePicture(
             isDialogOpen = isDialogOpen,
             context = context,
             onRefresh = { shouldRefresh = true }

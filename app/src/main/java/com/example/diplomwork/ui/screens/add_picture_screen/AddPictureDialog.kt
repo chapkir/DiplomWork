@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.screens.add_photo_screen
+package com.example.diplomwork.ui.screens.add_picture_screen
 
 import android.content.Context
 import android.net.Uri
@@ -30,17 +30,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import java.io.FileOutputStream
-import java.io.InputStream
 
 @Composable
-fun AddPhotoDialog(
+fun AddPictureDialog(
     onDismiss: () -> Unit,
     onAddPhoto: () -> Unit,
     onRefresh: () -> Unit
@@ -61,7 +59,7 @@ fun AddPhotoDialog(
     }
 
     if (showPreview && selectedImageUri != null) {
-        ImagePreviewDialog(
+        PicturePreviewDialog(
             imageUri = selectedImageUri!!,
             onDismiss = {
                 showPreview = false

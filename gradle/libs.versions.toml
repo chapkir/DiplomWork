@@ -16,6 +16,9 @@ retrofit = "2.11.0"
 volley = "1.2.1"
 accompanist = "0.36.0"
 uiTestAndroid = "1.7.8"
+viewModel = "2.8.7"
+loggingInterceptor = "4.9.0"
+
 
 
 
@@ -48,6 +51,8 @@ volley = { group = "com.android.volley", name = "volley", version.ref = "volley"
 accompanist-pager = { group = "com.google.accompanist", name = "accompanist-pager", version.ref = "accompanist" }
 accompanist-pager-indicators = { group = "com.google.accompanist", name = "accompanist-pager-indicators", version.ref = "accompanist" }
 androidx-ui-test-android = { group = "androidx.compose.ui", name = "ui-test-android", version.ref = "uiTestAndroid" }
+androidx-lifecycle-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "viewModel" }
+logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "loggingInterceptor" }
 
 
 

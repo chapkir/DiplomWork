@@ -19,9 +19,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
@@ -56,7 +53,7 @@ import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
 import com.example.diplomwork.R
 import com.example.diplomwork.auth.SessionManager
-import com.example.diplomwork.model.PinResponse
+import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.model.ProfileResponse
 import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
@@ -74,7 +71,7 @@ fun ProfileScreen(
     val scope = rememberCoroutineScope()
 
     var profileData by remember { mutableStateOf<ProfileResponse?>(null) }
-    var likedPins by remember { mutableStateOf<List<PinResponse>>(emptyList()) }
+    var likedPins by remember { mutableStateOf<List<PictureResponse>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var selectedTabIndex by remember { mutableStateOf(0) }
@@ -83,7 +80,7 @@ fun ProfileScreen(
 
     suspend fun loadLikedPins() {
         try {
-            likedPins = ApiClient.apiService.getLikedPins()
+            likedPins = ApiClient.apiService.getLikedPictures()
             Log.d("ProfileScreen", "Загружено ${likedPins.size} лайкнутых пинов")
         } catch (e: Exception) {
             Log.e("ProfileScreen", "Ошибка при загрузке лайкнутых пинов: ${e.message}")
@@ -308,7 +305,7 @@ private fun EmptyStateMessage(message: String) {
 }
 
 @Composable
-private fun PinsGrid(pins: List<PinResponse>, onPinClick: (Long, String) -> Unit) {
+private fun PinsGrid(pins: List<PictureResponse>, onPinClick: (Long, String) -> Unit) {
 
     var aspectRatio by remember { mutableStateOf(1f) }
 

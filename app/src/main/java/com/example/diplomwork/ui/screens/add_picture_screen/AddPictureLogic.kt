@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.screens.add_photo_screen
+package com.example.diplomwork.ui.screens.add_picture_screen
 
 import android.Manifest
 import android.content.Context
@@ -7,7 +7,6 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import android.widget.Toast
 import androidx.compose.runtime.MutableState
@@ -22,7 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun OpenGalleryAndSaveImage(
+fun OpenGalleryAndSavePicture(
     isDialogOpen: MutableState<Boolean>,
     context: Context,
     onRefresh: () -> Unit
@@ -85,7 +84,7 @@ fun OpenGalleryAndSaveImage(
     }
 
     if (isDialogOpen.value) {
-        AddPhotoDialog(
+        AddPictureDialog(
             onDismiss = { isDialogOpen.value = false },
             onAddPhoto = openGallery,
             onRefresh = onRefresh
