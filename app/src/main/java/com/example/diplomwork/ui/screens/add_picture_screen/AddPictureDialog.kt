@@ -36,6 +36,7 @@ import java.io.File
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import java.io.FileOutputStream
+import java.io.IOException
 
 @Composable
 fun AddPictureDialog(
@@ -90,13 +91,29 @@ fun AddPictureDialog(
                                                 Toast.makeText(context, "Ошибка при загрузке изображения", Toast.LENGTH_SHORT).show()
                                             }
                                         } else {
-                                            Toast.makeText(context, "Ошибка: ${response.errorBody()?.string()}", Toast.LENGTH_SHORT).show()
+                                            Log.e("AddPhotoDialog", "Ошибка загрузки: ${response.code()} - ${response.message()}")
+                                            val errorBody = response.errorBody()?.string() ?: "Неизвестная ошибка"
+                                            Log.e("AddPhotoDialog", "Содержимое ошибки: $errorBody")
+
+                                            // Попытка восстановления при ошибке сервера
+                                            if (response.code() >= 500) {
+                                                Toast.makeText(context, "Ошибка сервера. Повторите попытку позже.", Toast.LENGTH_SHORT).show()
+                                            } else if (response.code() == 413) {
+                                                Toast.makeText(context, "Файл слишком большой", Toast.LENGTH_SHORT).show()
+                                            } else {
+                                                Toast.makeText(context, "Ошибка: ${response.message()}", Toast.LENGTH_SHORT).show()
+                                            }
                                         }
                                     }
                                 } catch (e: Exception) {
                                     Log.e("AddPhotoDialog", "Ошибка при загрузке", e)
                                     withContext(Dispatchers.Main) {
-                                        Toast.makeText(context, "Ошибка при загрузке: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                                        val errorMessage = when {
+                                            e.message?.contains("timeout") == true -> "Истекло время ожидания. Проверьте подключение к сети."
+                                            e.message?.contains("Unable to resolve host") == true -> "Нет подключения к серверу. Проверьте Интернет."
+                                            else -> "Ошибка при загрузке: ${e.localizedMessage}"
+                                        }
+                                        Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
                                     }
                                 } finally {
                                     withContext(Dispatchers.Main) {
@@ -210,22 +227,26 @@ fun AddPictureDialog(
 
 private fun createTempFileFromUri(context: Context, uri: Uri): File? {
     return try {
-        val fileName = context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-            val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-            cursor.moveToFirst()
-            cursor.getString(nameIndex)
-        } ?: "temp_image_${System.currentTimeMillis()}.jpg"
+        // Получаем имя файла
+        val fileName = getFileName(context, uri)
 
+        // Создаем временный файл
         val tempFile = File(context.cacheDir, fileName)
         tempFile.createNewFile()
 
+        // Проверяем размер файла перед началом копирования
+        val fileSize = getFileSize(context, uri)
+        if (fileSize > 50 * 1024 * 1024) { // 50MB лимит
+            throw IllegalArgumentException("Файл слишком большой. Максимальный размер: 50MB")
+        }
+
+        // Копируем данные с использованием буфера
         context.contentResolver.openInputStream(uri)?.use { inputStream ->
             val bufferedInputStream = inputStream.buffered(8192)
             FileOutputStream(tempFile).buffered(8192).use { outputStream ->
                 val buffer = ByteArray(8192)
                 var bytesRead: Int
                 var totalBytesRead = 0L
-                val fileSize = getFileSize(context, uri)
 
                 while (bufferedInputStream.read(buffer).also { bytesRead = it } != -1) {
                     outputStream.write(buffer, 0, bytesRead)
@@ -234,23 +255,40 @@ private fun createTempFileFromUri(context: Context, uri: Uri): File? {
                     // Логируем прогресс
                     if (fileSize > 0) {
                         val progress = (totalBytesRead.toFloat() / fileSize * 100).toInt()
-                        Log.d("AddPhotoDialog", "Прогресс загрузки: $progress%")
+                        Log.d("AddPhotoDialog", "Прогресс подготовки файла: $progress%")
                     }
                 }
                 outputStream.flush()
             }
         }
 
-        // Проверяем размер файла
-        if (tempFile.length() > 10 * 1024 * 1024) { // 10MB
-            throw IllegalArgumentException("Файл слишком большой. Максимальный размер: 10MB")
+        // Проверяем, что файл был создан успешно
+        if (!tempFile.exists() || tempFile.length() == 0L) {
+            throw IOException("Не удалось создать файл")
         }
 
+        Log.d("AddPhotoDialog", "Файл создан успешно: ${tempFile.absolutePath}, размер: ${tempFile.length()} байт")
         tempFile
     } catch (e: Exception) {
-        Log.e("AddPhotoDialog", "Ошибка при создании временного файла", e)
+        Log.e("AddPhotoDialog", "Ошибка при подготовке файла", e)
         null
     }
+}
+
+/**
+ * Получает имя файла из URI
+ */
+private fun getFileName(context: Context, uri: Uri): String {
+    // Пытаемся получить имя файла из метаданных
+    val fileName = context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+        val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+        if (nameIndex != -1 && cursor.moveToFirst()) {
+            cursor.getString(nameIndex)
+        } else null
+    }
+
+    // Если не получилось, генерируем уникальное имя
+    return fileName ?: "image_${System.currentTimeMillis()}.jpg"
 }
 
 private fun getFileSize(context: Context, uri: Uri): Long {

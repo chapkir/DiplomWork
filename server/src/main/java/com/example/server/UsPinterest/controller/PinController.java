@@ -345,30 +345,109 @@ public class PinController {
             logger.info("Проксирование изображения: {}", imageUrl);
 
             // Если это URL с Яндекс Диска, пробуем обновить его, чтобы получить прямую ссылку
-            if (imageUrl.contains("yandex") || imageUrl.contains("disk.")) {
-                imageUrl = yandexDiskService.updateImageUrl(imageUrl);
-                logger.info("Обновленный URL изображения: {}", imageUrl);
+            if (imageUrl.contains("yandex") || imageUrl.contains("disk.") ||
+                    imageUrl.contains("yadi.sk") || imageUrl.contains("/d/")) {
+                try {
+                    String updatedUrl = yandexDiskService.updateImageUrl(imageUrl);
+                    if (!updatedUrl.equals(imageUrl)) {
+                        logger.info("Обновлен URL изображения: {} -> {}", imageUrl, updatedUrl);
+                        imageUrl = updatedUrl;
+                    }
+                } catch (Exception e) {
+                    logger.warn("Не удалось обновить URL: {}", e.getMessage());
+                }
             }
 
-            URL url = new URL(imageUrl);
-            URLConnection connection = url.openConnection();
-            connection.setRequestProperty("User-Agent", "Mozilla/5.0");
+            // Проверка, если URL содержит локальный путь к прокси
+            if (imageUrl.contains("/api/pins/proxy-image")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("Обнаружен рекурсивный запрос к прокси".getBytes());
+            }
+
+            java.net.URL url = new java.net.URL(imageUrl);
+            java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+            connection.setConnectTimeout(10000);
+            connection.setReadTimeout(10000);
+            connection.setInstanceFollowRedirects(true);
+
+            // Устанавливаем Referer для обхода некоторых ограничений
+            connection.setRequestProperty("Referer", "https://disk.yandex.ru/");
+
+            // Проверяем код ответа
+            int responseCode = connection.getResponseCode();
+
+            // Если ссылка недействительна (410 Gone, 404 Not Found и т.д.)
+            if (responseCode >= 400) {
+                logger.error("Ошибка при загрузке изображения: код {}", responseCode);
+
+                // Пробуем обновить URL еще раз с принудительным обновлением кэша
+                if (imageUrl.contains("yandex") || imageUrl.contains("disk.") ||
+                        imageUrl.contains("downloader.") || imageUrl.contains("preview.")) {
+
+                    // Удаляем URL из кэша принудительно
+                    try {
+                        String freshUrl = yandexDiskService.forceUpdateImageUrl(imageUrl);
+                        if (!freshUrl.equals(imageUrl)) {
+                            logger.info("Принудительно обновлен URL после ошибки: {} -> {}", imageUrl, freshUrl);
+
+                            // Рекурсивно вызываем метод с новым URL
+                            return proxyImage(freshUrl);
+                        }
+                    } catch (Exception e) {
+                        logger.error("Не удалось принудительно обновить URL: {}", e.getMessage());
+                    }
+                }
+
+                // Если обновление не помогло, возвращаем ошибку
+                return ResponseEntity.status(responseCode).build();
+            }
 
             String contentType = connection.getContentType();
             if (contentType == null) {
-                contentType = MediaType.IMAGE_JPEG_VALUE; // Значение по умолчанию
+                contentType = determineContentType(imageUrl);
             }
 
-            byte[] imageData = connection.getInputStream().readAllBytes();
+            byte[] imageData;
+            try (java.io.InputStream inputStream = connection.getInputStream()) {
+                imageData = inputStream.readAllBytes();
+            }
+
+            if (imageData.length == 0) {
+                logger.error("Получен пустой ответ при загрузке изображения");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.parseMediaType(contentType));
-            headers.setCacheControl("max-age=31536000"); // Кэширование на 1 год
+            headers.setCacheControl("max-age=86400"); // Кэширование на 1 день
+            headers.setContentLength(imageData.length);
 
             return new ResponseEntity<>(imageData, headers, HttpStatus.OK);
         } catch (IOException e) {
             logger.error("Ошибка при проксировании изображения: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+    }
+
+    /**
+     * Определяет тип контента на основе расширения файла в URL
+     */
+    private String determineContentType(String url) {
+        String lowerUrl = url.toLowerCase();
+        if (lowerUrl.endsWith(".jpg") || lowerUrl.endsWith(".jpeg")) {
+            return MediaType.IMAGE_JPEG_VALUE;
+        } else if (lowerUrl.endsWith(".png")) {
+            return MediaType.IMAGE_PNG_VALUE;
+        } else if (lowerUrl.endsWith(".gif")) {
+            return MediaType.IMAGE_GIF_VALUE;
+        } else if (lowerUrl.endsWith(".webp")) {
+            return "image/webp";
+        } else if (lowerUrl.endsWith(".svg")) {
+            return "image/svg+xml";
+        } else {
+            // По умолчанию считаем, что это JPEG
+            return MediaType.IMAGE_JPEG_VALUE;
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.example.diplomwork.ui.screens.picture_detail_screen
 
+import android.util.Log
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -39,6 +40,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -94,8 +96,8 @@ fun PictureDetailScreen(
             item {
                 ImageView(
                     imageRes =
-                    if (imageUrl.startsWith("http")) imageUrl
-                    else ApiClient.baseUrl + imageUrl,
+                        if (imageUrl.startsWith("http")) imageUrl
+                        else ApiClient.getBaseUrl() + imageUrl,
                     aspectRatio = 1f
                 )
             }
@@ -117,7 +119,7 @@ fun PictureDetailScreen(
                         .fillMaxWidth()
                         .padding(
                             bottom =
-                            SystemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value)
+                                SystemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value)
                 ) {
                     if (comments.isNotEmpty()) {
                         Text(
@@ -180,6 +182,26 @@ fun PictureDetailScreen(
 @Composable
 fun ImageView(imageRes: String, aspectRatio: Float) {
     var currentAspectRatio by remember { mutableStateOf(aspectRatio) }
+    var isLoading by remember { mutableStateOf(true) }
+    var isError by remember { mutableStateOf(false) }
+    var retryCount by remember { mutableIntStateOf(0) }
+
+    val context = LocalContext.current
+
+    // Обрабатываем URL изображения
+    var currentUrl by remember {
+        mutableStateOf(
+            if (imageRes.startsWith("http")) {
+                if (isYandexDiskUrl(imageRes)) {
+                    "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${android.net.Uri.encode(imageRes)}"
+                } else {
+                    imageRes
+                }
+            } else {
+                "${ApiClient.getBaseUrl()}$imageRes"
+            }
+        )
+    }
 
     Card(
         shape = RoundedCornerShape(30.dp),
@@ -192,13 +214,60 @@ fun ImageView(imageRes: String, aspectRatio: Float) {
                 .clip(RoundedCornerShape(30.dp))
         ) {
             AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(imageRes)
+                model = ImageRequest.Builder(context)
+                    .data(currentUrl)
                     .crossfade(true)
                     .build(),
                 contentDescription = null,
                 onState = { state ->
+                    isLoading = state is AsyncImagePainter.State.Loading
+
+                    if (state is AsyncImagePainter.State.Error) {
+                        isError = true
+                        val exception = state.result.throwable
+
+                        // Логируем ошибку
+                        Log.e("ImageView", "Ошибка загрузки изображения: $currentUrl", exception)
+
+                        // Пробуем восстановиться
+                        if (retryCount < 2) {
+                            retryCount++
+
+                            // Определяем тип ошибки по сообщению
+                            val errorCode = when {
+                                exception.message?.contains("410") == true -> 410
+                                exception.message?.contains("404") == true -> 404
+                                exception.message?.contains("400") == true -> 400
+                                exception.message?.contains("500") == true -> 500
+                                else -> -1
+                            }
+
+                            // Выбираем стратегию обработки в зависимости от ошибки
+                            currentUrl = when (errorCode) {
+                                410, 404 -> {
+                                    // Для устаревших или отсутствующих ссылок
+                                    Log.w("ImageView", "Ссылка недействительна, пробуем через прокси")
+                                    "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${android.net.Uri.encode(imageRes)}&cache_bust=${System.currentTimeMillis()}"
+                                }
+                                in 400..499 -> {
+                                    // Для клиентских ошибок
+                                    if (isYandexDiskUrl(imageRes)) {
+                                        "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${android.net.Uri.encode(imageRes)}&cache_bust=${System.currentTimeMillis()}"
+                                    } else {
+                                        // Если не Яндекс Диск, просто используем исходный URL
+                                        imageRes
+                                    }
+                                }
+                                else -> {
+                                    // Для всех остальных случаев
+                                    "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${android.net.Uri.encode(imageRes)}&cache_bust=${System.currentTimeMillis()}"
+                                }
+                            }
+                        }
+                    }
+
                     if (state is AsyncImagePainter.State.Success) {
+                        isError = false
                         val size = state.painter.intrinsicSize
                         if (size.width > 0 && size.height > 0) {
                             currentAspectRatio = size.width / size.height
@@ -211,13 +280,40 @@ fun ImageView(imageRes: String, aspectRatio: Float) {
                     .clip(RoundedCornerShape(12.dp))
             )
 
-            if (currentAspectRatio == 0f) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
-                )
+            when {
+                isLoading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+                isError -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.5f))
+                            .align(Alignment.Center)
+                    ) {
+                        Text(
+                            text = "Ошибка загрузки изображения",
+                            color = Color.White,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+                }
             }
         }
     }
+}
+
+/**
+ * Проверяет, является ли URL ссылкой на Яндекс.Диск
+ */
+private fun isYandexDiskUrl(url: String): Boolean {
+    return url.contains("yandex") ||
+            url.contains("disk.") ||
+            url.contains("downloader.") ||
+            url.contains("preview.") ||
+            url.contains("yadi.sk")
 }
 
 @Composable
@@ -256,8 +352,8 @@ fun ActionBar(
                 Icon(
                     painter = painterResource(
                         id =
-                        if (isLiked) R.drawable.ic_favs_filled
-                        else R.drawable.ic_favs
+                            if (isLiked) R.drawable.ic_favs_filled
+                            else R.drawable.ic_favs
                     ),
                     contentDescription = "Лайк",
                     tint = if (isLiked) Color.Red else Color.White,

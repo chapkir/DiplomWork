@@ -18,12 +18,28 @@ import coil.memory.MemoryCache
 import coil.request.CachePolicy
 
 object ApiClient {
-    const val baseUrl = "http://192.168.205.109:8081/"
+    // Заменяем жестко закодированный IP на базовый URL, который можно изменить
+    private const val DEFAULT_SERVER_URL = "http://192.168.1.181:8081/"
+    private var serverUrl = DEFAULT_SERVER_URL
+
+    // Геттер для получения текущего базового URL
+    fun getBaseUrl(): String = serverUrl
+
+    // Сеттер для изменения базового URL (можно использовать для настройки)
+    fun setBaseUrl(url: String) {
+        serverUrl = if (url.endsWith("/")) url else "$url/"
+        recreateRetrofit()
+    }
+
     private const val TAG = "ApiClient"
     private lateinit var sessionManager: SessionManager
+    private lateinit var retrofit: Retrofit
+    private lateinit var _apiService: ApiService
+    private lateinit var _imageUploadService: ImageUploadService
 
     fun init(context: Context) {
         sessionManager = SessionManager(context)
+        createRetrofit()
     }
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
@@ -36,7 +52,7 @@ object ApiClient {
             .header("Accept", "*/*")
             .header("Connection", "keep-alive")
             .header("Accept-Encoding", "gzip, deflate, br")
-            .header("Origin", "http://192.168.205.109:8081")
+            .header("Origin", serverUrl.trimEnd('/'))
             .header("Access-Control-Request-Method", original.method)
             .header("Access-Control-Request-Headers", "Authorization, Content-Type")
             .method(original.method, original.body)
@@ -101,16 +117,74 @@ object ApiClient {
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
         .retryOnConnectionFailure(true)
+        // Добавляем обработчик ошибок для повторных попыток
+        .addInterceptor { chain ->
+            val request = chain.request()
+            var response: okhttp3.Response? = null
+            var retryCount = 0
+            val maxRetries = 3
+            var exception: IOException? = null
+
+            while (retryCount < maxRetries) {
+                try {
+                    // Если это не первая попытка, добавляем случайную задержку
+                    if (retryCount > 0) {
+                        val backoffMs = (2000L * (retryCount)) + (Math.random() * 1000).toLong()
+                        Log.d(TAG, "Повторная попытка #$retryCount через $backoffMs мс: ${request.url}")
+                        Thread.sleep(backoffMs)
+                    }
+
+                    response = chain.proceed(request)
+
+                    // Проверяем специфичные ошибки, требующие повторной попытки
+                    if (response.code in listOf(408, 429, 500, 502, 503, 504, 410) && retryCount < maxRetries - 1) {
+                        Log.w(TAG, "Код ответа ${response.code} требует повторной попытки")
+                        response.close()
+                        retryCount++
+                        continue
+                    }
+
+                    // Для успешных ответов или ошибок, не требующих повторных попыток
+                    return@addInterceptor response
+                } catch (e: IOException) {
+                    exception = e
+                    if (retryCount < maxRetries - 1) {
+                        Log.w(TAG, "Попытка #$retryCount не удалась с ошибкой: ${e.message}")
+                        retryCount++
+                    } else {
+                        Log.e(TAG, "Все попытки исчерпаны")
+                        throw e
+                    }
+                }
+            }
+
+            // Если мы здесь, значит все попытки исчерпаны
+            throw exception ?: IOException("Неизвестная ошибка после $maxRetries попыток")
+        }
         .build()
 
-    private val retrofit = Retrofit.Builder()
-        .baseUrl(baseUrl)
-        .client(okHttpClient)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
+    private fun createRetrofit() {
+        retrofit = Retrofit.Builder()
+            .baseUrl(serverUrl)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
 
-    val apiService: ApiService = retrofit.create(ApiService::class.java)
-    val imageUploadService: ImageUploadService = retrofit.create(ImageUploadService::class.java)
+        _apiService = retrofit.create(ApiService::class.java)
+        _imageUploadService = retrofit.create(ImageUploadService::class.java)
+    }
+
+    private fun recreateRetrofit() {
+        if (::retrofit.isInitialized) {
+            createRetrofit()
+        }
+    }
+
+    val apiService: ApiService
+        get() = _apiService
+
+    val imageUploadService: ImageUploadService
+        get() = _imageUploadService
 
     fun createImageLoader(context: Context): ImageLoader {
         return ImageLoader.Builder(context)
@@ -125,11 +199,12 @@ object ApiClient {
             .diskCache {
                 DiskCache.Builder()
                     .directory(context.cacheDir.resolve("image_cache"))
-                    .maxSizePercent(0.02)
+                    .maxSizePercent(0.05) // Увеличиваем размер кэша
                     .build()
             }
-            .respectCacheHeaders(false)
+            .respectCacheHeaders(false) // Игнорируем заголовки кэширования
             .crossfade(true)
+            .error(android.R.drawable.ic_menu_report_image) // Изображение по умолчанию при ошибке
             .build()
     }
 }

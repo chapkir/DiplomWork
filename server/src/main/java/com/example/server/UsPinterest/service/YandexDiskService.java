@@ -23,6 +23,9 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.Map;
 
 @Service
 public class YandexDiskService {
@@ -40,6 +43,12 @@ public class YandexDiskService {
     private static final String API_BASE_URL = "https://cloud-api.yandex.net/v1/disk";
     private static final String RESOURCES_PATH = "/resources";
     private static final String UPLOAD_PATH = "/resources/upload";
+
+    // Кэш для URL изображений, чтобы не запрашивать одни и те же URL несколько раз
+    private final ConcurrentHashMap<String, CachedUrl> urlCache = new ConcurrentHashMap<>();
+
+    // Время жизни кэша URL (12 часов)
+    private static final long URL_CACHE_TTL_MS = TimeUnit.HOURS.toMillis(12);
 
     private RequestConfig requestConfig;
 
@@ -313,41 +322,215 @@ public class YandexDiskService {
             return imageUrl;
         }
 
-        // Если это уже прямая ссылка на скачивание или предпросмотр
-        if (imageUrl.contains("https://downloader.disk.yandex.ru/") ||
-                imageUrl.contains("https://preview.disk.yandex.ru/")) {
-            return imageUrl;
+        // Проверка является ли URL локальным прокси
+        if (imageUrl.contains("/api/pins/proxy-image")) {
+            // Извлекаем оригинальный URL из параметра
+            String encodedOriginalUrl = imageUrl.split("url=")[1];
+            try {
+                String originalUrl = java.net.URLDecoder.decode(encodedOriginalUrl, StandardCharsets.UTF_8.toString());
+                imageUrl = originalUrl;
+            } catch (Exception e) {
+                logger.warn("Не удалось декодировать URL из прокси: {}", imageUrl);
+                // Если декодирование не удалось, используем как есть
+            }
         }
 
-        // Если это публичная ссылка, пытаемся получить прямую ссылку на предпросмотр
-        if (imageUrl.contains("https://disk.yandex.ru/")) {
+        // Проверяем кэш и его актуальность
+        CachedUrl cachedUrl = urlCache.get(imageUrl);
+
+        // Проверяем, истек ли срок действия кэшированного URL или это URL от Яндекс Диска с прямой ссылкой
+        boolean shouldRefresh = cachedUrl == null || cachedUrl.isExpired() ||
+                (cachedUrl.getUrl().contains("downloader.disk.yandex.ru") &&
+                        System.currentTimeMillis() - cachedUrl.getCreationTime() > TimeUnit.MINUTES.toMillis(30));
+
+        if (!shouldRefresh) {
+            logger.debug("Использую кэшированный URL для {}: {}", imageUrl, cachedUrl.getUrl());
+            return cachedUrl.getUrl();
+        }
+
+        // Определяем тип URL
+        if (imageUrl.contains("yadi.sk") || imageUrl.contains("disk.yandex.ru") ||
+                imageUrl.startsWith("https://yandex") || imageUrl.contains("/d/")) {
+            // Это публичная ссылка на Яндекс.Диск
             try (CloseableHttpClient client = HttpClients.custom()
                     .setDefaultRequestConfig(requestConfig)
                     .build()) {
 
-                String previewUrl = API_BASE_URL + "/resources/download?public_key=" +
-                        URLEncoder.encode(imageUrl, StandardCharsets.UTF_8.toString()) + "&preview=true";
+                String downloadUrl = API_BASE_URL + "/resources/download?public_key=" +
+                        URLEncoder.encode(imageUrl, StandardCharsets.UTF_8.toString());
 
-                HttpGet previewRequest = new HttpGet(previewUrl);
-                previewRequest.setHeader("Authorization", "OAuth " + oauthToken);
+                // Добавляем параметр preview=true только для изображений
+                if (isImageURL(imageUrl)) {
+                    downloadUrl += "&preview=true";
+                }
 
-                try (CloseableHttpResponse response = client.execute(previewRequest)) {
+                HttpGet downloadRequest = new HttpGet(downloadUrl);
+                downloadRequest.setHeader("Authorization", "OAuth " + oauthToken);
+
+                try (CloseableHttpResponse response = client.execute(downloadRequest)) {
                     if (response.getStatusLine().getStatusCode() == 200) {
                         String jsonResponse = EntityUtils.toString(response.getEntity());
                         JsonObject jsonObject = JsonParser.parseString(jsonResponse).getAsJsonObject();
 
                         if (jsonObject.has("href")) {
-                            String directPreviewUrl = jsonObject.get("href").getAsString();
-                            logger.info("Updated image URL to preview URL: {} -> {}", imageUrl, directPreviewUrl);
-                            return directPreviewUrl;
+                            String directUrl = jsonObject.get("href").getAsString();
+                            logger.info("Получена прямая ссылка для {}: {}", imageUrl, directUrl);
+
+                            // Кэшируем обновленный URL
+                            urlCache.put(imageUrl, new CachedUrl(directUrl));
+                            return directUrl;
+                        } else {
+                            logger.warn("В ответе API Яндекс.Диска отсутствует поле 'href'");
                         }
+                    } else {
+                        logger.warn("Не удалось получить прямую ссылку. Код: {}", response.getStatusLine().getStatusCode());
                     }
                 }
             } catch (Exception e) {
-                logger.error("Failed to get preview URL for {}: {}", imageUrl, e.getMessage());
+                logger.error("Ошибка при обновлении URL из Яндекс.Диска: {}", e.getMessage(), e);
+            }
+        } else if (imageUrl.contains("downloader.disk.yandex.ru") ||
+                imageUrl.contains("preview.disk.yandex.ru")) {
+            // Это уже прямая ссылка, но она могла устареть
+            // Попробуем получить исходную публичную ссылку из метаданных, если она есть
+            if (cachedUrl != null && cachedUrl.getOriginalUrl() != null) {
+                logger.info("Прямая ссылка могла устареть, обновляем используя оригинальный URL: {}",
+                        cachedUrl.getOriginalUrl());
+                try {
+                    return updateImageUrl(cachedUrl.getOriginalUrl());
+                } catch (Exception e) {
+                    logger.error("Не удалось обновить истекшую ссылку: {}", e.getMessage());
+                }
+            } else {
+                // Если у нас нет исходной ссылки, кэшируем текущую на короткое время
+                logger.info("Используем прямую ссылку без возможности обновления: {}", imageUrl);
+                urlCache.put(imageUrl, new CachedUrl(imageUrl, imageUrl, TimeUnit.MINUTES.toMillis(5)));
             }
         }
 
+        // Если не удалось получить прямую ссылку, возвращаем исходную и кэшируем её
+        if (!urlCache.containsKey(imageUrl)) {
+            urlCache.put(imageUrl, new CachedUrl(imageUrl, imageUrl, TimeUnit.MINUTES.toMillis(5)));
+        }
         return imageUrl;
+    }
+
+    /**
+     * Проверяет, является ли URL ссылкой на изображение по его расширению
+     */
+    private boolean isImageURL(String url) {
+        String lowerUrl = url.toLowerCase();
+        return lowerUrl.endsWith(".jpg") || lowerUrl.endsWith(".jpeg") ||
+                lowerUrl.endsWith(".png") || lowerUrl.endsWith(".gif") ||
+                lowerUrl.endsWith(".webp") || lowerUrl.contains("image") ||
+                !lowerUrl.contains(".");  // Если нет расширения, предполагаем что это может быть изображение
+    }
+
+    /**
+     * Внутренний класс для кэширования URL с временем жизни
+     */
+    private static class CachedUrl {
+        private final String url;
+        private final String originalUrl;
+        private final long expirationTime;
+        private final long creationTime;
+
+        public CachedUrl(String url) {
+            this(url, url, URL_CACHE_TTL_MS);
+        }
+
+        public CachedUrl(String url, String originalUrl, long ttlMs) {
+            this.url = url;
+            this.originalUrl = originalUrl;
+            this.creationTime = System.currentTimeMillis();
+            this.expirationTime = this.creationTime + ttlMs;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public String getOriginalUrl() {
+            return originalUrl;
+        }
+
+        public long getCreationTime() {
+            return creationTime;
+        }
+
+        public boolean isExpired() {
+            return System.currentTimeMillis() > expirationTime;
+        }
+    }
+
+    /**
+     * Принудительно обновляет URL изображения, игнорируя кэш
+     * @param imageUrl существующая ссылка на изображение
+     * @return обновленная ссылка на изображение
+     * @throws IOException если произошла ошибка при получении прямой ссылки
+     */
+    public String forceUpdateImageUrl(String imageUrl) throws IOException {
+        // Сначала удаляем URL из кэша, если он там есть
+        urlCache.remove(imageUrl);
+
+        // Проверяем, является ли это прямой ссылкой Яндекс Диска
+        if (imageUrl.contains("downloader.disk.yandex.ru") ||
+                imageUrl.contains("preview.disk.yandex.ru")) {
+
+            // Извлекаем информацию из URL, чтобы попытаться восстановить публичную ссылку
+            try {
+                // Ищем исходную публичную ссылку в других записях кэша
+                for (Map.Entry<String, CachedUrl> entry : urlCache.entrySet()) {
+                    CachedUrl cachedUrl = entry.getValue();
+                    if (imageUrl.equals(cachedUrl.getUrl())) {
+                        String originalUrl = entry.getKey();
+                        logger.info("Найден исходный URL в кэше: {}", originalUrl);
+                        urlCache.remove(entry.getKey());
+                        return updateImageUrl(originalUrl);
+                    }
+                }
+
+                // Если не нашли в кэше, пробуем получить файл через общую ссылку на Яндекс Диск
+                // Из URL можно извлечь uid и filename для формирования публичной ссылки
+                String uid = extractParameter(imageUrl, "uid");
+                String filename = extractParameter(imageUrl, "filename");
+
+                if (uid != null && filename != null) {
+                    // Пытаемся найти файл по API в публичных файлах
+                    logger.info("Попытка найти публичный файл по uid={} и filename={}", uid, filename);
+
+                    // Создаем запрос к API поиска публичных файлов
+                    String publicUrl = "https://disk.yandex.ru/i/" + uid;
+                    logger.info("Пробуем публичную ссылку: {}", publicUrl);
+                    return updateImageUrl(publicUrl);
+                }
+            } catch (Exception e) {
+                logger.error("Ошибка при попытке восстановить исходный URL: {}", e.getMessage());
+            }
+        }
+
+        // Если это не прямая ссылка или не удалось восстановить публичную ссылку,
+        // просто обновляем через обычный метод
+        return updateImageUrl(imageUrl);
+    }
+
+    /**
+     * Извлекает значение параметра из URL
+     */
+    private String extractParameter(String url, String paramName) {
+        try {
+            int startIdx = url.indexOf(paramName + "=");
+            if (startIdx == -1) return null;
+
+            startIdx += paramName.length() + 1;
+            int endIdx = url.indexOf("&", startIdx);
+            if (endIdx == -1) endIdx = url.length();
+
+            String value = url.substring(startIdx, endIdx);
+            return java.net.URLDecoder.decode(value, StandardCharsets.UTF_8.toString());
+        } catch (Exception e) {
+            logger.error("Ошибка при извлечении параметра {}: {}", paramName, e.getMessage());
+            return null;
+        }
     }
 }

@@ -14,12 +14,22 @@ import androidx.navigation.compose.rememberNavController
 import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.system_settings.SetSystemBarsColor
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
+import com.example.diplomwork.auth.SessionManager
+import android.util.Log
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Инициализация ApiClient
         ApiClient.init(this)
+
+        // Получаем сохраненный URL сервера и устанавливаем его
+        val sessionManager = SessionManager(this)
+        val serverUrl = sessionManager.getServerUrl()
+        ApiClient.setBaseUrl(serverUrl)
+        Log.d("MainActivity", "Используется URL сервера: $serverUrl")
+
         enableEdgeToEdge()
         setContent {
             SetSystemBarsColor(
