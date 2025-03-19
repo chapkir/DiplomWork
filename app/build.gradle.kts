@@ -1,6 +1,9 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    id("com.google.devtools.ksp")
+    id("com.google.dagger.hilt.android") // Плагин для Hilt
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -8,14 +11,11 @@ android {
     compileSdk = 35
 
     defaultConfig {
-
         applicationId = "com.example.diplomwork"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
@@ -32,18 +32,18 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
         buildConfig = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1"
+        kotlinCompilerExtensionVersion = "1.5.15"
     }
     packaging {
         resources {
@@ -54,7 +54,7 @@ android {
 }
 
 dependencies {
-
+    // Основные зависимости
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -72,14 +72,24 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    // Зависимости для KSP и Hilt
+    implementation("com.google.dagger:hilt-android:2.45") // Hilt
+    implementation("com.squareup.retrofit2:retrofit:2.9.0") // Пример для сети, если нужен
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0") // Конвертер для GSON, если нужен
+
+    // Для KSP
+    ksp("com.google.dagger:hilt-android-compiler:2.50")
+
+    // Прочие зависимости
     implementation(libs.accompanist.systemuicontroller)
     implementation(libs.io.coil.kt)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.squareup.retrofit)
     implementation(libs.squareup.converter)
-    implementation (libs.android.material)
+    implementation(libs.android.material)
     implementation(libs.logging.interceptor)
     implementation(libs.androidx.lifecycle.viewmodel)
-
 }
+
 

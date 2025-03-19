@@ -9,7 +9,7 @@ class SessionManager(context: Context) {
         context.getSharedPreferences("AppSession", Context.MODE_PRIVATE)
     private val KEY_TOKEN = "auth_token"
     private val KEY_SERVER_URL = "server_url"
-    private val DEFAULT_SERVER_URL = "http://192.168.1.181:8081"
+    private val DEFAULT_SERVER_URL = "http://192.168.205.109:8081"
 
     fun saveAuthToken(token: String) {
         prefs.edit {
