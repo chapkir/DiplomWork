@@ -1,13 +1,18 @@
 package com.example.server.UsPinterest.dto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class PinResponse {
     private Long id;
     private String imageUrl;
     private String description;
-
-
+    private Long boardId;
+    private String boardTitle;
+    private Long userId;
+    private String username;
+    private String userProfileImageUrl;
+    private LocalDateTime createdAt;
     private int likesCount;
     private List<CommentResponse> comments;
     private boolean isLikedByCurrentUser;
@@ -34,6 +39,54 @@ public class PinResponse {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Long getBoardId() {
+        return boardId;
+    }
+
+    public void setBoardId(Long boardId) {
+        this.boardId = boardId;
+    }
+
+    public String getBoardTitle() {
+        return boardTitle;
+    }
+
+    public void setBoardTitle(String boardTitle) {
+        this.boardTitle = boardTitle;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getUserProfileImageUrl() {
+        return userProfileImageUrl;
+    }
+
+    public void setUserProfileImageUrl(String userProfileImageUrl) {
+        this.userProfileImageUrl = userProfileImageUrl;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
     public int getLikesCount() {

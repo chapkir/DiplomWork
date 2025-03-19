@@ -40,6 +40,10 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:1.18.28")
     implementation ("com.github.vladimir-bukhtoyarov:bucket4j-core:7.6.0")
 
+    // Кэширование с использованием Caffeine
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
+
     // зависимости для работы с HTTP и JSON
     implementation("com.squareup.okhttp3:okhttp:4.9.1")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
