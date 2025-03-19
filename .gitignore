@@ -43,7 +43,6 @@ Thumbs.db
 # Локальные настройки пользователя
 *.keystore
 *.jks
-*.properties
 *.key
 *.pem
 *.p12
