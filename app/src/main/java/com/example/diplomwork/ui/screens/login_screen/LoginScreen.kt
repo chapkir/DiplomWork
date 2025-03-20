@@ -62,7 +62,6 @@ fun LoginScreen(
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
     }
-    var step by rememberSaveable { mutableIntStateOf(0) }
     var username by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var isLoading by rememberSaveable { mutableStateOf(false) }

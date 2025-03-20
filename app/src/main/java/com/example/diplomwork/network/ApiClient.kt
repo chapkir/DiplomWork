@@ -19,7 +19,7 @@ import coil.request.CachePolicy
 
 object ApiClient {
     // Заменяем жестко закодированный IP на базовый URL, который можно изменить
-    private const val DEFAULT_SERVER_URL = "http://192.168.1.181:8081/"
+    private const val DEFAULT_SERVER_URL = "http://192.168.205.109:8081/"
     private var serverUrl = DEFAULT_SERVER_URL
 
     // Геттер для получения текущего базового URL

@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.screens.picture_detail_screen
+package com.example.diplomwork.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class PictureDetailViewModel(private val pictureId: Long) : ViewModel() {
+class PictureDetailScreenViewModel(private val pictureId: Long) : ViewModel() {
 
     private val _pictureDescription = MutableStateFlow("")
     val pictureDescription: StateFlow<String> = _pictureDescription

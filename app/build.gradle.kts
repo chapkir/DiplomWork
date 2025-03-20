@@ -73,15 +73,10 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
-    // Зависимости для KSP и Hilt
-    implementation("com.google.dagger:hilt-android:2.45") // Hilt
-    implementation("com.squareup.retrofit2:retrofit:2.9.0") // Пример для сети, если нужен
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0") // Конвертер для GSON, если нужен
-
-    // Для KSP
+    implementation ("androidx.hilt:hilt-navigation-compose:1.1.0")
+    implementation("com.google.dagger:hilt-android:2.50") // Hilt
     ksp("com.google.dagger:hilt-android-compiler:2.50")
 
-    // Прочие зависимости
     implementation(libs.accompanist.systemuicontroller)
     implementation(libs.io.coil.kt)
     implementation(libs.androidx.compose.foundation)
