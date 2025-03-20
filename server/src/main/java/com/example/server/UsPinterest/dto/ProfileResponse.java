@@ -1,12 +1,19 @@
 package com.example.server.UsPinterest.dto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class ProfileResponse {
     private Long id;
     private String username;
     private String email;
+    private String bio;
+    private String profileImageUrl;
+    private LocalDateTime registrationDate;
     private List<PinResponse> pins;
+    private int pinsCount;
+    private int followersCount;
+    private int followingCount;
 
     public Long getId() {
         return id;
@@ -32,11 +39,59 @@ public class ProfileResponse {
         this.email = email;
     }
 
+    public String getBio() {
+        return bio;
+    }
+
+    public void setBio(String bio) {
+        this.bio = bio;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public LocalDateTime getRegistrationDate() {
+        return registrationDate;
+    }
+
+    public void setRegistrationDate(LocalDateTime registrationDate) {
+        this.registrationDate = registrationDate;
+    }
+
     public List<PinResponse> getPins() {
         return pins;
     }
 
     public void setPins(List<PinResponse> pins) {
         this.pins = pins;
+    }
+
+    public int getPinsCount() {
+        return pinsCount;
+    }
+
+    public void setPinsCount(int pinsCount) {
+        this.pinsCount = pinsCount;
+    }
+
+    public int getFollowersCount() {
+        return followersCount;
+    }
+
+    public void setFollowersCount(int followersCount) {
+        this.followersCount = followersCount;
+    }
+
+    public int getFollowingCount() {
+        return followingCount;
+    }
+
+    public void setFollowingCount(int followingCount) {
+        this.followingCount = followingCount;
     }
 }
