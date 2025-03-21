@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.components
+package com.example.diplomwork.ui.navigation
 
 import android.net.Uri
 import androidx.compose.foundation.layout.padding
@@ -17,7 +17,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import com.example.diplomwork.auth.SessionManager
-import com.example.diplomwork.ui.components.bottom_menu.BottomMenu
+import com.example.diplomwork.ui.components.bottom_menu.BottomNavigationBar
 import com.example.diplomwork.ui.components.top_bar.GetTopBars
 import com.example.diplomwork.ui.screens.add_picture_screen.OpenGalleryAndSavePicture
 import com.example.diplomwork.ui.screens.home_screen.HomeScreen
@@ -32,7 +32,13 @@ fun AppNavigation(navController: NavHostController) {
     val sessionManager = remember { SessionManager(context) }
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
-    val hiddenScreens = listOf("picture_detail", "login_screen", "registration_screen")
+    val hiddenScreens =
+        listOf(
+            NavigationItem.ViewPicture.route,
+            NavigationItem.Login.route,
+            NavigationItem.Register.route
+        )
+
     val showBottomBar = currentRoute != null && hiddenScreens.none { currentRoute.startsWith(it)}
     val topBar = GetTopBars(currentRoute)
 
@@ -44,7 +50,7 @@ fun AppNavigation(navController: NavHostController) {
     Scaffold(
         topBar = { GetTopBars(currentRoute) },
         bottomBar = {
-            if (showBottomBar) BottomMenu(
+            if (showBottomBar) BottomNavigationBar(
                 currentRoute = currentRoute ?: "",
                 onNavigate = { route ->
                     navController.navigate(route) {
@@ -57,55 +63,58 @@ fun AppNavigation(navController: NavHostController) {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = if (sessionManager.isLoggedIn()) "home_screen" else "login_screen",
+            startDestination = if (sessionManager.isLoggedIn()) NavigationItem.Home.route else NavigationItem.Login.route,
             modifier = Modifier.padding(paddingValues)
         ) {
-            composable("home_screen") {
+            composable(NavigationItem.Home.route) {
                 HomeScreen(
                     onImageClick = { pictureId, imageUrl ->
                         val encodedUrl = Uri.encode(imageUrl)
-                        navController.navigate("picture_detail/$pictureId/$encodedUrl") {
-                            popUpTo("picture_detail/$pictureId/$encodedUrl") { inclusive = true }
+                        navController.navigate("${NavigationItem.ViewPicture.route}/$pictureId/$encodedUrl") {
+                            popUpTo("${NavigationItem.ViewPicture.route}/$pictureId/$encodedUrl") { inclusive = true }
                         }
                     },
                     shouldRefresh = shouldRefresh,
                     onRefreshComplete = { shouldRefresh = false }
                 )
             }
-            composable("login_screen") {
+            composable(NavigationItem.Login.route) {
                 LoginScreen(
                     onLoginSuccess = {
-                        navController.navigate("profile_screen") {
-                            popUpTo("login_screen") { inclusive = true }
+                        navController.navigate(NavigationItem.Profile.route) {
+                            popUpTo(NavigationItem.Login.route) { inclusive = true }
                         }
                     },
-                    onNavigateToRegister = { navController.navigate("registration_screen") },
+                    onNavigateToRegister = { navController.navigate(NavigationItem.Register.route) },
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
-            composable("profile_screen") {
+            composable(NavigationItem.Profile.route) {
                 ProfileScreen(
                     onLogout = {
                         sessionManager.clearSession()
-                        navController.navigate("home_screen") {
+                        navController.navigate(NavigationItem.Home.route) {
                             popUpTo(0) { inclusive = true }
                         }
                     },
                     onNavigateToLogin = {
-                        navController.navigate("login_screen") {
+                        navController.navigate(NavigationItem.Login.route) {
                             popUpTo(0) { inclusive = true }
                         }
                     },
                     onImageClick = { pictureId, imageUrl ->
                         val encodedUrl = java.net.URLEncoder.encode(imageUrl, "UTF-8")
-                        navController.navigate("picture_detail/$pictureId/$encodedUrl") {
-                            popUpTo("picture_detail/$pictureId/$encodedUrl") { inclusive = true }
+                        navController.navigate(
+                            "${NavigationItem.ViewPicture.route}/$pictureId/$encodedUrl") {
+                            popUpTo(
+                                "${NavigationItem.ViewPicture.route}/$pictureId/$encodedUrl")
+                            { inclusive = true }
                         }
                     }
                 )
             }
             composable(
-                "picture_detail/{pictureId}/{imageUrl}",
+                "${NavigationItem.ViewPicture.route}/{pictureId}/{imageUrl}",
                 arguments = listOf(
                     navArgument("pictureId") { type = NavType.LongType },
                     navArgument("imageUrl") { type = NavType.StringType }
@@ -115,20 +124,20 @@ fun AppNavigation(navController: NavHostController) {
                     pictureId = backStackEntry.arguments?.getLong("pictureId") ?: 0,
                     imageUrl = backStackEntry.arguments?.getString("imageUrl") ?: "",
                     onNavigateBack = { navController.popBackStack() },
-                    onNavigateToLogin = { navController.navigate("login_screen") }
+                    onNavigateToLogin = { navController.navigate(NavigationItem.Login.route) }
                 )
             }
-            composable("posts_screen") {
+            composable(NavigationItem.Posts.route) {
                 /* InfoScreen() */
             }
 
-            composable("notice_screen") {
+            composable(NavigationItem.Notification.route) {
                 /* FavsScreen() */
             }
-            composable("registration_screen") {
+            composable(NavigationItem.Register.route) {
                 RegisterScreen(onCompleteRegistration = {
-                    navController.navigate("home_screen"){
-                        popUpTo("registration_screen") { inclusive = true }
+                    navController.navigate(NavigationItem.Home.route){
+                        popUpTo(NavigationItem.Register.route) { inclusive = true }
                     }
                 })
             }

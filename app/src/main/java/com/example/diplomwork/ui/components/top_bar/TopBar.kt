@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.diplomwork.R
+import com.example.diplomwork.ui.navigation.NavigationItem
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 import com.example.diplomwork.ui.theme.Dimens.TopBarHeight
 
@@ -55,18 +56,18 @@ fun GetTopBars(currentRoute: String?) {
         )
     } else {
         when (currentRoute) {
-            "home_screen" -> CustomTopBar(
+            NavigationItem.Home.route -> CustomTopBar(
                 title = "Лента картинок",
                 icon = R.drawable.ic_search,
                 contentDescription = "Search",
                 onIconClick = { isSearching = true }
             )
 
-            "posts_screen" -> CustomTopBar(title = "Посты")
-            "add_screen" -> CustomTopBar(title = "Добавить")
-            "notice_screen" -> CustomTopBar(title = "Уведомления")
-            "profile_screen" -> CustomTopBar(title = "Профиль")
-            "login_screen" -> CustomTopBar(title = "Авторизация")
+            NavigationItem.Posts.route -> CustomTopBar(title = "Посты")
+            NavigationItem.AddContent.route -> CustomTopBar(title = "Добавить")
+            NavigationItem.Notification.route -> CustomTopBar(title = "Уведомления")
+            NavigationItem.Profile.route -> CustomTopBar(title = "Профиль")
+            NavigationItem.Login.route -> CustomTopBar(title = "Авторизация")
             else -> {}
         }
     }

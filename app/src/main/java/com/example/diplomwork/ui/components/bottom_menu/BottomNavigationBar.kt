@@ -16,22 +16,31 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import com.example.diplomwork.R
 import com.example.diplomwork.system_settings.SystemInsetHeight
+import com.example.diplomwork.ui.navigation.Screen
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 import com.example.diplomwork.ui.theme.Dimens.BottomMenuHeight
 
+data class BottomNavItem(
+    val route: String,
+    val icon: Int,
+    val label: String,
+    val isAddButton: Boolean = false
+)
+
+
 @Composable
-fun BottomMenu(
+fun BottomNavigationBar(
     currentRoute: String,
     onNavigate: (String) -> Unit,
     onAddClicked: () -> Unit
 ) {
 
     val items = listOf(
-        BottomNavItem("home_screen", R.drawable.ic_home, "Home"),
-        BottomNavItem("posts_screen", R.drawable.ic_picture, "Posts"),
-        BottomNavItem("add_screen", R.drawable.ic_add, "Add", isAddButton = true),
-        BottomNavItem("notice_screen", R.drawable.ic_bell, "Notice"),
-        BottomNavItem("profile_screen", R.drawable.ic_user, "Profile")
+        BottomNavItem(Screen.HOME.name, R.drawable.ic_home, "Home"),
+        BottomNavItem(Screen.POSTS.name, R.drawable.ic_picture, "Posts"),
+        BottomNavItem(Screen.ADD_CONTENT.name, R.drawable.ic_add, "Add", isAddButton = true),
+        BottomNavItem(Screen.NOTIFICATION.name, R.drawable.ic_bell, "Notice"),
+        BottomNavItem(Screen.PROFILE.name, R.drawable.ic_user, "Profile")
     )
 
     NavigationBar(
@@ -81,12 +90,6 @@ fun BottomMenu(
 }
 
 
-data class BottomNavItem(
-    val route: String,
-    val icon: Int,
-    val label: String,
-    val isAddButton: Boolean = false
-)
 
 
 
