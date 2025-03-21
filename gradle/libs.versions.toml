@@ -1,23 +1,28 @@
 [versions]
 agp = "8.8.2"
+bucket4jCore = "7.6.0"
+caffeine = "3.1.8"
+converterGson = "2.11.0"
 hiltAndroid = "2.51.1"
 hiltNavigationCompose = "1.2.0"
+httpmime = "4.5.14"
+jjwtJackson = "0.11.5"
 kotlin = "2.1.10"
 coreKtx = "1.15.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
-espressoCore = "3.6.1"
 kotlinxMetadataJvm = "0.6.2"
 lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.10.1"
 composeBom = "2025.03.00"
+lombokVersion = "1.18.36"
 navigationCompose = "2.8.9"
 coil-compose = "2.7.0"
 compose-foundation = "1.7.8"
 material = "1.12.0"
+okhttp = "4.12.0"
 retrofit = "2.11.0"
-volley = "1.2.1"
-accompanist = "0.36.0"
+springBootStarter = "3.4.1"
 uiTestAndroid = "1.7.8"
 viewModel = "2.8.7"
 loggingInterceptor = "4.9.0"
@@ -32,11 +37,18 @@ loggingInterceptor = "4.9.0"
 accompanist-systemuicontroller = "com.google.accompanist:accompanist-systemuicontroller:0.36.0"
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+bucket4j-core = { module = "com.github.vladimir-bukhtoyarov:bucket4j-core", version.ref = "bucket4jCore" }
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
+converter-gson-v290 = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hiltAndroid" }
+httpclient = { module = "org.apache.httpcomponents:httpclient", version.ref = "httpmime" }
+httpmime = { module = "org.apache.httpcomponents:httpmime", version.ref = "httpmime" }
+jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwtJackson" }
+jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwtJackson" }
+jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwtJackson" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
-androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
@@ -51,14 +63,21 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 io-coil-kt = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil-compose" }
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "compose-foundation" }
 android-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 kotlinx-metadata-jvm = { module = "org.jetbrains.kotlinx:kotlinx-metadata-jvm", version.ref = "kotlinxMetadataJvm" }
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+postgresql = { module = "org.postgresql:postgresql" }
+projectlombok-lombok = { module = "org.projectlombok:lombok", version.ref = "lombokVersion" }
+spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter", version.ref = "springBootStarter" }
+spring-boot-starter-cache = { module = "org.springframework.boot:spring-boot-starter-cache" }
 spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
+spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
+spring-security-test = { module = "org.springframework.security:spring-security-test" }
 squareup-retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 squareup-converter = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
-volley = { group = "com.android.volley", name = "volley", version.ref = "volley" }
-accompanist-pager = { group = "com.google.accompanist", name = "accompanist-pager", version.ref = "accompanist" }
-accompanist-pager-indicators = { group = "com.google.accompanist", name = "accompanist-pager-indicators", version.ref = "accompanist" }
 androidx-ui-test-android = { group = "androidx.compose.ui", name = "ui-test-android", version.ref = "uiTestAndroid" }
 androidx-lifecycle-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "viewModel" }
 logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "loggingInterceptor" }
