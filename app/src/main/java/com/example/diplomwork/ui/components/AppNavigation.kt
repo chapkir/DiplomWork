@@ -18,7 +18,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.ui.components.bottom_menu.BottomMenu
-import com.example.diplomwork.ui.components.top_bar.getTopBarForScreen
+import com.example.diplomwork.ui.components.top_bar.GetTopBars
 import com.example.diplomwork.ui.screens.add_picture_screen.OpenGalleryAndSavePicture
 import com.example.diplomwork.ui.screens.home_screen.HomeScreen
 import com.example.diplomwork.ui.screens.picture_detail_screen.PictureDetailScreen
@@ -34,7 +34,7 @@ fun AppNavigation(navController: NavHostController) {
 
     val hiddenScreens = listOf("picture_detail", "login_screen", "registration_screen")
     val showBottomBar = currentRoute != null && hiddenScreens.none { currentRoute.startsWith(it)}
-    val topBar = getTopBarForScreen(currentRoute)
+    val topBar = GetTopBars(currentRoute)
 
     val isDialogOpen = remember { mutableStateOf(false) }
     val openDialog = { isDialogOpen.value = true }
@@ -42,7 +42,7 @@ fun AppNavigation(navController: NavHostController) {
     var shouldRefresh by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { topBar() },
+        topBar = { GetTopBars(currentRoute) },
         bottomBar = {
             if (showBottomBar) BottomMenu(
                 currentRoute = currentRoute ?: "",
