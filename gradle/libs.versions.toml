@@ -1,10 +1,13 @@
 [versions]
 agp = "8.8.2"
+hiltAndroid = "2.51.1"
+hiltNavigationCompose = "1.2.0"
 kotlin = "2.1.10"
 coreKtx = "1.15.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
+kotlinxMetadataJvm = "0.6.2"
 lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.10.1"
 composeBom = "2025.03.00"
@@ -28,6 +31,9 @@ loggingInterceptor = "4.9.0"
 [libraries]
 accompanist-systemuicontroller = "com.google.accompanist:accompanist-systemuicontroller:0.36.0"
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }
+hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hiltAndroid" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -45,6 +51,9 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 io-coil-kt = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil-compose" }
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "compose-foundation" }
 android-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+kotlinx-metadata-jvm = { module = "org.jetbrains.kotlinx:kotlinx-metadata-jvm", version.ref = "kotlinxMetadataJvm" }
+spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
+spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
 squareup-retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 squareup-converter = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
 volley = { group = "com.android.volley", name = "volley", version.ref = "volley" }

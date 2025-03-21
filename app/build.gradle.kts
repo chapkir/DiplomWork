@@ -67,15 +67,16 @@ dependencies {
     implementation(libs.androidx.ui.test.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
+    //androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
-    implementation ("androidx.hilt:hilt-navigation-compose:1.1.0")
-    implementation("com.google.dagger:hilt-android:2.50") // Hilt
-    ksp("com.google.dagger:hilt-android-compiler:2.50")
+    implementation (libs.androidx.hilt.navigation.compose)
+    implementation(libs.hilt.android) // Hilt
+    ksp(libs.hilt.android.compiler)
+    implementation(libs.kotlinx.metadata.jvm)
 
     implementation(libs.accompanist.systemuicontroller)
     implementation(libs.io.coil.kt)
