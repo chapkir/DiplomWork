@@ -4,13 +4,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -33,7 +35,6 @@ import androidx.compose.ui.unit.sp
 import com.example.diplomwork.R
 import com.example.diplomwork.ui.navigation.NavigationItem
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
-import com.example.diplomwork.ui.theme.Dimens.TopBarHeight
 
 @Composable
 fun GetTopBars(currentRoute: String?) {
@@ -80,14 +81,13 @@ fun CustomTopBar(
     contentDescription: String = "",
     onIconClick: () -> Unit = {}
 ) {
+    val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(ColorForBottomMenu)
-            //.padding(top = SystemInsetHeight(WindowInsetsCompat.Type.statusBars()).value)
-            .height(TopBarHeight),
-        verticalAlignment = Alignment.Bottom,
-        horizontalArrangement = Arrangement.Center
+            .padding(top = statusBarHeight),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != 0) Spacer(Modifier.weight(2f))
         else Spacer(Modifier.weight(1f))
@@ -97,7 +97,7 @@ fun CustomTopBar(
             fontWeight = FontWeight.Bold,
             color = Color.White,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(bottom = 11.dp)
+            modifier = Modifier.padding(top = 11.dp, bottom = 11.dp)
         )
         Spacer(Modifier.weight(1f))
         if (icon != 0) {
@@ -106,7 +106,7 @@ fun CustomTopBar(
                 Icon(
                     painter = painterResource(id = icon),
                     contentDescription = contentDescription,
-                    modifier = Modifier.size(15.dp),
+                    modifier = Modifier.size(17.dp),
                     tint = Color.White
                 )
             }
@@ -120,34 +120,47 @@ fun SearchBar(
     onSearchQueryChange: (String) -> Unit,
     onCloseSearch: () -> Unit
 ) {
+    val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(ColorForBottomMenu)
-            .padding(10.dp)
-            .height(TopBarHeight + 10.dp),
-        verticalAlignment = Alignment.Bottom,
-        horizontalArrangement = Arrangement.Center
+            .padding(top = statusBarHeight + 8.dp, bottom = 9.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         IconButton(onClick = onCloseSearch) {
             Icon(
-                imageVector = Icons.Default.ArrowBack,
+                painter = painterResource(R.drawable.ic_arrow_left),
                 contentDescription = "Back",
-                tint = Color.White
+                tint = Color.White,
+                modifier = Modifier.size(29.dp)
             )
         }
         TextField(
             value = searchQuery,
             onValueChange = onSearchQueryChange,
-            modifier = Modifier.height(50.dp),
+            modifier = Modifier.height(51.dp).width(251.dp),
             placeholder = { Text("Поиск", color = Color.Gray, fontSize = 15.sp) },
             singleLine = true,
             shape = RoundedCornerShape(10.dp),
             colors = TextFieldDefaults.colors(
                 focusedTextColor = Color.Black,
-                unfocusedTextColor = Color.Gray
+                unfocusedTextColor = Color.Gray,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                errorIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent
             )
         )
+        IconButton(onClick = {}) {
+            Icon(
+                painter = painterResource(R.drawable.ic_search),
+                contentDescription = "Search",
+                tint = Color.White,
+                modifier = Modifier.size(17.dp),
+            )
+        }
     }
 }
 
