@@ -23,7 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.network.ApiClient
-import com.example.diplomwork.ui.components.LoadingSpinner
+import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 
 @Composable
@@ -66,7 +66,7 @@ fun ContentGrid(
     ) {
         when {
             isLoading -> {
-                LoadingSpinner()
+                LoadingSpinnerForScreen()
             }
 
             error != null -> {

@@ -12,16 +12,36 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun LoadingSpinner() {
+fun LoadingSpinnerForScreen(
+    indicatorColor: Color = Color.Red,
+    indicatorSize: Int = 55
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .wrapContentSize(Alignment.Center)
     ) {
         CircularProgressIndicator(
-            color = Color.Red,
-            strokeWidth = 6.dp,
-            modifier = Modifier.size(100.dp)
+            color = indicatorColor,
+            strokeWidth = 5.dp,
+            modifier = Modifier.size(indicatorSize.dp)
+        )
+    }
+}
+
+@Composable
+fun LoadingSpinnerForElement(
+    indicatorColor: Color = Color.White,
+    indicatorSize: Int = 20
+) {
+    Box(
+        modifier = Modifier
+            .wrapContentSize(Alignment.Center)
+    ) {
+        CircularProgressIndicator(
+            color = indicatorColor,
+            strokeWidth = 4.dp,
+            modifier = Modifier.size(indicatorSize.dp)
         )
     }
 }

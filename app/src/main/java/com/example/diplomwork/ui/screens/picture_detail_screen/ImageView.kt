@@ -27,7 +27,7 @@ import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
 import com.example.diplomwork.network.ApiClient
-import com.example.diplomwork.ui.components.LoadingSpinner
+import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 
 @Composable
 fun ImageView(imageRes: String, aspectRatio: Float) {
@@ -153,7 +153,7 @@ fun ImageView(imageRes: String, aspectRatio: Float) {
 
             when {
                 isLoading -> {
-                    LoadingSpinner()
+                    LoadingSpinnerForScreen()
                 }
 
                 isError -> {

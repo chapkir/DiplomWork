@@ -56,7 +56,7 @@ import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.model.LoginRequest
 import com.example.diplomwork.model.RegisterRequest
 import com.example.diplomwork.network.ApiClient
-import com.example.diplomwork.ui.components.LoadingSpinner
+import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 import kotlinx.coroutines.launch
 
@@ -196,7 +196,7 @@ fun RegisterScreen(onCompleteRegistration: () -> Unit) {
                 )
             ) {
                 if (isLoading && step == 2) {
-                    LoadingSpinner()
+                    LoadingSpinnerForElement()
                 } else {
                     Text(
                         text = if (step < 2) "Далее" else "Завершить"

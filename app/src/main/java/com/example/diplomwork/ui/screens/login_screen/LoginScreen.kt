@@ -26,7 +26,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -48,7 +47,7 @@ import com.example.diplomwork.R
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.model.LoginRequest
 import com.example.diplomwork.network.ApiClient
-import com.example.diplomwork.ui.components.LoadingSpinner
+import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 import kotlinx.coroutines.launch
 
@@ -197,7 +196,7 @@ fun LoginScreen(
             enabled = !isLoading && username.isNotBlank() && password.isNotBlank()
         ) {
             if (isLoading) {
-                LoadingSpinner()
+                LoadingSpinnerForScreen()
             } else {
                 Text(
                     text = "Войти",

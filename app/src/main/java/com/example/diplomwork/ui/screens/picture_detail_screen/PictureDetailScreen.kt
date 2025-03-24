@@ -33,7 +33,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.diplomwork.R
 import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.system_settings.systemInsetHeight
-import com.example.diplomwork.ui.components.LoadingSpinner
+import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.theme.ColorForArrowBack
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 import com.example.diplomwork.viewmodel.PictureDetailScreenViewModel
@@ -63,7 +63,7 @@ fun PictureDetailScreen(
     ) {
         if (isLoading) {
             item {
-                LoadingSpinner()
+                LoadingSpinnerForScreen()
             }
         } else {
             item {

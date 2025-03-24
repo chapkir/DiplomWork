@@ -55,7 +55,7 @@ import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.model.ProfileResponse
 import com.example.diplomwork.network.ApiClient
-import com.example.diplomwork.ui.components.LoadingSpinner
+import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
@@ -156,7 +156,7 @@ fun ProfileScreen(
     ) {
         when {
             isLoading -> {
-                LoadingSpinner()
+                LoadingSpinnerForScreen()
             }
 
             error != null -> {
