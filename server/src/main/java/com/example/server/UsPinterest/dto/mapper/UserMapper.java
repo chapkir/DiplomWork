@@ -6,6 +6,7 @@ import com.example.server.UsPinterest.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import com.example.server.UsPinterest.service.YandexDiskService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -18,6 +19,9 @@ public class UserMapper {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private YandexDiskService yandexDiskService;
 
     /**
      * Преобразует User в объект ProfileResponse
@@ -35,7 +39,21 @@ public class UserMapper {
         response.setUsername(user.getUsername());
         response.setEmail(user.getEmail());
         response.setBio(user.getBio());
-        response.setProfileImageUrl(user.getProfileImageUrl());
+
+        // Обновляем ссылку на изображение профиля, получая прямую ссылку если возможно
+        String profileImageUrl = user.getProfileImageUrl();
+        if (profileImageUrl != null && (profileImageUrl.contains("yadi.sk") || profileImageUrl.contains("disk.yandex.ru"))) {
+            try {
+                String directUrl = yandexDiskService.updateImageUrl(profileImageUrl);
+                response.setProfileImageUrl(directUrl);
+            } catch (Exception e) {
+                // В случае ошибки используем оригинальный URL
+                response.setProfileImageUrl(profileImageUrl);
+            }
+        } else {
+            response.setProfileImageUrl(profileImageUrl);
+        }
+
         response.setRegistrationDate(user.getRegistrationDate());
 
         // По умолчанию, пины не загружаем в маппере,

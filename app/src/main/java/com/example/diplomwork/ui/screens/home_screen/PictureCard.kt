@@ -145,18 +145,25 @@ fun PictureCard(
  * используя прокси для Яндекс.Диска
  */
 private fun processImageUrl(imageUrl: String): String {
+    val url = if (imageUrl.startsWith("@")) imageUrl.substring(1) else imageUrl
+
     return when {
         // Если URL уже содержит протокол, проверяем, это Яндекс.Диск или нет
-        imageUrl.startsWith("http://") || imageUrl.startsWith("https://") -> {
-            if (isYandexDiskUrl(imageUrl)) {
-                // Используем прокси для Яндекс.Диска
-                "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${android.net.Uri.encode(imageUrl)}"
+        url.startsWith("http://") || url.startsWith("https://") -> {
+            if (isYandexDiskUrl(url)) {
+                // Для коротких ссылок yadi.sk необходимо всегда использовать прокси
+                if (url.contains("yadi.sk")) {
+                    "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${android.net.Uri.encode(url)}&direct_access=true"
+                } else {
+                    // Для других типов ссылок Яндекс Диска
+                    "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${android.net.Uri.encode(url)}"
+                }
             } else {
-                imageUrl
+                url
             }
         }
         // Если это относительный путь, добавляем базовый URL
-        else -> "${ApiClient.getBaseUrl()}$imageUrl"
+        else -> "${ApiClient.getBaseUrl()}$url"
     }
 }
 
@@ -164,27 +171,46 @@ private fun processImageUrl(imageUrl: String): String {
  * Принудительно проксирует URL через сервер
  */
 private fun forceProxyImageUrl(imageUrl: String): String {
-    val baseUrl = if (imageUrl.startsWith("http")) {
-        imageUrl
+    val url = if (imageUrl.startsWith("@")) imageUrl.substring(1) else imageUrl
+
+    val baseUrl = if (url.startsWith("http")) {
+        url
     } else {
-        "${ApiClient.getBaseUrl()}$imageUrl"
+        "${ApiClient.getBaseUrl()}$url"
     }
-    return "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${android.net.Uri.encode(baseUrl)}&cache_bust=${System.currentTimeMillis()}"
+
+    // Для yadi.sk применяем специальный флаг для прямого доступа
+    val extraParams = if (url.contains("yadi.sk")) {
+        "&direct_access=true&cache_bust=${System.currentTimeMillis()}"
+    } else {
+        "&cache_bust=${System.currentTimeMillis()}"
+    }
+
+    return "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${android.net.Uri.encode(baseUrl)}$extraParams"
 }
 
 /**
  * Пробует альтернативный URL в зависимости от номера попытки
  */
 private fun tryAlternativeUrl(imageUrl: String, attemptNumber: Int): String {
+    val url = if (imageUrl.startsWith("@")) imageUrl.substring(1) else imageUrl
+
     return when (attemptNumber) {
-        1 -> forceProxyImageUrl(imageUrl) // Первая попытка - через прокси
+        1 -> forceProxyImageUrl(url) // Первая попытка - через прокси с особыми параметрами
         else -> {
-            // Вторая попытка - прямая ссылка, если это не Яндекс Диск
-            if (!isYandexDiskUrl(imageUrl) && imageUrl.startsWith("http")) {
-                imageUrl
+            // Вторая попытка
+            if (isYandexDiskUrl(url)) {
+                // Для Яндекс Диска используем еще один вариант прокси
+                val extraParams = if (url.contains("yadi.sk")) {
+                    "&force_direct=true&no_redirect=false&cache_bust=${System.currentTimeMillis() + 1000}"
+                } else {
+                    "&force_update=true&cache_bust=${System.currentTimeMillis() + 1000}"
+                }
+                "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${android.net.Uri.encode(url)}$extraParams"
+            } else if (url.startsWith("http")) {
+                url // Пробуем прямую ссылку для не-Яндекс URL
             } else {
-                // Иначе снова через прокси, но с другим параметром cache_bust
-                "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${android.net.Uri.encode(imageUrl)}&cache_bust=${System.currentTimeMillis() + attemptNumber}"
+                "${ApiClient.getBaseUrl()}$url" // Используем относительный URL
             }
         }
     }

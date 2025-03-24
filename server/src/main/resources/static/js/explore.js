@@ -1,30 +1,44 @@
 // Global variables
 let pins = [];
 let currentPage = 0;
+let currentSize = 20;
 let isLoading = false;
 let hasMorePins = true;
 let searchQuery = '';
 let selectedCategory = '';
-let selectedSort = 'newest';
+let sortBy = 'createdAt';
+let sortDirection = 'desc';
 let currentUser = null;
 const API_BASE_URL = window.location.origin;
+
+// DOM elements
+const pinsGrid = document.getElementById('pinsGrid');
+const searchInput = document.getElementById('searchInput');
+const searchButton = document.getElementById('searchButton');
+const categorySelect = document.getElementById('categorySelect');
+const sortSelect = document.getElementById('sortSelect');
+const loadMoreBtn = document.getElementById('loadMoreBtn');
+const exploreTitle = document.getElementById('exploreTitle');
+
+// Authorization buttons
+const loginBtn = document.getElementById('loginBtn');
+const registerBtn = document.getElementById('registerBtn');
+const profileBtn = document.getElementById('profileBtn');
+const logoutBtn = document.getElementById('logoutBtn');
 
 document.addEventListener('DOMContentLoaded', function() {
     initApp();
 });
 
 function initApp() {
+    // Check authentication status
+    checkAuth();
+
     // Check URL parameters
     checkUrlParams();
 
-    // Update page title based on search/category
-    updateTitle();
-
     // Setup event listeners
     setupEventListeners();
-
-    // Check authentication status
-    checkAuth();
 
     // Load categories for filter
     loadCategories();
@@ -34,71 +48,57 @@ function initApp() {
 
     // Setup infinite scroll
     setupInfiniteScroll();
+
+    // Update page title based on search/category
+    updateTitle();
 }
 
 function setupEventListeners() {
-    // Search form
-    const searchForm = document.getElementById('searchForm');
-    if (searchForm) {
-        searchForm.addEventListener('submit', function(e) {
-            e.preventDefault();
+    // Authorization button listeners
+    loginBtn.addEventListener('click', () => window.location.href = '/?login=true');
+    registerBtn.addEventListener('click', () => window.location.href = '/?register=true');
+    profileBtn.addEventListener('click', () => window.location.href = '/profile.html');
+    logoutBtn.addEventListener('click', logout);
+
+    // Search handler
+    searchButton.addEventListener('click', handleSearch);
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
             handleSearch();
-        });
-    }
+        }
+    });
 
     // Category filter
-    const categorySelect = document.getElementById('categoryFilter');
     if (categorySelect) {
-        categorySelect.addEventListener('change', function() {
-            selectedCategory = this.value;
+        categorySelect.addEventListener('change', () => {
+            selectedCategory = categorySelect.value;
             resetAndReload();
         });
     }
 
     // Sort filter
-    const sortSelect = document.getElementById('sortFilter');
     if (sortSelect) {
-        sortSelect.addEventListener('change', function() {
-            selectedSort = this.value;
+        sortSelect.addEventListener('change', () => {
+            const [newSortBy, newSortDirection] = sortSelect.value.split(':');
+            sortBy = newSortBy;
+            sortDirection = newSortDirection;
             resetAndReload();
         });
     }
 
-    // Login/Register buttons
-    const loginBtn = document.getElementById('loginBtn');
-    if (loginBtn) {
-        loginBtn.addEventListener('click', function() {
-            window.location.href = '/?login=true';
-        });
-    }
-
-    const registerBtn = document.getElementById('registerBtn');
-    if (registerBtn) {
-        registerBtn.addEventListener('click', function() {
-            window.location.href = '/?register=true';
-        });
-    }
-
-    // Logout button
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', logout);
+    // Load more pins
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', loadMorePins);
     }
 }
 
 async function checkAuth() {
     try {
-        const token = localStorage.getItem('token');
-
-        if (!token) {
-            updateUIForGuest();
-            return;
-        }
-
-        const response = await fetch(`${API_BASE_URL}/api/auth/check`, {
+        const response = await fetch('/api/auth/check', {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${token}`
+                'Content-Type': 'application/json',
+                'Authorization': localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : '',
             }
         });
 
@@ -107,32 +107,25 @@ async function checkAuth() {
             currentUser = data;
             updateUIForUser(data);
         } else {
-            // Token is invalid or expired
-            localStorage.removeItem('token');
             updateUIForGuest();
         }
     } catch (error) {
-        console.error('Error checking authentication:', error);
+        console.error('Ошибка проверки авторизации:', error);
         updateUIForGuest();
     }
 }
 
 function updateAuthUI(isAuthenticated) {
-    const loginBtn = document.getElementById('loginBtn');
-    const registerBtn = document.getElementById('registerBtn');
-    const profileBtn = document.getElementById('profileBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-
     if (isAuthenticated) {
-        if (loginBtn) loginBtn.style.display = 'none';
-        if (registerBtn) registerBtn.style.display = 'none';
-        if (profileBtn) profileBtn.style.display = 'inline-block';
-        if (logoutBtn) logoutBtn.style.display = 'inline-block';
+        loginBtn.style.display = 'none';
+        registerBtn.style.display = 'none';
+        profileBtn.style.display = 'inline-flex';
+        logoutBtn.style.display = 'inline-flex';
     } else {
-        if (loginBtn) loginBtn.style.display = 'inline-block';
-        if (registerBtn) registerBtn.style.display = 'inline-block';
-        if (profileBtn) profileBtn.style.display = 'none';
-        if (logoutBtn) logoutBtn.style.display = 'none';
+        loginBtn.style.display = 'inline-flex';
+        registerBtn.style.display = 'inline-flex';
+        profileBtn.style.display = 'none';
+        logoutBtn.style.display = 'none';
     }
 }
 
@@ -142,9 +135,8 @@ function updateUIForGuest() {
 
 function updateUIForUser(user) {
     updateAuthUI(true);
-    const profileBtn = document.getElementById('profileBtn');
     if (profileBtn) {
-        profileBtn.href = `/profile.html?username=${user.username}`;
+        profileBtn.innerHTML = `<i class="fas fa-user"></i> ${user.username}`;
     }
 }
 
@@ -156,7 +148,6 @@ function loadCategories() {
 }
 
 function populateCategorySelect(categories) {
-    const categorySelect = document.getElementById('categoryFilter');
     if (!categorySelect) return;
 
     categorySelect.innerHTML = '<option value="">Все категории</option>';
@@ -170,47 +161,57 @@ function populateCategorySelect(categories) {
 }
 
 function checkUrlParams() {
-    const urlParams = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(window.location.search);
 
     // Check for search query
-    if (urlParams.has('search')) {
-        searchQuery = urlParams.get('search');
-        const searchInput = document.getElementById('searchInput');
+    if (params.has('query')) {
+        searchQuery = params.get('query');
         if (searchInput) {
             searchInput.value = searchQuery;
         }
     }
 
     // Check for category
-    if (urlParams.has('category')) {
-        selectedCategory = urlParams.get('category');
-        const categorySelect = document.getElementById('categoryFilter');
+    if (params.has('category')) {
+        selectedCategory = params.get('category');
         if (categorySelect) {
             categorySelect.value = selectedCategory;
         }
     }
 
     // Check for sort
-    if (urlParams.has('sort')) {
-        selectedSort = urlParams.get('sort');
-        const sortSelect = document.getElementById('sortFilter');
-        if (sortSelect) {
-            sortSelect.value = selectedSort;
-        }
+    if (params.has('sortBy')) {
+        sortBy = params.get('sortBy');
+    }
+
+    if (params.has('sortDirection')) {
+        sortDirection = params.get('sortDirection');
+    }
+
+    // Set sort value
+    if (sortSelect && sortBy && sortDirection) {
+        const sortValue = `${sortBy}:${sortDirection}`;
+        sortSelect.value = sortValue;
     }
 }
 
 function updateTitle() {
-    const titleElement = document.querySelector('.explore-header h1');
-    if (!titleElement) return;
+    if (!exploreTitle) return;
 
     if (searchQuery) {
-        titleElement.textContent = `Результаты поиска: "${searchQuery}"`;
+        exploreTitle.textContent = `Результаты поиска: "${searchQuery}"`;
     } else if (selectedCategory) {
-        const categoryName = document.querySelector(`#categoryFilter option[value="${selectedCategory}"]`)?.textContent || 'Категория';
-        titleElement.textContent = `Обзор: ${categoryName}`;
+        // Here you can get the category name by ID
+        const categories = getMockCategories();
+        const category = categories.find(c => c.id.toString() === selectedCategory.toString());
+
+        if (category) {
+            exploreTitle.textContent = category.name;
+        } else {
+            exploreTitle.textContent = 'Обзор пинов';
+        }
     } else {
-        titleElement.textContent = 'Обзор всех изображений';
+        exploreTitle.textContent = 'Обзор пинов';
     }
 }
 
@@ -222,71 +223,81 @@ function setupInfiniteScroll() {
         const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
         const clientHeight = document.documentElement.clientHeight;
 
-        if (scrollTop + clientHeight >= scrollHeight - 200) {
+        if (scrollTop + clientHeight >= scrollHeight - 300) {
             loadMorePins();
         }
     });
 }
 
 async function loadPins() {
-    if (isLoading) return;
+    if (isLoading || !hasMorePins) return;
 
     isLoading = true;
     showLoading();
 
     try {
-        let url = `${API_BASE_URL}/api/pins?page=${currentPage}&size=20`;
+        // Use search API instead of mock data
+        const searchEndpoint = searchQuery
+            ? `/api/search/pins?query=${encodeURIComponent(searchQuery)}&page=${currentPage}&size=${currentSize}&sortBy=${sortBy}&sortDirection=${sortDirection}`
+            : `/api/search/pins?page=${currentPage}&size=${currentSize}&sortBy=${sortBy}&sortDirection=${sortDirection}`;
 
-        if (searchQuery) {
-            url += `&search=${encodeURIComponent(searchQuery)}`;
-        }
-
-        if (selectedCategory) {
-            url += `&category=${encodeURIComponent(selectedCategory)}`;
-        }
-
-        if (selectedSort) {
-            url += `&sort=${encodeURIComponent(selectedSort)}`;
-        }
-
-        const token = localStorage.getItem('token');
-        const headers = {
-            'Content-Type': 'application/json'
-        };
-
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        const response = await fetch(url, {
+        const response = await fetch(searchEndpoint, {
             method: 'GET',
-            headers: headers
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : '',
+            }
         });
 
         if (!response.ok) {
-            throw new Error('Failed to fetch pins');
+            throw new Error('Не удалось загрузить пины');
         }
 
         const data = await response.json();
 
-        if (data.content && Array.isArray(data.content)) {
+        // Check API response structure
+        const pinsData = data.data || data;
+
+        if (pinsData.content && Array.isArray(pinsData.content)) {
+            // If first load, clear grid
             if (currentPage === 0) {
-                pins = data.content;
-            } else {
-                pins = [...pins, ...data.content];
+                pinsGrid.innerHTML = '';
             }
 
-            hasMorePins = !data.last;
-            currentPage++;
+            // Render pins
+            renderPins(pinsData.content);
 
-            renderPins();
+            // Check for more pages
+            hasMorePins = !pinsData.last;
+
+            // Update load more button state
+            if (loadMoreBtn) {
+                loadMoreBtn.style.display = hasMorePins ? 'block' : 'none';
+            }
+
+            // Check for empty result
+            if (pinsData.content.length === 0 && currentPage === 0) {
+                pinsGrid.innerHTML = `
+                    <div class="no-results">
+                        <i class="fas fa-search"></i>
+                        <h3>Нет результатов</h3>
+                        <p>По запросу "${searchQuery}" ничего не найдено</p>
+                    </div>
+                `;
+                if (loadMoreBtn) {
+                    loadMoreBtn.style.display = 'none';
+                }
+            }
+
+            // Increase page number for next load
+            currentPage++;
         } else {
-            console.error('Invalid response format:', data);
-            showMessage('Произошла ошибка при загрузке данных', 'error');
+            console.error('Неверный формат данных:', pinsData);
+            showMessage('Неверный формат данных от сервера', 'error');
         }
     } catch (error) {
-        console.error('Error loading pins:', error);
-        showMessage('Не удалось загрузить изображения. Пожалуйста, попробуйте позже.', 'error');
+        console.error('Ошибка загрузки пинов:', error);
+        showMessage('Не удалось загрузить пины', 'error');
     } finally {
         isLoading = false;
         hideLoading();
@@ -297,218 +308,211 @@ function loadMorePins() {
     loadPins();
 }
 
-function renderPins() {
-    const imageGrid = document.querySelector('.image-grid');
-    if (!imageGrid) return;
+function renderPins(pins) {
+    if (!pinsGrid) return;
 
-    if (currentPage === 1) {
-        imageGrid.innerHTML = '';
-    }
-
-    if (pins.length === 0) {
-        imageGrid.innerHTML = `
-            <div class="no-results">
-                <i class="fas fa-search"></i>
-                <h3>Ничего не найдено</h3>
-                <p>Попробуйте изменить параметры поиска или категорию</p>
-            </div>
-        `;
-        return;
-    }
-
-    pins.forEach(pin => {
+    pins.forEach((pin, index) => {
         const pinElement = document.createElement('div');
         pinElement.className = 'image-card';
-        pinElement.setAttribute('data-id', pin.id);
+        pinElement.style.animationDelay = `${(index % 10) * 0.1}s`;
 
+        const imageUrl = pin.imageUrl || 'img/placeholder.svg';
+        const description = pin.description || 'Без описания';
+        const username = pin.username || 'Неизвестный автор';
+        const userProfileImage = pin.userProfileImageUrl || '';
+
+        // Create HTML structure for pin card
         pinElement.innerHTML = `
             <a href="/pin.html?id=${pin.id}">
                 <div class="image-container">
-                    <img src="${pin.imageUrl}" alt="${pin.description || 'Изображение'}">
+                    <img src="${imageUrl}" alt="${description}" onerror="this.src='img/placeholder.svg';">
+                    <div class="image-overlay">
+                        <div class="image-actions">
+                            <button class="like-btn" data-pin-id="${pin.id}" title="Нравится">
+                                <i class="${pin.isLikedByCurrentUser ? 'fas' : 'far'} fa-heart"></i>
+                            </button>
+                            <button class="save-btn" data-pin-id="${pin.id}" title="Сохранить">
+                                <i class="far fa-bookmark"></i>
+                            </button>
+                            <button class="share-btn" data-pin-id="${pin.id}" title="Поделиться">
+                                <i class="fas fa-share-alt"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div class="image-info">
-                    <h3>${pin.description || 'Без описания'}</h3>
-                    <p><i class="fas fa-heart"></i> ${pin.likesCount || 0}</p>
-                </div>
-                <div class="image-overlay">
-                    <div class="image-actions">
-                        <button class="like-btn" data-id="${pin.id}" title="Нравится">
-                            <i class="fas ${pin.isLikedByCurrentUser ? 'fa-heart' : 'fa-heart-o'}"></i>
-                        </button>
-                        <button class="save-btn" data-id="${pin.id}" title="Сохранить">
-                            <i class="fas fa-bookmark"></i>
-                        </button>
-                    </div>
+                    <h3 title="${description}">${description.length > 30 ? description.substring(0, 30) + '...' : description}</h3>
+                    <p>
+                        ${userProfileImage ? `<img src="${userProfileImage}" alt="${username}" class="user-avatar">` : ''}
+                        <span>${username}</span>
+                    </p>
                 </div>
             </a>
         `;
 
-        imageGrid.appendChild(pinElement);
-
-        // Add event listeners for like and save buttons
+        // Add event listeners
         const likeBtn = pinElement.querySelector('.like-btn');
-        if (likeBtn) {
-            likeBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                likePin(pin.id);
-            });
-        }
-
         const saveBtn = pinElement.querySelector('.save-btn');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                savePin(pin.id);
-            });
-        }
+        const shareBtn = pinElement.querySelector('.share-btn');
+
+        likeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            likePin(pin.id, likeBtn);
+        });
+
+        saveBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            savePin(pin.id);
+        });
+
+        shareBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // Implementation of sharing
+            const shareUrl = `${window.location.origin}/pin.html?id=${pin.id}`;
+            navigator.clipboard.writeText(shareUrl)
+                .then(() => showMessage('Ссылка скопирована в буфер обмена', 'success'))
+                .catch(() => showMessage('Не удалось скопировать ссылку', 'error'));
+        });
+
+        pinsGrid.appendChild(pinElement);
     });
 }
 
 function handleSearch() {
-    const searchInput = document.getElementById('searchInput');
     if (!searchInput) return;
 
     searchQuery = searchInput.value.trim();
 
-    // Update URL with search parameter
-    const url = new URL(window.location.href);
+    // Update URL with search parameters
+    const url = new URL(window.location);
+
     if (searchQuery) {
-        url.searchParams.set('search', searchQuery);
+        url.searchParams.set('query', searchQuery);
     } else {
-        url.searchParams.delete('search');
+        url.searchParams.delete('query');
     }
+
     window.history.pushState({}, '', url);
 
+    // Reset and reload pins
     resetAndReload();
 }
 
 function resetAndReload() {
     currentPage = 0;
     hasMorePins = true;
-    pins = [];
+    pinsGrid.innerHTML = '';
     updateTitle();
     loadPins();
 }
 
 function savePin(pinId) {
-    const token = localStorage.getItem('token');
-    if (!token) {
-        showMessage('Пожалуйста, войдите в систему, чтобы сохранять изображения', 'warning');
+    // Implementation of saving pin to user collection
+    if (!currentUser) {
+        showMessage('Для сохранения пина необходимо авторизоваться', 'info');
         return;
     }
 
-    // In a real application, you would send a request to save the pin
-    // For now, we'll just show a success message
-    showMessage('Изображение сохранено в вашей коллекции', 'success');
+    // TODO: Add API for saving pin
+    showMessage('Функция сохранения будет доступна в следующем обновлении', 'info');
 }
 
-async function likePin(pinId) {
-    const token = localStorage.getItem('token');
-    if (!token) {
-        showMessage('Пожалуйста, войдите в систему, чтобы ставить лайки', 'warning');
+async function likePin(pinId, button) {
+    if (!currentUser) {
+        showMessage('Для оценки пина необходимо авторизоваться', 'info');
         return;
     }
 
     try {
-        const pin = pins.find(p => p.id === pinId);
-        if (!pin) return;
+        const isLiked = button.querySelector('i').classList.contains('fas');
 
-        const method = pin.isLikedByCurrentUser ? 'DELETE' : 'POST';
-        const url = `${API_BASE_URL}/api/pins/${pinId}/likes`;
+        // Optimistic UI update
+        button.querySelector('i').className = isLiked ? 'far fa-heart' : 'fas fa-heart';
 
-        const response = await fetch(url, {
+        const endpoint = isLiked ? `/api/pins/${pinId}/likes` : `/api/pins/${pinId}/likes`;
+        const method = isLiked ? 'DELETE' : 'POST';
+
+        const response = await fetch(endpoint, {
             method: method,
             headers: {
-                'Authorization': `Bearer ${token}`
+                'Content-Type': 'application/json',
+                'Authorization': localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : '',
             }
         });
 
-        if (response.ok) {
-            // Update pin in local array
-            pin.isLikedByCurrentUser = !pin.isLikedByCurrentUser;
-            pin.likesCount = pin.isLikedByCurrentUser ? (pin.likesCount + 1) : (pin.likesCount - 1);
-
-            // Update UI
-            const likeBtn = document.querySelector(`.like-btn[data-id="${pinId}"] i`);
-            if (likeBtn) {
-                likeBtn.className = `fas ${pin.isLikedByCurrentUser ? 'fa-heart' : 'fa-heart-o'}`;
-            }
-
-            const likesCount = document.querySelector(`.image-card[data-id="${pinId}"] .image-info p`);
-            if (likesCount) {
-                likesCount.innerHTML = `<i class="fas fa-heart"></i> ${pin.likesCount}`;
-            }
-        } else {
-            throw new Error('Failed to update like status');
+        if (!response.ok) {
+            // Rollback optimistic update in case of error
+            button.querySelector('i').className = isLiked ? 'fas fa-heart' : 'far fa-heart';
+            throw new Error('Не удалось выполнить действие');
         }
+
+        showMessage(isLiked ? 'Пин удалён из понравившихся' : 'Пин добавлен в понравившиеся', 'success');
     } catch (error) {
-        console.error('Error liking pin:', error);
-        showMessage('Не удалось обновить статус лайка. Пожалуйста, попробуйте позже.', 'error');
+        console.error('Ошибка при лайке пина:', error);
+        showMessage('Не удалось выполнить действие', 'error');
     }
 }
 
 async function logout() {
-    try {
-        localStorage.removeItem('token');
-        updateUIForGuest();
-        showMessage('Вы успешно вышли из системы', 'success');
-    } catch (error) {
-        console.error('Error during logout:', error);
-        showMessage('Произошла ошибка при выходе из системы', 'error');
-    }
+    localStorage.removeItem('token');
+    currentUser = null;
+    updateUIForGuest();
+    showMessage('Вы вышли из аккаунта', 'success');
 }
 
 function showLoading() {
-    const loadingIndicator = document.querySelector('.loading-indicator');
-    if (loadingIndicator) loadingIndicator.style.display = 'flex';
+    document.body.classList.add('loading');
 }
 
 function hideLoading() {
-    const loadingIndicator = document.querySelector('.loading-indicator');
-    if (loadingIndicator) loadingIndicator.style.display = 'none';
+    document.body.classList.remove('loading');
 }
 
 function showMessage(message, type = 'info') {
     // Remove any existing message
-    const existingMessage = document.querySelector('.message');
+    const existingMessage = document.querySelector('.message-toast');
     if (existingMessage) {
         existingMessage.remove();
     }
 
     // Create message element
-    const messageElement = document.createElement('div');
-    messageElement.className = `message message-${type}`;
-    messageElement.innerHTML = `
+    const messageEl = document.createElement('div');
+    messageEl.className = `message-toast ${type}`;
+    messageEl.innerHTML = `
         <div class="message-content">
-            <i class="fas ${type === 'success' ? 'fa-check-circle' :
-                           type === 'error' ? 'fa-exclamation-circle' :
-                           type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i>
+            <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
             <span>${message}</span>
         </div>
-        <button class="message-close"><i class="fas fa-times"></i></button>
+        <button class="close-btn"><i class="fas fa-times"></i></button>
     `;
 
-    // Add to DOM
-    document.body.appendChild(messageElement);
+    document.body.appendChild(messageEl);
 
-    // Add event listener for close button
-    const closeButton = messageElement.querySelector('.message-close');
-    if (closeButton) {
-        closeButton.addEventListener('click', function() {
-            hideMessage(messageElement);
-        });
-    }
+    // Animation appearance
+    setTimeout(() => {
+        messageEl.style.transform = 'translateY(0)';
+        messageEl.style.opacity = '1';
+    }, 10);
 
     // Auto-hide after 5 seconds
-    setTimeout(() => {
-        hideMessage(messageElement);
+    const timeout = setTimeout(() => {
+        hideMessage(messageEl);
     }, 5000);
+
+    // Close button handler
+    messageEl.querySelector('.close-btn').addEventListener('click', () => {
+        clearTimeout(timeout);
+        hideMessage(messageEl);
+    });
 }
 
 function hideMessage(messageEl) {
-    messageEl.classList.add('message-hiding');
+    messageEl.style.transform = 'translateY(-20px)';
+    messageEl.style.opacity = '0';
+
     setTimeout(() => {
         messageEl.remove();
     }, 300);
@@ -517,13 +521,15 @@ function hideMessage(messageEl) {
 // Mock data for categories (in a real app, this would come from the server)
 function getMockCategories() {
     return [
-        { id: 'nature', name: 'Природа' },
-        { id: 'architecture', name: 'Архитектура' },
-        { id: 'travel', name: 'Путешествия' },
-        { id: 'food', name: 'Еда' },
-        { id: 'art', name: 'Искусство' },
-        { id: 'technology', name: 'Технологии' },
-        { id: 'animals', name: 'Животные' },
-        { id: 'fashion', name: 'Мода' }
+        { id: 1, name: 'Искусство' },
+        { id: 2, name: 'Фотография' },
+        { id: 3, name: 'Дизайн' },
+        { id: 4, name: 'Мода' },
+        { id: 5, name: 'Путешествия' },
+        { id: 6, name: 'Еда' },
+        { id: 7, name: 'Архитектура' },
+        { id: 8, name: 'Природа' },
+        { id: 9, name: 'Технологии' },
+        { id: 10, name: 'Спорт' }
     ];
 }

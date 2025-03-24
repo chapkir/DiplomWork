@@ -32,10 +32,15 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
-import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -266,8 +271,9 @@ public class PinController {
             logger.info("Generated filename: {}", filename);
 
             try {
-                String imageUrl = yandexDiskService.uploadFile(file, filename);
-                logger.info("File uploaded successfully to Yandex.Disk, URL: {}", imageUrl);
+                // Получаем постоянную публичную ссылку на файл
+                String imageUrl = yandexDiskService.uploadFile(file);
+                logger.info("File uploaded successfully to Yandex.Disk, permanent public URL: {}", imageUrl);
 
                 Pin pin = new Pin();
                 pin.setImageUrl(imageUrl);
@@ -295,44 +301,163 @@ public class PinController {
         }
     }
 
-    @GetMapping("/update-image-urls")
-    public ResponseEntity<?> updateAllImageUrls() {
-        logger.info("Starting update of all image URLs");
-
-        List<Pin> pins = pinRepository.findAll();
-        int updatedCount = 0;
-        int failedCount = 0;
-
-        for (Pin pin : pins) {
-            try {
-                String originalUrl = pin.getImageUrl();
-                if (originalUrl != null && !originalUrl.isEmpty()) {
-                    String updatedUrl = yandexDiskService.updateImageUrl(originalUrl);
-
-                    if (!originalUrl.equals(updatedUrl)) {
-                        pin.setImageUrl(updatedUrl);
-                        pinRepository.save(pin);
-                        updatedCount++;
-                        logger.info("Updated image URL for pin {}: {} -> {}", pin.getId(), originalUrl, updatedUrl);
-                    } else {
-                        logger.debug("No update needed for pin {}, URL: {}", pin.getId(), originalUrl);
-                    }
-                }
-            } catch (Exception e) {
-                failedCount++;
-                logger.error("Failed to update image URL for pin {}: {}", pin.getId(), e.getMessage());
-            }
+    @GetMapping("/update-yandex-links")
+    public ResponseEntity<?> updateAllYandexLinks() {
+        try {
+            int updatedCount = yandexDiskService.updateAllYandexDiskLinks(pinRepository);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Обновлено " + updatedCount + " ссылок на изображения на прямые ссылки Яндекс.Диска");
+            response.put("updatedCount", updatedCount);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Ошибка при обновлении ссылок на изображения: {}", e.getMessage(), e);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("error", "Ошибка при обновлении ссылок: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
+    }
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("totalPins", pins.size());
-        result.put("updatedPins", updatedCount);
-        result.put("failedPins", failedCount);
+    /**
+     * Исправляет закодированные амперсанды &amp; в URL
+     */
+    private String fixAmpersands(String url) {
+        if (url == null || url.isEmpty()) {
+            return url;
+        }
+        // Заменяем HTML-кодированные амперсанды на настоящие
+        return url.replace("&amp;", "&");
+    }
 
-        logger.info("Finished updating image URLs. Total: {}, Updated: {}, Failed: {}",
-                pins.size(), updatedCount, failedCount);
+    @GetMapping("/force-update-yandex-links")
+    public ResponseEntity<?> forceUpdateAllYandexLinks() {
+        try {
+            logger.info("Запущено принудительное обновление всех ссылок на прямые ссылки Яндекс.Диска");
+            List<Pin> pins = pinRepository.findAll();
+            int totalCount = pins.size();
+            int updatedCount = 0;
+            int errorCount = 0;
+            int skippedCount = 0;
 
-        return ResponseEntity.ok(result);
+            for (Pin pin : pins) {
+                try {
+                    String originalUrl = pin.getImageUrl();
+                    if (originalUrl == null || originalUrl.isEmpty()) {
+                        logger.debug("Пустая ссылка на изображение для пина {}, пропускаем", pin.getId());
+                        skippedCount++;
+                        continue;
+                    }
+
+                    // Исправляем закодированные амперсанды в URL
+                    originalUrl = fixAmpersands(originalUrl);
+
+                    // Если это уже прямая ссылка Яндекс.Диска, проверяем её
+                    if (originalUrl.contains("downloader.disk.yandex.ru") ||
+                            originalUrl.contains("preview.disk.yandex.ru")) {
+
+                        try {
+                            // Проверяем, не устарела ли ссылка
+                            URL url = new URL(originalUrl);
+                            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                            connection.setRequestMethod("HEAD");
+                            connection.setConnectTimeout(5000);
+                            int responseCode = connection.getResponseCode();
+
+                            if (responseCode >= 200 && responseCode < 400) {
+                                logger.debug("Прямая ссылка для пина {} все еще действительна: {}", pin.getId(), originalUrl);
+                                skippedCount++;
+                                continue;
+                            }
+
+                            logger.info("Прямая ссылка для пина {} устарела (код {}), обновляем", pin.getId(), responseCode);
+                        } catch (Exception e) {
+                            logger.warn("Ошибка при проверке прямой ссылки {}: {}", originalUrl, e.getMessage());
+                        }
+                    }
+
+                    // Извлекаем оригинальную ссылку Яндекс.Диска, если это прокси-ссылка
+                    String yandexUrl = originalUrl;
+                    if (originalUrl.contains("/api/pins/proxy-image") && originalUrl.contains("url=")) {
+                        try {
+                            String encodedOriginalUrl = originalUrl.split("url=")[1];
+                            if (encodedOriginalUrl.contains("&")) {
+                                encodedOriginalUrl = encodedOriginalUrl.split("&")[0];
+                            }
+                            yandexUrl = java.net.URLDecoder.decode(encodedOriginalUrl, StandardCharsets.UTF_8.toString());
+                            logger.info("Извлечена оригинальная ссылка из прокси: {} -> {}", originalUrl, yandexUrl);
+                        } catch (Exception e) {
+                            logger.error("Ошибка при извлечении оригинальной ссылки из прокси {}: {}", originalUrl, e.getMessage());
+                        }
+                    }
+
+                    // Пытаемся получить прямую ссылку
+                    boolean isYandexUrl = yandexUrl.contains("yadi.sk") ||
+                            yandexUrl.contains("disk.yandex.ru/");
+
+                    String directUrl = null;
+                    if (isYandexUrl) {
+                        try {
+                            directUrl = yandexDiskService.getDownloadLink(yandexUrl);
+
+                            // Проверяем, что это действительно прямая ссылка
+                            if (directUrl != null &&
+                                    (directUrl.contains("downloader.disk.yandex.ru") ||
+                                            directUrl.contains("preview.disk.yandex.ru"))) {
+
+                                pin.setImageUrl(directUrl);
+                                pinRepository.save(pin);
+                                logger.info("Обновлена ссылка для пина {}: {} -> {}", pin.getId(), originalUrl, directUrl);
+                                updatedCount++;
+                            } else {
+                                logger.warn("Не удалось получить прямую ссылку для пина {}: {}", pin.getId(), yandexUrl);
+
+                                // Если это не прокси-ссылка, сохраняем хотя бы оригинальную ссылку на Яндекс.Диск
+                                if (!originalUrl.equals(yandexUrl) &&
+                                        (yandexUrl.contains("yadi.sk") || yandexUrl.contains("disk.yandex.ru/"))) {
+                                    pin.setImageUrl(yandexUrl);
+                                    pinRepository.save(pin);
+                                    logger.info("Сохранена оригинальная ссылка Яндекс.Диска вместо прокси: {} -> {}",
+                                            originalUrl, yandexUrl);
+                                    updatedCount++;
+                                } else {
+                                    skippedCount++;
+                                }
+                            }
+                        } catch (Exception e) {
+                            logger.error("Ошибка при получении прямой ссылки для пина {}: {}", pin.getId(), e.getMessage());
+                            errorCount++;
+                        }
+                    } else {
+                        logger.debug("URL для пина {} не является ссылкой на Яндекс.Диск: {}", pin.getId(), yandexUrl);
+                        skippedCount++;
+                    }
+                } catch (Exception e) {
+                    logger.error("Ошибка при обработке пина {}: {}", pin.getId(), e.getMessage());
+                    errorCount++;
+                }
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Принудительное обновление завершено: обновлено " + updatedCount + ", пропущено " +
+                    skippedCount + ", ошибок " + errorCount + " из " + totalCount + " ссылок");
+            response.put("totalPins", totalCount);
+            response.put("updatedCount", updatedCount);
+            response.put("skippedCount", skippedCount);
+            response.put("errorCount", errorCount);
+
+            logger.info("Принудительное обновление ссылок завершено. Всего: {}, Обновлено: {}, Пропущено: {}, Ошибок: {}",
+                    totalCount, updatedCount, skippedCount, errorCount);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Критическая ошибка при принудительном обновлении ссылок: {}", e.getMessage(), e);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("error", "Ошибка при обновлении ссылок: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
     /**
@@ -340,114 +465,76 @@ public class PinController {
      * Решает проблему с CORS при загрузке изображений напрямую с Яндекс Диска
      */
     @GetMapping("/proxy-image")
-    public ResponseEntity<byte[]> proxyImage(@RequestParam("url") String imageUrl) {
+    public ResponseEntity<?> proxyImage(@RequestParam("url") String imageUrl, HttpServletResponse response) {
         try {
-            logger.info("Проксирование изображения: {}", imageUrl);
+            logger.debug("Получен запрос на проксирование изображения: {}", imageUrl);
 
-            // Если это URL с Яндекс Диска, пробуем обновить его, чтобы получить прямую ссылку
-            if (imageUrl.contains("yandex") || imageUrl.contains("disk.") ||
-                    imageUrl.contains("yadi.sk") || imageUrl.contains("/d/")) {
-                try {
-                    String updatedUrl = yandexDiskService.updateImageUrl(imageUrl);
-                    if (!updatedUrl.equals(imageUrl)) {
-                        logger.info("Обновлен URL изображения: {} -> {}", imageUrl, updatedUrl);
-                        imageUrl = updatedUrl;
-                    }
-                } catch (Exception e) {
-                    logger.warn("Не удалось обновить URL: {}", e.getMessage());
+            // Исправляем закодированные амперсанды в URL
+            imageUrl = fixAmpersands(imageUrl);
+
+            // Проверяем, нужно ли добавить параметр disposition=inline для Яндекс.Диска
+            if (imageUrl.contains("disk.yandex.ru") && !imageUrl.contains("disposition=")) {
+                if (imageUrl.contains("?")) {
+                    imageUrl += "&disposition=inline";
+                } else {
+                    imageUrl += "?disposition=inline";
                 }
+                logger.debug("Добавлен параметр disposition=inline: {}", imageUrl);
             }
 
-            // Проверка, если URL содержит локальный путь к прокси
-            if (imageUrl.contains("/api/pins/proxy-image")) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("Обнаружен рекурсивный запрос к прокси".getBytes());
-            }
+            URL url = new URL(imageUrl);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
 
-            java.net.URL url = new java.net.URL(imageUrl);
-            java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
+            // Добавляем заголовки для имитации браузера
             connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
-            connection.setConnectTimeout(10000);
-            connection.setReadTimeout(10000);
-            connection.setInstanceFollowRedirects(true);
-
-            // Устанавливаем Referer для обхода некоторых ограничений
+            connection.setRequestProperty("Accept", "image/webp,image/apng,image/*,*/*;q=0.8");
+            connection.setRequestProperty("Accept-Language", "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7");
             connection.setRequestProperty("Referer", "https://disk.yandex.ru/");
 
-            // Проверяем код ответа
-            int responseCode = connection.getResponseCode();
+            // Получаем данные
+            int statusCode = connection.getResponseCode();
 
-            // Если ссылка недействительна (410 Gone, 404 Not Found и т.д.)
-            if (responseCode >= 400) {
-                logger.error("Ошибка при загрузке изображения: код {}", responseCode);
+            if (statusCode >= 200 && statusCode < 300) {
+                String contentType = connection.getContentType();
+                if (contentType == null) {
+                    contentType = "image/jpeg";  // Предполагаем, что это изображение
+                }
 
-                // Пробуем обновить URL еще раз с принудительным обновлением кэша
-                if (imageUrl.contains("yandex") || imageUrl.contains("disk.") ||
-                        imageUrl.contains("downloader.") || imageUrl.contains("preview.")) {
+                response.setContentType(contentType);
 
-                    // Удаляем URL из кэша принудительно
-                    try {
-                        String freshUrl = yandexDiskService.forceUpdateImageUrl(imageUrl);
-                        if (!freshUrl.equals(imageUrl)) {
-                            logger.info("Принудительно обновлен URL после ошибки: {} -> {}", imageUrl, freshUrl);
+                // Получаем длину контента, если она доступна
+                int contentLength = connection.getContentLength();
+                if (contentLength > 0) {
+                    response.setContentLength(contentLength);
+                }
 
-                            // Рекурсивно вызываем метод с новым URL
-                            return proxyImage(freshUrl);
-                        }
-                    } catch (Exception e) {
-                        logger.error("Не удалось принудительно обновить URL: {}", e.getMessage());
+                // Копируем поток данных изображения в ответ
+                try (InputStream inputStream = connection.getInputStream();
+                     OutputStream outputStream = response.getOutputStream()) {
+                    byte[] buffer = new byte[8192];
+                    int bytesRead;
+                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
                     }
                 }
 
-                // Если обновление не помогло, возвращаем ошибку
-                return ResponseEntity.status(responseCode).build();
+                return ResponseEntity.ok().build();
+            } else {
+                // Если не удалось получить изображение, возвращаем ошибку
+                String errorMessage = "Не удалось загрузить изображение. Код ответа: " + statusCode;
+                logger.error(errorMessage);
+
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", errorMessage);
+                return ResponseEntity.status(statusCode).body(errorResponse);
             }
+        } catch (Exception e) {
+            logger.error("Ошибка при проксировании изображения {}: {}", imageUrl, e.getMessage(), e);
 
-            String contentType = connection.getContentType();
-            if (contentType == null) {
-                contentType = determineContentType(imageUrl);
-            }
-
-            byte[] imageData;
-            try (java.io.InputStream inputStream = connection.getInputStream()) {
-                imageData = inputStream.readAllBytes();
-            }
-
-            if (imageData.length == 0) {
-                logger.error("Получен пустой ответ при загрузке изображения");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-            }
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.parseMediaType(contentType));
-            headers.setCacheControl("max-age=86400"); // Кэширование на 1 день
-            headers.setContentLength(imageData.length);
-
-            return new ResponseEntity<>(imageData, headers, HttpStatus.OK);
-        } catch (IOException e) {
-            logger.error("Ошибка при проксировании изображения: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-    }
-
-    /**
-     * Определяет тип контента на основе расширения файла в URL
-     */
-    private String determineContentType(String url) {
-        String lowerUrl = url.toLowerCase();
-        if (lowerUrl.endsWith(".jpg") || lowerUrl.endsWith(".jpeg")) {
-            return MediaType.IMAGE_JPEG_VALUE;
-        } else if (lowerUrl.endsWith(".png")) {
-            return MediaType.IMAGE_PNG_VALUE;
-        } else if (lowerUrl.endsWith(".gif")) {
-            return MediaType.IMAGE_GIF_VALUE;
-        } else if (lowerUrl.endsWith(".webp")) {
-            return "image/webp";
-        } else if (lowerUrl.endsWith(".svg")) {
-            return "image/svg+xml";
-        } else {
-            // По умолчанию считаем, что это JPEG
-            return MediaType.IMAGE_JPEG_VALUE;
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Ошибка при загрузке изображения: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 }

@@ -18,8 +18,8 @@ import coil.memory.MemoryCache
 import coil.request.CachePolicy
 
 object ApiClient {
-    // Заменяем жестко закодированный IP на базовый URL, который можно изменить
-    private const val DEFAULT_SERVER_URL = "http://192.168.205.109:8081/"
+    // Значение по умолчанию для эмулятора Android
+    private const val DEFAULT_SERVER_URL = "http://10.0.2.2:8080/"
     private var serverUrl = DEFAULT_SERVER_URL
 
     // Геттер для получения текущего базового URL
@@ -39,6 +39,11 @@ object ApiClient {
 
     fun init(context: Context) {
         sessionManager = SessionManager(context)
+        // Получаем сохраненный URL сервера
+        serverUrl = sessionManager.getServerUrl()
+        if (!serverUrl.endsWith("/")) {
+            serverUrl += "/"
+        }
         createRetrofit()
     }
 
@@ -206,5 +211,108 @@ object ApiClient {
             .crossfade(true)
             .error(android.R.drawable.ic_menu_report_image) // Изображение по умолчанию при ошибке
             .build()
+    }
+
+    // Метод для создания OkHttpClient с интерсептором для добавления токена аутентификации
+    fun createAuthenticatedClient(context: Context): OkHttpClient {
+        val sessionManager = SessionManager(context)
+
+        return OkHttpClient.Builder()
+            .connectTimeout(60, TimeUnit.SECONDS) // Увеличиваем таймаут для загрузки изображений
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
+            .addInterceptor { chain ->
+                val originalRequest = chain.request()
+                val token = sessionManager.getAuthToken()
+
+                // Логируем информацию о запросе
+                Log.d(TAG, "Аутентифицированный запрос: ${originalRequest.method} ${originalRequest.url}")
+
+                val newRequest = if (token != null) {
+                    val tokenExpiration = sessionManager.getTokenExpiration()
+                    val isExpired = tokenExpiration != null && tokenExpiration < System.currentTimeMillis()
+
+                    if (isExpired) {
+                        Log.d(TAG, "Токен истек, требуется повторная аутентификация")
+                        // Здесь можно добавить логику для обновления токена
+                        // Если доступен refresh token, обновляем токен
+                    }
+
+                    // Добавляем заголовок авторизации с токеном
+                    originalRequest.newBuilder()
+                        .header("Authorization", "Bearer $token")
+                        .build()
+                } else {
+                    originalRequest
+                }
+
+                // Выполняем запрос
+                try {
+                    val response = chain.proceed(newRequest)
+
+                    // Проверяем ответ на 401 (Unauthorized)
+                    if (response.code == 401) {
+                        Log.d(TAG, "Получен код 401, очищаем токен")
+                        sessionManager.clearSession()
+                    }
+
+                    response
+                } catch (e: Exception) {
+                    Log.e(TAG, "Ошибка при выполнении аутентифицированного запроса: ${e.message}")
+                    throw e
+                }
+            }
+            .build()
+    }
+
+    // Проверяет, является ли URL постоянной ссылкой или прокси-ссылкой
+    // Возвращает оптимальный URL для загрузки изображения
+    fun getOptimalImageUrl(url: String?, baseUrl: String): String {
+        if (url.isNullOrEmpty()) {
+            return ""
+        }
+
+        // Если это уже прокси-URL, возвращаем как есть
+        if (url.contains("/api/pins/proxy-image")) {
+            // Но всё равно добавляем параметр disposition, если это ссылка Яндекс.Диска
+            if (url.contains("yandex") || url.contains("disk.") ||
+                url.contains("downloader.") || url.contains("preview.")) {
+
+                // Проверяем наличие disposition параметра
+                if (!url.contains("disposition=")) {
+                    return if (url.contains("?")) {
+                        "$url&disposition=inline"
+                    } else {
+                        "$url?disposition=inline"
+                    }
+                }
+            }
+            return url
+        }
+
+        // Для всех ссылок Яндекс.Диска используем прокси-сервер для обхода ограничений
+        if (url.contains("yandex") ||
+            url.contains("disk.") ||
+            url.contains("yadi.sk") ||
+            url.contains("downloader.") ||
+            url.contains("preview.")) {
+
+            Log.d(TAG, "Использую прокси для URL Яндекс Диска: $url")
+
+            try {
+                // Сначала фиксируем URL с параметром disposition
+                val fixedUrl = com.example.diplomwork.util.ImageUtils.fixYandexDiskUrl(url)
+                val encodedUrl = java.net.URLEncoder.encode(fixedUrl, "UTF-8")
+                val proxyUrl = "${baseUrl}api/pins/proxy-image?url=$encodedUrl"
+                Log.d(TAG, "Создан прокси-URL: $proxyUrl")
+                return proxyUrl
+            } catch (e: Exception) {
+                Log.e(TAG, "Ошибка при создании прокси-URL: ${e.message}")
+                return com.example.diplomwork.util.ImageUtils.fixYandexDiskUrl(url)
+            }
+        }
+
+        // Для остальных URL возвращаем как есть
+        return url
     }
 }

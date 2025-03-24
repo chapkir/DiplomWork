@@ -6,6 +6,7 @@ import com.example.server.UsPinterest.model.Board;
 import com.example.server.UsPinterest.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import com.example.server.UsPinterest.service.YandexDiskService;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,6 +19,9 @@ public class BoardMapper {
 
     @Autowired
     private PinMapper pinMapper;
+
+    @Autowired
+    private YandexDiskService yandexDiskService;
 
     /**
      * Преобразует Board в BoardResponse
@@ -40,7 +44,20 @@ public class BoardMapper {
         if (board.getUser() != null) {
             response.setUserId(board.getUser().getId());
             response.setUsername(board.getUser().getUsername());
-            response.setUserProfileImageUrl(board.getUser().getProfileImageUrl());
+
+            // Обновляем ссылку на изображение профиля, получая прямую ссылку если возможно
+            String profileImageUrl = board.getUser().getProfileImageUrl();
+            if (profileImageUrl != null && (profileImageUrl.contains("yadi.sk") || profileImageUrl.contains("disk.yandex.ru"))) {
+                try {
+                    String directUrl = yandexDiskService.updateImageUrl(profileImageUrl);
+                    response.setUserProfileImageUrl(directUrl);
+                } catch (Exception e) {
+                    // В случае ошибки используем оригинальный URL
+                    response.setUserProfileImageUrl(profileImageUrl);
+                }
+            } else {
+                response.setUserProfileImageUrl(profileImageUrl);
+            }
         }
 
         int pinsCount = board.getPins() != null ? board.getPins().size() : 0;

@@ -5,6 +5,8 @@ import com.example.server.UsPinterest.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -19,4 +21,26 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Page<User> findByUsernameContainingIgnoreCase(String username, Pageable pageable);
 
     List<User> findByUsernameContainingIgnoreCase(String username);
+
+    boolean existsByUsername(String username);
+
+    boolean existsByEmail(String email);
+
+    /**
+     * Подсчитывает количество подписчиков у пользователя
+     *
+     * @param userId ID пользователя
+     * @return количество подписчиков
+     */
+    @Query(value = "SELECT COUNT(*) FROM followers WHERE following_id = :userId", nativeQuery = true)
+    long countFollowersByUserId(@Param("userId") Long userId);
+
+    /**
+     * Подсчитывает количество пользователей, на которых подписан данный пользователь
+     *
+     * @param userId ID пользователя
+     * @return количество подписок
+     */
+    @Query(value = "SELECT COUNT(*) FROM followers WHERE follower_id = :userId", nativeQuery = true)
+    long countFollowingByUserId(@Param("userId") Long userId);
 }

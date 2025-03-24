@@ -7,6 +7,7 @@ import com.example.server.UsPinterest.model.User;
 import com.example.server.UsPinterest.repository.NotificationRepository;
 import com.example.server.UsPinterest.repository.PinRepository;
 import com.example.server.UsPinterest.repository.UserRepository;
+import com.example.server.UsPinterest.service.YandexDiskService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -35,6 +36,9 @@ public class NotificationService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private YandexDiskService yandexDiskService;
 
     // Создать уведомление о лайке
     public void createLikeNotification(User sender, Pin pin) {
@@ -154,7 +158,20 @@ public class NotificationService {
 
         if (notification.getPin() != null) {
             response.setPinId(notification.getPin().getId());
-            response.setPinImageUrl(notification.getPin().getImageUrl());
+
+            // Обновляем ссылку на изображение пина, получая прямую ссылку если возможно
+            String imageUrl = notification.getPin().getImageUrl();
+            if (imageUrl != null && (imageUrl.contains("yadi.sk") || imageUrl.contains("disk.yandex.ru"))) {
+                try {
+                    String directUrl = yandexDiskService.updateImageUrl(imageUrl);
+                    response.setPinImageUrl(directUrl);
+                } catch (Exception e) {
+                    // В случае ошибки используем оригинальный URL
+                    response.setPinImageUrl(imageUrl);
+                }
+            } else {
+                response.setPinImageUrl(imageUrl);
+            }
         }
 
         response.setCreatedAt(notification.getCreatedAt());

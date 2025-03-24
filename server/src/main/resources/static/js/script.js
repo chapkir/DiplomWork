@@ -9,6 +9,7 @@ let isIntersectionObserverSupported = 'IntersectionObserver' in window;
 // DOM элементы
 const imageGrid = document.querySelector('.image-grid');
 const searchInput = document.querySelector('.search-bar input');
+const searchBtn = document.querySelector('.search-btn');
 const loginModal = document.getElementById('loginModal');
 const registerModal = document.getElementById('registerModal');
 const loginForm = document.getElementById('loginForm');
@@ -80,17 +81,14 @@ function setupEventListeners() {
         });
     });
 
-    // Поиск
-    const searchInput = document.getElementById('searchInput');
-    const searchButton = document.getElementById('searchButton');
-
-    if (searchInput && searchButton) {
+    // Поиск на главной странице
+    if (searchInput && searchBtn) {
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                handleSearch(e);
+                handleSearch();
             }
         });
-        searchButton.addEventListener('click', handleSearch);
+        searchBtn.addEventListener('click', handleSearch);
     }
 
     // Обработчики для тегов
@@ -206,9 +204,13 @@ async function loadPins(page = 0, size = 12, search = '') {
     showLoading();
 
     try {
-        const url = search
-            ? `/api/pins?page=${page}&size=${size}&search=${encodeURIComponent(search)}`
-            : `/api/pins?page=${page}&size=${size}`;
+        let url;
+        if (search) {
+            // Используем новый API поиска
+            url = `/api/search/pins?query=${encodeURIComponent(search)}&page=${page}&size=${size}`;
+        } else {
+            url = `/api/pins?page=${page}&size=${size}`;
+        }
 
         console.log('Загрузка пинов: ' + url);
         const response = await fetch(url);
@@ -339,48 +341,12 @@ function createPinElement(pin) {
 }
 
 // Обработка поиска
-function handleSearch(e) {
-    if (e) e.preventDefault();
-    const searchQuery = document.getElementById('searchInput').value.trim();
+function handleSearch() {
+    const query = searchInput.value.trim();
 
-    if (searchQuery) {
-        resetPinGrid();
-        showLoading();
-
-        // Добавляем класс, показывающий активный поиск
-        document.querySelector('.search-bar').classList.add('active-search');
-
-        // Меняем заголовок секции
-        const sectionTitle = document.querySelector('.section-title h2');
-        if (sectionTitle) {
-            sectionTitle.textContent = `Результаты поиска: "${searchQuery}"`;
-        }
-
-        // Вызываем загрузку с поисковым запросом
-        loadPins(0, 20, searchQuery)
-            .then(() => {
-                if (document.querySelector('.image-grid').children.length === 0) {
-                    showNoResultsMessage(searchQuery);
-                }
-                hideLoading();
-            })
-            .catch(err => {
-                console.error('Ошибка при поиске:', err);
-                showErrorMessage('Произошла ошибка при поиске идей. Пожалуйста, попробуйте еще раз.');
-                hideLoading();
-            });
-    } else {
-        // Если поле поиска пустое, просто обновляем все пины
-        resetPinGrid();
-        document.querySelector('.search-bar').classList.remove('active-search');
-
-        // Возвращаем исходный заголовок
-        const sectionTitle = document.querySelector('.section-title h2');
-        if (sectionTitle) {
-            sectionTitle.textContent = 'Последние идеи';
-        }
-
-        loadPins();
+    if (query) {
+        // Перенаправляем на страницу explore.html с параметром query
+        window.location.href = `/explore.html?query=${encodeURIComponent(query)}`;
     }
 }
 

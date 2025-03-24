@@ -10,6 +10,7 @@ import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.model.RegisterRequest
 import com.example.diplomwork.model.RegisterResponse
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -60,4 +61,9 @@ interface ApiService {
     @POST("api/auth/register")
     suspend fun register(@Body registerRequest: RegisterRequest): RegisterResponse
 
+    @Multipart
+    @POST("api/profile/image")
+    suspend fun uploadProfileImage(
+        @Part file: MultipartBody.Part
+    ): Response<ProfileResponse>
 }

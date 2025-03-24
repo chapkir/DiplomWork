@@ -180,16 +180,27 @@ public class PinService {
 
     public String updatePinImageUrl(Pin pin) {
         String imageUrl = pin.getImageUrl();
+
+        // Проверяем, является ли ссылка уже постоянной публичной ссылкой Яндекс Диска
+        if (imageUrl != null && !imageUrl.isEmpty() &&
+                (imageUrl.contains("disk.yandex.ru/i/") ||
+                        imageUrl.contains("disk.yandex.ru/d/") ||
+                        imageUrl.contains("yadi.sk"))) {
+            // Если это уже постоянная ссылка, просто возвращаем её
+            return imageUrl;
+        }
+
         try {
-            imageUrl = yandexDiskService.updateImageUrl(imageUrl);
-            if (!imageUrl.equals(pin.getImageUrl())) {
-                pin.setImageUrl(imageUrl);
+            String updatedImageUrl = yandexDiskService.updateImageUrl(imageUrl);
+            if (!updatedImageUrl.equals(pin.getImageUrl())) {
+                pin.setImageUrl(updatedImageUrl);
                 pinRepository.save(pin);
             }
+            return updatedImageUrl;
         } catch (Exception e) {
             logger.error("Failed to update image URL for pin {}: {}", pin.getId(), e.getMessage());
+            return imageUrl;
         }
-        return imageUrl;
     }
 
     public PinResponse convertToPinResponse(Pin pin, User currentUser) {

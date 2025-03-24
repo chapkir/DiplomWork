@@ -6,6 +6,8 @@ import com.example.server.UsPinterest.dto.PinResponse;
 import com.example.server.UsPinterest.model.Pin;
 import com.example.server.UsPinterest.model.User;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.example.server.UsPinterest.service.YandexDiskService;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -16,6 +18,9 @@ import java.util.stream.Collectors;
  */
 @Component
 public class PinMapper {
+
+    @Autowired
+    private YandexDiskService yandexDiskService;
 
     /**
      * Преобразует сущность Pin в DTO PinResponse с указанием, лайкнул ли текущий пользователь пин
@@ -31,7 +36,21 @@ public class PinMapper {
 
         PinResponse response = new PinResponse();
         response.setId(pin.getId());
-        response.setImageUrl(pin.getImageUrl());
+
+        // Обновляем ссылку на изображение, получая прямую ссылку если возможно
+        String imageUrl = pin.getImageUrl();
+        if (imageUrl != null && (imageUrl.contains("yadi.sk") || imageUrl.contains("disk.yandex.ru"))) {
+            try {
+                String directUrl = yandexDiskService.updateImageUrl(imageUrl);
+                response.setImageUrl(directUrl);
+            } catch (Exception e) {
+                // В случае ошибки используем оригинальный URL
+                response.setImageUrl(imageUrl);
+            }
+        } else {
+            response.setImageUrl(imageUrl);
+        }
+
         response.setDescription(pin.getDescription());
 
         // Информация о доске
