@@ -17,7 +17,6 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -49,6 +48,7 @@ import com.example.diplomwork.R
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.model.LoginRequest
 import com.example.diplomwork.network.ApiClient
+import com.example.diplomwork.ui.components.LoadingSpinner
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 import kotlinx.coroutines.launch
 
@@ -197,10 +197,7 @@ fun LoginScreen(
             enabled = !isLoading && username.isNotBlank() && password.isNotBlank()
         ) {
             if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = Color.White
-                )
+                LoadingSpinner()
             } else {
                 Text(
                     text = "Войти",

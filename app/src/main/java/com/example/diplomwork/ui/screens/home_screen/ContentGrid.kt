@@ -1,13 +1,21 @@
 package com.example.diplomwork.ui.screens.home_screen
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -15,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.network.ApiClient
+import com.example.diplomwork.ui.components.LoadingSpinner
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 
 @Composable
@@ -57,11 +66,9 @@ fun ContentGrid(
     ) {
         when {
             isLoading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(48.dp),
-                    color = Color.White
-                )
+                LoadingSpinner()
             }
+
             error != null -> {
                 Column(
                     modifier = Modifier
@@ -76,6 +83,7 @@ fun ContentGrid(
                     )
                 }
             }
+
             pictures.isEmpty() -> {
                 Text(
                     text = "Нет доступных пинов",
@@ -83,6 +91,7 @@ fun ContentGrid(
                     modifier = Modifier.padding(16.dp)
                 )
             }
+
             else -> {
                 LazyVerticalStaggeredGrid(
                     columns = StaggeredGridCells.Fixed(2),

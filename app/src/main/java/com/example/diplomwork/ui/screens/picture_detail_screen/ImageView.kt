@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,6 +27,7 @@ import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
 import com.example.diplomwork.network.ApiClient
+import com.example.diplomwork.ui.components.LoadingSpinner
 
 @Composable
 fun ImageView(imageRes: String, aspectRatio: Float) {
@@ -43,7 +43,11 @@ fun ImageView(imageRes: String, aspectRatio: Float) {
         mutableStateOf(
             if (imageRes.startsWith("http")) {
                 if (isYandexDiskUrl(imageRes)) {
-                    "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${android.net.Uri.encode(imageRes)}"
+                    "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${
+                        android.net.Uri.encode(
+                            imageRes
+                        )
+                    }"
                 } else {
                     imageRes
                 }
@@ -96,21 +100,38 @@ fun ImageView(imageRes: String, aspectRatio: Float) {
                             currentUrl = when (errorCode) {
                                 410, 404 -> {
                                     // Для устаревших или отсутствующих ссылок
-                                    Log.w("ImageView", "Ссылка недействительна, пробуем через прокси")
-                                    "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${android.net.Uri.encode(imageRes)}&cache_bust=${System.currentTimeMillis()}"
+                                    Log.w(
+                                        "ImageView",
+                                        "Ссылка недействительна, пробуем через прокси"
+                                    )
+                                    "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${
+                                        android.net.Uri.encode(
+                                            imageRes
+                                        )
+                                    }&cache_bust=${System.currentTimeMillis()}"
                                 }
+
                                 in 400..499 -> {
                                     // Для клиентских ошибок
                                     if (isYandexDiskUrl(imageRes)) {
-                                        "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${android.net.Uri.encode(imageRes)}&cache_bust=${System.currentTimeMillis()}"
+                                        "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${
+                                            android.net.Uri.encode(
+                                                imageRes
+                                            )
+                                        }&cache_bust=${System.currentTimeMillis()}"
                                     } else {
                                         // Если не Яндекс Диск, просто используем исходный URL
                                         imageRes
                                     }
                                 }
+
                                 else -> {
                                     // Для всех остальных случаев
-                                    "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${android.net.Uri.encode(imageRes)}&cache_bust=${System.currentTimeMillis()}"
+                                    "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${
+                                        android.net.Uri.encode(
+                                            imageRes
+                                        )
+                                    }&cache_bust=${System.currentTimeMillis()}"
                                 }
                             }
                         }
@@ -132,10 +153,9 @@ fun ImageView(imageRes: String, aspectRatio: Float) {
 
             when {
                 isLoading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
+                    LoadingSpinner()
                 }
+
                 isError -> {
                     Box(
                         modifier = Modifier

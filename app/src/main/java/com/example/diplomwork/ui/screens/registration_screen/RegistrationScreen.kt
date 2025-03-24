@@ -1,5 +1,9 @@
 package com.example.diplomwork.ui.screens.registration_screen
 
+import android.app.Activity
+import android.content.Context
+import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -29,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -48,20 +52,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.diplomwork.R
-import com.example.diplomwork.ui.theme.ColorForBottomMenu
-import com.example.diplomwork.network.ApiClient
-import com.example.diplomwork.model.RegisterRequest
-import com.example.diplomwork.model.LoginRequest
 import com.example.diplomwork.auth.SessionManager
-import android.app.Activity
-import android.content.Context
-import android.view.inputmethod.InputMethodManager
-import android.widget.Toast
-import androidx.compose.runtime.rememberCoroutineScope
+import com.example.diplomwork.model.LoginRequest
+import com.example.diplomwork.model.RegisterRequest
+import com.example.diplomwork.network.ApiClient
+import com.example.diplomwork.ui.components.LoadingSpinner
+import com.example.diplomwork.ui.theme.ColorForBottomMenu
 import kotlinx.coroutines.launch
 
 fun hideKeyboard(context: Context) {
-    val inputMethodManager = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+    val inputMethodManager =
+        context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
     val activity = context as Activity
     val currentFocus = activity.currentFocus
     if (currentFocus != null) {
@@ -99,8 +100,10 @@ fun RegisterScreen(onCompleteRegistration: () -> Unit) {
                 "Введите имя пользователя",
                 "Логин",
                 username,
-                { username = it.replace(" ", "")
-                    .filter { c -> c.code in 32..126 } }
+                {
+                    username = it.replace(" ", "")
+                        .filter { c -> c.code in 32..126 }
+                }
             )
 
             1 -> StepField(
@@ -172,10 +175,12 @@ fun RegisterScreen(onCompleteRegistration: () -> Unit) {
                                 focusManager.clearFocus()
                                 hideKeyboard(context)
 
-                                Toast.makeText(context, "Регистрация успешна!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Регистрация успешна!", Toast.LENGTH_SHORT)
+                                    .show()
                                 onCompleteRegistration()
                             } catch (e: Exception) {
-                                Toast.makeText(context, "Ошибка: ${e.message}", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, "Ошибка: ${e.message}", Toast.LENGTH_LONG)
+                                    .show()
                             } finally {
                                 isLoading = false
                             }
@@ -191,10 +196,7 @@ fun RegisterScreen(onCompleteRegistration: () -> Unit) {
                 )
             ) {
                 if (isLoading && step == 2) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = Color.White
-                    )
+                    LoadingSpinner()
                 } else {
                     Text(
                         text = if (step < 2) "Далее" else "Завершить"
@@ -251,7 +253,8 @@ fun StepField(
         Spacer(modifier = Modifier.height(25.dp))
 
         CustomOutlinedTextField(
-            value, onValueChange, label, keyboardType, focusRequester, isPassword)
+            value, onValueChange, label, keyboardType, focusRequester, isPassword
+        )
     }
 }
 
@@ -281,7 +284,9 @@ fun CustomOutlinedTextField(
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
                     Icon(
                         painter = painterResource(image),
-                        modifier = Modifier.size(26.dp).padding(end = 4.dp),
+                        modifier = Modifier
+                            .size(26.dp)
+                            .padding(end = 4.dp),
                         contentDescription = "Toggle password visibility"
                     )
                 }

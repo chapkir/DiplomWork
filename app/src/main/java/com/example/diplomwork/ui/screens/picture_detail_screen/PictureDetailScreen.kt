@@ -1,7 +1,6 @@
 package com.example.diplomwork.ui.screens.picture_detail_screen
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +33,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.diplomwork.R
 import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.system_settings.systemInsetHeight
+import com.example.diplomwork.ui.components.LoadingSpinner
 import com.example.diplomwork.ui.theme.ColorForArrowBack
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 import com.example.diplomwork.viewmodel.PictureDetailScreenViewModel
@@ -64,9 +63,7 @@ fun PictureDetailScreen(
     ) {
         if (isLoading) {
             item {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Color.White)
-                }
+                LoadingSpinner()
             }
         } else {
             item {
