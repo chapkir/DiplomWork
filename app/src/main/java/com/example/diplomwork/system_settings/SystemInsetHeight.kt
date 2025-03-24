@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 
 @Composable
-fun SystemInsetHeight(type: Int): MutableState<Dp> {
+fun systemInsetHeight(type: Int): MutableState<Dp> {
 
     val insetHeight = remember { mutableStateOf(0.dp) }
 

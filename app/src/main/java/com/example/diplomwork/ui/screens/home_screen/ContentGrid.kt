@@ -87,7 +87,7 @@ fun ContentGrid(
                 LazyVerticalStaggeredGrid(
                     columns = StaggeredGridCells.Fixed(2),
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(4.dp)
+                    //contentPadding = PaddingValues(0.dp, 4.dp, 4.dp, 4.dp)
                 ) {
                     itemsIndexed(pictures) { _, picture ->
                         PictureCard(

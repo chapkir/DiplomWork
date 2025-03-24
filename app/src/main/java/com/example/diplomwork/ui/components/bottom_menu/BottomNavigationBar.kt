@@ -15,7 +15,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import com.example.diplomwork.R
-import com.example.diplomwork.system_settings.SystemInsetHeight
+import com.example.diplomwork.system_settings.systemInsetHeight
 import com.example.diplomwork.ui.navigation.Screen
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 import com.example.diplomwork.ui.theme.Dimens.BottomMenuHeight
@@ -26,7 +26,6 @@ data class BottomNavItem(
     val label: String,
     val isAddButton: Boolean = false
 )
-
 
 @Composable
 fun BottomNavigationBar(
@@ -47,7 +46,7 @@ fun BottomNavigationBar(
         containerColor = ColorForBottomMenu,
         contentColor = Color.White,
         modifier = Modifier.height(
-            BottomMenuHeight + SystemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value
+            BottomMenuHeight + systemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value
         )
     ) {
         items.forEach { item ->
