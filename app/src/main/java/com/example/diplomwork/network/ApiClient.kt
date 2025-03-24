@@ -79,7 +79,11 @@ object ApiClient {
             sessionManager.getAuthToken()?.let { token ->
                 requestBuilder.addHeader("Authorization", "Bearer $token")
                 Log.d(TAG, "Добавлен токен авторизации: Bearer ${token.take(10)}...")
+            } ?: run {
+                Log.w(TAG, "Токен авторизации отсутствует")
             }
+        } else {
+            Log.w(TAG, "SessionManager не инициализирован")
         }
 
         val request = requestBuilder.build()
@@ -99,16 +103,8 @@ object ApiClient {
             }
 
             response
-        } catch (e: SocketTimeoutException) {
-            Log.e(TAG, "Таймаут соединения: ${e.message}")
-            Log.e(TAG, "Стек вызовов: ${e.stackTraceToString()}")
-            throw e
-        } catch (e: IOException) {
-            Log.e(TAG, "Ошибка сети: ${e.message}")
-            Log.e(TAG, "Стек вызовов: ${e.stackTraceToString()}")
-            throw e
         } catch (e: Exception) {
-            Log.e(TAG, "Неожиданная ошибка: ${e.message}")
+            Log.e(TAG, "Ошибка при выполнении запроса: ${e.message}")
             Log.e(TAG, "Стек вызовов: ${e.stackTraceToString()}")
             throw e
         }

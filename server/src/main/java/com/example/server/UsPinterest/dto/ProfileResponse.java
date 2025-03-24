@@ -2,6 +2,7 @@ package com.example.server.UsPinterest.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import com.example.server.UsPinterest.model.Board;
 
 public class ProfileResponse {
     private Long id;
@@ -11,6 +12,7 @@ public class ProfileResponse {
     private String profileImageUrl;
     private LocalDateTime registrationDate;
     private List<PinResponse> pins;
+    private List<Board> boards;
     private int pinsCount;
     private int followersCount;
     private int followingCount;
@@ -69,6 +71,14 @@ public class ProfileResponse {
 
     public void setPins(List<PinResponse> pins) {
         this.pins = pins;
+    }
+
+    public List<Board> getBoards() {
+        return boards;
+    }
+
+    public void setBoards(List<Board> boards) {
+        this.boards = boards;
     }
 
     public int getPinsCount() {

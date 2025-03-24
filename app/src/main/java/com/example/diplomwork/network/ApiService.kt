@@ -46,7 +46,7 @@ interface ApiService {
     ): CommentResponse
 
     @GET("api/profile/liked-pins")
-    suspend fun getLikedPictures(): List<PictureResponse>
+    suspend fun getLikedPins(): List<PictureResponse>
 
     @Multipart
     @POST("api/pins/upload")

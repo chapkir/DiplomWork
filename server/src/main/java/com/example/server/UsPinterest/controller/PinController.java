@@ -40,6 +40,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -48,6 +49,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/api/pins")
@@ -267,13 +270,34 @@ public class PinController {
 
             logger.info("User found: {}, ID: {}", user.getUsername(), user.getId());
 
-            String filename = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-            logger.info("Generated filename: {}", filename);
-
             try {
-                // Получаем постоянную публичную ссылку на файл
-                String imageUrl = yandexDiskService.uploadFile(file);
-                logger.info("File uploaded successfully to Yandex.Disk, permanent public URL: {}", imageUrl);
+                // Получаем прямую ссылку на файл (гарантированно downloader.disk.yandex.ru)
+                String imageUrl = yandexDiskService.uploadFile(file, false, true);
+                logger.info("File uploaded successfully to Yandex.Disk, direct URL: {}", imageUrl);
+
+                // Дополнительная проверка полученной ссылки
+                if (imageUrl == null || imageUrl.isEmpty()) {
+                    return ResponseEntity.status(500)
+                            .body(new MessageResponse("Failed to get valid image URL from Yandex.Disk"));
+                }
+
+                // Проверяем, что URL - это прямая ссылка, а не yadi.sk
+                if (imageUrl.contains("yadi.sk") ||
+                        (imageUrl.contains("disk.yandex.ru") && !imageUrl.contains("downloader.disk.yandex.ru") && !imageUrl.contains("preview.disk.yandex.ru"))) {
+                    try {
+                        // Пытаемся преобразовать ссылку yadi.sk в прямую
+                        String directUrl = yandexDiskService.getDownloadLink(imageUrl);
+                        if (directUrl != null &&
+                                (directUrl.contains("downloader.disk.yandex.ru") || directUrl.contains("preview.disk.yandex.ru"))) {
+                            imageUrl = directUrl;
+                            logger.info("Converted yadi.sk link to direct URL: {}", imageUrl);
+                        } else {
+                            logger.warn("Could not convert yadi.sk link to direct URL, using original: {}", imageUrl);
+                        }
+                    } catch (Exception e) {
+                        logger.error("Error converting yadi.sk link to direct URL: {}", e.getMessage());
+                    }
+                }
 
                 Pin pin = new Pin();
                 pin.setImageUrl(imageUrl);
@@ -298,24 +322,6 @@ public class PinController {
             logger.error("Unexpected error during image upload: {}", e.getMessage(), e);
             return ResponseEntity.status(500)
                     .body(new MessageResponse("Server error: " + e.getMessage()));
-        }
-    }
-
-    @GetMapping("/update-yandex-links")
-    public ResponseEntity<?> updateAllYandexLinks() {
-        try {
-            int updatedCount = yandexDiskService.updateAllYandexDiskLinks(pinRepository);
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "Обновлено " + updatedCount + " ссылок на изображения на прямые ссылки Яндекс.Диска");
-            response.put("updatedCount", updatedCount);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            logger.error("Ошибка при обновлении ссылок на изображения: {}", e.getMessage(), e);
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("error", "Ошибка при обновлении ссылок: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
@@ -365,16 +371,37 @@ public class PinController {
                             int responseCode = connection.getResponseCode();
 
                             if (responseCode >= 200 && responseCode < 400) {
-                                logger.debug("Прямая ссылка для пина {} все еще действительна: {}", pin.getId(), originalUrl);
-                                skippedCount++;
+                                // Проверяем наличие параметра disposition=inline
+                                if (!originalUrl.contains("disposition=")) {
+                                    String updatedUrl = originalUrl;
+                                    if (updatedUrl.contains("?")) {
+                                        updatedUrl += "&disposition=inline";
+                                    } else {
+                                        updatedUrl += "?disposition=inline";
+                                    }
+                                    pin.setImageUrl(updatedUrl);
+                                    pinRepository.save(pin);
+                                    logger.info("Добавлен параметр disposition=inline к ссылке пина {}: {}",
+                                            pin.getId(), updatedUrl);
+                                    updatedCount++;
+                                } else {
+                                    logger.debug("Прямая ссылка для пина {} все еще действительна: {}",
+                                            pin.getId(), originalUrl);
+                                    skippedCount++;
+                                }
                                 continue;
                             }
 
-                            logger.info("Прямая ссылка для пина {} устарела (код {}), обновляем", pin.getId(), responseCode);
+                            logger.info("Прямая ссылка для пина {} устарела (код {}), обновляем",
+                                    pin.getId(), responseCode);
                         } catch (Exception e) {
                             logger.warn("Ошибка при проверке прямой ссылки {}: {}", originalUrl, e.getMessage());
                         }
                     }
+
+                    // Проверяем, является ли это ссылкой Яндекс.Диска
+                    boolean isYandexUrl = originalUrl.contains("yadi.sk") ||
+                            originalUrl.contains("disk.yandex.ru/");
 
                     // Извлекаем оригинальную ссылку Яндекс.Диска, если это прокси-ссылка
                     String yandexUrl = originalUrl;
@@ -386,19 +413,40 @@ public class PinController {
                             }
                             yandexUrl = java.net.URLDecoder.decode(encodedOriginalUrl, StandardCharsets.UTF_8.toString());
                             logger.info("Извлечена оригинальная ссылка из прокси: {} -> {}", originalUrl, yandexUrl);
+                            isYandexUrl = yandexUrl.contains("yadi.sk") ||
+                                    yandexUrl.contains("disk.yandex.ru/");
                         } catch (Exception e) {
-                            logger.error("Ошибка при извлечении оригинальной ссылки из прокси {}: {}", originalUrl, e.getMessage());
+                            logger.error("Ошибка при извлечении оригинальной ссылки из прокси {}: {}",
+                                    originalUrl, e.getMessage());
                         }
                     }
 
-                    // Пытаемся получить прямую ссылку
-                    boolean isYandexUrl = yandexUrl.contains("yadi.sk") ||
-                            yandexUrl.contains("disk.yandex.ru/");
-
-                    String directUrl = null;
+                    // Пытаемся получить прямую ссылку для Яндекс.Диска
                     if (isYandexUrl) {
                         try {
-                            directUrl = yandexDiskService.getDownloadLink(yandexUrl);
+                            // Сначала пробуем получить ссылку по ID файла
+                            String fileId = extractFileIdFromYandexLink(yandexUrl);
+                            String directUrl = null;
+
+                            if (fileId != null) {
+                                logger.info("Извлечен ID файла: {} для URL: {}", fileId, yandexUrl);
+                                try {
+                                    // Пытаемся получить прямую ссылку через API используя OAuth токен
+                                    directUrl = yandexDiskService.getDownloadLinkById(fileId);
+                                    if (directUrl != null &&
+                                            (directUrl.contains("downloader.disk.yandex.ru") ||
+                                                    directUrl.contains("preview.disk.yandex.ru"))) {
+                                        logger.info("Получена прямая ссылка по ID файла: {}", directUrl);
+                                    }
+                                } catch (Exception e) {
+                                    logger.warn("Не удалось получить прямую ссылку по ID файла: {}", e.getMessage());
+                                }
+                            }
+
+                            // Если не удалось получить прямую ссылку по ID, используем стандартный метод
+                            if (directUrl == null) {
+                                directUrl = yandexDiskService.getDownloadLink(yandexUrl);
+                            }
 
                             // Проверяем, что это действительно прямая ссылка
                             if (directUrl != null &&
@@ -472,6 +520,43 @@ public class PinController {
             // Исправляем закодированные амперсанды в URL
             imageUrl = fixAmpersands(imageUrl);
 
+            // Проверяем, является ли это ссылкой на Яндекс.Диск
+            boolean isYandexUrl = imageUrl.contains("yadi.sk") ||
+                    imageUrl.contains("disk.yandex.ru/");
+
+            // Для ссылок Яндекс.Диска пытаемся получить прямую ссылку
+            if (isYandexUrl) {
+                try {
+                    String fileId = extractFileIdFromYandexLink(imageUrl);
+                    String directUrl = null;
+
+                    if (fileId != null) {
+                        try {
+                            directUrl = yandexDiskService.getDownloadLinkById(fileId);
+                            if (directUrl != null) {
+                                logger.info("Получена прямая ссылка по ID для проксирования: {}", directUrl);
+                                imageUrl = directUrl;
+                            }
+                        } catch (Exception e) {
+                            logger.warn("Не удалось получить прямую ссылку по ID: {}", e.getMessage());
+                        }
+                    }
+
+                    if (directUrl == null) {
+                        // Пытаемся получить прямую ссылку через стандартный метод
+                        directUrl = yandexDiskService.getDownloadLink(imageUrl);
+                        if (directUrl != null &&
+                                (directUrl.contains("downloader.disk.yandex.ru") ||
+                                        directUrl.contains("preview.disk.yandex.ru"))) {
+                            logger.info("Получена прямая ссылка для проксирования: {}", directUrl);
+                            imageUrl = directUrl;
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.warn("Ошибка при получении прямой ссылки для проксирования: {}", e.getMessage());
+                }
+            }
+
             // Проверяем, нужно ли добавить параметр disposition=inline для Яндекс.Диска
             if (imageUrl.contains("disk.yandex.ru") && !imageUrl.contains("disposition=")) {
                 if (imageUrl.contains("?")) {
@@ -536,5 +621,77 @@ public class PinController {
             errorResponse.put("error", "Ошибка при загрузке изображения: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
+    }
+
+    /**
+     * Извлекает ID файла из ссылки Яндекс.Диска
+     * @param yandexUrl URL Яндекс.Диска
+     * @return ID файла или null, если не удалось извлечь
+     */
+    private String extractFileIdFromYandexLink(String yandexUrl) {
+        if (yandexUrl == null || yandexUrl.isEmpty()) {
+            return null;
+        }
+
+        try {
+            // Поддерживаем различные форматы ссылок Яндекс.Диска
+            // https://yadi.sk/i/SOME_ID
+            // https://disk.yandex.ru/i/SOME_ID
+            Pattern pattern = Pattern.compile("(?:yadi\\.sk/[id]/|disk\\.yandex\\.ru/[id]/)([\\w-]+)");
+            Matcher matcher = pattern.matcher(yandexUrl);
+
+            if (matcher.find()) {
+                String fileId = matcher.group(1);
+                logger.info("Извлечен ID файла: {} из ссылки: {}", fileId, yandexUrl);
+                return fileId;
+            }
+
+            // Если ссылка в формате с параметрами
+            // Примеры:
+            // https://downloader.disk.yandex.ru/...?public_key=...
+            if (yandexUrl.contains("public_key=")) {
+                String publicKeyParam = extractQueryParameter(yandexUrl, "public_key");
+                if (publicKeyParam != null) {
+                    // Рекурсивно извлекаем ID из public_key
+                    return extractFileIdFromYandexLink(publicKeyParam);
+                }
+            }
+
+            logger.warn("Не удалось извлечь ID файла из ссылки: {}", yandexUrl);
+            return null;
+        } catch (Exception e) {
+            logger.error("Ошибка при извлечении ID файла: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Извлекает значение параметра запроса из URL
+     * @param url URL для анализа
+     * @param paramName имя параметра
+     * @return значение параметра или null
+     */
+    private String extractQueryParameter(String url, String paramName) {
+        try {
+            String decodedUrl = URLDecoder.decode(url, StandardCharsets.UTF_8.toString());
+            String[] urlParts = decodedUrl.split("\\?");
+            if (urlParts.length < 2) {
+                return null;
+            }
+
+            String query = urlParts[1];
+            String[] pairs = query.split("&");
+
+            for (String pair : pairs) {
+                String[] keyValue = pair.split("=");
+                if (keyValue.length == 2 && keyValue[0].equals(paramName)) {
+                    return URLDecoder.decode(keyValue[1], StandardCharsets.UTF_8.toString());
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Ошибка при извлечении параметра {}: {}", paramName, e.getMessage());
+        }
+
+        return null;
     }
 }

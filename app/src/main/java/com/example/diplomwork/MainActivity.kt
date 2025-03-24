@@ -22,13 +22,20 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         // Инициализация ApiClient
+        Log.d("MainActivity", "Инициализация ApiClient")
         ApiClient.init(this)
 
         // Получаем сохраненный URL сервера и устанавливаем его
         val sessionManager = SessionManager(this)
         val serverUrl = sessionManager.getServerUrl()
+        Log.d("MainActivity", "URL сервера: $serverUrl")
         ApiClient.setBaseUrl(serverUrl)
-        Log.d("MainActivity", "Используется URL сервера: $serverUrl")
+
+        // Проверяем состояние авторизации
+        val isLoggedIn = sessionManager.isLoggedIn()
+        val token = sessionManager.getAuthToken()
+        Log.d("MainActivity", "Состояние авторизации: $isLoggedIn")
+        Log.d("MainActivity", "Токен: ${token?.take(10)}...")
 
         enableEdgeToEdge()
         setContent {

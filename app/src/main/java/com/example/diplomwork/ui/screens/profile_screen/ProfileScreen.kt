@@ -19,6 +19,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
@@ -80,7 +83,7 @@ fun ProfileScreen(
 
     suspend fun loadLikedPins() {
         try {
-            likedPins = ApiClient.apiService.getLikedPictures()
+            likedPins = ApiClient.apiService.getLikedPins()
             Log.d("ProfileScreen", "Загружено ${likedPins.size} лайкнутых пинов")
         } catch (e: Exception) {
             Log.e("ProfileScreen", "Ошибка при загрузке лайкнутых пинов: ${e.message}")
@@ -217,10 +220,10 @@ fun ProfileScreen(
 
                 when (selectedTabIndex) {
                     0 -> {
-                        if (profileData!!.pins.isEmpty()) {
+                        if (profileData?.pins?.isEmpty() == true) {
                             EmptyStateMessage(message = "У вас пока нет пинов")
                         } else {
-                            PinsGrid(pins = profileData!!.pins, onPinClick = onImageClick)
+                            PinsGrid(pins = profileData?.pins ?: emptyList(), onPinClick = onImageClick)
                         }
                     }
 

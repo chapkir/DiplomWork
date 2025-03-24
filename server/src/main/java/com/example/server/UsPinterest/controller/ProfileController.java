@@ -18,9 +18,11 @@ import com.example.server.UsPinterest.entity.Like;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.ArrayList;
@@ -44,72 +46,31 @@ public class ProfileController {
     private final LikeRepository likeRepository;
 
     @GetMapping
-    public ResponseEntity<ProfileResponse> getProfile(Authentication authentication) {
-        System.out.println("Получен запрос на профиль пользователя");
-
+    public ResponseEntity<?> getProfile() {
         try {
-            if (authentication == null) {
-                System.err.println("Ошибка: Authentication объект равен null");
-                return ResponseEntity.status(401).build();
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Пользователь не авторизован");
             }
 
-            String username = authentication.getName();
-            System.out.println("Запрос профиля для пользователя: " + username);
-
-            User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> {
-                        System.err.println("Пользователь не найден: " + username);
-                        return new ResourceNotFoundException("Пользователь не найден");
-                    });
-
-            System.out.println("Пользователь найден: " + user.getUsername());
-
-            // Получаем пины пользователя через репозиторий
-            List<Pin> userPins = pinRepository.findByUser(user);
-            List<PinResponse> pinResponses = userPins.stream()
-                    .map(pin -> {
-                        PinResponse pr = new PinResponse();
-                        pr.setId(pin.getId());
-                        pr.setImageUrl(pin.getImageUrl());
-                        pr.setDescription(pin.getDescription());
-                        pr.setLikesCount(pin.getLikes() != null ? pin.getLikes().size() : 0);
-                        pr.setIsLikedByCurrentUser(pin.getLikes().stream()
-                                .anyMatch(like -> like.getUser().getId().equals(user.getId())));
-                        pr.setComments(
-                                pin.getComments().stream().map(comment -> {
-                                    CommentResponse cr = new CommentResponse();
-                                    cr.setId(comment.getId());
-                                    cr.setText(comment.getText());
-                                    cr.setUsername(comment.getUser() != null ? comment.getUser().getUsername() : "Unknown");
-                                    return cr;
-                                }).collect(Collectors.toList())
-                        );
-                        return pr;
-                    })
-                    .collect(Collectors.toList());
+            User user = userService.getCurrentUser();
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Пользователь не найден");
+            }
 
             ProfileResponse response = new ProfileResponse();
             response.setId(user.getId());
             response.setUsername(user.getUsername());
             response.setEmail(user.getEmail());
-            response.setProfileImageUrl(user.getProfileImageUrl());
-            response.setBio(user.getBio());
+            response.setProfileImageUrl(user.getProfileImageUrl() != null ? user.getProfileImageUrl() : "");
             response.setRegistrationDate(user.getRegistrationDate());
-            response.setPins(pinResponses);
-            response.setPinsCount(pinResponses.size());
+            response.setBoards(user.getBoards());
 
-            // Добавление количества подписчиков и подписок
-            long followersCount = userRepository.countFollowersByUserId(user.getId());
-            long followingCount = userRepository.countFollowingByUserId(user.getId());
-            response.setFollowersCount((int) followersCount);
-            response.setFollowingCount((int) followingCount);
-
-            System.out.println("Профиль успешно сформирован и отправлен");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            System.err.println("Ошибка при получении профиля: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
+            logger.error("Ошибка при получении профиля: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Произошла ошибка при получении профиля: " + e.getMessage());
         }
     }
 
@@ -117,65 +78,39 @@ public class ProfileController {
      * Загрузка и обновление изображения профиля пользователя
      *
      * @param file файл изображения
-     * @param authentication информация об аутентифицированном пользователе
      * @return ответ с обновленным профилем пользователя
      */
     @PostMapping("/image")
-    public ResponseEntity<?> updateProfileImage(
-            @RequestParam("file") MultipartFile file,
-            Authentication authentication) {
-
-        logger.info("Получен запрос на обновление изображения профиля");
-
+    public ResponseEntity<?> updateProfileImage(@RequestParam("image") MultipartFile file) {
         try {
-            if (authentication == null) {
-                logger.error("Ошибка аутентификации: объект Authentication равен null");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(ApiResponse.error("Необходима аутентификация"));
-            }
-
-            String username = authentication.getName();
-            logger.info("Обработка запроса на загрузку изображения для пользователя: {}", username);
-
-            User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
-
-            // Проверяем, что файл не пустой и имеет правильный формат
             if (file.isEmpty()) {
-                logger.error("Получен пустой файл");
-                return ResponseEntity.badRequest()
-                        .body(ApiResponse.error("Файл не должен быть пустым"));
+                return ResponseEntity.badRequest().body("Файл не выбран");
             }
 
-            String contentType = file.getContentType();
-            if (contentType == null || !contentType.startsWith("image/")) {
-                logger.error("Неподдерживаемый формат файла: {}", contentType);
-                return ResponseEntity.badRequest()
-                        .body(ApiResponse.error("Поддерживаются только файлы изображений"));
+            if (!file.getContentType().startsWith("image/")) {
+                return ResponseEntity.badRequest().body("Файл должен быть изображением");
             }
 
-            // Обновляем изображение профиля
+            User user = userService.getCurrentUser();
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Пользователь не авторизован");
+            }
+
             User updatedUser = userService.updateProfileImage(user.getId(), file);
+            if (updatedUser == null) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Не удалось обновить изображение профиля");
+            }
 
-            // Формируем ответ
-            ProfileResponse response = new ProfileResponse();
-            response.setId(updatedUser.getId());
-            response.setUsername(updatedUser.getUsername());
-            response.setEmail(updatedUser.getEmail());
-            response.setProfileImageUrl(updatedUser.getProfileImageUrl());
-
-            logger.info("Изображение профиля успешно обновлено для пользователя: {}", username);
-            return ResponseEntity.ok(ApiResponse.success(response, "Изображение профиля успешно обновлено"));
-
-        } catch (ResourceNotFoundException e) {
-            logger.error("Пользователь не найден: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error(e.getMessage()));
-
-        } catch (Exception e) {
-            logger.error("Ошибка при обновлении изображения профиля: {}", e.getMessage(), e);
+            return ResponseEntity.ok(updatedUser.getProfileImageUrl());
+        } catch (IOException e) {
+            logger.error("Ошибка при загрузке изображения профиля: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("Не удалось обновить изображение профиля: " + e.getMessage()));
+                    .body("Ошибка при загрузке изображения: " + e.getMessage());
+        } catch (Exception e) {
+            logger.error("Неожиданная ошибка при обновлении изображения профиля: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Произошла ошибка при обновлении изображения профиля");
         }
     }
 
