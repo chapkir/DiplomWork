@@ -1,5 +1,5 @@
 [versions]
-agp = "8.8.2"
+agp = "8.9.1"
 bucket4jCore = "7.6.0"
 caffeine = "3.1.8"
 converterGson = "2.11.0"
@@ -16,6 +16,7 @@ lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.10.1"
 composeBom = "2025.03.00"
 lombokVersion = "1.18.36"
+materialVersion = "1.7.8"
 navigationCompose = "2.8.9"
 coil-compose = "2.7.0"
 compose-foundation = "1.7.8"
@@ -37,6 +38,7 @@ loggingInterceptor = "4.9.0"
 accompanist-systemuicontroller = "com.google.accompanist:accompanist-systemuicontroller:0.36.0"
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+androidx-material = { module = "androidx.compose.material:material", version.ref = "materialVersion" }
 bucket4j-core = { module = "com.github.vladimir-bukhtoyarov:bucket4j-core", version.ref = "bucket4jCore" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
 converter-gson-v290 = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }

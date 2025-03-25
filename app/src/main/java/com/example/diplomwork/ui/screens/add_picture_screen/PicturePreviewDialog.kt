@@ -35,6 +35,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.theme.ColorForAddPhotoDialog
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
@@ -173,7 +174,7 @@ fun PicturePreviewDialog(
                         shape = RoundedCornerShape(25.dp)
                     ) {
                         if (isLoading) {
-                            LoadingSpinnerForScreen()
+                            LoadingSpinnerForElement()
                         } else {
                             Text(
                                 "Опубликовать",

@@ -47,6 +47,7 @@ import com.example.diplomwork.R
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.model.LoginRequest
 import com.example.diplomwork.network.ApiClient
+import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 import kotlinx.coroutines.launch
@@ -197,7 +198,7 @@ fun LoginScreen(
             enabled = !isLoading && username.isNotBlank() && password.isNotBlank()
         ) {
             if (isLoading) {
-                LoadingSpinnerForScreen()
+                LoadingSpinnerForElement()
             } else {
                 Text(
                     text = "Войти",

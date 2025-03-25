@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun LoadingSpinnerForScreen(
-    indicatorColor: Color = Color.Red,
+    indicatorColor: Color = Color.Gray,
     indicatorSize: Int = 55
 ) {
     Box(

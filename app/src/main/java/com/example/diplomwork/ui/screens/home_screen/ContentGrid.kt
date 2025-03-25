@@ -40,7 +40,9 @@ fun ContentGrid(
     suspend fun loadPictures() {
         try {
             isLoading = true
-            pictures = ApiClient.apiService.getPictures()
+            val fetchedPictures = ApiClient.apiService.getPictures()
+            // Рандомизация порядка изображений
+            pictures = fetchedPictures.shuffled()
             isLoading = false
             error = null
         } catch (e: Exception) {
@@ -68,7 +70,6 @@ fun ContentGrid(
             isLoading -> {
                 LoadingSpinnerForScreen()
             }
-
             error != null -> {
                 Column(
                     modifier = Modifier
@@ -83,7 +84,6 @@ fun ContentGrid(
                     )
                 }
             }
-
             pictures.isEmpty() -> {
                 Text(
                     text = "Нет доступных пинов",
@@ -91,12 +91,10 @@ fun ContentGrid(
                     modifier = Modifier.padding(16.dp)
                 )
             }
-
             else -> {
                 LazyVerticalStaggeredGrid(
                     columns = StaggeredGridCells.Fixed(2),
                     modifier = Modifier.fillMaxSize(),
-                    //contentPadding = PaddingValues(0.dp, 4.dp, 4.dp, 4.dp)
                 ) {
                     itemsIndexed(pictures) { _, picture ->
                         PictureCard(

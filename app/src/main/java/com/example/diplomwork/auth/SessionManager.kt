@@ -21,7 +21,7 @@ class SessionManager(context: Context) {
         private const val TAG = "SessionManager"
 
         // URL сервера по умолчанию
-        private const val DEFAULT_SERVER_URL = "http://192.168.1.125:8081"
+        private const val DEFAULT_SERVER_URL = "http://192.168.232.109:8081"
 
         // Время в миллисекундах, которое нужно вычесть из времени истечения
         // для предварительного обновления токена (5 минут)

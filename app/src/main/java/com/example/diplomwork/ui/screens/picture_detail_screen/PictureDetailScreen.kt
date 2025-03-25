@@ -49,6 +49,7 @@ fun PictureDetailScreen(
     val pictureDescription by viewModel.pictureDescription.collectAsState()
     val likesCount by viewModel.likesCount.collectAsState()
     val isLiked by viewModel.isLiked.collectAsState()
+    val pictureUserId by viewModel.pictureUserId.collectAsState()
     val comments by viewModel.comments.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
@@ -82,7 +83,7 @@ fun PictureDetailScreen(
                     isLiked = isLiked,
                     commentsCount = comments.size,
                     avatarUrl = "",
-                    username = "Kiryha",
+                    username = pictureUserId,
                     onLikeClick = { viewModel.toggleLike() },
                     onCommentClick = { showCommentsSheet = true },
                     onProfileClick = { }
