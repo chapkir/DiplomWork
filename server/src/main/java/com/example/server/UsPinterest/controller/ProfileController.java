@@ -14,6 +14,7 @@ import com.example.server.UsPinterest.service.BoardService;
 import com.example.server.UsPinterest.service.PinService;
 import com.example.server.UsPinterest.service.UserService;
 import com.example.server.UsPinterest.entity.Like;
+import com.example.server.UsPinterest.service.YandexDiskService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @RestController
 @RequestMapping("/api/profile")
@@ -44,6 +46,8 @@ public class ProfileController {
     private final UserRepository userRepository;
     private final PinRepository pinRepository;
     private final LikeRepository likeRepository;
+    @Autowired
+    private YandexDiskService yandexDiskService;
 
     @GetMapping
     public ResponseEntity<?> getProfile() {
@@ -65,6 +69,33 @@ public class ProfileController {
             response.setProfileImageUrl(user.getProfileImageUrl() != null ? user.getProfileImageUrl() : "");
             response.setRegistrationDate(user.getRegistrationDate());
             response.setBoards(user.getBoards());
+
+            // Получаем пины пользователя
+            List<Pin> userPins = pinRepository.findByUser(user);
+            List<PinResponse> pinResponses = userPins.stream()
+                    .map(pin -> {
+                        PinResponse pr = new PinResponse();
+                        pr.setId(pin.getId());
+                        pr.setImageUrl(pin.getImageUrl());
+                        pr.setDescription(pin.getDescription());
+                        pr.setLikesCount(pin.getLikes().size());
+                        pr.setUserId(user.getId());
+                        pr.setUsername(user.getUsername());
+                        pr.setUserProfileImageUrl(user.getProfileImageUrl());
+                        pr.setCreatedAt(pin.getCreatedAt());
+                        pr.setIsLikedByCurrentUser(pin.getLikes().stream()
+                                .anyMatch(like -> like.getUser().getId().equals(user.getId())));
+
+                        if (pin.getBoard() != null) {
+                            pr.setBoardId(pin.getBoard().getId());
+                            pr.setBoardTitle(pin.getBoard().getTitle());
+                        }
+
+                        return pr;
+                    })
+                    .collect(Collectors.toList());
+            response.setPins(pinResponses);
+            response.setPinsCount(pinResponses.size());
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -159,6 +190,41 @@ public class ProfileController {
             e.printStackTrace();
             return ResponseEntity.status(500)
                     .body("Ошибка при получении лайкнутых пинов: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/avatar")
+    public ResponseEntity<?> uploadAvatar(@RequestParam("file") MultipartFile file) {
+        try {
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest().body("Файл не выбран");
+            }
+
+            if (!file.getContentType().startsWith("image/")) {
+                return ResponseEntity.badRequest().body("Файл должен быть изображением");
+            }
+
+            User user = userService.getCurrentUser();
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Пользователь не авторизован");
+            }
+
+            // Загружаем изображение на Яндекс.Диск
+            String imageUrl = yandexDiskService.uploadProfileImage(file, user.getId());
+
+            // Обновляем URL аватарки в профиле пользователя
+            user.setProfileImageUrl(imageUrl);
+            userRepository.save(user);
+
+            return ResponseEntity.ok(imageUrl);
+        } catch (IOException e) {
+            logger.error("Ошибка при загрузке аватарки: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Ошибка при загрузке аватарки: " + e.getMessage());
+        } catch (Exception e) {
+            logger.error("Неожиданная ошибка при загрузке аватарки: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Произошла ошибка при загрузке аватарки");
         }
     }
 } 

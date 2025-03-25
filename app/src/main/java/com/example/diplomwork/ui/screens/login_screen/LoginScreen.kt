@@ -173,7 +173,8 @@ fun LoginScreen(
                     try {
                         isLoading = true
                         val response = ApiClient.apiService.login(LoginRequest(username, password))
-                        sessionManager.saveAuthToken(response.token)
+                        sessionManager.saveAuthData(response.token, response.refreshToken)
+                        sessionManager.saveUsername(username)
                         onLoginSuccess()
                     } catch (e: Exception) {
                         Toast.makeText(

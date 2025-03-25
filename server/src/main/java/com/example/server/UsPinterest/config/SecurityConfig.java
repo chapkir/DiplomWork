@@ -42,7 +42,7 @@ public class SecurityConfig {
     @Autowired
     private CustomUserDetailsService userDetailsService;
 
-    // Добавляем AuthenticationEntryPoint для обработки ошибок аутентификации
+
     private final AuthenticationEntryPoint authEntryPoint = (request, response, authException) -> {
         logger.error("Unauthorized error: {}", authException.getMessage());
         response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Ошибка аутентификации: " + authException.getMessage());

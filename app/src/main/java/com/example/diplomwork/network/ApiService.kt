@@ -9,6 +9,8 @@ import com.example.diplomwork.model.CommentResponse
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.model.RegisterRequest
 import com.example.diplomwork.model.RegisterResponse
+import com.example.diplomwork.model.TokenRefreshRequest
+import com.example.diplomwork.model.TokenRefreshResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -26,6 +28,12 @@ interface ApiService {
 
     @POST("api/auth/login")
     suspend fun login(@Body loginRequest: LoginRequest): LoginResponse
+
+    @POST("api/auth/refresh")
+    suspend fun refreshToken(@Body request: TokenRefreshRequest): TokenRefreshResponse
+
+    @POST("api/auth/logout")
+    suspend fun logout(): Response<Map<String, String>>
 
     @GET("api/profile")
     suspend fun getProfile(): ProfileResponse
@@ -66,4 +74,8 @@ interface ApiService {
     suspend fun uploadProfileImage(
         @Part file: MultipartBody.Part
     ): Response<ProfileResponse>
+
+    @Multipart
+    @POST("api/profile/avatar")
+    suspend fun uploadAvatar(@Part file: MultipartBody.Part): Response<String>
 }

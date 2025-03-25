@@ -16,6 +16,12 @@ import coil.ImageLoader
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
+import com.example.diplomwork.model.TokenRefreshRequest
+import com.example.diplomwork.model.TokenRefreshResponse
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import retrofit2.HttpException
 
 object ApiClient {
     // Значение по умолчанию для эмулятора Android
@@ -37,6 +43,18 @@ object ApiClient {
     private lateinit var _apiService: ApiService
     private lateinit var _imageUploadService: ImageUploadService
 
+    // Мутекс для синхронизации обновления токенов
+    private val refreshTokenMutex = Mutex()
+
+    // Флаг для отслеживания процесса обновления токена
+    private var isRefreshingToken = false
+
+    // Максимальное количество попыток обновления токена
+    private const val MAX_REFRESH_ATTEMPTS = 3
+
+    // Счетчик попыток обновления токена
+    private var refreshAttempts = 0
+
     fun init(context: Context) {
         sessionManager = SessionManager(context)
         // Получаем сохраненный URL сервера
@@ -44,6 +62,7 @@ object ApiClient {
         if (!serverUrl.endsWith("/")) {
             serverUrl += "/"
         }
+        Log.d(TAG, "ApiClient инициализирован с URL: $serverUrl")
         createRetrofit()
     }
 
@@ -65,49 +84,190 @@ object ApiClient {
         chain.proceed(requestBuilder.build())
     }
 
-    // Добавляем свой интерцептор для отслеживания запросов
+    // Добавляем свой интерцептор для отслеживания запросов и обновления токенов
     private val authInterceptor = Interceptor { chain ->
         val original = chain.request()
+
+        // Пропускаем запросы на обновление токена и вход
+        val skipAuthPaths = listOf("/api/auth/login", "/api/auth/refresh", "/api/auth/register")
+        val shouldSkipAuth = skipAuthPaths.any { original.url.toString().contains(it) }
+
         val requestBuilder = original.newBuilder()
 
         // Логируем информацию о запросе
         Log.d(TAG, "Отправка запроса: ${original.method} ${original.url}")
-        Log.d(TAG, "Заголовки запроса: ${original.headers}")
 
-        // Получаем токен и добавляем его в заголовок, если он существует
-        if (::sessionManager.isInitialized) {
+        if (::sessionManager.isInitialized && !shouldSkipAuth) {
+            // Проверяем, не истек ли токен
+            if ((sessionManager.isTokenExpired() || sessionManager.willTokenExpireSoon()) && sessionManager.hasRefreshToken()) {
+                Log.d(TAG, "Токен истек или скоро истечет, пытаемся обновить")
+
+                // Обновляем токен перед выполнением запроса
+                val refreshSuccess = refreshTokenIfNeeded()
+
+                if (!refreshSuccess) {
+                    Log.e(TAG, "Не удалось обновить токен, очищаем сессию")
+                    sessionManager.clearSession()
+                }
+            }
+
+            // После возможного обновления токена добавляем актуальный токен в запрос
             sessionManager.getAuthToken()?.let { token ->
                 requestBuilder.addHeader("Authorization", "Bearer $token")
                 Log.d(TAG, "Добавлен токен авторизации: Bearer ${token.take(10)}...")
-            } ?: run {
-                Log.w(TAG, "Токен авторизации отсутствует")
-            }
-        } else {
+            } ?: Log.w(TAG, "Токен авторизации отсутствует")
+        } else if (!::sessionManager.isInitialized) {
             Log.w(TAG, "SessionManager не инициализирован")
+        } else if (shouldSkipAuth) {
+            Log.d(TAG, "Пропускаем авторизацию для: ${original.url}")
         }
 
         val request = requestBuilder.build()
+
         try {
+            // Выполняем запрос
             val response = chain.proceed(request)
 
-            // Логируем информацию об ответе
             Log.d(TAG, "Получен ответ: ${response.code} для ${request.url}")
-            Log.d(TAG, "Заголовки ответа: ${response.headers}")
 
-            val responseBody = response.peekBody(Long.MAX_VALUE).string()
-            Log.d(TAG, "Тело ответа: $responseBody")
+            // Проверяем заголовок X-Token-Expired и код 401
+            if (response.header("X-Token-Expired") == "true" || response.code == 401) {
+                if (response.header("X-Token-Expired") == "true") {
+                    Log.d(TAG, "Получен заголовок X-Token-Expired")
+                } else if (response.code == 401) {
+                    Log.d(TAG, "Получен код 401 Unauthorized")
+                }
 
-            if (!response.isSuccessful) {
-                Log.e(TAG, "Ошибка запроса: ${response.code} ${response.message}")
-                Log.e(TAG, "Тело ответа с ошибкой: $responseBody")
+                // Проверяем, есть ли у нас refresh token и не выполняем ли мы уже обновление
+                if (sessionManager.hasRefreshToken() && !shouldSkipAuth) {
+                    var refreshSuccess = false
+                    var newResponse: Response? = null
+
+                    runBlocking {
+                        refreshTokenMutex.withLock {
+                            if (!isRefreshingToken) {
+                                refreshSuccess = refreshTokenIfNeeded(forceRefresh = true)
+                            }
+                        }
+                    }
+
+                    // Если обновление токена успешно, повторяем запрос с новым токеном
+                    if (refreshSuccess) {
+                        response.close() // Закрываем старый ответ
+
+                        val newToken = sessionManager.getAuthToken()
+                        if (newToken != null) {
+                            val newRequest = original.newBuilder()
+                                .header("Authorization", "Bearer $newToken")
+                                .build()
+
+                            Log.d(TAG, "Повторный запрос с новым токеном: ${original.url}")
+
+                            // Выполняем запрос заново
+                            try {
+                                newResponse = chain.proceed(newRequest)
+                                return@Interceptor newResponse!!
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Ошибка при повторном запросе: ${e.message}")
+                                throw e
+                            }
+                        } else {
+                            Log.e(TAG, "Не удалось получить новый токен после обновления")
+                        }
+                    } else {
+                        Log.d(TAG, "Не удалось обновить токен, возвращаем оригинальный ответ")
+                    }
+                } else {
+                    if (!sessionManager.hasRefreshToken()) {
+                        Log.d(TAG, "Нет refresh токена, очищаем сессию")
+                    } else if (shouldSkipAuth) {
+                        Log.d(TAG, "Запрос для пути, который не требует авторизации")
+                    } else if (isRefreshingToken) {
+                        Log.d(TAG, "Процесс обновления токена уже выполняется")
+                    }
+                    sessionManager.clearSession()
+                }
             }
 
-            response
+            return@Interceptor response
         } catch (e: Exception) {
             Log.e(TAG, "Ошибка при выполнении запроса: ${e.message}")
             Log.e(TAG, "Стек вызовов: ${e.stackTraceToString()}")
             throw e
         }
+    }
+
+    // Метод для обновления токена доступа
+    private fun refreshTokenIfNeeded(forceRefresh: Boolean = false): Boolean {
+        // Проверяем, нужно ли обновлять токен
+        if (!forceRefresh && !sessionManager.isTokenExpired() && !sessionManager.willTokenExpireSoon()) {
+            return true  // Токен не требует обновления
+        }
+
+        // Проверяем наличие refresh токена
+        if (!sessionManager.hasRefreshToken()) {
+            Log.e(TAG, "Отсутствует refresh токен для обновления")
+            return false
+        }
+
+        // Проверяем лимит попыток обновления
+        if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
+            Log.e(TAG, "Достигнут лимит попыток обновления токена: $MAX_REFRESH_ATTEMPTS")
+            refreshAttempts = 0  // Сбрасываем счетчик
+            return false
+        }
+
+        var success = false
+
+        try {
+            isRefreshingToken = true
+            refreshAttempts++  // Увеличиваем счетчик попыток
+
+            Log.d(TAG, "Обновление токена, попытка #$refreshAttempts")
+            val refreshToken = sessionManager.getRefreshToken()
+
+            if (refreshToken != null) {
+                val username = sessionManager.getUsername()
+                Log.d(TAG, "Отправляем запрос на обновление токена для пользователя: $username")
+
+                runBlocking {
+                    try {
+                        val tokenRequest = TokenRefreshRequest(refreshToken)
+                        val response = _apiService.refreshToken(tokenRequest)
+
+                        // Сохраняем новые токены
+                        Log.d(TAG, "Получен новый токен доступа")
+                        sessionManager.saveAuthData(response.accessToken, response.refreshToken)
+                        Log.d(TAG, "Токены успешно обновлены")
+
+                        // Сбрасываем счетчик попыток при успехе
+                        refreshAttempts = 0
+                        success = true
+                    } catch (e: HttpException) {
+                        Log.e(TAG, "HTTP ошибка при обновлении токена: ${e.code()}")
+                        Log.e(TAG, "Сообщение: ${e.message()}")
+
+                        // Если сервер отверг refresh токен, очищаем сессию
+                        if (e.code() == 401 || e.code() == 403) {
+                            Log.e(TAG, "Refresh токен недействителен, очищаем сессию")
+                            sessionManager.clearSession()
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Ошибка при обновлении токена: ${e.message}")
+                        e.printStackTrace()
+                    }
+                }
+            } else {
+                Log.e(TAG, "Refresh токен равен null")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Исключение при обновлении токена: ${e.message}")
+            e.printStackTrace()
+        } finally {
+            isRefreshingToken = false
+        }
+
+        return success
     }
 
     private val okHttpClient = OkHttpClient.Builder()
@@ -173,10 +333,13 @@ object ApiClient {
 
         _apiService = retrofit.create(ApiService::class.java)
         _imageUploadService = retrofit.create(ImageUploadService::class.java)
+
+        Log.d(TAG, "Создан Retrofit клиент с базовым URL: $serverUrl")
     }
 
     private fun recreateRetrofit() {
         if (::retrofit.isInitialized) {
+            Log.d(TAG, "Пересоздание Retrofit клиента с URL: $serverUrl")
             createRetrofit()
         }
     }
@@ -231,7 +394,7 @@ object ApiClient {
                     if (isExpired) {
                         Log.d(TAG, "Токен истек, требуется повторная аутентификация")
                         // Здесь можно добавить логику для обновления токена
-                        // Если доступен refresh token, обновляем токен
+                        // Используем механизм обновления токена из основного клиента
                     }
 
                     // Добавляем заголовок авторизации с токеном

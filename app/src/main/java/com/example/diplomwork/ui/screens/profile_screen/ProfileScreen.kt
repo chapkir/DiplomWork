@@ -1,5 +1,6 @@
 package com.example.diplomwork.ui.screens.profile_screen
 
+import android.content.Context
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
@@ -58,6 +59,9 @@ import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import retrofit2.HttpException
 
 @Composable
@@ -73,6 +77,7 @@ fun ProfileScreen(
     var profileData by remember { mutableStateOf<ProfileResponse?>(null) }
     var likedPins by remember { mutableStateOf<List<PictureResponse>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
+    var isUploading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var selectedTabIndex by remember { mutableStateOf(0) }
     var profileImageUrl by remember { mutableStateOf<String?>(null) }
@@ -86,6 +91,64 @@ fun ProfileScreen(
             Log.e("ProfileScreen", "Ошибка при загрузке лайкнутых пинов: ${e.message}")
             Toast.makeText(context, "Ошибка при загрузке лайкнутых пинов", Toast.LENGTH_SHORT)
                 .show()
+        }
+    }
+
+    suspend fun loadProfile() {
+        try {
+            profileData = ApiClient.apiService.getProfile()
+            profileImageUrl = profileData?.profileImageUrl
+            Log.d("ProfileScreen", "Загружен профиль: ${profileData?.username}, аватар: $profileImageUrl")
+        } catch (e: Exception) {
+            Log.e("ProfileScreen", "Ошибка при загрузке профиля: ${e.message}")
+            throw e
+        }
+    }
+
+    // Функция для загрузки аватарки на сервер
+    fun uploadAvatarToServer(uri: Uri, context: Context) {
+        scope.launch {
+            isUploading = true
+            try {
+                // Используем ImageUtils для сжатия и подготовки изображения
+                val imageFile = com.example.diplomwork.util.ImageUtils.copyUriToFile(context, uri)
+
+                if (imageFile != null) {
+                    // Создаем MultipartBody.Part для файла изображения
+                    val requestFile = imageFile.asRequestBody("image/*".toMediaTypeOrNull())
+                    val body = MultipartBody.Part.createFormData("image", imageFile.name, requestFile)
+
+                    // Отправляем запрос на сервер
+                    val response = ApiClient.apiService.uploadProfileImage(body)
+
+                    // Обрабатываем успешный ответ
+                    if (response.isSuccessful) {
+                        // Обновляем URL аватарки
+                        val updatedProfile = response.body()
+                        profileImageUrl = updatedProfile?.profileImageUrl
+                        profileData = updatedProfile
+
+                        Toast.makeText(context, "Аватар успешно обновлен", Toast.LENGTH_SHORT).show()
+                        Log.d("ProfileScreen", "Аватар успешно загружен: $profileImageUrl")
+                    } else {
+                        // Обрабатываем ошибку
+                        val errorMessage = response.errorBody()?.string() ?: "Неизвестная ошибка"
+                        Toast.makeText(context, "Ошибка при загрузке аватара: $errorMessage", Toast.LENGTH_SHORT).show()
+                        Log.e("ProfileScreen", "Ошибка при загрузке аватара: $errorMessage")
+                    }
+
+                    // Удаляем временный файл
+                    imageFile.delete()
+                } else {
+                    Toast.makeText(context, "Не удалось подготовить изображение", Toast.LENGTH_SHORT).show()
+                    Log.e("ProfileScreen", "Не удалось подготовить изображение")
+                }
+            } catch (e: Exception) {
+                Log.e("ProfileScreen", "Ошибка при загрузке аватара: ${e.message}", e)
+                Toast.makeText(context, "Ошибка при загрузке аватара: ${e.message}", Toast.LENGTH_SHORT).show()
+            } finally {
+                isUploading = false
+            }
         }
     }
 
@@ -104,7 +167,7 @@ fun ProfileScreen(
                 return@LaunchedEffect
             }
 
-            profileData = ApiClient.apiService.getProfile()
+            loadProfile()
             loadLikedPins()
             isLoading = false
         } catch (e: HttpException) {
@@ -135,17 +198,7 @@ fun ProfileScreen(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
-            profileImageUrl = it.toString()
-            //uploadAvatarToServer(it, context) // TODO САШКА ДЛЯ ТЕБЯ
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        try {
-            // profileData = ApiClient.apiService.getProfile()
-            //profileImageUrl = profileData?.profileImageUrl  // TODO САШКА ДЛЯ ТЕБЯ
-        } catch (e: Exception) {
-            error = "Ошибка: ${e.message}"
+            uploadAvatarToServer(it, context)
         }
     }
 
@@ -176,7 +229,7 @@ fun ProfileScreen(
                             isLoading = true
                             scope.launch {
                                 try {
-                                    profileData = ApiClient.apiService.getProfile()
+                                    loadProfile()
                                     loadLikedPins()
                                     isLoading = false
                                 } catch (e: Exception) {
@@ -195,6 +248,7 @@ fun ProfileScreen(
                 ProfileHeader(
                     username = profileData?.username ?: "Неизвестный",
                     avatarUrl = profileImageUrl,
+                    isUploading = isUploading,
                     onAvatarClick = { pickImageLauncher.launch("image/*") },
                     onLogout = onLogout
                 )
@@ -242,6 +296,7 @@ fun ProfileScreen(
 private fun ProfileHeader(
     username: String,
     avatarUrl: String?,
+    isUploading: Boolean = false,
     onAvatarClick: () -> Unit,
     onLogout: () -> Unit
 ) {
@@ -266,12 +321,21 @@ private fun ProfileHeader(
                     .clickable { onAvatarClick() },
                 contentAlignment = Alignment.Center
             ) {
-                AsyncImage(
-                    model = avatarUrl ?: R.drawable.default_avatar,
-                    contentDescription = "Avatar",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.matchParentSize()
-                )
+                if (isUploading) {
+                    LoadingSpinnerForScreen()
+                } else {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(avatarUrl)
+                            .crossfade(true)
+                            .placeholder(R.drawable.default_avatar)
+                            .error(R.drawable.default_avatar)
+                            .build(),
+                        contentDescription = "Avatar",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.matchParentSize()
+                    )
+                }
             }
             Box(modifier = Modifier.size(40.dp))
             {
