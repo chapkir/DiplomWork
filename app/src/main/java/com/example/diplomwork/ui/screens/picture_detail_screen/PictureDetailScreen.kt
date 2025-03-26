@@ -50,7 +50,7 @@ fun PictureDetailScreen(
     viewModel: PictureDetailScreenViewModel = remember {
         val timestamp = System.currentTimeMillis()
         Log.i("NAVIGATION_DEBUG", "$timestamp - DETAIL: ИНИЦИАЛИЗАЦИЯ ЭКРАНА ПИНА С ID=${viewPictureDetailScreenData.pictureId}, URL=${viewPictureDetailScreenData.imageUrl}")
-        PictureDetailScreenViewModel(viewPictureDetailScreenData.pictureId)
+        PictureDetailScreenViewModel(viewPictureDetailScreenData.pictureId.toLong())
     }
 ) {
     val pictureDescription by viewModel.pictureDescription.collectAsState()

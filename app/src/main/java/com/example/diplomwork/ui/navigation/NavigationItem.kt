@@ -43,6 +43,6 @@ object ViewPost : Screen
 
 @Serializable
 data class ViewPictureDetailScreenData(
-    val pictureId: Long,
+    val pictureId: String,
     val imageUrl: String
 ) : Screen

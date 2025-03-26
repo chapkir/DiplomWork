@@ -2,6 +2,7 @@ package com.example.diplomwork.ui.navigation
 
 import android.net.Uri
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import android.widget.Toast
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -9,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -26,6 +28,9 @@ import com.example.diplomwork.ui.screens.login_screen.LoginScreen
 import com.example.diplomwork.ui.screens.picture_detail_screen.PictureDetailScreen
 import com.example.diplomwork.ui.screens.profile_screen.ProfileScreen
 import com.example.diplomwork.ui.screens.registration_screen.RegisterScreen
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
@@ -52,19 +57,56 @@ fun AppNavigation(navController: NavHostController) {
 
     var shouldRefresh by remember { mutableStateOf(false) }
     var lastRefreshTimestamp by remember { mutableStateOf(0L) }
+    var searchQuery by remember { mutableStateOf("") }
+    var lastSearchJob by remember { mutableStateOf<Job?>(null) }
+    var isSearchActive by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     val triggerRefresh = {
         shouldRefresh = true
         lastRefreshTimestamp = System.currentTimeMillis()
         Log.d("AppNavigation", "Запрошено обновление главного экрана в $lastRefreshTimestamp")
+        Unit
+    }
+
+    // Функция для задержки поиска
+    fun performSearch(query: String) {
+        lastSearchJob?.cancel()
+        lastSearchJob = coroutineScope.launch {
+            delay(400) // Задержка в 400 мс
+            searchQuery = query
+            isSearchActive = query.isNotEmpty()
+            Log.d("AppNavigation", "Выполняется поиск по запросу: $query")
+            if (currentRoute != Home::class.simpleName) {
+                navController.navigate(Home)
+            }
+        }
+    }
+
+    // Обработка системной кнопки назад для закрытия поиска
+    BackHandler(enabled = isSearchActive) {
+        Log.d("AppNavigation", "Нажата системная кнопка назад, закрываем поиск")
+        performSearch("")
     }
 
     Scaffold(
-        topBar = { GetTopBars(currentRoute) },
+        topBar = {
+            GetTopBars(
+                currentRoute = currentRoute,
+                onSearch = { query ->
+                    performSearch(query)
+                },
+                onRefresh = triggerRefresh
+            )
+        },
         bottomBar = {
             if (showBottomBar) BottomNavigationBar(
                 currentRoute = currentRoute ?: "",
                 onNavigate = { route ->
+                    if (route == Home && searchQuery.isNotEmpty()) {
+                        searchQuery = ""
+                        isSearchActive = false
+                    }
                     navController.navigate(route) {
                         popUpTo(route) { inclusive = true }
                     }
@@ -83,10 +125,11 @@ fun AppNavigation(navController: NavHostController) {
                     onImageClick = { pictureId, imageUrl ->
                         val timestamp = System.currentTimeMillis()
                         Log.i("NAVIGATION_DEBUG", "$timestamp - НАЖАТИЕ НА ПИН С ID=$pictureId И URL=$imageUrl")
-                        navController.navigate(ViewPictureDetailScreenData(pictureId, imageUrl))
+                        navController.navigate(ViewPictureDetailScreenData(pictureId.toString(), imageUrl))
                     },
                     shouldRefresh = shouldRefresh,
-                    onRefreshComplete = { shouldRefresh = false }
+                    onRefreshComplete = { shouldRefresh = false },
+                    searchQuery = searchQuery
                 )
             }
             composable<Login> {
@@ -114,8 +157,8 @@ fun AppNavigation(navController: NavHostController) {
                         }
                     },
                     onImageClick = { pictureId, imageUrl ->
-                        navController.navigate(ViewPictureDetailScreenData(pictureId, imageUrl)) {
-                            popUpTo(ViewPictureDetailScreenData(pictureId, imageUrl))
+                        navController.navigate(ViewPictureDetailScreenData(pictureId.toString(), imageUrl)) {
+                            popUpTo(ViewPictureDetailScreenData(pictureId.toString(), imageUrl))
                             { inclusive = true }
                         }
                     }

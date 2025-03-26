@@ -27,8 +27,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,24 +43,39 @@ import com.example.diplomwork.ui.navigation.Posts
 import com.example.diplomwork.ui.navigation.Profile
 import com.example.diplomwork.ui.navigation.Screen
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
 
 @Composable
-fun GetTopBars(currentRoute: String?) {
+fun GetTopBars(
+    currentRoute: String?,
+    onSearch: (String) -> Unit = {},
+    onRefresh: () -> Unit = {}
+) {
     var isSearching by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
 
     LaunchedEffect(currentRoute) {
-        isSearching = false
-        searchQuery = ""
+        if (currentRoute != Home::class.simpleName) {
+            isSearching = false
+            searchQuery = ""
+        }
     }
 
     if (isSearching) {
         SearchBar(
             searchQuery = searchQuery,
-            onSearchQueryChange = { searchQuery = it },
+            onSearchQueryChange = {
+                searchQuery = it
+                onSearch(it)
+            },
             onCloseSearch = {
                 isSearching = false
                 searchQuery = ""
+                onSearch("")
+            },
+            onSearch = {
+                onSearch(searchQuery)
             }
         )
     } else {
@@ -67,7 +84,8 @@ fun GetTopBars(currentRoute: String?) {
                 title = "Лента картинок",
                 icon = R.drawable.ic_search,
                 contentDescription = "Search",
-                onIconClick = { isSearching = true }
+                onIconClick = { isSearching = true },
+                onRefreshClick = onRefresh // Обработка нажатия на кнопку обновления
             )
 
             Posts::class.simpleName -> CustomTopBar(title = "Посты")
@@ -84,8 +102,10 @@ fun GetTopBars(currentRoute: String?) {
 fun CustomTopBar(
     title: String,
     icon: Int = 0,
+    refreshIcon: Int = 0,
     contentDescription: String = "",
-    onIconClick: () -> Unit = {}
+    onIconClick: () -> Unit = {},
+    onRefreshClick: () -> Unit = {}
 ) {
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     Row(
@@ -95,8 +115,9 @@ fun CustomTopBar(
             .padding(top = statusBarHeight),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (icon != 0) Spacer(Modifier.weight(2f))
+        if (icon != 0 || refreshIcon != 0) Spacer(Modifier.weight(2f))
         else Spacer(Modifier.weight(1f))
+
         Text(
             text = title,
             fontSize = 18.sp,
@@ -105,10 +126,24 @@ fun CustomTopBar(
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 11.dp, bottom = 11.dp)
         )
+
         Spacer(Modifier.weight(1f))
+
+        // Иконка обновления
+        if (refreshIcon != 0) {
+            IconButton(onClick = { onRefreshClick() }) {
+                Icon(
+                    painter = painterResource(id = refreshIcon),
+                    contentDescription = "Refresh",
+                    modifier = Modifier.size(17.dp),
+                    tint = Color.White
+                )
+            }
+        }
+
+        // Иконка поиска
         if (icon != 0) {
-            IconButton(onClick = { onIconClick() })
-            {
+            IconButton(onClick = { onIconClick() }) {
                 Icon(
                     painter = painterResource(id = icon),
                     contentDescription = contentDescription,
@@ -116,7 +151,7 @@ fun CustomTopBar(
                     tint = Color.White
                 )
             }
-        } else return
+        }
     }
 }
 
@@ -124,9 +159,12 @@ fun CustomTopBar(
 fun SearchBar(
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
-    onCloseSearch: () -> Unit
+    onCloseSearch: () -> Unit,
+    onSearch: () -> Unit = {}
 ) {
+    val focusManager = LocalFocusManager.current
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -150,6 +188,13 @@ fun SearchBar(
             placeholder = { Text("Поиск", color = Color.Gray, fontSize = 15.sp) },
             singleLine = true,
             shape = RoundedCornerShape(10.dp),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(
+                onSearch = {
+                    focusManager.clearFocus()
+                    onSearch()
+                }
+            ),
             colors = TextFieldDefaults.colors(
                 focusedTextColor = Color.Black,
                 unfocusedTextColor = Color.Gray,
@@ -159,7 +204,7 @@ fun SearchBar(
                 disabledIndicatorColor = Color.Transparent
             )
         )
-        IconButton(onClick = {}) {
+        IconButton(onClick = onSearch) {
             Icon(
                 painter = painterResource(R.drawable.ic_search),
                 contentDescription = "Search",

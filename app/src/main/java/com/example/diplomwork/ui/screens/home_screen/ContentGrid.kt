@@ -26,18 +26,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.diplomwork.model.ApiResponse
+import com.example.diplomwork.model.PageResponse
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 
 @Composable
 fun ContentGrid(
     modifier: Modifier = Modifier,
     onImageClick: (PictureResponse) -> Unit,
     refreshTrigger: Int = 0,
-    isRefreshing: Boolean = false
+    isRefreshing: Boolean = false,
+    searchQuery: String = ""
 ) {
     var pictures by remember { mutableStateOf<List<PictureResponse>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -49,15 +53,27 @@ fun ContentGrid(
             if (!isRefreshing) {
                 isLoading = true
             }
-            Log.d("ContentGrid", "Загрузка пинов...")
 
-            val fetchedPictures = ApiClient.apiService.getPictures()
-            Log.d("ContentGrid", "Загружено ${fetchedPictures.size} пинов")
-            pictures = fetchedPictures
+            // Выбираем между поиском и обычной загрузкой
+            if (searchQuery.isNotEmpty()) {
+                Log.d("ContentGrid", "Поиск пинов по запросу: $searchQuery")
+                val searchResponse = ApiClient.apiService.searchPictures(searchQuery)
+                val searchResults = searchResponse.data.content
+                Log.d("ContentGrid", "Найдено ${searchResults.size} пинов по запросу '$searchQuery'")
+
+                pictures = searchResults
+            } else {
+                Log.d("ContentGrid", "Загрузка пинов...")
+                val fetchedPictures = ApiClient.apiService.getPictures()
+                Log.d("ContentGrid", "Загружено ${fetchedPictures.size} пинов")
+                pictures = fetchedPictures
+
+            }
+
             isLoading = false
             error = null
         } catch (e: Exception) {
-
+            // Логи
             Log.e("ContentGrid", "Ошибка загрузки данных: ${e.message}", e)
 
             error = "Ошибка загрузки данных: ${e.message}"
@@ -70,12 +86,31 @@ fun ContentGrid(
         loadPictures()
     }
 
-    // Загрузка при изменении триггера обновления
-    LaunchedEffect(refreshTrigger) {
-        if (refreshTrigger > 0) {
-            Log.d("ContentGrid", "Обработка запроса на обновление (триггер: $refreshTrigger)")
-            loadPictures()
+    // Загрузка при изменении триггера обновления или поискового запроса
+    LaunchedEffect(refreshTrigger, searchQuery) {
+        val showLoading = (pictures.isEmpty() || refreshTrigger > 0)
+        if (showLoading && !isRefreshing) {
+            isLoading = true
         }
+
+        if (searchQuery.isNotEmpty()) {
+            Log.d("ContentGrid", "Поиск обновлен с запросом: '$searchQuery'")
+        }
+
+        loadPictures()
+    }
+
+    // Добавляем информацию о поиске для пользователя
+    var searchInfoText by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(searchQuery, pictures.size) {
+        searchInfoText = if (searchQuery.isNotEmpty()) {
+            if (pictures.isEmpty()) {
+                "По запросу \"$searchQuery\" ничего не найдено"
+            } else {
+                "Найдено ${pictures.size} результатов по запросу \"$searchQuery\""
+            }
+        } else null
     }
 
     Box(
@@ -112,7 +147,8 @@ fun ContentGrid(
             }
             pictures.isEmpty() -> {
                 Text(
-                    text = "Нет доступных пинов",
+                    text = if (searchQuery.isEmpty()) "Нет доступных пинов"
+                    else "По запросу \"$searchQuery\" ничего не найдено",
                     color = Color.White,
                     modifier = Modifier.padding(16.dp)
                 )
@@ -121,23 +157,38 @@ fun ContentGrid(
                 LazyVerticalStaggeredGrid(
                     columns = StaggeredGridCells.Fixed(2),
                     modifier = Modifier.fillMaxSize(),
-                ) {
-                    itemsIndexed(pictures) { _, picture ->
-                        Log.d("ContentGrid", "Отображение пина: ID=${picture.id}, URL=${picture.imageUrl}")
-                        PictureCard(
-                            imageUrl = picture.imageUrl,
-                            id = picture.id,
-                            onClick = {
-                                // Подробное логирование с отметкой времени
-                                val timestamp = System.currentTimeMillis()
-                                Log.i("NAVIGATION_DEBUG", "$timestamp - GRID: КЛИК НА ПИН С ID=${picture.id}, URL=${picture.imageUrl}")
-                                Log.i("NAVIGATION_DEBUG", "Дополнительные данные пина: Описание=${picture.description.take(20)}, " +
-                                        "Автор=${picture.username}, Лайков=${picture.likesCount}")
-                                onImageClick(picture)
+                    content = {
+                        if (searchInfoText != null) {
+                            item(span = StaggeredGridItemSpan.FullLine) {
+                                Text(
+                                    text = searchInfoText!!,
+                                    color = Color.White,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    textAlign = TextAlign.Center
+                                )
                             }
-                        )
+                        }
+
+
+                        itemsIndexed(pictures) { _, picture ->
+                            Log.d("ContentGrid", "Отображение пина: ID=${picture.id}, URL=${picture.imageUrl}")
+                            PictureCard(
+                                imageUrl = picture.imageUrl,
+                                id = picture.id,
+                                onClick = {
+                                    // логи
+                                    val timestamp = System.currentTimeMillis()
+                                    Log.i("NAVIGATION_DEBUG", "$timestamp - GRID: КЛИК НА ПИН С ID=${picture.id}, URL=${picture.imageUrl}")
+                                    Log.i("NAVIGATION_DEBUG", "Дополнительные данные пина: Описание=${picture.description.take(20)}, " +
+                                            "Автор=${picture.username}, Лайков=${picture.likesCount}")
+                                    onImageClick(picture)
+                                }
+                            )
+                        }
                     }
-                }
+                )
             }
         }
     }

@@ -11,6 +11,8 @@ import com.example.diplomwork.model.RegisterRequest
 import com.example.diplomwork.model.RegisterResponse
 import com.example.diplomwork.model.TokenRefreshRequest
 import com.example.diplomwork.model.TokenRefreshResponse
+import com.example.diplomwork.model.ApiResponse
+import com.example.diplomwork.model.PageResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -23,8 +25,12 @@ interface ApiService {
     @GET("api/pins/{id}")
     suspend fun getPicture(@Path("id") id: Long): PictureResponse
 
-    @GET("api/pins/search")
-    suspend fun searchPictures(@Query("query") query: String): List<PictureResponse>
+    @GET("api/search/pins")
+    suspend fun searchPictures(
+        @Query("query") query: String,
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 20
+    ): ApiResponse<PageResponse<PictureResponse>>
 
     @POST("api/auth/login")
     suspend fun login(@Body loginRequest: LoginRequest): LoginResponse
