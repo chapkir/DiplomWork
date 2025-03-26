@@ -21,8 +21,8 @@ import com.example.diplomwork.ui.components.bottom_menu.BottomNavigationBar
 import com.example.diplomwork.ui.components.top_bar.GetTopBars
 import com.example.diplomwork.ui.screens.add_picture_screen.OpenGalleryAndSavePicture
 import com.example.diplomwork.ui.screens.home_screen.HomeScreen
-import com.example.diplomwork.ui.screens.picture_detail_screen.PictureDetailScreen
 import com.example.diplomwork.ui.screens.login_screen.LoginScreen
+import com.example.diplomwork.ui.screens.picture_detail_screen.PictureDetailScreen
 import com.example.diplomwork.ui.screens.profile_screen.ProfileScreen
 import com.example.diplomwork.ui.screens.registration_screen.RegisterScreen
 
@@ -30,7 +30,8 @@ import com.example.diplomwork.ui.screens.registration_screen.RegisterScreen
 fun AppNavigation(navController: NavHostController) {
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
-    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route?.substringAfterLast('.')
+    val currentRoute = navController.
+    currentBackStackEntryAsState().value?.destination?.route?.substringAfterLast('.')
 
     Log.i("appnav", "сейчас путь - $currentRoute")
 
@@ -72,9 +73,13 @@ fun AppNavigation(navController: NavHostController) {
             composable<Home> {
                 HomeScreen(
                     onImageClick = { pictureId, imageUrl ->
-                        val encodedUrl = Uri.encode(imageUrl)
-                        navController.navigate(ViewPictureDetailScreenData(pictureId, encodedUrl)) {
-                            popUpTo(ViewPictureDetailScreenData(pictureId, encodedUrl)) { inclusive = true }
+                        navController.navigate(ViewPictureDetailScreenData(pictureId, imageUrl)) {
+                            popUpTo(
+                                ViewPictureDetailScreenData(
+                                    pictureId,
+                                    imageUrl
+                                )
+                            ) { inclusive = true }
                         }
                     },
                     shouldRefresh = shouldRefresh,
@@ -106,20 +111,21 @@ fun AppNavigation(navController: NavHostController) {
                         }
                     },
                     onImageClick = { pictureId, imageUrl ->
-                        val encodedUrl = java.net.URLEncoder.encode(imageUrl, "UTF-8")
-                        navController.navigate(ViewPictureDetailScreenData(pictureId, encodedUrl)) {
-                            popUpTo(ViewPictureDetailScreenData(pictureId, encodedUrl))
+                        navController.navigate(ViewPictureDetailScreenData(pictureId, imageUrl)) {
+                            popUpTo(ViewPictureDetailScreenData(pictureId, imageUrl))
                             { inclusive = true }
                         }
                     }
                 )
             }
             composable<ViewPictureDetailScreenData> { backStackEntry ->
+                val viewPictureDetailScreenData = backStackEntry.toRoute<ViewPictureDetailScreenData>()
                 PictureDetailScreen(
-                    viewPictureDetailScreenData = backStackEntry.toRoute<ViewPictureDetailScreenData>(),
+                    viewPictureDetailScreenData,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToLogin = { navController.navigate(Login) }
                 )
+                Log.i("", "в навигации при отправке " + viewPictureDetailScreenData.pictureId + " " + viewPictureDetailScreenData.imageUrl)
             }
             composable<Posts> {
                 /* InfoScreen() */
@@ -130,7 +136,7 @@ fun AppNavigation(navController: NavHostController) {
             }
             composable<Register> {
                 RegisterScreen(onCompleteRegistration = {
-                    navController.navigate(Home){
+                    navController.navigate(Home) {
                         popUpTo(Register) { inclusive = true }
                     }
                 })
