@@ -20,9 +20,8 @@ class SessionManager(context: Context) {
 
         private const val TAG = "SessionManager"
 
-
-
-         private const val DEFAULT_SERVER_URL = "http://spotsychlen.ddns.net:8081/"
+        // Значение URL по умолчанию - используем DDNS
+        private const val DEFAULT_SERVER_URL = "http://spotsychlen.ddns.net:8081"
 
         // Время в миллисекундах, которое нужно вычесть из времени истечения
         // для предварительного обновления токена (5 минут)
@@ -33,13 +32,24 @@ class SessionManager(context: Context) {
      * Получает URL сервера
      */
     fun getServerUrl(): String {
-        return prefs.getString(KEY_SERVER_URL, DEFAULT_SERVER_URL) ?: DEFAULT_SERVER_URL
+        val url = prefs.getString(KEY_SERVER_URL, DEFAULT_SERVER_URL) ?: DEFAULT_SERVER_URL
+        Log.d(TAG, "Получен URL сервера: $url")
+
+        // Проверка на локальный IP-адрес
+        val localIpRegex = Regex("192\\.168\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\.")
+        if (url.contains(localIpRegex)) {
+            Log.d(TAG, "Обнаружен локальный IP в URL, возвращаем DDNS вместо него")
+            return DEFAULT_SERVER_URL
+        }
+
+        return url
     }
 
     /**
      * Устанавливает URL сервера
      */
     fun setServerUrl(url: String) {
+        Log.d(TAG, "Сохранение URL сервера: $url")
         val editor = prefs.edit()
         editor.putString(KEY_SERVER_URL, url)
         editor.apply()

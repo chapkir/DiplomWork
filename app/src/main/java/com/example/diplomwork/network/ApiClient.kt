@@ -24,10 +24,8 @@ import kotlinx.coroutines.sync.withLock
 import retrofit2.HttpException
 
 object ApiClient {
-
-
-     private const val DEFAULT_SERVER_URL = "http://spotsychlen.ddns.net:8081/"
-    private var serverUrl = DEFAULT_SERVER_URL
+    // Default DDNS URL
+    private var serverUrl = "http://spotsychlen.ddns.net:8081/"
 
     // Геттер для получения текущего базового URL
     fun getBaseUrl(): String = serverUrl
@@ -59,7 +57,18 @@ object ApiClient {
     fun init(context: Context) {
         sessionManager = SessionManager(context)
         // Получаем сохраненный URL сервера
-        serverUrl = sessionManager.getServerUrl()
+        var savedUrl = sessionManager.getServerUrl()
+
+        // Проверяем, не локальный ли это IP
+        val localIpRegex = Regex("192\\.168\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\.")
+        if (savedUrl.contains(localIpRegex)) {
+            // Если это локальный IP, заменяем на DDNS
+            Log.d(TAG, "Найден локальный IP в URL: $savedUrl, заменяем на DDNS")
+            savedUrl = "http://spotsychlen.ddns.net:8081/"
+            sessionManager.setServerUrl(savedUrl)
+        }
+
+        serverUrl = savedUrl
         if (!serverUrl.endsWith("/")) {
             serverUrl += "/"
         }

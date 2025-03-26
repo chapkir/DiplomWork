@@ -15,11 +15,18 @@ import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.system_settings.SetSystemBarsColor
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 import com.example.diplomwork.auth.SessionManager
+import com.example.diplomwork.util.PreferencesCleaner
 import android.util.Log
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Сбрасываем настройки URL, если обнаружен локальный IP
+        if (PreferencesCleaner.hasLocalIpInUrl(this)) {
+            Log.d("MainActivity", "Обнаружен локальный IP в настройках, выполняется сброс")
+            PreferencesCleaner.resetServerUrl(this)
+        }
 
         // Инициализация ApiClient
         Log.d("MainActivity", "Инициализация ApiClient")
@@ -28,8 +35,19 @@ class MainActivity : ComponentActivity() {
         // Получаем сохраненный URL сервера и устанавливаем его
         val sessionManager = SessionManager(this)
         val serverUrl = sessionManager.getServerUrl()
-        Log.d("MainActivity", "URL сервера: $serverUrl")
-        ApiClient.setBaseUrl(serverUrl)
+        Log.d("MainActivity", "URL сервера из SessionManager: $serverUrl")
+
+        // устанавливаем URL DDNS
+        val ddnsUrl = "http://spotsychlen.ddns.net:8081/" // Замените на свой DDNS
+        ApiClient.setBaseUrl(ddnsUrl)
+        Log.d("MainActivity", "Установлен URL сервера: $ddnsUrl")
+
+        // Сохраняем DDNS URL в SharedPreferences
+        sessionManager.setServerUrl(ddnsUrl)
+        Log.d("MainActivity", "URL сервера сохранен в SessionManager")
+
+        // Проверяем базовый URL в ApiClient после установки
+        Log.d("MainActivity", "Текущий базовый URL в ApiClient: ${ApiClient.getBaseUrl()}")
 
         // Проверяем состояние авторизации
         val isLoggedIn = sessionManager.isLoggedIn()
