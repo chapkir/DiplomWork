@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACME Challenge Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+            border: 1px solid #d6e9c6;
+        }
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+            border: 1px solid #ebccd1;
+        }
+        .token-list {
+            margin-top: 30px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+        .token-item {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .token-key {
+            font-weight: bold;
+            word-break: break-all;
+        }
+        .token-value {
+            word-break: break-all;
+            margin-top: 5px;
+            padding: 5px;
+            background-color: #f0f0f0;
+        }
+        .instructions {
+            background-color: #e7f3fe;
+            border-left: 6px solid #2196F3;
+            padding: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>ACME Challenge Manager</h1>
+
+    <div class="instructions">
+        <p>Эта страница позволяет вручную добавить токены проверки для Let's Encrypt.</p>
+        <p>При попытке получения SSL-сертификата с помощью win-acme, скопируйте токен и ключ авторизации из консоли и вставьте их здесь.</p>
+    </div>
+
+    <div class="form-group">
+        <label for="token">Токен:</label>
+        <input type="text" id="token" placeholder="Например: BDV1iw_C1WqJ0x1TYgmGED-jJQ2XcanczZ_aInMCOsI">
+    </div>
+
+    <div class="form-group">
+        <label for="keyAuth">Ключ авторизации (полное содержимое):</label>
+        <input type="text" id="keyAuth" placeholder="Например: BDV1iw_C1WqJ0x1TYgmGED-jJQ2XcanczZ_aInMCOsI.Ag5GRS7c2...">
+    </div>
+
+    <button onclick="saveToken()">Сохранить</button>
+
+    <div id="status" class="status"></div>
+
+    <div class="token-list">
+        <h2>Текущие токены:</h2>
+        <div id="tokenList">
+            <p>Загрузка токенов...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Функция для сохранения токена
+    function saveToken() {
+        const token = document.getElementById('token').value.trim();
+        const keyAuth = document.getElementById('keyAuth').value.trim();
+        const statusDiv = document.getElementById('status');
+
+        if (!token || !keyAuth) {
+            statusDiv.className = 'status error';
+            statusDiv.textContent = 'Ошибка: Заполните оба поля!';
+            return;
+        }
+
+        // Создаем данные формы
+        const formData = new FormData();
+        formData.append('token', token);
+        formData.append('keyAuth', keyAuth);
+
+        // Отправляем запрос
+        fetch('/save-acme-token', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.text();
+            }
+            throw new Error('Ошибка сохранения токена');
+        })
+        .then(data => {
+            statusDiv.className = 'status success';
+            statusDiv.textContent = 'Токен успешно сохранен!';
+
+            // Очищаем поля ввода
+            document.getElementById('token').value = '';
+            document.getElementById('keyAuth').value = '';
+
+            // Обновляем список токенов
+            checkTokens();
+        })
+        .catch(error => {
+            statusDiv.className = 'status error';
+            statusDiv.textContent = error.message;
+        });
+    }
+
+    // Функция для проверки текущих токенов
+    function checkTokens() {
+        const tokenListDiv = document.getElementById('tokenList');
+        tokenListDiv.innerHTML = '<p>Загрузка токенов...</p>';
+
+        fetch('/acme-tokens')
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Не удалось получить список токенов');
+            })
+            .then(data => {
+                if (Object.keys(data).length === 0) {
+                    tokenListDiv.innerHTML = '<p>Нет активных токенов</p>';
+                    return;
+                }
+
+                let tokensHtml = '';
+                for (const [token, keyAuth] of Object.entries(data)) {
+                    tokensHtml += `
+                        <div class="token-item">
+                            <div class="token-key">Токен: ${token}</div>
+                            <div class="token-value">${keyAuth}</div>
+                        </div>
+                    `;
+                }
+
+                tokenListDiv.innerHTML = tokensHtml;
+            })
+            .catch(error => {
+                tokenListDiv.innerHTML = `<p class="error">Ошибка: ${error.message}</p>`;
+            });
+    }
+
+    // Инициализация при загрузке страницы
+    window.addEventListener('load', checkTokens);
+</script>
+</body>
+</html>

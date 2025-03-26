@@ -35,6 +35,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
         registry.addViewController("/").setViewName("forward:/index.html");
+        registry.addViewController("/acme-manager").setViewName("forward:/acme-manager.html");
         logger.info("View controllers configured");
     }
 
@@ -53,12 +54,20 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations(uploadAbsolutePath);
 
+        // Add explicit resource handler for ACME challenge files
+        registry.addResourceHandler("/.well-known/**")
+                .addResourceLocations(uploadAbsolutePath + ".well-known/");
+
         // Profile images directory
         registry.addResourceHandler("/uploads/profiles/**")
                 .addResourceLocations(profileImagesAbsolutePath);
 
         // Static resources
         registry.addResourceHandler("/static/**")
+                .addResourceLocations("classpath:/static/");
+
+        // Добавляем явный обработчик для acme-manager.html
+        registry.addResourceHandler("/acme-manager.html")
                 .addResourceLocations("classpath:/static/");
 
         logger.info("Resource handlers configured");

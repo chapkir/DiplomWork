@@ -117,7 +117,7 @@ fun ProfileScreen(
                     try {
                         // Создаем MultipartBody.Part для файла изображения
                         val requestFile = imageFile.asRequestBody("image/*".toMediaTypeOrNull())
-                        val body = MultipartBody.Part.createFormData("file", imageFile.name, requestFile)
+                        val body = MultipartBody.Part.createFormData("image", imageFile.name, requestFile)
 
                         // Отправляем запрос на сервер
                         val response = ApiClient.apiService.uploadProfileImage(body)

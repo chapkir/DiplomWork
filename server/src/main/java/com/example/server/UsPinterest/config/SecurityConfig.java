@@ -66,8 +66,11 @@ public class SecurityConfig {
                     auth.requestMatchers("/api/piner/uploadImage/**").permitAll();
                     auth.requestMatchers("/api/pins/uploadImage/**").permitAll();
                     auth.requestMatchers("/", "/js/**", "/css/**", "/img/**", "/favicon.ico").permitAll();
-                    auth.requestMatchers("/index.html", "/pin.html", "/profile.html", "/search.html").permitAll();
+                    auth.requestMatchers("/index.html", "/pin.html", "/profile.html", "/search.html", "/acme-manager.html").permitAll();
+                    auth.requestMatchers("/save-acme-token", "/acme-test").permitAll();
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
+                    auth.requestMatchers("/.well-known/**").permitAll();
+                    auth.requestMatchers("/uploads/**").permitAll();
                     auth.anyRequest().permitAll(); // Временно разрешён доступ ко всем ресурсам для отладки Я потом уберу)
                 })
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
