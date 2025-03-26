@@ -24,8 +24,9 @@ import kotlinx.coroutines.sync.withLock
 import retrofit2.HttpException
 
 object ApiClient {
-    // Значение по умолчанию для эмулятора Android
-    private const val DEFAULT_SERVER_URL = "http://10.0.2.2:8080/"
+
+
+     private const val DEFAULT_SERVER_URL = "http://spotsychlen.ddns.net:8081/"
     private var serverUrl = DEFAULT_SERVER_URL
 
     // Геттер для получения текущего базового URL
