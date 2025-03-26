@@ -41,7 +41,16 @@ class PictureDetailScreenViewModel(private val pictureId: Long) : ViewModel() {
     private fun loadPictureData() {
         viewModelScope.launch {
             try {
+                Log.d("PictureDetailViewModel", "Начинаем загрузку данных пина с ID: $pictureId")
                 val picture = ApiClient.apiService.getPicture(pictureId)
+
+                // Логируем полученные данные для отладки
+                Log.d("PictureDetailViewModel", "Загружен пин: ID=${picture.id}, " +
+                        "URL=${picture.imageUrl}, " +
+                        "Автор=${picture.username}, " +
+                        "Лайки=${picture.likesCount}, " +
+                        "Описание='${picture.description}'")
+
                 _pictureUsername.value = picture.username
                 _profileImageUrl.value = picture.userProfileImageUrl
                 _pictureDescription.value = picture.description
@@ -49,8 +58,9 @@ class PictureDetailScreenViewModel(private val pictureId: Long) : ViewModel() {
                 _isLiked.value = picture.isLikedByCurrentUser
 
                 _comments.value = ApiClient.apiService.getComments(pictureId)
+                Log.d("PictureDetailViewModel", "Загружено ${_comments.value.size} комментариев")
             } catch (e: Exception) {
-                Log.e("PictureDetailViewModel", "Error loading data: ${e.message}")
+                Log.e("PictureDetailViewModel", "Error loading data: ${e.message}", e)
             } finally {
                 _isLoading.value = false
             }

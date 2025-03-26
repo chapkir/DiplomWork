@@ -2,6 +2,7 @@ package com.example.diplomwork.ui.navigation
 
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -50,6 +51,13 @@ fun AppNavigation(navController: NavHostController) {
     val openDialog = { isDialogOpen.value = true }
 
     var shouldRefresh by remember { mutableStateOf(false) }
+    var lastRefreshTimestamp by remember { mutableStateOf(0L) }
+
+    val triggerRefresh = {
+        shouldRefresh = true
+        lastRefreshTimestamp = System.currentTimeMillis()
+        Log.d("AppNavigation", "Запрошено обновление главного экрана в $lastRefreshTimestamp")
+    }
 
     Scaffold(
         topBar = { GetTopBars(currentRoute) },
@@ -73,14 +81,9 @@ fun AppNavigation(navController: NavHostController) {
             composable<Home> {
                 HomeScreen(
                     onImageClick = { pictureId, imageUrl ->
-                        navController.navigate(ViewPictureDetailScreenData(pictureId, imageUrl)) {
-                            popUpTo(
-                                ViewPictureDetailScreenData(
-                                    pictureId,
-                                    imageUrl
-                                )
-                            ) { inclusive = true }
-                        }
+                        val timestamp = System.currentTimeMillis()
+                        Log.i("NAVIGATION_DEBUG", "$timestamp - НАЖАТИЕ НА ПИН С ID=$pictureId И URL=$imageUrl")
+                        navController.navigate(ViewPictureDetailScreenData(pictureId, imageUrl))
                     },
                     shouldRefresh = shouldRefresh,
                     onRefreshComplete = { shouldRefresh = false }
@@ -120,6 +123,8 @@ fun AppNavigation(navController: NavHostController) {
             }
             composable<ViewPictureDetailScreenData> { backStackEntry ->
                 val viewPictureDetailScreenData = backStackEntry.toRoute<ViewPictureDetailScreenData>()
+                val timestamp = System.currentTimeMillis()
+                Log.i("NAVIGATION_DEBUG", "$timestamp - ОТКРЫТИЕ ПИНА С ID=${viewPictureDetailScreenData.pictureId} И URL=${viewPictureDetailScreenData.imageUrl}")
                 PictureDetailScreen(
                     viewPictureDetailScreenData,
                     onNavigateBack = { navController.popBackStack() },
@@ -147,7 +152,9 @@ fun AppNavigation(navController: NavHostController) {
         OpenGalleryAndSavePicture(
             isDialogOpen = isDialogOpen,
             context = context,
-            onRefresh = { shouldRefresh = true }
+            onRefresh = {
+                triggerRefresh()
+            }
         )
     }
 }

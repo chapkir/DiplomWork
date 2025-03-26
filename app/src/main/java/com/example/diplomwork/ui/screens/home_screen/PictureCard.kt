@@ -39,13 +39,15 @@ import java.nio.charset.StandardCharsets
 @Composable
 fun PictureCard(
     imageUrl: String,
+    id: Long,
     onClick: () -> Unit
 ) {
     var aspectRatio by remember { mutableFloatStateOf(1f) }
     var isLoading by remember { mutableStateOf(true) }
     var isError by remember { mutableStateOf(false) }
     var retryCount by rememberSaveable { mutableIntStateOf(0) }
-    var currentUrl by rememberSaveable { mutableStateOf(processImageUrl(imageUrl)) }
+    val originalUrl = remember { imageUrl }
+    var displayUrl by rememberSaveable { mutableStateOf(processImageUrl(imageUrl)) }
     val maxRetryCount = 2
 
     Card(
@@ -61,7 +63,7 @@ fun PictureCard(
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(currentUrl)
+                    .data(displayUrl)
                     .crossfade(true)
                     .build(),
                 contentDescription = null,
@@ -72,7 +74,7 @@ fun PictureCard(
                     if (state is AsyncImagePainter.State.Error) {
                         isError = true
                         val exception = state.result.throwable
-                        Log.e("PictureCard", "Ошибка загрузки изображения: $currentUrl", exception)
+                        Log.e("PictureCard", "Ошибка загрузки изображения: $displayUrl", exception)
 
                         if (retryCount < maxRetryCount) {
                             retryCount++
@@ -84,7 +86,7 @@ fun PictureCard(
                                 else -> -1
                             }
 
-                            currentUrl = when (errorCode) {
+                            displayUrl = when (errorCode) {
                                 410, 404 -> {
                                     Log.w("PictureCard", "Ссылка недействительна ($errorCode), пробуем через прокси")
                                     forceProxyImageUrl(imageUrl)

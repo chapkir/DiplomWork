@@ -38,8 +38,11 @@ fun ImageView(imageRes: String, aspectRatio: Float) {
 
     val context = LocalContext.current
 
-    // Обрабатываем URL изображения
-    var currentUrl by remember {
+    // Сохраняем оригинальный URL
+    val originalUrl = remember { imageRes }
+
+    // Обрабатываем URL для отображения изображения
+    var displayUrl by remember {
         mutableStateOf(
             if (imageRes.startsWith("http")) {
                 imageRes
@@ -61,7 +64,7 @@ fun ImageView(imageRes: String, aspectRatio: Float) {
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(context)
-                    .data(currentUrl)
+                    .data(displayUrl)
                     .crossfade(true)
                     .build(),
                 contentDescription = null,
@@ -73,7 +76,7 @@ fun ImageView(imageRes: String, aspectRatio: Float) {
                         val exception = state.result.throwable
 
                         // Логируем ошибку
-                        Log.e("ImageView", "Ошибка загрузки изображения: $currentUrl", exception)
+                        Log.e("ImageView", "Ошибка загрузки изображения: $displayUrl (оригинальный URL: $originalUrl)", exception)
 
                         // Пробуем восстановиться
                         if (retryCount < 2) {
@@ -89,32 +92,32 @@ fun ImageView(imageRes: String, aspectRatio: Float) {
                             }
 
                             // Выбираем стратегию обработки в зависимости от ошибки
-                            currentUrl = when (errorCode) {
+                            displayUrl = when (errorCode) {
                                 410, 404 -> {
                                     // Для устаревших или отсутствующих ссылок
                                     Log.w(
                                         "ImageView",
                                         "Ссылка недействительна, пробуем с другим timestamp"
                                     )
-                                    val separator = if (currentUrl.contains("?")) "&" else "?"
-                                    "${currentUrl}${separator}cache_bust=${System.currentTimeMillis()}"
+                                    val separator = if (displayUrl.contains("?")) "&" else "?"
+                                    "${displayUrl}${separator}cache_bust=${System.currentTimeMillis()}"
                                 }
 
                                 in 400..499 -> {
                                     // Для клиентских ошибок, пробуем напрямую с сервера
-                                    if (imageRes.startsWith("http")) {
-                                        imageRes
+                                    if (originalUrl.startsWith("http")) {
+                                        originalUrl
                                     } else {
                                         // Добавляем параметр для обхода кэша
-                                        val separator = if (imageRes.contains("?")) "&" else "?"
-                                        "${ApiClient.getBaseUrl()}$imageRes${separator}cache_bust=${System.currentTimeMillis()}"
+                                        val separator = if (originalUrl.contains("?")) "&" else "?"
+                                        "${ApiClient.getBaseUrl()}$originalUrl${separator}cache_bust=${System.currentTimeMillis()}"
                                     }
                                 }
 
                                 else -> {
                                     // Для всех остальных случаев
-                                    val separator = if (currentUrl.contains("?")) "&" else "?"
-                                    "${currentUrl}${separator}cache_bust=${System.currentTimeMillis()}"
+                                    val separator = if (displayUrl.contains("?")) "&" else "?"
+                                    "${displayUrl}${separator}cache_bust=${System.currentTimeMillis()}"
                                 }
                             }
                         }

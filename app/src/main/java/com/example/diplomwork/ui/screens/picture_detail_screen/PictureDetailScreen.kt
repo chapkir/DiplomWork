@@ -48,6 +48,8 @@ fun PictureDetailScreen(
     onNavigateBack: () -> Unit,
     onNavigateToLogin: () -> Unit,
     viewModel: PictureDetailScreenViewModel = remember {
+        val timestamp = System.currentTimeMillis()
+        Log.i("NAVIGATION_DEBUG", "$timestamp - DETAIL: ИНИЦИАЛИЗАЦИЯ ЭКРАНА ПИНА С ID=${viewPictureDetailScreenData.pictureId}, URL=${viewPictureDetailScreenData.imageUrl}")
         PictureDetailScreenViewModel(viewPictureDetailScreenData.pictureId)
     }
 ) {
@@ -74,6 +76,11 @@ fun PictureDetailScreen(
             }
         } else {
             item {
+                val timestamp = System.currentTimeMillis()
+                Log.i("NAVIGATION_DEBUG", "$timestamp - DETAIL: ОТОБРАЖЕНИЕ ПИНА С ID=${viewPictureDetailScreenData.pictureId}, " +
+                        "Описание='$pictureDescription', Лайки=$likesCount, " +
+                        "Автор=$pictureUsername, Комментариев=${comments.size}")
+
                 ImageView(
                     imageRes =
                     if (viewPictureDetailScreenData.imageUrl.startsWith("http")) viewPictureDetailScreenData.imageUrl
