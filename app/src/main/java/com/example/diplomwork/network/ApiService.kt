@@ -73,7 +73,7 @@ interface ApiService {
     @POST("api/profile/image")
     suspend fun uploadProfileImage(
         @Part image: MultipartBody.Part
-    ): Response<ProfileResponse>
+    ): Response<Map<String, String>>
 
     @Multipart
     @POST("api/profile/avatar")

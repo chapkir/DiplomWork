@@ -64,6 +64,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import retrofit2.HttpException
+import coil.request.CachePolicy
 
 @Composable
 fun ProfileScreen(
@@ -82,6 +83,7 @@ fun ProfileScreen(
     var error by remember { mutableStateOf<String?>(null) }
     var selectedTabIndex by remember { mutableStateOf(0) }
     var profileImageUrl by remember { mutableStateOf<String?>(null) }
+    var avatarUpdateCounter by remember { mutableStateOf(0) }
     val tabTitles = listOf("Публикации", "Лайки")
 
     suspend fun loadLikedPins() {
@@ -126,11 +128,26 @@ fun ProfileScreen(
                         if (response.isSuccessful) {
                             // Обновляем URL аватарки
                             val updatedProfile = response.body()
-                            profileImageUrl = updatedProfile?.profileImageUrl
-                            profileData = updatedProfile
+                            val newImageUrl = updatedProfile?.get("profileImageUrl")
 
-                            Toast.makeText(context, "Аватар успешно обновлен", Toast.LENGTH_SHORT).show()
-                            Log.d("ProfileScreen", "Аватар успешно загружен: $profileImageUrl")
+                            // Сначала обновляем локальную переменную profileImageUrl
+                            profileImageUrl = newImageUrl
+
+                            // Увеличиваем счетчик обновлений для перерисовки UI
+                            avatarUpdateCounter++
+
+                            // Затем обновляем данные профиля
+                            try {
+                                profileData = ApiClient.apiService.getProfile()
+                                // Теперь profileData содержит актуальные данные, включая обновленный URL аватара
+
+                                Toast.makeText(context, "Аватар успешно обновлен", Toast.LENGTH_SHORT).show()
+                                Log.d("ProfileScreen", "Аватар успешно загружен: $profileImageUrl")
+                            } catch (e: Exception) {
+                                Log.e("ProfileScreen", "Ошибка при обновлении профиля после загрузки аватара: ${e.message}")
+                                // Даже если не удалось обновить полный профиль,
+                                // аватар все равно уже обновлен в интерфейсе
+                            }
                         } else {
                             // Обрабатываем ошибку
                             val errorMessage = response.errorBody()?.string() ?: "Неизвестная ошибка"
@@ -256,7 +273,8 @@ fun ProfileScreen(
                     avatarUrl = profileImageUrl,
                     isUploading = isUploading,
                     onAvatarClick = { pickImageLauncher.launch("image/*") },
-                    onLogout = onLogout
+                    onLogout = onLogout,
+                    avatarUpdateKey = avatarUpdateCounter
                 )
 
                 TabRow(
@@ -304,7 +322,8 @@ private fun ProfileHeader(
     avatarUrl: String?,
     isUploading: Boolean = false,
     onAvatarClick: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    avatarUpdateKey: Int
 ) {
     Column(
         modifier = Modifier
@@ -332,10 +351,12 @@ private fun ProfileHeader(
                 } else {
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
-                            .data(avatarUrl)
+                            .data(avatarUrl + "?v=$avatarUpdateKey")
                             .crossfade(true)
                             .placeholder(R.drawable.default_avatar)
                             .error(R.drawable.default_avatar)
+                            .diskCachePolicy(CachePolicy.DISABLED)
+                            .memoryCachePolicy(CachePolicy.DISABLED)
                             .build(),
                         contentDescription = "Avatar",
                         contentScale = ContentScale.Crop,
