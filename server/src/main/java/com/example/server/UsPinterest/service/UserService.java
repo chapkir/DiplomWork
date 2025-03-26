@@ -5,6 +5,7 @@ import com.example.server.UsPinterest.model.User;
 import com.example.server.UsPinterest.repository.UserRepository;
 import com.example.server.UsPinterest.security.JwtTokenUtil;
 import com.example.server.UsPinterest.exception.ResourceNotFoundException;
+import com.example.server.UsPinterest.service.FileStorageService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.*;
@@ -37,7 +38,7 @@ public class UserService {
     private CustomUserDetailsService userDetailsService;
 
     @Autowired
-    private YandexDiskService yandexDiskService;
+    private FileStorageService fileStorageService;
 
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
@@ -85,44 +86,30 @@ public class UserService {
      * @throws IOException если произошла ошибка при загрузке файла
      */
     public User updateProfileImage(Long userId, MultipartFile file) throws IOException {
-        try {
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
 
-            // Проверяем размер файла (максимум 5MB)
-            if (file.getSize() > 5 * 1024 * 1024) {
-                throw new IllegalArgumentException("Размер файла не должен превышать 5MB");
-            }
-
-            // Проверяем тип файла
-            String contentType = file.getContentType();
-            if (contentType == null || !contentType.startsWith("image/")) {
-                throw new IllegalArgumentException("Файл должен быть изображением");
-            }
-
-            // Загружаем изображение на Яндекс Диск
-            String profileImageUrl = yandexDiskService.uploadProfileImage(file, userId);
-            if (profileImageUrl == null || profileImageUrl.isEmpty()) {
-                throw new IOException("Не удалось получить URL загруженного изображения");
-            }
-
-            // Обновляем поле profileImageUrl пользователя
-            user.setProfileImageUrl(profileImageUrl);
-
-            return userRepository.save(user);
-        } catch (ResourceNotFoundException e) {
-            logger.error("Пользователь не найден при обновлении изображения профиля: {}", e.getMessage());
-            throw e;
-        } catch (IllegalArgumentException e) {
-            logger.error("Некорректные параметры при обновлении изображения профиля: {}", e.getMessage());
-            throw e;
-        } catch (IOException e) {
-            logger.error("Ошибка при загрузке изображения профиля: {}", e.getMessage(), e);
-            throw e;
-        } catch (Exception e) {
-            logger.error("Неожиданная ошибка при обновлении изображения профиля: {}", e.getMessage(), e);
-            throw new RuntimeException("Не удалось обновить изображение профиля", e);
+        // Проверяем размер файла (максимум 5MB)
+        if (file.getSize() > 5 * 1024 * 1024) {
+            throw new IllegalArgumentException("Размер файла не должен превышать 5MB");
         }
+
+        // Проверяем тип файла
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("Файл должен быть изображением");
+        }
+
+        // Загружаем изображение на Яндекс Диск
+        String profileImageUrl = fileStorageService.storeProfileImage(file, userId);
+        if (profileImageUrl == null || profileImageUrl.isEmpty()) {
+            throw new IOException("Не удалось получить URL загруженного изображения");
+        }
+
+        // Обновляем поле profileImageUrl пользователя
+        user.setProfileImageUrl(profileImageUrl);
+
+        return userRepository.save(user);
     }
 
     public User getCurrentUser() {

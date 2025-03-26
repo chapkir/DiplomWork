@@ -3,13 +3,15 @@ package com.example.server.UsPinterest.dto.mapper;
 import com.example.server.UsPinterest.dto.ProfileResponse;
 import com.example.server.UsPinterest.dto.RegisterRequest;
 import com.example.server.UsPinterest.model.User;
+import com.example.server.UsPinterest.service.FileStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import com.example.server.UsPinterest.service.YandexDiskService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Маппер для преобразования между сущностью User и DTO
@@ -21,7 +23,7 @@ public class UserMapper {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private YandexDiskService yandexDiskService;
+    private FileStorageService fileStorageService;
 
     /**
      * Преобразует User в объект ProfileResponse
@@ -42,9 +44,9 @@ public class UserMapper {
 
         // Обновляем ссылку на изображение профиля, получая прямую ссылку если возможно
         String profileImageUrl = user.getProfileImageUrl();
-        if (profileImageUrl != null && (profileImageUrl.contains("yadi.sk") || profileImageUrl.contains("disk.yandex.ru"))) {
+        if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
             try {
-                String directUrl = yandexDiskService.updateImageUrl(profileImageUrl);
+                String directUrl = fileStorageService.updateImageUrl(profileImageUrl);
                 response.setProfileImageUrl(directUrl);
             } catch (Exception e) {
                 // В случае ошибки используем оригинальный URL
@@ -104,5 +106,17 @@ public class UserMapper {
         }
 
         return user;
+    }
+
+    /**
+     * Convert a list of User entities to a list of ProfileResponse DTOs
+     *
+     * @param users list of User entities
+     * @return list of ProfileResponse DTOs
+     */
+    public List<ProfileResponse> mapUsersToProfileResponses(List<User> users) {
+        return users.stream()
+                .map(this::toProfileDto)
+                .collect(Collectors.toList());
     }
 }

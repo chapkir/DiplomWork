@@ -4,8 +4,11 @@ import android.app.Application
 import android.content.Context
 import android.util.Log
 import coil.Coil
+import coil.ImageLoader
+import coil.request.CachePolicy
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.network.ApiClient
+import com.example.diplomwork.ui.util.ImageUtils
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
@@ -17,8 +20,44 @@ class DiplomWorkApplication : Application()
         // Сбрасываем настройки URL сервера при первом запуске
         resetServerUrlIfNeeded()
 
+        // Очищаем кэш изображений при запуске, чтобы избежать проблем с устаревшими изображениями
+        clearImageCache()
+
         // Инициализация Coil с настройками
-        Coil.setImageLoader(ApiClient.createImageLoader(this))
+        configureImageLoader()
+    }
+
+    private fun configureImageLoader() {
+        try {
+            // Создаем кастомный ImageLoader с настройками для обработки ошибок 410
+            val imageLoader = ApiClient.createImageLoader(this)
+
+            // Устанавливаем этот ImageLoader как дефолтный для всего приложения
+            Coil.setImageLoader(imageLoader)
+
+            Log.d("DiplomWorkApplication", "ImageLoader сконфигурирован с настройками для обработки ошибок 410")
+        } catch (e: Exception) {
+            Log.e("DiplomWorkApplication", "Ошибка при настройке ImageLoader: ${e.message}")
+        }
+    }
+
+    private fun clearImageCache() {
+        try {
+            // Очищаем локальный кэш изображений
+            val success = ImageUtils.clearImageCache(this)
+
+            // Очищаем кэш Coil
+            val cacheDir = cacheDir.resolve("image_cache")
+            if (cacheDir.exists()) {
+                val deletedSize = cacheDir.walkTopDown().filter { it.isFile }.map { it.length() }.sum()
+                val deleted = cacheDir.deleteRecursively()
+                Log.d("DiplomWorkApplication", "Очистка кэша Coil: удалено ${deletedSize / 1024} KB, успешно: $deleted")
+            }
+
+            Log.d("DiplomWorkApplication", "Кэш изображений очищен: $success")
+        } catch (e: Exception) {
+            Log.e("DiplomWorkApplication", "Ошибка при очистке кэша изображений: ${e.message}")
+        }
     }
 
     private fun resetServerUrlIfNeeded() {

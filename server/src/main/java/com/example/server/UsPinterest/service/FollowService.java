@@ -92,8 +92,10 @@ public class FollowService {
     public Page<FollowResponse> getFollowing(Long userId, Pageable pageable) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new FollowException("Пользователь не найден"));
-        return followRepository.findByFollower(user, pageable)
-                .map(followMapper::toDto);
+
+        Page<Follow> follows = followRepository.findByFollower(user, pageable);
+
+        return follows.map(followMapper::toDto);
     }
 
     /**
@@ -107,8 +109,10 @@ public class FollowService {
     public Page<FollowResponse> getFollowers(Long userId, Pageable pageable) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new FollowException("Пользователь не найден"));
-        return followRepository.findByFollowing(user, pageable)
-                .map(followMapper::toDto);
+
+        Page<Follow> follows = followRepository.findByFollowing(user, pageable);
+
+        return follows.map(followMapper::toDto);
     }
 
     /**

@@ -42,15 +42,7 @@ fun ImageView(imageRes: String, aspectRatio: Float) {
     var currentUrl by remember {
         mutableStateOf(
             if (imageRes.startsWith("http")) {
-                if (isYandexDiskUrl(imageRes)) {
-                    "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${
-                        android.net.Uri.encode(
-                            imageRes
-                        )
-                    }"
-                } else {
-                    imageRes
-                }
+                imageRes
             } else {
                 "${ApiClient.getBaseUrl()}$imageRes"
             }
@@ -102,36 +94,27 @@ fun ImageView(imageRes: String, aspectRatio: Float) {
                                     // Для устаревших или отсутствующих ссылок
                                     Log.w(
                                         "ImageView",
-                                        "Ссылка недействительна, пробуем через прокси"
+                                        "Ссылка недействительна, пробуем с другим timestamp"
                                     )
-                                    "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${
-                                        android.net.Uri.encode(
-                                            imageRes
-                                        )
-                                    }&cache_bust=${System.currentTimeMillis()}"
+                                    val separator = if (currentUrl.contains("?")) "&" else "?"
+                                    "${currentUrl}${separator}cache_bust=${System.currentTimeMillis()}"
                                 }
 
                                 in 400..499 -> {
-                                    // Для клиентских ошибок
-                                    if (isYandexDiskUrl(imageRes)) {
-                                        "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${
-                                            android.net.Uri.encode(
-                                                imageRes
-                                            )
-                                        }&cache_bust=${System.currentTimeMillis()}"
-                                    } else {
-                                        // Если не Яндекс Диск, просто используем исходный URL
+                                    // Для клиентских ошибок, пробуем напрямую с сервера
+                                    if (imageRes.startsWith("http")) {
                                         imageRes
+                                    } else {
+                                        // Добавляем параметр для обхода кэша
+                                        val separator = if (imageRes.contains("?")) "&" else "?"
+                                        "${ApiClient.getBaseUrl()}$imageRes${separator}cache_bust=${System.currentTimeMillis()}"
                                     }
                                 }
 
                                 else -> {
                                     // Для всех остальных случаев
-                                    "${ApiClient.getBaseUrl()}api/pins/proxy-image?url=${
-                                        android.net.Uri.encode(
-                                            imageRes
-                                        )
-                                    }&cache_bust=${System.currentTimeMillis()}"
+                                    val separator = if (currentUrl.contains("?")) "&" else "?"
+                                    "${currentUrl}${separator}cache_bust=${System.currentTimeMillis()}"
                                 }
                             }
                         }
@@ -173,15 +156,4 @@ fun ImageView(imageRes: String, aspectRatio: Float) {
             }
         }
     }
-}
-
-/**
- * Проверяет, является ли URL ссылкой на Яндекс.Диск
- */
-private fun isYandexDiskUrl(url: String): Boolean {
-    return url.contains("yandex") ||
-            url.contains("disk.") ||
-            url.contains("downloader.") ||
-            url.contains("preview.") ||
-            url.contains("yadi.sk")
 }

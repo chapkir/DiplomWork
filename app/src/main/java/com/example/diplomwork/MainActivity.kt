@@ -16,28 +16,55 @@ import com.example.diplomwork.system_settings.SetSystemBarsColor
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.util.PreferencesCleaner
+import com.example.diplomwork.ui.util.ImageUtils
 import android.util.Log
+import java.io.File
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Инициализация ApiClient
+        Log.d("MainActivity", "Инициализация ApiClient")
+        ApiClient.init(this)
+
+        // Проверяем и сбрасываем настройки URL
+        checkAndResetServerUrl()
+
+        // Очищаем кэш изображений при каждом запуске
+        clearImageCaches()
+
+        enableEdgeToEdge()
+        setContent {
+            SetSystemBarsColor(
+                statusBarColor = ColorForBottomMenu,
+                navigationBarColor = Color.Black
+            )
+            MaterialTheme {
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    val navController = rememberNavController()
+                    AppNavigation(navController = navController)
+                }
+            }
+        }
+    }
+
+    private fun checkAndResetServerUrl() {
         // Сбрасываем настройки URL, если обнаружен локальный IP
         if (PreferencesCleaner.hasLocalIpInUrl(this)) {
             Log.d("MainActivity", "Обнаружен локальный IP в настройках, выполняется сброс")
             PreferencesCleaner.resetServerUrl(this)
         }
 
-        // Инициализация ApiClient
-        Log.d("MainActivity", "Инициализация ApiClient")
-        ApiClient.init(this)
-
         // Получаем сохраненный URL сервера и устанавливаем его
         val sessionManager = SessionManager(this)
         val serverUrl = sessionManager.getServerUrl()
         Log.d("MainActivity", "URL сервера из SessionManager: $serverUrl")
 
-        // устанавливаем URL DDNS
+        // Принудительно устанавливаем URL DDNS
         val ddnsUrl = "http://spotsychlen.ddns.net:8081/" // Замените на свой DDNS
         ApiClient.setBaseUrl(ddnsUrl)
         Log.d("MainActivity", "Установлен URL сервера: $ddnsUrl")
@@ -54,18 +81,33 @@ class MainActivity : ComponentActivity() {
         val token = sessionManager.getAuthToken()
         Log.d("MainActivity", "Состояние авторизации: $isLoggedIn")
         Log.d("MainActivity", "Токен: ${token?.take(10)}...")
+    }
 
-        enableEdgeToEdge()
-        setContent {
-            SetSystemBarsColor(
-                statusBarColor = ColorForBottomMenu,
-                navigationBarColor = Color.Black
-            )
-            MaterialTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    val navController = rememberNavController()
-                    AppNavigation(navController = navController)
+    private fun clearImageCaches() {
+        // Запускаем очистку кэша в фоновом потоке
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // Очищаем наш пользовательский кэш изображений
+                val success = ImageUtils.clearImageCache(this@MainActivity)
+                Log.d("MainActivity", "Очистка пользовательского кэша: $success")
+
+                // Очищаем кэш Coil
+                val cacheDir = File(cacheDir, "image_cache")
+                if (cacheDir.exists()) {
+                    val deletedSize = cacheDir.walkTopDown().filter { it.isFile }.map { it.length() }.sum()
+                    val deleted = cacheDir.deleteRecursively()
+                    Log.d("MainActivity", "Очистка кэша Coil: удалено ${deletedSize / 1024} KB, успешно: $deleted")
                 }
+
+                // Очищаем HTTP кэш
+                val httpCacheDir = File(cacheDir, "http-cache")
+                if (httpCacheDir.exists()) {
+                    val deletedSize = httpCacheDir.walkTopDown().filter { it.isFile }.map { it.length() }.sum()
+                    val deleted = httpCacheDir.deleteRecursively()
+                    Log.d("MainActivity", "Очистка HTTP кэша: удалено ${deletedSize / 1024} KB, успешно: $deleted")
+                }
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Ошибка при очистке кэша: ${e.message}")
             }
         }
     }

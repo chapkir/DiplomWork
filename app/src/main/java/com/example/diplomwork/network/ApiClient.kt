@@ -16,6 +16,9 @@ import coil.ImageLoader
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
+import coil.request.ImageRequest
+import coil.request.ImageResult
+import coil.intercept.Interceptor as CoilInterceptor
 import com.example.diplomwork.model.TokenRefreshRequest
 import com.example.diplomwork.model.TokenRefreshResponse
 import kotlinx.coroutines.runBlocking
@@ -373,12 +376,30 @@ object ApiClient {
             .diskCache {
                 DiskCache.Builder()
                     .directory(context.cacheDir.resolve("image_cache"))
-                    .maxSizePercent(0.05) // Увеличиваем размер кэша
+                    .maxSizePercent(0.10) // Увеличиваем размер кэша до 10%
                     .build()
             }
             .respectCacheHeaders(false) // Игнорируем заголовки кэширования
             .crossfade(true)
             .error(android.R.drawable.ic_menu_report_image) // Изображение по умолчанию при ошибке
+            .interceptorDispatcher(kotlinx.coroutines.Dispatchers.IO)
+            .fetcherDispatcher(kotlinx.coroutines.Dispatchers.IO)
+            .decoderDispatcher(kotlinx.coroutines.Dispatchers.IO)
+            .transformationDispatcher(kotlinx.coroutines.Dispatchers.Default)
+            .components {
+                // Добавляем свой обработчик HTTP ошибок
+                add(object : CoilInterceptor {
+                    override suspend fun intercept(chain: CoilInterceptor.Chain): ImageResult {
+                        // Правильно получаем запрос и выполняем его
+                        val request = chain.request
+                        val result = chain.proceed(request)
+
+
+
+                        return result
+                    }
+                })
+            }
             .build()
     }
 
@@ -434,54 +455,76 @@ object ApiClient {
             .build()
     }
 
-    // Проверяет, является ли URL постоянной ссылкой или прокси-ссылкой
-    // Возвращает оптимальный URL для загрузки изображения
-    fun getOptimalImageUrl(url: String?, baseUrl: String): String {
-        if (url.isNullOrEmpty()) {
-            return ""
+    /**
+     * Обновляет URL, добавляя или обновляя параметр cache_bust для обхода кэша
+     */
+    fun refreshUrl(url: String): String {
+        // Если URL пустой, возвращаем пустую строку
+        if (url.isNullOrEmpty()) return ""
+
+        // Удаляем предыдущий параметр cache_bust, если он есть
+        val urlWithoutCache = url.replace(Regex("&cache_bust=\\d+"), "")
+            .replace(Regex("\\?cache_bust=\\d+&"), "?")
+            .replace(Regex("\\?cache_bust=\\d+$"), "")
+
+        // Добавляем новый параметр cache_bust с текущим временем
+        val cacheParam = "cache_bust=${System.currentTimeMillis()}"
+
+        return if (urlWithoutCache.contains("?")) {
+            "$urlWithoutCache&$cacheParam"
+        } else {
+            "$urlWithoutCache?$cacheParam"
         }
+    }
 
-        // Если это уже прокси-URL, возвращаем как есть
-        if (url.contains("/api/pins/proxy-image")) {
-            // Но всё равно добавляем параметр disposition, если это ссылка Яндекс.Диска
-            if (url.contains("yandex") || url.contains("disk.") ||
-                url.contains("downloader.") || url.contains("preview.")) {
+    /**
+     * Добавляет перехватчик для повторения запросов при ошибках 410
+     */
+    private fun createRetryInterceptor(): Interceptor {
+        return Interceptor { chain ->
+            val originalRequest = chain.request()
+            var response = chain.proceed(originalRequest)
+            var retryCount = 0
 
-                // Проверяем наличие disposition параметра
-                if (!url.contains("disposition=")) {
-                    return if (url.contains("?")) {
-                        "$url&disposition=inline"
-                    } else {
-                        "$url?disposition=inline"
-                    }
-                }
+            // Проверяем, требуется ли повторная попытка для кода 410
+            while (retryCount < 3 && response.code == 410) {
+                Log.w(TAG, "Код ответа 410 требует повторной попытки")
+
+                // Закрываем предыдущий ответ
+                response.close()
+
+                // Добавляем задержку перед повторной попыткой с увеличением времени ожидания
+                val waitTime = (2000L + (retryCount * 1000)) + (Math.random() * 1000).toLong()
+                Log.d(TAG, "Повторная попытка #${retryCount + 1} через $waitTime мс: ${originalRequest.url}")
+
+                Thread.sleep(waitTime)
+                retryCount++
+
+                // Создаем новый запрос с обновленным URL для обхода кэша
+                val newUrl = refreshUrl(originalRequest.url.toString())
+                val newRequest = originalRequest.newBuilder()
+                    .url(newUrl)
+                    .build()
+
+                // Выполняем новый запрос
+                response = chain.proceed(newRequest)
             }
-            return url
+
+            response
         }
+    }
 
-        // Для всех ссылок Яндекс.Диска используем прокси-сервер для обхода ограничений
-        if (url.contains("yandex") ||
-            url.contains("disk.") ||
-            url.contains("yadi.sk") ||
-            url.contains("downloader.") ||
-            url.contains("preview.")) {
-
-            Log.d(TAG, "Использую прокси для URL Яндекс Диска: $url")
-
-            try {
-                // Сначала фиксируем URL с параметром disposition
-                val fixedUrl = com.example.diplomwork.util.ImageUtils.fixYandexDiskUrl(url)
-                val encodedUrl = java.net.URLEncoder.encode(fixedUrl, "UTF-8")
-                val proxyUrl = "${baseUrl}api/pins/proxy-image?url=$encodedUrl"
-                Log.d(TAG, "Создан прокси-URL: $proxyUrl")
-                return proxyUrl
-            } catch (e: Exception) {
-                Log.e(TAG, "Ошибка при создании прокси-URL: ${e.message}")
-                return com.example.diplomwork.util.ImageUtils.fixYandexDiskUrl(url)
-            }
-        }
-
-        // Для остальных URL возвращаем как есть
-        return url
+    /**
+     * Создает клиент OkHttp с нашими перехватчиками
+     */
+    private fun createOkHttpClient(context: Context): OkHttpClient {
+        return OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .addInterceptor(authInterceptor)
+            .addInterceptor(createRetryInterceptor())
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build()
     }
 }

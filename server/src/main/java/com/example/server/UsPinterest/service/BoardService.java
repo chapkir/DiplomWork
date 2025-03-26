@@ -68,11 +68,10 @@ public class BoardService {
     @Transactional(readOnly = true)
     @Cacheable(value = "boards", key = "#id + '_' + #includePins")
     public BoardResponse getBoardResponseById(Long id, boolean includePins) {
-        User currentUser = userService.getCurrentUser();
-        Board board = getBoardById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Доска не найдена с id: " + id));
+        Board board = boardRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Доска не найдена"));
 
-        return boardMapper.toDto(board, currentUser, includePins);
+        return boardMapper.toDto(board, null, includePins);
     }
 
     /**
@@ -96,11 +95,10 @@ public class BoardService {
     @Transactional(readOnly = true)
     @Cacheable(value = "boards", key = "'user_' + #userId + '_' + #includePins")
     public List<BoardResponse> getBoardsByUserId(Long userId, boolean includePins) {
-        User currentUser = userService.getCurrentUser();
         List<Board> boards = boardRepository.findByUserId(userId);
 
         return boards.stream()
-                .map(board -> boardMapper.toDto(board, currentUser, includePins))
+                .map(board -> boardMapper.toDto(board, null, includePins))
                 .collect(Collectors.toList());
     }
 

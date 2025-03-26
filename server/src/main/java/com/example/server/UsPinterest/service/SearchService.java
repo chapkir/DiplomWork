@@ -58,15 +58,15 @@ public class SearchService {
     @Cacheable(value = "search", key = "'pins_' + #keyword + '_' + #page + '_' + #size + '_' + #sortBy + '_' + #sortDirection")
     public PageResponse<PinResponse> searchPins(String keyword, int page, int size,
                                                 String sortBy, String sortDirection) {
-        User currentUser = userService.getCurrentUser();
-        Pageable pageable = paginationService.createPageable(page, size, sortBy, sortDirection);
+        String searchKeyword = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : "";
 
-        Page<Pin> pinsPage;
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            pinsPage = pinRepository.findByDescriptionContainingIgnoreCase(keyword, pageable);
-        } else {
-            pinsPage = pinRepository.findAll(pageable);
-        }
+        Pageable pageable = paginationService.createPageable(page, size, sortBy, sortDirection);
+        Page<Pin> pinsPage = pinRepository.findByDescriptionContainingIgnoreCase(searchKeyword, pageable);
+
+        User currentUser = userService.getCurrentUser();
+        List<PinResponse> pinResponses = pinsPage.getContent().stream()
+                .map(pin -> pinMapper.toDto(pin, currentUser))
+                .collect(Collectors.toList());
 
         return paginationService.createPageResponse(pinsPage, pin -> pinMapper.toDto(pin, currentUser));
     }
@@ -82,15 +82,11 @@ public class SearchService {
     @Transactional(readOnly = true)
     @Cacheable(value = "search", key = "'users_' + #username + '_' + #page + '_' + #size")
     public PageResponse<ProfileResponse> searchUsers(String username, int page, int size) {
+        String searchUsername = (username != null && !username.trim().isEmpty()) ? username.trim() : "";
+
         Pageable pageable = paginationService.createPageable(page, size);
+        Page<User> usersPage = userRepository.findByUsernameContainingIgnoreCase(searchUsername, pageable);
 
-        Page<User> usersPage;
-        if (username != null && !username.trim().isEmpty()) {
-            usersPage = userRepository.findByUsernameContainingIgnoreCase(username, pageable);
-        } else {
-            usersPage = userRepository.findAll(pageable);
-        }
-
-        return paginationService.createPageResponse(usersPage, user -> userMapper.toProfileDto(user));
+        return paginationService.createPageResponse(usersPage, userMapper::toProfileDto);
     }
 }

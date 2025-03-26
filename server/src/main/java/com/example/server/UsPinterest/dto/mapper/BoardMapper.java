@@ -6,10 +6,12 @@ import com.example.server.UsPinterest.model.Board;
 import com.example.server.UsPinterest.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import com.example.server.UsPinterest.service.YandexDiskService;
+import com.example.server.UsPinterest.service.FileStorageService;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Маппер для преобразования между сущностью Board и DTO
@@ -18,10 +20,10 @@ import java.util.Collections;
 public class BoardMapper {
 
     @Autowired
-    private PinMapper pinMapper;
+    private FileStorageService fileStorageService;
 
     @Autowired
-    private YandexDiskService yandexDiskService;
+    private PinMapper pinMapper;
 
     /**
      * Преобразует Board в BoardResponse
@@ -47,9 +49,9 @@ public class BoardMapper {
 
             // Обновляем ссылку на изображение профиля, получая прямую ссылку если возможно
             String profileImageUrl = board.getUser().getProfileImageUrl();
-            if (profileImageUrl != null && (profileImageUrl.contains("yadi.sk") || profileImageUrl.contains("disk.yandex.ru"))) {
+            if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
                 try {
-                    String directUrl = yandexDiskService.updateImageUrl(profileImageUrl);
+                    String directUrl = fileStorageService.updateImageUrl(profileImageUrl);
                     response.setUserProfileImageUrl(directUrl);
                 } catch (Exception e) {
                     // В случае ошибки используем оригинальный URL
@@ -118,5 +120,22 @@ public class BoardMapper {
         }
 
         return board;
+    }
+
+    /**
+     * Convert a list of Board entities to BoardResponse DTOs
+     *
+     * @param boards The list of Board entities
+     * @param includePins Whether to include pin data
+     * @return List of BoardResponse DTOs
+     */
+    public List<BoardResponse> mapBoardsToBoardResponses(List<Board> boards, boolean includePins) {
+        if (boards == null) {
+            return new ArrayList<>();
+        }
+
+        return boards.stream()
+                .map(board -> toDto(board, null, includePins))
+                .collect(Collectors.toList());
     }
 }

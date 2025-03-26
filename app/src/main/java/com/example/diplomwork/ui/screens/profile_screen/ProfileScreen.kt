@@ -58,6 +58,7 @@ import com.example.diplomwork.model.ProfileResponse
 import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
+import com.example.diplomwork.ui.util.ImageUtils
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -110,35 +111,40 @@ fun ProfileScreen(
         scope.launch {
             isUploading = true
             try {
-                // Используем ImageUtils для сжатия и подготовки изображения
-                val imageFile = com.example.diplomwork.util.ImageUtils.copyUriToFile(context, uri)
+                val imageFile = ImageUtils.copyUriToFile(context, uri)
 
                 if (imageFile != null) {
-                    // Создаем MultipartBody.Part для файла изображения
-                    val requestFile = imageFile.asRequestBody("image/*".toMediaTypeOrNull())
-                    val body = MultipartBody.Part.createFormData("image", imageFile.name, requestFile)
+                    try {
+                        // Создаем MultipartBody.Part для файла изображения
+                        val requestFile = imageFile.asRequestBody("image/*".toMediaTypeOrNull())
+                        val body = MultipartBody.Part.createFormData("file", imageFile.name, requestFile)
 
-                    // Отправляем запрос на сервер
-                    val response = ApiClient.apiService.uploadProfileImage(body)
+                        // Отправляем запрос на сервер
+                        val response = ApiClient.apiService.uploadProfileImage(body)
 
-                    // Обрабатываем успешный ответ
-                    if (response.isSuccessful) {
-                        // Обновляем URL аватарки
-                        val updatedProfile = response.body()
-                        profileImageUrl = updatedProfile?.profileImageUrl
-                        profileData = updatedProfile
+                        // Обрабатываем успешный ответ
+                        if (response.isSuccessful) {
+                            // Обновляем URL аватарки
+                            val updatedProfile = response.body()
+                            profileImageUrl = updatedProfile?.profileImageUrl
+                            profileData = updatedProfile
 
-                        Toast.makeText(context, "Аватар успешно обновлен", Toast.LENGTH_SHORT).show()
-                        Log.d("ProfileScreen", "Аватар успешно загружен: $profileImageUrl")
-                    } else {
-                        // Обрабатываем ошибку
-                        val errorMessage = response.errorBody()?.string() ?: "Неизвестная ошибка"
-                        Toast.makeText(context, "Ошибка при загрузке аватара: $errorMessage", Toast.LENGTH_SHORT).show()
-                        Log.e("ProfileScreen", "Ошибка при загрузке аватара: $errorMessage")
+                            Toast.makeText(context, "Аватар успешно обновлен", Toast.LENGTH_SHORT).show()
+                            Log.d("ProfileScreen", "Аватар успешно загружен: $profileImageUrl")
+                        } else {
+                            // Обрабатываем ошибку
+                            val errorMessage = response.errorBody()?.string() ?: "Неизвестная ошибка"
+                            Toast.makeText(context, "Ошибка при загрузке аватара: $errorMessage", Toast.LENGTH_SHORT).show()
+                            Log.e("ProfileScreen", "Ошибка при загрузке аватара: $errorMessage")
+                        }
+                    } finally {
+                        // Удаляем временный файл
+                        try {
+                            imageFile.delete()
+                        } catch (e: Exception) {
+                            Log.e("ProfileScreen", "Ошибка при удалении временного файла: ${e.message}")
+                        }
                     }
-
-                    // Удаляем временный файл
-                    imageFile.delete()
                 } else {
                     Toast.makeText(context, "Не удалось подготовить изображение", Toast.LENGTH_SHORT).show()
                     Log.e("ProfileScreen", "Не удалось подготовить изображение")

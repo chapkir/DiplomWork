@@ -7,7 +7,7 @@ import com.example.server.UsPinterest.model.User;
 import com.example.server.UsPinterest.repository.NotificationRepository;
 import com.example.server.UsPinterest.repository.PinRepository;
 import com.example.server.UsPinterest.repository.UserRepository;
-import com.example.server.UsPinterest.service.YandexDiskService;
+import com.example.server.UsPinterest.service.FileStorageService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -38,7 +38,7 @@ public class NotificationService {
     private UserService userService;
 
     @Autowired
-    private YandexDiskService yandexDiskService;
+    private FileStorageService fileStorageService;
 
     // Создать уведомление о лайке
     public void createLikeNotification(User sender, Pin pin) {
@@ -148,8 +148,10 @@ public class NotificationService {
     private NotificationResponse convertToNotificationResponse(Notification notification) {
         NotificationResponse response = new NotificationResponse();
         response.setId(notification.getId());
-        response.setType(notification.getType().name());
+        response.setType(notification.getType().toString());
         response.setMessage(notification.getMessage());
+        response.setCreatedAt(notification.getCreatedAt());
+        response.setRead(notification.isRead());
 
         if (notification.getSender() != null) {
             response.setSenderId(notification.getSender().getId());
@@ -159,23 +161,17 @@ public class NotificationService {
         if (notification.getPin() != null) {
             response.setPinId(notification.getPin().getId());
 
-            // Обновляем ссылку на изображение пина, получая прямую ссылку если возможно
             String imageUrl = notification.getPin().getImageUrl();
-            if (imageUrl != null && (imageUrl.contains("yadi.sk") || imageUrl.contains("disk.yandex.ru"))) {
+            if (imageUrl != null && !imageUrl.isEmpty()) {
                 try {
-                    String directUrl = yandexDiskService.updateImageUrl(imageUrl);
+                    String directUrl = fileStorageService.updateImageUrl(imageUrl);
                     response.setPinImageUrl(directUrl);
                 } catch (Exception e) {
-                    // В случае ошибки используем оригинальный URL
+                    // If we can't get direct URL, use original
                     response.setPinImageUrl(imageUrl);
                 }
-            } else {
-                response.setPinImageUrl(imageUrl);
             }
         }
-
-        response.setCreatedAt(notification.getCreatedAt());
-        response.setRead(notification.isRead());
 
         return response;
     }

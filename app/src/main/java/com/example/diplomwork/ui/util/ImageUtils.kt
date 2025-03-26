@@ -1,162 +1,167 @@
-package com.example.diplomwork.util
+package com.example.diplomwork.ui.util
 
-import android.content.ContentResolver
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
+import coil.request.CachePolicy
+import coil.size.Scale
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.net.URL
+import java.security.MessageDigest
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
- * Утилитный класс для работы с изображениями
+ * Утилита для работы с изображениями
  */
 object ImageUtils {
     private const val TAG = "ImageUtils"
-    private const val COMPRESS_QUALITY = 80
 
     /**
-     * Исправляет URL Яндекс.Диска, добавляя параметр disposition=inline если его нет
-     * и декодирует HTML-закодированные символы
+     * Копирует содержимое Uri в файл
      */
-    fun fixYandexDiskUrl(url: String): String {
-        if (url.isEmpty()) {
-            return url
-        }
-
-        // Сначала заменяем закодированные амперсанды на обычные
-        val decodedUrl = url.replace("&amp;", "&")
-
-        // Если параметр disposition уже есть, просто возвращаем декодированный URL
-        if (decodedUrl.contains("disposition=")) {
-            return decodedUrl
-        }
-
-        // Проверяем, является ли URL ссылкой на Яндекс.Диск
-        if (decodedUrl.contains("disk.yandex.ru") ||
-            decodedUrl.contains("downloader.disk.yandex.ru") ||
-            decodedUrl.contains("preview.disk.yandex.ru")) {
-
-            return if (decodedUrl.contains("?")) {
-                "$decodedUrl&disposition=inline"
-            } else {
-                "$decodedUrl?disposition=inline"
-            }
-        }
-
-        return decodedUrl
-    }
-
-    /**
-     * Создает временный файл для изображения
-     */
-    fun createImageFile(context: Context, prefix: String = "img"): File {
-        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-        val imageFileName = "${prefix}_${timeStamp}"
-        return File.createTempFile(
-            imageFileName,
-            ".jpg",
-            context.cacheDir
-        )
-    }
-
-    /**
-     * Копирует изображение из Uri в файл с оптимизацией
-     */
-    fun copyUriToFile(context: Context, uri: Uri, maxWidth: Int = 1024, maxHeight: Int = 1024): File? {
+    fun copyUriToFile(context: Context, uri: Uri): File? {
         return try {
-            val tempFile = createImageFile(context)
+            // Создаем временный файл
+            val tempFile = File.createTempFile("upload", ".jpg", context.cacheDir)
 
-            // Сначала получаем размеры изображения для определения параметров сжатия
-            val options = BitmapFactory.Options().apply {
-                inJustDecodeBounds = true
-            }
-
+            // Копируем содержимое Uri в файл
             context.contentResolver.openInputStream(uri)?.use { input ->
-                BitmapFactory.decodeStream(input, null, options)
-            }
-
-            // Определяем коэффициент сжатия
-            var sampleSize = 1
-            if (options.outHeight > maxHeight || options.outWidth > maxWidth) {
-                val heightRatio = Math.round(options.outHeight.toFloat() / maxHeight.toFloat())
-                val widthRatio = Math.round(options.outWidth.toFloat() / maxWidth.toFloat())
-                sampleSize = if (heightRatio < widthRatio) heightRatio else widthRatio
-            }
-
-            // Загружаем изображение с применением сжатия
-            val loadOptions = BitmapFactory.Options().apply {
-                inSampleSize = sampleSize
-            }
-
-            var bitmap: Bitmap? = null
-            context.contentResolver.openInputStream(uri)?.use { input ->
-                bitmap = BitmapFactory.decodeStream(input, null, loadOptions)
-            }
-
-            // Сохраняем сжатое изображение в файл
-            bitmap?.let {
-                FileOutputStream(tempFile).use { out ->
-                    it.compress(Bitmap.CompressFormat.JPEG, COMPRESS_QUALITY, out)
+                FileOutputStream(tempFile).use { output ->
+                    input.copyTo(output)
                 }
-                bitmap?.recycle()
-                Log.d(TAG, "Изображение успешно сжато и сохранено: ${tempFile.absolutePath}")
-                tempFile
-            } ?: run {
-                Log.e(TAG, "Не удалось декодировать изображение")
-                null
             }
+
+            Log.d(TAG, "Файл успешно создан: ${tempFile.absolutePath}")
+            tempFile
         } catch (e: IOException) {
-            Log.e(TAG, "Ошибка при копировании изображения", e)
+            Log.e(TAG, "Ошибка при копировании файла: ${e.message}")
             null
         }
     }
 
     /**
-     * Получает имя файла из Uri
+     * Создает MD5 хеш для URL, используется для имен файлов кэша
      */
-    fun getFileName(context: Context, uri: Uri): String {
-        var result: String? = null
-        if (uri.scheme == ContentResolver.SCHEME_CONTENT) {
-            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                if (cursor.moveToFirst()) {
-                    val columnIndex = cursor.getColumnIndex("_display_name")
-                    if (columnIndex != -1) {
-                        result = cursor.getString(columnIndex)
-                    }
-                }
-            }
-        }
-        if (result == null) {
-            result = uri.path
-            val cut = result?.lastIndexOf('/')
-            if (cut != -1 && cut != null) {
-                result = result?.substring(cut + 1)
-            }
-        }
-        return result ?: "unknown_${System.currentTimeMillis()}.jpg"
+    fun hashUrl(url: String): String {
+        val md = MessageDigest.getInstance("MD5")
+        val digest = md.digest(url.toByteArray())
+        return digest.joinToString("") { "%02x".format(it) }
     }
 
     /**
-     * Сжимает существующий файл изображения
+     * Проверяет, есть ли изображение в кэше
      */
-    fun compressImageFile(file: File, quality: Int = COMPRESS_QUALITY): Boolean {
-        return try {
-            val bitmap = BitmapFactory.decodeFile(file.absolutePath)
-            FileOutputStream(file).use { out ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, quality, out)
+    fun isImageCached(context: Context, url: String): Boolean {
+        val hash = hashUrl(url)
+        val cacheFile = File(context.cacheDir, "images/$hash")
+        return cacheFile.exists() && cacheFile.length() > 0
+    }
+
+    /**
+     * Получает изображение из кэша или загружает, если его нет
+     */
+    suspend fun getImage(context: Context, url: String, maxRetries: Int = 3): Bitmap? = withContext(Dispatchers.IO) {
+        val hash = hashUrl(url)
+        val cacheDir = File(context.cacheDir, "images").apply { mkdirs() }
+        val cacheFile = File(cacheDir, hash)
+
+        // Проверяем кэш
+        if (cacheFile.exists() && cacheFile.length() > 0) {
+            try {
+                return@withContext BitmapFactory.decodeFile(cacheFile.absolutePath)
+            } catch (e: Exception) {
+                Log.e(TAG, "Ошибка при чтении из кэша: ${e.message}")
+                // Если не удалось прочитать из кэша, удаляем файл и загружаем заново
+                cacheFile.delete()
             }
-            bitmap.recycle()
-            Log.d(TAG, "Изображение успешно сжато: ${file.absolutePath}")
+        }
+
+        // Загружаем изображение
+        var retryCount = 0
+        var lastException: Exception? = null
+
+        while (retryCount < maxRetries) {
+            try {
+                // Добавляем параметр cache_bust для предотвращения кэширования на сервере
+                val urlWithBust = if (url.contains("cache_bust=")) {
+                    url.replace(Regex("cache_bust=\\d+"), "cache_bust=${System.currentTimeMillis()}")
+                } else {
+                    val separator = if (url.contains("?")) "&" else "?"
+                    "$url${separator}cache_bust=${System.currentTimeMillis()}"
+                }
+
+                val connection = URL(urlWithBust).openConnection()
+                connection.connectTimeout = 15000
+                connection.readTimeout = 15000
+                connection.addRequestProperty("User-Agent", "Mozilla/5.0")
+
+                connection.connect()
+
+                val responseCode = if (connection is java.net.HttpURLConnection) {
+                    connection.responseCode
+                } else {
+                    200 // Если не HTTP-соединение, считаем, что всё ОК
+                }
+
+                if (responseCode == 410) {
+                    Log.w(TAG, "Получен код 410 для URL: $urlWithBust")
+                    retryCount++
+                    lastException = Exception("HTTP 410: Gone")
+                    // Ждем перед повторной попыткой
+                    Thread.sleep(1000L * retryCount)
+                    continue
+                }
+
+                // Проверяем успешность ответа
+                if (connection is java.net.HttpURLConnection && connection.responseCode != 200) {
+                    throw Exception("HTTP ${connection.responseCode}: ${connection.responseMessage}")
+                }
+
+                // Получаем изображение из потока
+                val bitmap = BitmapFactory.decodeStream(connection.inputStream)
+
+                // Сохраняем в кэш
+                if (bitmap != null) {
+                    try {
+                        cacheFile.parentFile?.mkdirs()
+                        FileOutputStream(cacheFile).use { outputStream ->
+                            bitmap.compress(Bitmap.CompressFormat.JPEG, 95, outputStream)
+                        }
+                        Log.d(TAG, "Изображение сохранено в кэш: $hash")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Ошибка при сохранении в кэш: ${e.message}")
+                    }
+                }
+
+                return@withContext bitmap
+            } catch (e: Exception) {
+                Log.e(TAG, "Ошибка при загрузке изображения (попытка ${retryCount + 1}): ${e.message}")
+                lastException = e
+                retryCount++
+                // Ждем перед повторной попыткой
+                Thread.sleep(1000L * retryCount)
+            }
+        }
+
+        Log.e(TAG, "Все попытки загрузки исчерпаны для URL: $url")
+        lastException?.let { throw it }
+        return@withContext null
+    }
+
+    /**
+     * Очищает кэш изображений
+     */
+    fun clearImageCache(context: Context): Boolean {
+        val cacheDir = File(context.cacheDir, "images")
+        return if (cacheDir.exists()) {
+            cacheDir.deleteRecursively()
+        } else {
             true
-        } catch (e: Exception) {
-            Log.e(TAG, "Ошибка при сжатии изображения", e)
-            false
         }
     }
 }

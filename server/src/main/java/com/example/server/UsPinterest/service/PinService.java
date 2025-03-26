@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.example.server.UsPinterest.service.FileStorageService;
 
 @Service
 @Transactional
@@ -52,7 +53,7 @@ public class PinService {
     private LikeRepository likeRepository;
 
     @Autowired
-    private YandexDiskService yandexDiskService;
+    private FileStorageService fileStorageService;
 
     public Pin createPin(Pin pin) {
         return pinRepository.save(pin);
@@ -178,48 +179,74 @@ public class PinService {
         return responseMap;
     }
 
+    /**
+     * Update image URL to ensure it's using the current environment's base URL
+     */
     public String updatePinImageUrl(Pin pin) {
-        String imageUrl = pin.getImageUrl();
-
-        // Проверяем, является ли ссылка уже постоянной публичной ссылкой Яндекс Диска
-        if (imageUrl != null && !imageUrl.isEmpty() &&
-                (imageUrl.contains("disk.yandex.ru/i/") ||
-                        imageUrl.contains("disk.yandex.ru/d/") ||
-                        imageUrl.contains("yadi.sk"))) {
-            // Если это уже постоянная ссылка, просто возвращаем её
-            return imageUrl;
+        if (pin == null || pin.getImageUrl() == null) {
+            return null;
         }
 
         try {
-            String updatedImageUrl = yandexDiskService.updateImageUrl(imageUrl);
-            if (!updatedImageUrl.equals(pin.getImageUrl())) {
+            String imageUrl = pin.getImageUrl();
+            String updatedImageUrl = fileStorageService.updateImageUrl(imageUrl);
+
+            // Only update in database if URL has changed
+            if (!imageUrl.equals(updatedImageUrl)) {
                 pin.setImageUrl(updatedImageUrl);
                 pinRepository.save(pin);
             }
+
             return updatedImageUrl;
         } catch (Exception e) {
-            logger.error("Failed to update image URL for pin {}: {}", pin.getId(), e.getMessage());
-            return imageUrl;
+            logger.error("Error updating pin image URL: {}", e.getMessage());
+            return pin.getImageUrl();
         }
     }
 
+    /**
+     * Convert Pin to PinResponse with current user's like status
+     */
     public PinResponse convertToPinResponse(Pin pin, User currentUser) {
         PinResponse response = new PinResponse();
         response.setId(pin.getId());
-        response.setImageUrl(updatePinImageUrl(pin));
+
+        // Update image URL to use current environment's base URL
+        String imageUrl = pin.getImageUrl();
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            imageUrl = fileStorageService.updateImageUrl(imageUrl);
+        }
+        response.setImageUrl(imageUrl);
+
         response.setDescription(pin.getDescription());
+
+        if (pin.getBoard() != null) {
+            response.setBoardId(pin.getBoard().getId());
+            response.setBoardTitle(pin.getBoard().getTitle());
+        }
+
+        if (pin.getUser() != null) {
+            response.setUserId(pin.getUser().getId());
+            response.setUsername(pin.getUser().getUsername());
+
+            String profileImageUrl = pin.getUser().getProfileImageUrl();
+            if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
+                profileImageUrl = fileStorageService.updateImageUrl(profileImageUrl);
+            }
+            response.setUserProfileImageUrl(profileImageUrl);
+        }
+
+        response.setCreatedAt(pin.getCreatedAt());
         response.setLikesCount(pin.getLikes() != null ? pin.getLikes().size() : 0);
-        response.setIsLikedByCurrentUser(currentUser != null && pin.getLikes().stream()
-                .anyMatch(like -> like.getUser().getId().equals(currentUser.getId())));
-        response.setComments(
-                pin.getComments().stream().map(comment -> {
-                    CommentResponse cr = new CommentResponse();
-                    cr.setId(comment.getId());
-                    cr.setText(comment.getText());
-                    cr.setUsername(comment.getUser() != null ? comment.getUser().getUsername() : "Unknown");
-                    return cr;
-                }).collect(Collectors.toList())
-        );
+
+        // Check if current user has liked this pin
+        boolean isLiked = false;
+        if (currentUser != null && pin.getLikes() != null) {
+            isLiked = pin.getLikes().stream()
+                    .anyMatch(like -> like.getUser().getId().equals(currentUser.getId()));
+        }
+        response.setIsLikedByCurrentUser(isLiked);
+
         return response;
     }
 } 

@@ -1,6 +1,7 @@
 package com.example.server.UsPinterest.controller;
 
 import com.example.server.UsPinterest.dto.FollowResponse;
+import com.example.server.UsPinterest.exception.FollowException;
 import com.example.server.UsPinterest.service.FollowService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,7 +32,12 @@ public class FollowController {
     public ResponseEntity<FollowResponse> follow(
             @PathVariable Long followerId,
             @PathVariable Long followingId) {
-        return ResponseEntity.ok(followService.follow(followerId, followingId));
+        try {
+            FollowResponse followResponse = followService.follow(followerId, followingId);
+            return ResponseEntity.ok(followResponse);
+        } catch (FollowException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     /**

@@ -14,7 +14,7 @@ import com.example.server.UsPinterest.service.BoardService;
 import com.example.server.UsPinterest.service.PinService;
 import com.example.server.UsPinterest.service.UserService;
 import com.example.server.UsPinterest.entity.Like;
-import com.example.server.UsPinterest.service.YandexDiskService;
+import com.example.server.UsPinterest.service.FileStorageService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -47,7 +48,7 @@ public class ProfileController {
     private final PinRepository pinRepository;
     private final LikeRepository likeRepository;
     @Autowired
-    private YandexDiskService yandexDiskService;
+    private FileStorageService fileStorageService;
 
     @GetMapping
     public ResponseEntity<?> getProfile() {
@@ -113,35 +114,27 @@ public class ProfileController {
      */
     @PostMapping("/image")
     public ResponseEntity<?> updateProfileImage(@RequestParam("image") MultipartFile file) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.singletonMap("message", "Необходима авторизация"));
+        }
+
+        String username = authentication.getName();
         try {
-            if (file.isEmpty()) {
-                return ResponseEntity.badRequest().body("Файл не выбран");
-            }
+            User user = userService.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-            if (!file.getContentType().startsWith("image/")) {
-                return ResponseEntity.badRequest().body("Файл должен быть изображением");
-            }
+            // Update to use FileStorageService
+            String imageUrl = fileStorageService.storeProfileImage(file, user.getId());
 
-            User user = userService.getCurrentUser();
-            if (user == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Пользователь не авторизован");
-            }
+            user.setProfileImageUrl(imageUrl);
+            userRepository.save(user);
 
-            User updatedUser = userService.updateProfileImage(user.getId(), file);
-            if (updatedUser == null) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body("Не удалось обновить изображение профиля");
-            }
-
-            return ResponseEntity.ok(updatedUser.getProfileImageUrl());
+            return ResponseEntity.ok(Collections.singletonMap("profileImageUrl", imageUrl));
         } catch (IOException e) {
-            logger.error("Ошибка при загрузке изображения профиля: {}", e.getMessage(), e);
+            logger.error("Ошибка при загрузке изображения профиля", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Ошибка при загрузке изображения: " + e.getMessage());
-        } catch (Exception e) {
-            logger.error("Неожиданная ошибка при обновлении изображения профиля: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Произошла ошибка при обновлении изображения профиля");
+                    .body(Collections.singletonMap("message", "Ошибка при загрузке изображения: " + e.getMessage()));
         }
     }
 
@@ -195,36 +188,27 @@ public class ProfileController {
 
     @PostMapping("/avatar")
     public ResponseEntity<?> uploadAvatar(@RequestParam("file") MultipartFile file) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.singletonMap("message", "Необходима авторизация"));
+        }
+
+        String username = authentication.getName();
         try {
-            if (file.isEmpty()) {
-                return ResponseEntity.badRequest().body("Файл не выбран");
-            }
+            User user = userService.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-            if (!file.getContentType().startsWith("image/")) {
-                return ResponseEntity.badRequest().body("Файл должен быть изображением");
-            }
+            // Update to use FileStorageService
+            String imageUrl = fileStorageService.storeProfileImage(file, user.getId());
 
-            User user = userService.getCurrentUser();
-            if (user == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Пользователь не авторизован");
-            }
-
-            // Загружаем изображение на Яндекс.Диск
-            String imageUrl = yandexDiskService.uploadProfileImage(file, user.getId());
-
-            // Обновляем URL аватарки в профиле пользователя
             user.setProfileImageUrl(imageUrl);
             userRepository.save(user);
 
-            return ResponseEntity.ok(imageUrl);
+            return ResponseEntity.ok(Collections.singletonMap("profileImageUrl", imageUrl));
         } catch (IOException e) {
-            logger.error("Ошибка при загрузке аватарки: {}", e.getMessage(), e);
+            logger.error("Ошибка при загрузке аватара", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Ошибка при загрузке аватарки: " + e.getMessage());
-        } catch (Exception e) {
-            logger.error("Неожиданная ошибка при загрузке аватарки: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Произошла ошибка при загрузке аватарки");
+                    .body(Collections.singletonMap("message", "Ошибка при загрузке аватара: " + e.getMessage()));
         }
     }
 } 

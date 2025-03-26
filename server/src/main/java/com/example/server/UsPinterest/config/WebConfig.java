@@ -2,6 +2,7 @@ package com.example.server.UsPinterest.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
@@ -17,12 +18,19 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Arrays;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
     private static final Logger logger = LoggerFactory.getLogger(WebConfig.class);
+
+    @Value("${file.upload-dir}")
+    private String uploadDir;
+
+    @Value("${file.profile-images-dir:profile-images}")
+    private String profileImagesDir;
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
@@ -32,11 +40,24 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Регистрируем обработчик для файлов из папки uploads
-        registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:uploads/");
+        Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+        String uploadAbsolutePath = uploadPath.toUri().toString();
 
-        // Отдаем статичные ресурсы (если они находятся в каталоге static)
+        Path profileImagesPath = Paths.get(uploadDir, profileImagesDir).toAbsolutePath().normalize();
+        String profileImagesAbsolutePath = profileImagesPath.toUri().toString();
+
+        logger.info("Configuring file resources at: {}", uploadAbsolutePath);
+        logger.info("Configuring profile images at: {}", profileImagesAbsolutePath);
+
+        // Main uploads directory
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations(uploadAbsolutePath);
+
+        // Profile images directory
+        registry.addResourceHandler("/uploads/profiles/**")
+                .addResourceLocations(profileImagesAbsolutePath);
+
+        // Static resources
         registry.addResourceHandler("/static/**")
                 .addResourceLocations("classpath:/static/");
 
@@ -45,7 +66,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        logger.info("Настраиваем глобальную конфигурацию CORS");
+        logger.info("Configuring global CORS settings");
         registry.addMapping("/**")
                 .allowedOrigins(
                         "http://localhost:8081",
@@ -63,7 +84,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedHeaders("*")
                 .exposedHeaders("Content-Disposition")
                 .maxAge(3600);
-        logger.info("Глобальная конфигурация CORS настроена");
+        logger.info("Global CORS configuration complete");
     }
 
     @Bean
@@ -82,7 +103,7 @@ public class WebConfig implements WebMvcConfigurer {
 
                 response.setHeader("Permissions-Policy", null);
 
-                // Добавляем заголовки для CORS
+                // Add CORS headers
                 response.setHeader("Access-Control-Allow-Origin", "*");
                 response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
                 response.setHeader("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization, X-Requested-With");

@@ -2,7 +2,7 @@ package com.example.server.UsPinterest.dto.mapper;
 
 import com.example.server.UsPinterest.dto.FollowResponse;
 import com.example.server.UsPinterest.model.Follow;
-import com.example.server.UsPinterest.service.YandexDiskService;
+import com.example.server.UsPinterest.service.FileStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 public class FollowMapper {
 
     @Autowired
-    private YandexDiskService yandexDiskService;
+    private FileStorageService fileStorageService;
 
     /**
      * Преобразует сущность Follow в FollowResponse
@@ -36,9 +36,9 @@ public class FollowMapper {
 
             // Обновляем ссылку на изображение профиля подписчика
             String followerImageUrl = follow.getFollower().getProfileImageUrl();
-            if (followerImageUrl != null && (followerImageUrl.contains("yadi.sk") || followerImageUrl.contains("disk.yandex.ru"))) {
+            if (followerImageUrl != null && !followerImageUrl.isEmpty()) {
                 try {
-                    String directUrl = yandexDiskService.updateImageUrl(followerImageUrl);
+                    String directUrl = fileStorageService.updateImageUrl(followerImageUrl);
                     response.setFollowerProfileImageUrl(directUrl);
                 } catch (Exception e) {
                     // В случае ошибки используем оригинальный URL
@@ -55,9 +55,9 @@ public class FollowMapper {
 
             // Обновляем ссылку на изображение профиля целевого пользователя
             String followingImageUrl = follow.getFollowing().getProfileImageUrl();
-            if (followingImageUrl != null && (followingImageUrl.contains("yadi.sk") || followingImageUrl.contains("disk.yandex.ru"))) {
+            if (followingImageUrl != null && !followingImageUrl.isEmpty()) {
                 try {
-                    String directUrl = yandexDiskService.updateImageUrl(followingImageUrl);
+                    String directUrl = fileStorageService.updateImageUrl(followingImageUrl);
                     response.setFollowingProfileImageUrl(directUrl);
                 } catch (Exception e) {
                     // В случае ошибки используем оригинальный URL

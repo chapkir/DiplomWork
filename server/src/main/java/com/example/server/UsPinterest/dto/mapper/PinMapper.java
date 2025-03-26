@@ -5,12 +5,13 @@ import com.example.server.UsPinterest.dto.PinRequest;
 import com.example.server.UsPinterest.dto.PinResponse;
 import com.example.server.UsPinterest.model.Pin;
 import com.example.server.UsPinterest.model.User;
+import com.example.server.UsPinterest.service.FileStorageService;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Autowired;
-import com.example.server.UsPinterest.service.YandexDiskService;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
 public class PinMapper {
 
     @Autowired
-    private YandexDiskService yandexDiskService;
+    private FileStorageService fileStorageService;
 
     /**
      * Преобразует сущность Pin в DTO PinResponse с указанием, лайкнул ли текущий пользователь пин
@@ -39,9 +40,9 @@ public class PinMapper {
 
         // Обновляем ссылку на изображение, получая прямую ссылку если возможно
         String imageUrl = pin.getImageUrl();
-        if (imageUrl != null && (imageUrl.contains("yadi.sk") || imageUrl.contains("disk.yandex.ru"))) {
+        if (imageUrl != null && !imageUrl.isEmpty()) {
             try {
-                String directUrl = yandexDiskService.updateImageUrl(imageUrl);
+                String directUrl = fileStorageService.updateImageUrl(imageUrl);
                 response.setImageUrl(directUrl);
             } catch (Exception e) {
                 // В случае ошибки используем оригинальный URL
@@ -63,7 +64,17 @@ public class PinMapper {
         if (pin.getUser() != null) {
             response.setUserId(pin.getUser().getId());
             response.setUsername(pin.getUser().getUsername());
-            response.setUserProfileImageUrl(pin.getUser().getProfileImageUrl());
+
+            // Update profile image URL
+            String profileImageUrl = pin.getUser().getProfileImageUrl();
+            if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
+                try {
+                    String directUrl = fileStorageService.updateImageUrl(profileImageUrl);
+                    response.setUserProfileImageUrl(directUrl);
+                } catch (Exception e) {
+                    response.setUserProfileImageUrl(profileImageUrl);
+                }
+            }
         }
 
         // Добавление даты создания
@@ -140,5 +151,18 @@ public class PinMapper {
         }
 
         return pin;
+    }
+
+    /**
+     * Convert a list of Pins to a list of PinResponse DTOs
+     *
+     * @param pins the list of Pin entities
+     * @param currentUser the current authenticated user
+     * @return list of PinResponse DTOs
+     */
+    public List<PinResponse> mapPinsToPinResponses(List<Pin> pins, User currentUser) {
+        return pins.stream()
+                .map(pin -> toDto(pin, currentUser))
+                .collect(Collectors.toList());
     }
 }
