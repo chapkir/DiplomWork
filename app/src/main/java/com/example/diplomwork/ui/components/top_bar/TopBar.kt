@@ -33,7 +33,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.diplomwork.R
-import com.example.diplomwork.ui.navigation.NavigationItem
+import com.example.diplomwork.ui.navigation.AddContent
+import com.example.diplomwork.ui.navigation.Home
+import com.example.diplomwork.ui.navigation.Login
+import com.example.diplomwork.ui.navigation.Notification
+import com.example.diplomwork.ui.navigation.Posts
+import com.example.diplomwork.ui.navigation.Profile
+import com.example.diplomwork.ui.navigation.Screen
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 
 @Composable
@@ -57,18 +63,18 @@ fun GetTopBars(currentRoute: String?) {
         )
     } else {
         when (currentRoute) {
-            NavigationItem.Home.route -> CustomTopBar(
+            Home::class.simpleName -> CustomTopBar(
                 title = "Лента картинок",
                 icon = R.drawable.ic_search,
                 contentDescription = "Search",
                 onIconClick = { isSearching = true }
             )
 
-            NavigationItem.Posts.route -> CustomTopBar(title = "Посты")
-            NavigationItem.AddContent.route -> CustomTopBar(title = "Добавить")
-            NavigationItem.Notification.route -> CustomTopBar(title = "Уведомления")
-            NavigationItem.Profile.route -> CustomTopBar(title = "Профиль")
-            NavigationItem.Login.route -> CustomTopBar(title = "Авторизация")
+            Posts::class.simpleName -> CustomTopBar(title = "Посты")
+            AddContent::class.simpleName -> CustomTopBar(title = "Добавить")
+            Notification::class.simpleName -> CustomTopBar(title = "Уведомления")
+            Profile::class.simpleName -> CustomTopBar(title = "Профиль")
+            Login::class.simpleName -> CustomTopBar(title = "Авторизация")
             else -> {}
         }
     }

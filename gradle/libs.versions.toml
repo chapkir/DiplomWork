@@ -1,5 +1,5 @@
 [versions]
-agp = "8.8.1"
+agp = "8.9.1"
 bucket4jCore = "7.6.0"
 caffeine = "3.1.8"
 converterGson = "2.11.0"
@@ -27,14 +27,12 @@ springBootStarter = "3.4.1"
 uiTestAndroid = "1.7.8"
 viewModel = "2.8.7"
 loggingInterceptor = "4.9.3"
-
-
-
-
-
+serializationVersion = "2.0.0"
+serializationKotlin = "1.7.1"
 
 
 [libraries]
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serializationKotlin" }
 accompanist-systemuicontroller = "com.google.accompanist:accompanist-systemuicontroller:0.36.0"
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
@@ -90,4 +88,5 @@ logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-intercep
 android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+plugin_serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "serializationVersion" }
 

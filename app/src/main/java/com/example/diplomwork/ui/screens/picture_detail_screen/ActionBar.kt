@@ -41,7 +41,7 @@ fun ActionBar(
     isLiked: Boolean,
     commentsCount: Int,
     avatarUrl: String?,
-    username: Int,
+    username: String,
     onLikeClick: () -> Unit,
     onCommentClick: () -> Unit,
     onProfileClick: () -> Unit
@@ -145,7 +145,7 @@ fun ActionBar(
             }
             Spacer(modifier = Modifier.width(5.dp))
             Text(
-                text = "$username",
+                text = username,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,

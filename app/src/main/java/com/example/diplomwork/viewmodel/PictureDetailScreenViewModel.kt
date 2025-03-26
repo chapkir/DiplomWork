@@ -24,8 +24,8 @@ class PictureDetailScreenViewModel(private val pictureId: Long) : ViewModel() {
     private val _comments = MutableStateFlow<List<Comment>>(emptyList())
     val comments: StateFlow<List<Comment>> = _comments
 
-    private val _pictureUserId = MutableStateFlow(0)
-    val pictureUserId: StateFlow<Int> = _pictureUserId
+    private val _pictureUsername = MutableStateFlow("")
+    val pictureUsername: StateFlow<String> = _pictureUsername
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -38,8 +38,7 @@ class PictureDetailScreenViewModel(private val pictureId: Long) : ViewModel() {
         viewModelScope.launch {
             try {
                 val picture = ApiClient.apiService.getPicture(pictureId)
-                _pictureUserId.value = picture.userId.toInt()
-                Log.i("userid", "$pictureUserId")
+                _pictureUsername.value = picture.username
                 _pictureDescription.value = picture.description
                 _likesCount.value = picture.likesCount
                 _isLiked.value = picture.isLikedByCurrentUser

@@ -16,12 +16,17 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import com.example.diplomwork.R
 import com.example.diplomwork.system_settings.systemInsetHeight
+import com.example.diplomwork.ui.navigation.AddContent
+import com.example.diplomwork.ui.navigation.Home
+import com.example.diplomwork.ui.navigation.Notification
+import com.example.diplomwork.ui.navigation.Posts
+import com.example.diplomwork.ui.navigation.Profile
 import com.example.diplomwork.ui.navigation.Screen
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 import com.example.diplomwork.ui.theme.Dimens.BottomMenuHeight
 
 data class BottomNavItem(
-    val route: String,
+    val route: Screen,
     val icon: Int,
     val label: String,
     val isAddButton: Boolean = false
@@ -30,16 +35,16 @@ data class BottomNavItem(
 @Composable
 fun BottomNavigationBar(
     currentRoute: String,
-    onNavigate: (String) -> Unit,
+    onNavigate: (Screen) -> Unit,
     onAddClicked: () -> Unit
 ) {
 
     val items = listOf(
-        BottomNavItem(Screen.HOME.name, R.drawable.ic_home, "Home"),
-        BottomNavItem(Screen.POSTS.name, R.drawable.ic_picture, "Posts"),
-        BottomNavItem(Screen.ADD_CONTENT.name, R.drawable.ic_add, "Add", isAddButton = true),
-        BottomNavItem(Screen.NOTIFICATION.name, R.drawable.ic_bell, "Notice"),
-        BottomNavItem(Screen.PROFILE.name, R.drawable.ic_user, "Profile")
+        BottomNavItem(Home, R.drawable.ic_home, "Home"),
+        BottomNavItem(Posts, R.drawable.ic_picture, "Posts"),
+        BottomNavItem(AddContent, R.drawable.ic_add, "Add", isAddButton = true),
+        BottomNavItem(Notification, R.drawable.ic_bell, "Notice"),
+        BottomNavItem(Profile, R.drawable.ic_user, "Profile")
     )
 
     NavigationBar(
@@ -50,7 +55,7 @@ fun BottomNavigationBar(
         )
     ) {
         items.forEach { item ->
-            val isSelected = currentRoute == item.route
+            val isSelected = currentRoute == item.route::class.simpleName
 
             val size = animateDpAsState(
                 targetValue = if (isSelected) 27.dp else 25.dp,

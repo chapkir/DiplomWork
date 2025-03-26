@@ -34,22 +34,24 @@ import com.example.diplomwork.R
 import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.system_settings.systemInsetHeight
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
+import com.example.diplomwork.ui.navigation.ViewPictureDetailScreenData
 import com.example.diplomwork.ui.theme.ColorForArrowBack
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
 import com.example.diplomwork.viewmodel.PictureDetailScreenViewModel
 
 @Composable
 fun PictureDetailScreen(
-    pictureId: Long,
-    imageUrl: String,
+    viewPictureDetailScreenData: ViewPictureDetailScreenData,
     onNavigateBack: () -> Unit,
     onNavigateToLogin: () -> Unit,
-    viewModel: PictureDetailScreenViewModel = remember { PictureDetailScreenViewModel(pictureId) }
+    viewModel: PictureDetailScreenViewModel = remember {
+        PictureDetailScreenViewModel(viewPictureDetailScreenData.pictureId)
+    }
 ) {
     val pictureDescription by viewModel.pictureDescription.collectAsState()
     val likesCount by viewModel.likesCount.collectAsState()
     val isLiked by viewModel.isLiked.collectAsState()
-    val pictureUserId by viewModel.pictureUserId.collectAsState()
+    val pictureUsername by viewModel.pictureUsername.collectAsState()
     val comments by viewModel.comments.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
@@ -70,8 +72,8 @@ fun PictureDetailScreen(
             item {
                 ImageView(
                     imageRes =
-                    if (imageUrl.startsWith("http")) imageUrl
-                    else ApiClient.getBaseUrl() + imageUrl,
+                    if (viewPictureDetailScreenData.imageUrl.startsWith("http")) viewPictureDetailScreenData.imageUrl
+                    else ApiClient.getBaseUrl() + viewPictureDetailScreenData.imageUrl,
                     aspectRatio = 1f
                 )
             }
@@ -83,7 +85,7 @@ fun PictureDetailScreen(
                     isLiked = isLiked,
                     commentsCount = comments.size,
                     avatarUrl = "",
-                    username = pictureUserId,
+                    username = pictureUsername,
                     onLikeClick = { viewModel.toggleLike() },
                     onCommentClick = { showCommentsSheet = true },
                     onProfileClick = { }
