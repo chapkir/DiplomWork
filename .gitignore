@@ -49,3 +49,14 @@ Thumbs.db
 .env
 /google-services.json
 /firebase/
+
+
+# Директории для хранения загруженных файлов
+/server/uploads/
+/server/uploads/**
+/server/profile-images/
+/server/profile-images/**
+/uploads/
+/uploads/**
+/profile-images/
+/profile-images/**
