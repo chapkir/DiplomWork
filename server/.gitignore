@@ -1,1 +1,5 @@
 /build
+/uploads
+/uploads/**
+/profile-images
+/profile-images/**
