@@ -7,7 +7,8 @@ data class PictureResponse(
     val likesCount: Int,
     val comments: List<CommentResponse>?,
     val isLikedByCurrentUser: Boolean = false,
-    val username: String
+    val username: String,
+    val userProfileImageUrl: String
 )
 
 

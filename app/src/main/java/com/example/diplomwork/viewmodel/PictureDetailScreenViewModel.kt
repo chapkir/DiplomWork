@@ -1,5 +1,6 @@
 package com.example.diplomwork.viewmodel
 
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -24,6 +25,9 @@ class PictureDetailScreenViewModel(private val pictureId: Long) : ViewModel() {
     private val _comments = MutableStateFlow<List<Comment>>(emptyList())
     val comments: StateFlow<List<Comment>> = _comments
 
+    private val _profileImageUrl = MutableStateFlow("")
+    val profileImageUrl: StateFlow<String> = _profileImageUrl
+
     private val _pictureUsername = MutableStateFlow("")
     val pictureUsername: StateFlow<String> = _pictureUsername
 
@@ -39,6 +43,7 @@ class PictureDetailScreenViewModel(private val pictureId: Long) : ViewModel() {
             try {
                 val picture = ApiClient.apiService.getPicture(pictureId)
                 _pictureUsername.value = picture.username
+                _profileImageUrl.value = picture.userProfileImageUrl
                 _pictureDescription.value = picture.description
                 _likesCount.value = picture.likesCount
                 _isLiked.value = picture.isLikedByCurrentUser

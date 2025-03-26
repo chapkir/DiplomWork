@@ -40,7 +40,7 @@ fun ActionBar(
     likesCount: Int,
     isLiked: Boolean,
     commentsCount: Int,
-    avatarUrl: String?,
+    profileImageUrl: String?,
     username: String,
     onLikeClick: () -> Unit,
     onCommentClick: () -> Unit,
@@ -137,7 +137,7 @@ fun ActionBar(
                 contentAlignment = Alignment.Center
             ) {
                 AsyncImage(
-                    model = R.drawable.default_avatar,
+                    model = profileImageUrl,
                     contentDescription = "Avatar",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.matchParentSize()
