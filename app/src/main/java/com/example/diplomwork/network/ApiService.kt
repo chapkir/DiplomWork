@@ -14,10 +14,11 @@ import com.example.diplomwork.model.TokenRefreshResponse
 import com.example.diplomwork.model.ApiResponse
 import com.example.diplomwork.model.PageResponse
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.*
 
+
+// Делаем запросы и получаем сырые данные, то есть обьекты
 interface ApiService {
     @GET("api/pins/all")
     suspend fun getPictures(): List<PictureResponse>
@@ -60,7 +61,7 @@ interface ApiService {
     ): CommentResponse
 
     @GET("api/profile/liked-pins")
-    suspend fun getLikedPins(): List<PictureResponse>
+    suspend fun getLikedPictures(): List<PictureResponse>
 
     @Multipart
     @POST("api/pins/upload")

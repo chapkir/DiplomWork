@@ -68,7 +68,6 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import retrofit2.HttpException
 import coil.request.CachePolicy
 import com.example.diplomwork.ui.theme.ColorForFocusButton
-import com.example.diplomwork.ui.theme.ColorForHint
 
 @Composable
 fun ProfileScreen(
@@ -92,7 +91,7 @@ fun ProfileScreen(
 
     suspend fun loadLikedPins() {
         try {
-            likedPins = ApiClient.apiService.getLikedPins()
+            likedPins = ApiClient.apiService.getLikedPictures()
             Log.d("ProfileScreen", "Загружено ${likedPins.size} лайкнутых пинов")
         } catch (e: Exception) {
             Log.e("ProfileScreen", "Ошибка при загрузке лайкнутых пинов: ${e.message}")

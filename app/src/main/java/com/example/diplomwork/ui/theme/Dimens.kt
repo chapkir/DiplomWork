@@ -4,6 +4,6 @@ import androidx.compose.ui.unit.dp
 
 
 object Dimens {
-    val BottomMenuHeight = 55.dp
+    val BottomMenuHeight = 52.dp
     val TopBarHeight = 75.dp
 }
