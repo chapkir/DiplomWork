@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -65,6 +67,8 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import retrofit2.HttpException
 import coil.request.CachePolicy
+import com.example.diplomwork.ui.theme.ColorForFocusButton
+import com.example.diplomwork.ui.theme.ColorForHint
 
 @Composable
 fun ProfileScreen(
@@ -341,7 +345,7 @@ private fun ProfileHeader(
             Spacer(Modifier.size(40.dp))
             Box(
                 modifier = Modifier
-                    .size(130.dp)
+                    .size(140.dp)
                     .clip(RoundedCornerShape(50))
                     .clickable { onAvatarClick() },
                 contentAlignment = Alignment.Center
@@ -360,7 +364,14 @@ private fun ProfileHeader(
                             .build(),
                         contentDescription = "Avatar",
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier.matchParentSize()
+                        modifier = Modifier
+                            .size(140.dp)
+                            .clip(CircleShape)
+                            .border(
+                                3.dp,
+                                color = ColorForFocusButton,
+                                shape = CircleShape
+                            )
                     )
                 }
             }

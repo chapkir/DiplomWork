@@ -1,40 +1,48 @@
 package com.example.diplomwork.ui.components.bottom_menu
 
 import com.example.diplomwork.R
+import com.example.diplomwork.ui.navigation.AddContent
+import com.example.diplomwork.ui.navigation.Home
+import com.example.diplomwork.ui.navigation.Notification
+import com.example.diplomwork.ui.navigation.Posts
+import com.example.diplomwork.ui.navigation.Profile
+import com.example.diplomwork.ui.navigation.Screen
 
-sealed class BottomMenuItem(
-    val route: String,
-    val title: String,
-    val iconId: Int
-) {
-    object Home: BottomMenuItem(
-        route = "home",
-        title =  "",
-        iconId = R.drawable.ic_home
+sealed class BottomNavItem(
+    val route: Screen,
+    val icon: Int,
+    val label: String,
+    val isAddButton: Boolean = false
+){
+    object HomeScreen : BottomNavItem(
+        route = Home,
+        icon = R.drawable.ic_home,
+        label = "Home"
     )
-    object Favs: BottomMenuItem(
-        route = "favs",
-        title =  "",
-        iconId = R.drawable.ic_favs
+
+    object PostsScreen : BottomNavItem(
+        route = Posts,
+        icon = R.drawable.ic_picture,
+        label = "Posts"
     )
-    object Settings: BottomMenuItem(
-        route = "settings",
-        title =  "",
-        iconId = R.drawable.ic_settings
+
+    object AddContentScreen : BottomNavItem(
+        route = AddContent,
+        icon = R.drawable.ic_add,
+        label = "AddContent",
+        isAddButton = true
     )
-    object User: BottomMenuItem(
-        route = "user",
-        title =  "",
-        iconId = R.drawable.ic_user
+
+    object NotificationScreen : BottomNavItem(
+        route = Notification,
+        icon = R.drawable.ic_bell,
+        label = "Notification"
     )
-    object Add: BottomMenuItem(
-        route = "add",
-        title =  "",
-        iconId = R.drawable.ic_add
-    )
-    object Info: BottomMenuItem(
-        route = "info",
-        title =  "",
-        iconId = R.drawable.ic_info
+
+    object ProfileScreen : BottomNavItem(
+        route = Profile,
+        icon = R.drawable.ic_user,
+        label = "Profile"
     )
 }
+

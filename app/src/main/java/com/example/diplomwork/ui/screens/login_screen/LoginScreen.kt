@@ -50,6 +50,7 @@ import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
+import com.example.diplomwork.ui.theme.ColorForFocusButton
 import kotlinx.coroutines.launch
 
 @Composable
@@ -189,7 +190,7 @@ fun LoginScreen(
             },
             modifier = Modifier.fillMaxWidth(0.85f),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Red.copy(alpha = 0.9f),
+                containerColor = ColorForFocusButton,
                 contentColor = Color.White,
                 disabledContainerColor = Color.Gray,
                 disabledContentColor = Color.White

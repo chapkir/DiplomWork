@@ -58,6 +58,8 @@ import com.example.diplomwork.model.RegisterRequest
 import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
+import com.example.diplomwork.ui.theme.ColorForFocusButton
+import com.example.diplomwork.ui.theme.ColorForHint
 import kotlinx.coroutines.launch
 
 fun hideKeyboard(context: Context) {
@@ -134,7 +136,7 @@ fun RegisterScreen(onCompleteRegistration: () -> Unit) {
                 Button(
                     onClick = { step-- },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Red,
+                        containerColor = ColorForFocusButton,
                         contentColor = Color.White,
                     )
                 ) {
@@ -189,7 +191,7 @@ fun RegisterScreen(onCompleteRegistration: () -> Unit) {
                 },
                 enabled = isNextEnabled && !isLoading,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Red.copy(alpha = 0.9f),
+                    containerColor = ColorForFocusButton,
                     contentColor = Color.White,
                     disabledContainerColor = Color.Gray,
                     disabledContentColor = Color.White
@@ -207,7 +209,7 @@ fun RegisterScreen(onCompleteRegistration: () -> Unit) {
 
         Text(
             text = "Подсказка:",
-            color = Color.Gray,
+            color = ColorForHint.copy(alpha = 0.9f),
             modifier = Modifier.padding(top = 25.dp),
             textAlign = TextAlign.Center,
             fontWeight = FontWeight.Bold
@@ -218,7 +220,7 @@ fun RegisterScreen(onCompleteRegistration: () -> Unit) {
                     "\n• Вводите данные без пробелов •" +
                     "\n• В поле email обязательна @ •" +
                     "\n• Длина пароля минимум 8 символов •",
-            color = Color.Gray.copy(alpha = 0.8f),
+            color = ColorForHint.copy(alpha = 0.7f),
             modifier = Modifier.padding(top = 1.dp),
             textAlign = TextAlign.Center
         )

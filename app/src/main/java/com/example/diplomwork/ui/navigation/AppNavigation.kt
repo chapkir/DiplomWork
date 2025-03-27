@@ -1,9 +1,7 @@
 package com.example.diplomwork.ui.navigation
 
-import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.BackHandler
-import android.widget.Toast
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
