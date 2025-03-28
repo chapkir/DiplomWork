@@ -165,33 +165,47 @@ public class FileStorageService {
             return imageUrl;
         }
 
-        // If URL is already from our server, return as is
-        String currentContextPath = ServletUriComponentsBuilder.fromCurrentContextPath().toUriString();
-        if (imageUrl.startsWith(currentContextPath)) {
-            return imageUrl;
-        }
+        try {
+            // If URL is already from our server, return as is
+            String currentContextPath = ServletUriComponentsBuilder.fromCurrentContextPath().toUriString();
+            logger.debug("Current context path: {}, image URL: {}", currentContextPath, imageUrl);
 
-        // For external URLs, don't modify
-        if (imageUrl.startsWith("http")) {
-            return imageUrl;
-        }
-
-        // For relative paths, add server base URL
-        String filename = getFilenameFromUrl(imageUrl);
-        if (filename != null) {
-            if (imageUrl.contains("/profiles/")) {
-                return ServletUriComponentsBuilder.fromCurrentContextPath()
-                        .path("/api/files/profiles/")
-                        .path(filename)
-                        .toUriString();
-            } else {
-                return ServletUriComponentsBuilder.fromCurrentContextPath()
-                        .path("/api/files/")
-                        .path(filename)
-                        .toUriString();
+            if (imageUrl.startsWith(currentContextPath)) {
+                logger.debug("URL already from current server, returning as is");
+                return imageUrl;
             }
-        }
 
-        return imageUrl;
+            // For external URLs, don't modify
+            if (imageUrl.startsWith("http")) {
+                logger.debug("External URL detected, returning as is");
+                return imageUrl;
+            }
+
+            // For relative paths, add server base URL
+            String filename = getFilenameFromUrl(imageUrl);
+            logger.debug("Extracted filename: {}", filename);
+
+            if (filename != null) {
+                String updatedUrl;
+                if (imageUrl.contains("/profiles/")) {
+                    updatedUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+                            .path("/api/files/profiles/")
+                            .path(filename)
+                            .toUriString();
+                } else {
+                    updatedUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+                            .path("/api/files/")
+                            .path(filename)
+                            .toUriString();
+                }
+                logger.debug("Updated URL: {}", updatedUrl);
+                return updatedUrl;
+            }
+
+            return imageUrl;
+        } catch (Exception e) {
+            logger.error("Error updating image URL: {}", e.getMessage(), e);
+            return imageUrl; // Return original URL on error
+        }
     }
 }

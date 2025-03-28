@@ -3,20 +3,19 @@ package com.example.server.UsPinterest.config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
-import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.multipart.support.StandardServletMultipartResolver;
-import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.*;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -32,56 +31,50 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${file.profile-images-dir:profile-images}")
     private String profileImagesDir;
 
+    @Value("${api.current-version:v1}")
+    private String currentApiVersion;
+
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
         registry.addViewController("/").setViewName("forward:/index.html");
-        registry.addViewController("/acme-manager").setViewName("forward:/acme-manager.html");
-        logger.info("View controllers configured");
+        registry.addViewController("/login").setViewName("forward:/index.html");
+        registry.addViewController("/profile").setViewName("forward:/index.html");
     }
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
-        String uploadAbsolutePath = uploadPath.toUri().toString();
+        // Конфигурация для статических ресурсов веб-приложения
+        registry.addResourceHandler("/**")
+                .addResourceLocations("classpath:/static/")
+                .setCachePeriod(3600);
 
-        Path profileImagesPath = Paths.get(uploadDir, profileImagesDir).toAbsolutePath().normalize();
-        String profileImagesAbsolutePath = profileImagesPath.toUri().toString();
+        // Конфигурация для загруженных файлов
+        String uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize().toString();
+        logger.info("Configuring resource handler for uploads. Path: {}", uploadPath);
 
-        logger.info("Configuring file resources at: {}", uploadAbsolutePath);
-        logger.info("Configuring profile images at: {}", profileImagesAbsolutePath);
-
-        // Main uploads directory
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations(uploadAbsolutePath);
+                .addResourceLocations("file:" + uploadPath + "/")
+                .setCachePeriod(3600);
 
-        // Add explicit resource handler for ACME challenge files
-        registry.addResourceHandler("/.well-known/**")
-                .addResourceLocations(uploadAbsolutePath + ".well-known/");
+        // Конфигурация для изображений профилей
+        String profileImagesPath = Paths.get(uploadDir, profileImagesDir).toAbsolutePath().normalize().toString();
+        logger.info("Configuring resource handler for profile images. Path: {}", profileImagesPath);
 
-        // Profile images directory
-        registry.addResourceHandler("/uploads/profiles/**")
-                .addResourceLocations(profileImagesAbsolutePath);
+        registry.addResourceHandler("/uploads/profile-images/**")
+                .addResourceLocations("file:" + profileImagesPath + "/")
+                .setCachePeriod(3600);
 
-        // Static resources
-        registry.addResourceHandler("/static/**")
-                .addResourceLocations("classpath:/static/");
-
-        // Добавляем явный обработчик для acme-manager.html
-        registry.addResourceHandler("/acme-manager.html")
-                .addResourceLocations("classpath:/static/");
-
-        logger.info("Resource handlers configured");
+        // Swagger UI resources
+        registry.addResourceHandler("/swagger-ui/**")
+                .addResourceLocations("classpath:/META-INF/resources/webjars/swagger-ui/")
+                .setCachePeriod(3600);
     }
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        logger.info("Configuring global CORS settings");
         registry.addMapping("/**")
                 .allowedOrigins(
                         "http://localhost:8081",
-                        "http://192.168.205.109:8081",
-                        "http://192.168.1.125:8081",
-                        "http://192.168.1.181:8081",
                         "http://127.0.0.1:8081",
                         "capacitor://localhost",
                         "ionic://localhost",
@@ -90,16 +83,28 @@ public class WebConfig implements WebMvcConfigurer {
                         "*"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
+                .allowedHeaders("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "*")
                 .exposedHeaders("Content-Disposition")
+                .allowCredentials(false)
                 .maxAge(3600);
-        logger.info("Global CORS configuration complete");
+    }
+
+    /**
+     * Configure API versioning paths
+     */
+    @Override
+    public void configurePathMatch(PathMatchConfigurer configurer) {
+        // Отключаем версионирование API через путь из-за проблем с совместимостью
+        // В будущем можно использовать заголовок X-API-Version вместо префикса пути
+
+        logger.info("API versioning set to version: {}", currentApiVersion);
+
+        // Добавляем заголовок версии API к ответам через headerFilter Bean
     }
 
     @Bean
     public MultipartResolver multipartResolver() {
         StandardServletMultipartResolver resolver = new StandardServletMultipartResolver();
-        logger.info("Multipart resolver configured");
         return resolver;
     }
 
@@ -110,14 +115,18 @@ public class WebConfig implements WebMvcConfigurer {
             protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
                     throws ServletException, IOException {
 
-                response.setHeader("Permissions-Policy", null);
+                // Set security headers
+                response.setHeader("X-Content-Type-Options", "nosniff");
+                response.setHeader("X-Frame-Options", "DENY");
+                response.setHeader("X-XSS-Protection", "1; mode=block");
+                response.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+                response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+                response.setHeader("Pragma", "no-cache");
 
-                // Add CORS headers
-                response.setHeader("Access-Control-Allow-Origin", "*");
-                response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-                response.setHeader("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization, X-Requested-With");
-                response.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
-                response.setHeader("Access-Control-Max-Age", "3600");
+                // API version header
+                if (request.getRequestURI().contains("/api/")) {
+                    response.setHeader("X-API-Version", currentApiVersion);
+                }
 
                 filterChain.doFilter(request, response);
             }

@@ -17,4 +17,7 @@ public interface PinRepository extends JpaRepository<Pin, Long> {
     Page<Pin> findByDescriptionContainingIgnoreCase(String keyword, Pageable pageable);
     List<Pin> findByUserUsername(String username);
     List<Pin> findByUser(User user);
+    List<Pin> findByUserId(Long userId);
+    List<Pin> findByIdLessThanOrderByIdDesc(Long id, Pageable pageable);
+    List<Pin> findByIdGreaterThanOrderByIdAsc(Long id, Pageable pageable);
 }

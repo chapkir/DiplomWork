@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "614889689752",
+    "project_id": "diplomwork-5982e",
+    "storage_bucket": "diplomwork-5982e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:614889689752:android:1925144b94b7b472fe76ed",
+        "android_client_info": {
+          "package_name": "com.example.diplomwork"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBujlL4qrQXI8TcibIuu4OocGyY7Ef6t0Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

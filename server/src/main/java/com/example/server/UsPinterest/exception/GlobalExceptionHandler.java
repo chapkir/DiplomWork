@@ -1,232 +1,299 @@
 package com.example.server.UsPinterest.exception;
 
 import com.example.server.UsPinterest.dto.ApiResponse;
-import io.github.bucket4j.Bucket4j;
+import com.example.server.UsPinterest.dto.ErrorDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import org.springframework.web.multipart.MaxUploadSizeExceededException;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.DataAccessException;
-
-import java.time.LocalDateTime;
-import java.util.stream.Collectors;
+import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
-
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
- * Централизованный обработчик исключений для всего приложения
+ * Global exception handler for REST API
+ * Provides consistent error responses across the application
  */
 @ControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     /**
-     * Обработка ошибок валидации для аргументов методов
+     * Handle validation exceptions with detailed field errors
      */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Void>> handleValidationExceptions(
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex,
-            HttpServletRequest request) {
-        String errors = ex.getBindingResult().getFieldErrors().stream()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .collect(Collectors.joining(", "));
+            HttpHeaders headers,
+            HttpStatus status,
+            WebRequest request) {
 
-        logger.warn("Ошибка валидации: {}, путь: {}", errors, request.getRequestURI());
+        Map<String, String> errors = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .collect(Collectors.toMap(
+                        FieldError::getField,
+                        fieldError -> fieldError.getDefaultMessage() != null ? fieldError.getDefaultMessage() : "Invalid value",
+                        (first, second) -> first
+                ));
 
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error("Ошибка валидации: " + errors));
+        ErrorDetails errorDetails = new ErrorDetails();
+        errorDetails.setTimestamp(LocalDateTime.now());
+        errorDetails.setStatus(status.value());
+        errorDetails.setError("Validation Failed");
+        errorDetails.setMessage("Input validation failed");
+        errorDetails.setPath(extractPath(request));
+        errorDetails.setFieldErrors(errors);
+
+        logger.error("Validation error: {}", errors);
+
+        return new ResponseEntity<>(errorDetails, headers, status);
     }
 
     /**
-     * Обработка ошибок валидации для аргументов с аннотациями
+     * Handle resource not found exceptions
+     */
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleResourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
+        String path = extractPath(request);
+        logger.error("Resource not found at {}: {}", path, ex.getMessage());
+
+        ApiResponse<Void> apiResponse = new ApiResponse<>(
+                false,
+                ex.getMessage(),
+                HttpStatus.NOT_FOUND.value(),
+                path
+        );
+
+        return new ResponseEntity<>(apiResponse, HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * Handle bad credentials exceptions
+     */
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBadCredentialsException(BadCredentialsException ex, WebRequest request) {
+        String path = extractPath(request);
+        logger.error("Authentication failed at {}: {}", path, maskAuthenticationDetails(ex.getMessage()));
+
+        ApiResponse<Void> apiResponse = new ApiResponse<>(
+                false,
+                "Invalid username or password",
+                HttpStatus.UNAUTHORIZED.value(),
+                path
+        );
+
+        return new ResponseEntity<>(apiResponse, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
+     * Handle general authentication exceptions
+     */
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAuthenticationException(AuthenticationException ex, WebRequest request) {
+        String path = extractPath(request);
+        logger.error("Authentication error at {}: {}", path, maskAuthenticationDetails(ex.getMessage()));
+
+        ApiResponse<Void> apiResponse = new ApiResponse<>(
+                false,
+                "Authentication failed",
+                HttpStatus.UNAUTHORIZED.value(),
+                path
+        );
+
+        return new ResponseEntity<>(apiResponse, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
+     * Handle access denied exceptions
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(AccessDeniedException ex, WebRequest request) {
+        String path = extractPath(request);
+        logger.error("Access denied at {}: {}", path, ex.getMessage());
+
+        ApiResponse<Void> apiResponse = new ApiResponse<>(
+                false,
+                "You don't have permission to access this resource",
+                HttpStatus.FORBIDDEN.value(),
+                path
+        );
+
+        return new ResponseEntity<>(apiResponse, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * Handle file system access denied exceptions
+     */
+    @ExceptionHandler(java.nio.file.AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleFileAccessDeniedException(java.nio.file.AccessDeniedException ex, WebRequest request) {
+        String path = extractPath(request);
+        logger.error("File access denied at {}: {}", path, ex.getMessage());
+
+        ApiResponse<Void> apiResponse = new ApiResponse<>(
+                false,
+                "You don't have permission to access this resource",
+                HttpStatus.FORBIDDEN.value(),
+                path
+        );
+
+        return new ResponseEntity<>(apiResponse, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * Handle data integrity violations
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolationException(
+            DataIntegrityViolationException ex, WebRequest request) {
+        String path = extractPath(request);
+        logger.error("Data integrity violation at {}: {}", path, ex.getMessage());
+
+        // Extract useful information from the exception
+        String message = ex.getMostSpecificCause().getMessage();
+
+        // If it's a duplicate key violation, provide a clearer message
+        if (message != null && message.contains("duplicate key")) {
+            message = "A record with the same unique identifier already exists";
+        } else {
+            message = "Database constraint violation";
+        }
+
+        ApiResponse<Void> apiResponse = new ApiResponse<>(
+                false,
+                message,
+                HttpStatus.CONFLICT.value(),
+                path
+        );
+
+        return new ResponseEntity<>(apiResponse, HttpStatus.CONFLICT);
+    }
+
+    /**
+     * Handle constraint violations
      */
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ApiResponse<Void>> handleConstraintViolation(
-            ConstraintViolationException ex,
-            HttpServletRequest request) {
-        String errors = ex.getConstraintViolations().stream()
+    public ResponseEntity<ApiResponse<Void>> handleConstraintViolationException(
+            ConstraintViolationException ex, WebRequest request) {
+        String path = extractPath(request);
+
+        String message = ex.getConstraintViolations().stream()
                 .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
                 .collect(Collectors.joining(", "));
 
-        logger.warn("Ошибка валидации ограничений: {}, путь: {}", errors, request.getRequestURI());
+        logger.error("Constraint violation at {}: {}", path, message);
 
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error("Ошибка валидации: " + errors));
+        ApiResponse<Void> apiResponse = new ApiResponse<>(
+                false,
+                "Validation failed: " + message,
+                HttpStatus.BAD_REQUEST.value(),
+                path
+        );
+
+        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
     }
 
     /**
-     * Обработка ошибок несоответствия типов аргументов
+     * Handle multipart file upload exceptions
+     */
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMultipartException(MultipartException ex, WebRequest request) {
+        String path = extractPath(request);
+        logger.error("Multipart file upload error at {}: {}", path, ex.getMessage());
+
+        ApiResponse<Void> apiResponse = new ApiResponse<>(
+                false,
+                "Error processing the uploaded file",
+                HttpStatus.BAD_REQUEST.value(),
+                path
+        );
+
+        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Handle type mismatch exceptions
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleMethodArgumentTypeMismatch(
-            MethodArgumentTypeMismatchException ex,
-            HttpServletRequest request) {
-        String error = ex.getName() + " должен быть типа " + ex.getRequiredType().getSimpleName();
+            MethodArgumentTypeMismatchException ex, WebRequest request) {
+        String path = extractPath(request);
 
-        logger.warn("Ошибка типа аргумента: {}, путь: {}", error, request.getRequestURI());
+        String message = String.format("The parameter '%s' of value '%s' could not be converted to type '%s'",
+                ex.getName(), ex.getValue(), ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "Unknown");
 
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(error));
+        logger.error("Type mismatch at {}: {}", path, message);
+
+        ApiResponse<Void> apiResponse = new ApiResponse<>(
+                false,
+                message,
+                HttpStatus.BAD_REQUEST.value(),
+                path
+        );
+
+        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
     }
 
     /**
-     * Обработка ошибок "ресурс не найден"
-     */
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleResourceNotFound(
-            ResourceNotFoundException ex,
-            HttpServletRequest request) {
-        logger.warn("Ресурс не найден: {}, путь: {}", ex.getMessage(), request.getRequestURI());
-
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error(ex.getMessage()));
-    }
-
-    /**
-     * Обработка ошибок безопасности - плохие учетные данные
-     */
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBadCredentials(
-            BadCredentialsException ex,
-            HttpServletRequest request) {
-        logger.warn("Неверные учетные данные: {}, путь: {}", ex.getMessage(), request.getRequestURI());
-
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponse.error("Неверное имя пользователя или пароль"));
-    }
-
-    /**
-     * Обработка ошибок безопасности - пользователь не найден
-     */
-    @ExceptionHandler(UsernameNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleUsernameNotFound(
-            UsernameNotFoundException ex,
-            HttpServletRequest request) {
-        logger.warn("Пользователь не найден: {}, путь: {}", ex.getMessage(), request.getRequestURI());
-
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponse.error("Пользователь не найден"));
-    }
-
-    /**
-     * Обработка ошибок безопасности - доступ запрещен
-     */
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ApiResponse<Void>> handleAccessDenied(
-            AccessDeniedException ex,
-            HttpServletRequest request) {
-        logger.warn("Доступ запрещен: {}, путь: {}", ex.getMessage(), request.getRequestURI());
-
-        return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)
-                .body(ApiResponse.error("У вас нет прав для выполнения этой операции"));
-    }
-
-    /**
-     * Обработка ошибок загрузки файлов - превышен размер
-     */
-    @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<ApiResponse<Void>> handleMaxSizeException(
-            MaxUploadSizeExceededException ex,
-            HttpServletRequest request) {
-        logger.warn("Превышен допустимый размер файла: {}, путь: {}", ex.getMessage(), request.getRequestURI());
-
-        return ResponseEntity
-                .status(HttpStatus.PAYLOAD_TOO_LARGE)
-                .body(ApiResponse.error("Превышен максимальный размер файла"));
-    }
-
-    /**
-     * Обработка ошибок целостности данных
-     */
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolation(
-            DataIntegrityViolationException ex,
-            HttpServletRequest request) {
-        logger.error("Ошибка целостности данных: {}, путь: {}", ex.getMessage(), request.getRequestURI());
-
-        String message = "Невозможно выполнить операцию из-за ограничений в базе данных";
-
-        // Проверка на дублирование уникальных полей
-        if (ex.getMessage().contains("unique constraint") || ex.getMessage().contains("Duplicate entry")) {
-            message = "Запись с таким значением уже существует";
-        }
-
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(ApiResponse.error(message));
-    }
-
-    /**
-     * Обработка ошибок доступа к базе данных
-     */
-    @ExceptionHandler(DataAccessException.class)
-    public ResponseEntity<ApiResponse<Void>> handleDataAccessException(
-            DataAccessException ex,
-            HttpServletRequest request) {
-        logger.error("Ошибка доступа к базе данных: {}, путь: {}", ex.getMessage(), request.getRequestURI(), ex);
-
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Произошла ошибка при работе с базой данных"));
-    }
-
-    /**
-     * Обработка всех остальных исключений
+     * Handle global exceptions that weren't caught by other handlers
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleAllExceptions(
-            Exception ex,
-            HttpServletRequest request) {
-        logger.error("Непредвиденная ошибка: {}, путь: {}", ex.getMessage(), request.getRequestURI(), ex);
+    public ResponseEntity<ApiResponse<Void>> handleGlobalException(Exception ex, WebRequest request) {
+        String path = extractPath(request);
+        logger.error("Unexpected error at {}: {}", path, ex.getMessage(), ex);
 
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Внутренняя ошибка сервера"));
+        ApiResponse<Void> apiResponse = new ApiResponse<>(
+                false,
+                "An unexpected error occurred",
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                path
+        );
+
+        return new ResponseEntity<>(apiResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     /**
-     * Обрабатывает исключения, связанные с подписками
-     *
-     * @param ex исключение FollowException
-     * @return ResponseEntity с информацией об ошибке
+     * Extract request path from WebRequest
      */
-    @ExceptionHandler(FollowException.class)
-    public ResponseEntity<Map<String, Object>> handleFollowException(FollowException ex) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("message", ex.getMessage());
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("error", "Bad Request");
-
-        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    private String extractPath(WebRequest request) {
+        try {
+            if (request instanceof ServletWebRequest) {
+                HttpServletRequest httpRequest = ((ServletWebRequest) request).getRequest();
+                return httpRequest.getRequestURI();
+            }
+        } catch (Exception e) {
+            logger.warn("Unable to extract request path: {}", e.getMessage());
+        }
+        return "unknown";
     }
 
-    @ExceptionHandler(TokenRefreshException.class)
-    public ResponseEntity<ApiResponse<Void>> handleTokenRefreshException(
-            TokenRefreshException ex,
-            HttpServletRequest request) {
-        logger.error("Ошибка обновления токена: {}", ex.getMessage());
+    /**
+     * Mask sensitive information in authentication details
+     */
+    private String maskAuthenticationDetails(String message) {
+        if (message == null) return "null";
 
-        ApiResponse<Void> response = ApiResponse.error(ex.getMessage());
-        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+        // Mask user names, emails, and any other potentially sensitive info
+        return message.replaceAll("(username|email|login):\\s*[^\\s,]+", "$1: ***MASKED***")
+                .replaceAll("(password):\\s*[^\\s,]+", "$1: ***MASKED***");
     }
 }

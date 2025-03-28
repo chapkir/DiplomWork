@@ -14,6 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Контроллер для поиска контента
  */
@@ -88,7 +91,7 @@ public class SearchController {
      * @return результаты поиска
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<Object>> search(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> search(
             @RequestParam(required = false) String query,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
@@ -102,11 +105,10 @@ public class SearchController {
         PageResponse<PinResponse> pinsResult = searchService.searchPins(query, page, size, "createdAt", "desc");
         PageResponse<ProfileResponse> usersResult = searchService.searchUsers(query, page, size);
 
-        // Создаем объект с результатами поиска из пинов и пользователей
-        var result = new Object() {
-            public final PageResponse<PinResponse> pins = pinsResult;
-            public final PageResponse<ProfileResponse> users = usersResult;
-        };
+        // Создаем Map с результатами поиска
+        Map<String, Object> result = new HashMap<>();
+        result.put("pins", pinsResult);
+        result.put("users", usersResult);
 
         return ResponseEntity.ok(ApiResponse.success(result));
     }

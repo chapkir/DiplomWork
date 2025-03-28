@@ -1,0 +1,22 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background -->
+    <rect width="32" height="32" rx="8" fill="url(#background)"/>
+
+    <!-- Icon -->
+    <path d="M16 7C10.48 7 6 11.48 6 17C6 22.52 10.48 27 16 27C21.52 27 26 22.52 26 17C26 11.48 21.52 7 16 7ZM16 9C20.42 9 24 12.58 24 17C24 21.42 20.42 25 16 25C11.58 25 8 21.42 8 17C8 12.58 11.58 9 16 9Z" fill="white" opacity="0.9"/>
+
+    <!-- Lightbulb element -->
+    <path d="M16 10C13.24 10 11 12.24 11 15C11 16.95 12.07 18.59 13.65 19.37V21C13.65 21.55 14.1 22 14.65 22H17.35C17.9 22 18.35 21.55 18.35 21V19.37C19.93 18.59 21 16.95 21 15C21 12.24 18.76 10 16 10ZM17.35 18.05L16.85 18.36V20H15.15V18.36L14.65 18.05C13.64 17.51 13 16.32 13 15C13 13.34 14.34 12 16 12C17.66 12 19 13.34 19 15C19 16.32 18.36 17.51 17.35 18.05Z" fill="url(#icon-gradient)"/>
+
+    <!-- Defs -->
+    <defs>
+        <linearGradient id="background" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#584179"/>
+            <stop offset="1" stop-color="#5661A0"/>
+        </linearGradient>
+        <linearGradient id="icon-gradient" x1="11" y1="10" x2="21" y2="22" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#FE8CB2"/>
+            <stop offset="1" stop-color="#4F9EDF"/>
+        </linearGradient>
+    </defs>
+</svg>

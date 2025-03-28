@@ -208,45 +208,124 @@ public class PinService {
      * Convert Pin to PinResponse with current user's like status
      */
     public PinResponse convertToPinResponse(Pin pin, User currentUser) {
-        PinResponse response = new PinResponse();
-        response.setId(pin.getId());
+        try {
+            logger.debug("Converting Pin with ID {} to PinResponse", pin.getId());
+            PinResponse response = new PinResponse();
+            response.setId(pin.getId());
 
-        // Update image URL to use current environment's base URL
-        String imageUrl = pin.getImageUrl();
-        if (imageUrl != null && !imageUrl.isEmpty()) {
-            imageUrl = fileStorageService.updateImageUrl(imageUrl);
-        }
-        response.setImageUrl(imageUrl);
-
-        response.setDescription(pin.getDescription());
-
-        if (pin.getBoard() != null) {
-            response.setBoardId(pin.getBoard().getId());
-            response.setBoardTitle(pin.getBoard().getTitle());
-        }
-
-        if (pin.getUser() != null) {
-            response.setUserId(pin.getUser().getId());
-            response.setUsername(pin.getUser().getUsername());
-
-            String profileImageUrl = pin.getUser().getProfileImageUrl();
-            if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
-                profileImageUrl = fileStorageService.updateImageUrl(profileImageUrl);
+            // Update image URL to use current environment's base URL
+            try {
+                String imageUrl = pin.getImageUrl();
+                if (imageUrl != null && !imageUrl.isEmpty()) {
+                    imageUrl = fileStorageService.updateImageUrl(imageUrl);
+                }
+                response.setImageUrl(imageUrl);
+            } catch (Exception e) {
+                logger.error("Error updating image URL for pin {}: {}", pin.getId(), e.getMessage(), e);
+                response.setImageUrl(pin.getImageUrl()); // Fallback to original URL
             }
-            response.setUserProfileImageUrl(profileImageUrl);
+
+            response.setDescription(pin.getDescription());
+
+            if (pin.getBoard() != null) {
+                try {
+                    response.setBoardId(pin.getBoard().getId());
+                    response.setBoardTitle(pin.getBoard().getTitle());
+                } catch (Exception e) {
+                    logger.error("Error setting board info for pin {}: {}", pin.getId(), e.getMessage(), e);
+                }
+            }
+
+            if (pin.getUser() != null) {
+                try {
+                    response.setUserId(pin.getUser().getId());
+                    response.setUsername(pin.getUser().getUsername());
+
+                    String profileImageUrl = pin.getUser().getProfileImageUrl();
+                    if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
+                        try {
+                            profileImageUrl = fileStorageService.updateImageUrl(profileImageUrl);
+                        } catch (Exception e) {
+                            logger.error("Error updating profile image URL for pin {}: {}", pin.getId(), e.getMessage(), e);
+                        }
+                    }
+                    response.setUserProfileImageUrl(profileImageUrl);
+                } catch (Exception e) {
+                    logger.error("Error setting user info for pin {}: {}", pin.getId(), e.getMessage(), e);
+                }
+            }
+
+            response.setCreatedAt(pin.getCreatedAt());
+
+            try {
+                response.setLikesCount(pin.getLikes() != null ? pin.getLikes().size() : 0);
+
+                // Check if current user has liked this pin
+                boolean isLiked = false;
+                if (currentUser != null && pin.getLikes() != null) {
+                    isLiked = pin.getLikes().stream()
+                            .filter(like -> like.getUser() != null)
+                            .anyMatch(like -> currentUser.getId().equals(like.getUser().getId()));
+                }
+                response.setIsLikedByCurrentUser(isLiked);
+            } catch (Exception e) {
+                logger.error("Error processing likes for pin {}: {}", pin.getId(), e.getMessage(), e);
+                response.setLikesCount(0);
+                response.setIsLikedByCurrentUser(false);
+            }
+
+            logger.debug("Successfully converted Pin with ID {} to PinResponse", pin.getId());
+            return response;
+        } catch (Exception e) {
+            logger.error("Error converting Pin to PinResponse: {}", e.getMessage(), e);
+            // Create a minimal response to avoid null returns
+            PinResponse fallbackResponse = new PinResponse();
+            if (pin != null) {
+                fallbackResponse.setId(pin.getId());
+                fallbackResponse.setDescription(pin.getDescription());
+                fallbackResponse.setImageUrl(pin.getImageUrl());
+                fallbackResponse.setCreatedAt(pin.getCreatedAt());
+            }
+            return fallbackResponse;
         }
-
-        response.setCreatedAt(pin.getCreatedAt());
-        response.setLikesCount(pin.getLikes() != null ? pin.getLikes().size() : 0);
-
-        // Check if current user has liked this pin
-        boolean isLiked = false;
-        if (currentUser != null && pin.getLikes() != null) {
-            isLiked = pin.getLikes().stream()
-                    .anyMatch(like -> like.getUser().getId().equals(currentUser.getId()));
-        }
-        response.setIsLikedByCurrentUser(isLiked);
-
-        return response;
     }
-} 
+
+    /**
+     * Find all pins with ID less than the given cursor
+     * Used for descending cursor pagination
+     *
+     * @param cursorId The cursor ID
+     * @param limit The maximum number of pins to retrieve
+     * @return List of pins with ID less than the cursor
+     */
+    @Cacheable(value = "pins", key = "'cursor_lt_' + #cursorId + '_' + #limit")
+    public List<Pin> findPinsLessThan(Long cursorId, int limit) {
+        logger.debug("Finding pins with ID less than {} with limit {}", cursorId, limit);
+        return pinRepository.findByIdLessThanOrderByIdDesc(cursorId, PageRequest.of(0, limit));
+    }
+
+    /**
+     * Find all pins with ID greater than the given cursor
+     * Used for ascending cursor pagination
+     *
+     * @param cursorId The cursor ID
+     * @param limit The maximum number of pins to retrieve
+     * @return List of pins with ID greater than the cursor
+     */
+    @Cacheable(value = "pins", key = "'cursor_gt_' + #cursorId + '_' + #limit")
+    public List<Pin> findPinsGreaterThan(Long cursorId, int limit) {
+        logger.debug("Finding pins with ID greater than {} with limit {}", cursorId, limit);
+        return pinRepository.findByIdGreaterThanOrderByIdAsc(cursorId, PageRequest.of(0, limit));
+    }
+
+    /**
+     * Count total number of pins
+     *
+     * @return Total count of pins
+     */
+    @Cacheable(value = "pinCount")
+    public long count() {
+        logger.debug("Counting all pins");
+        return pinRepository.count();
+    }
+}
