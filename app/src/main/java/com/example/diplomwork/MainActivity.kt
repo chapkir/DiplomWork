@@ -13,10 +13,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.navigation.compose.rememberNavController
 import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.system_settings.SetSystemBarsColor
-import com.example.diplomwork.ui.theme.ColorForBottomMenu
+import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.util.PreferencesCleaner
-import com.example.diplomwork.ui.util.ImageUtils
+import com.example.diplomwork.util.ImageUtils
 import android.util.Log
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
@@ -40,7 +40,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             SetSystemBarsColor(
-                statusBarColor = ColorForBottomMenu,
+                statusBarColor = ColorForBackground,
                 navigationBarColor = Color.Black
             )
             MaterialTheme {

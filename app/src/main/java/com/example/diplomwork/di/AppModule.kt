@@ -20,7 +20,7 @@ import com.example.diplomwork.network.repos.CommentRepository
 import com.example.diplomwork.network.repos.PictureRepository
 import com.example.diplomwork.network.repos.ProfileRepository
 import com.example.diplomwork.network.repos.SearchRepository
-import com.example.diplomwork.ui.util.AppConstants
+import com.example.diplomwork.util.AppConstants
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

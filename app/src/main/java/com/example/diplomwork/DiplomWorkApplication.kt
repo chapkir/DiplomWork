@@ -8,7 +8,7 @@ import coil.ImageLoader
 import coil.request.CachePolicy
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.network.ApiClient
-import com.example.diplomwork.ui.util.ImageUtils
+import com.example.diplomwork.util.ImageUtils
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp

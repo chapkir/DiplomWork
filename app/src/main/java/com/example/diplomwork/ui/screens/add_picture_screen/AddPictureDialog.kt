@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.diplomwork.R
 import com.example.diplomwork.ui.theme.ColorForAddPhotoDialog
-import com.example.diplomwork.ui.theme.ColorForBottomMenu
+import com.example.diplomwork.ui.theme.ColorForBackground
 import android.widget.Toast
 import com.example.diplomwork.network.ApiClient
 import kotlinx.coroutines.Dispatchers
@@ -177,7 +177,7 @@ fun AddPictureDialog(
                                     filePicker.launch("image/*")
                                 },
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = ColorForBottomMenu
+                                    containerColor = ColorForBackground
                                 ),
                                 modifier = Modifier.width(120.dp)
                             ) {
@@ -199,7 +199,7 @@ fun AddPictureDialog(
                             Button(
                                 onClick = { onDismiss() },
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = ColorForBottomMenu
+                                    containerColor = ColorForBackground
                                 ),
                                 modifier = Modifier.width(120.dp)
                             ) {

@@ -38,7 +38,7 @@ import com.example.diplomwork.system_settings.systemInsetHeight
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.navigation.ViewPictureDetailScreenData
 import com.example.diplomwork.ui.theme.ColorForArrowBack
-import com.example.diplomwork.ui.theme.ColorForBottomMenu
+import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.viewmodel.PictureDetailScreenViewModel
 
 @Composable
@@ -60,7 +60,7 @@ fun PictureDetailScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(ColorForBottomMenu)
+            .background(ColorForBackground)
             .padding(top = systemInsetHeight(WindowInsetsCompat.Type.statusBars()).value)
             .imePadding()
     ) {

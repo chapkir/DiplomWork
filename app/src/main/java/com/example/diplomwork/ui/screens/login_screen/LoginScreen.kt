@@ -48,8 +48,7 @@ import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.model.LoginRequest
 import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.ui.components.LoadingSpinnerForElement
-import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
-import com.example.diplomwork.ui.theme.ColorForBottomMenu
+import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.ui.theme.ColorForFocusButton
 import kotlinx.coroutines.launch
 
@@ -76,7 +75,7 @@ fun LoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(ColorForBottomMenu)
+            .background(ColorForBackground)
             .imePadding(),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally

@@ -9,7 +9,7 @@ import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.model.ProfileResponse
 import com.example.diplomwork.network.repos.ProfileRepository
-import com.example.diplomwork.ui.util.ImageUtils
+import com.example.diplomwork.util.ImageUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

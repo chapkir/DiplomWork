@@ -41,8 +41,7 @@ import com.example.diplomwork.ui.navigation.Login
 import com.example.diplomwork.ui.navigation.Notification
 import com.example.diplomwork.ui.navigation.Posts
 import com.example.diplomwork.ui.navigation.Profile
-import com.example.diplomwork.ui.navigation.Screen
-import com.example.diplomwork.ui.theme.ColorForBottomMenu
+import com.example.diplomwork.ui.theme.ColorForBackground
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.KeyboardActions
 
@@ -111,7 +110,7 @@ fun CustomTopBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(ColorForBottomMenu)
+            .background(ColorForBackground)
             .padding(top = statusBarHeight),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -168,7 +167,7 @@ fun SearchBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(ColorForBottomMenu)
+            .background(ColorForBackground)
             .padding(top = statusBarHeight + 8.dp, bottom = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween

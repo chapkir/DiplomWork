@@ -1,6 +1,6 @@
 package com.example.diplomwork.network.interceptors
 
-import com.example.diplomwork.ui.util.AppConstants
+import com.example.diplomwork.util.AppConstants
 import okhttp3.Interceptor
 import okhttp3.Response
 import javax.inject.Inject

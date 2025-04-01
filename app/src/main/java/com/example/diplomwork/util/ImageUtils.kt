@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.util
+package com.example.diplomwork.util
 
 import android.content.Context
 import android.graphics.Bitmap

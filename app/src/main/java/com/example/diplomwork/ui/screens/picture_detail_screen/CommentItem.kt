@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.diplomwork.R
 import com.example.diplomwork.model.Comment
-import com.example.diplomwork.ui.theme.ColorForBottomMenu
+import com.example.diplomwork.ui.theme.ColorForBackground
 
 @Composable
 fun CommentItem(comment: Comment) {
@@ -122,7 +122,7 @@ fun CommentsBottomSheet(
                 .height(sheetHeight)
                 .offset(y = offsetY)
                 .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                .background(ColorForBottomMenu)
+                .background(ColorForBackground)
         ) {
             CommentsContent(
                 comments = comments,
@@ -248,7 +248,7 @@ fun CommentsContent(
                 Icon(
                     painter = painterResource(id = R.drawable.ic_arrow_up),
                     contentDescription = "Отправить",
-                    tint = ColorForBottomMenu
+                    tint = ColorForBackground
                 )
             }
         }

@@ -57,7 +57,7 @@ import com.example.diplomwork.model.LoginRequest
 import com.example.diplomwork.model.RegisterRequest
 import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.ui.components.LoadingSpinnerForElement
-import com.example.diplomwork.ui.theme.ColorForBottomMenu
+import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.ui.theme.ColorForFocusButton
 import com.example.diplomwork.ui.theme.ColorForHint
 import kotlinx.coroutines.launch
@@ -88,7 +88,7 @@ fun RegisterScreen(onCompleteRegistration: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(ColorForBottomMenu),
+            .background(ColorForBackground),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(32.dp))

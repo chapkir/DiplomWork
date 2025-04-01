@@ -34,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -56,7 +57,7 @@ import coil.request.ImageRequest
 import com.example.diplomwork.R
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
-import com.example.diplomwork.ui.theme.ColorForBottomMenu
+import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.ui.theme.ColorForFocusButton
 import com.example.diplomwork.viewmodel.ProfileViewModel
 
@@ -101,7 +102,7 @@ fun ProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(ColorForBottomMenu)
+            .background(ColorForBackground)
     ) {
         when {
             isLoading -> {
@@ -142,7 +143,7 @@ fun ProfileScreen(
                 TabRow(
                     selectedTabIndex = selectedTabIndex,
                     contentColor = Color.White,
-                    containerColor = ColorForBottomMenu
+                    containerColor = ColorForBackground
                 ) {
                     tabTitles.forEachIndexed { index, title ->
                         Tab(
@@ -271,7 +272,7 @@ private fun EmptyStateMessage(message: String) {
 @Composable
 private fun PinsGrid(pins: List<PictureResponse>, onPinClick: (Long, String) -> Unit) {
 
-    var aspectRatio by remember { mutableStateOf(1f) }
+    var aspectRatio by remember { mutableFloatStateOf(1f) }
 
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(3),
