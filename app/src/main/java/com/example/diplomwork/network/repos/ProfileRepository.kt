@@ -1,5 +1,6 @@
 package com.example.diplomwork.network.repos
 
+import android.util.Log
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.model.ProfileResponse
 import com.example.diplomwork.network.ApiService

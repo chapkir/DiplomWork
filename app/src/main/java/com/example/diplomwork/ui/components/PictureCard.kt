@@ -2,6 +2,7 @@ package com.example.diplomwork.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -31,7 +32,8 @@ import coil.request.ImageRequest
 fun PictureCard(
     imageUrl: String,
     id: Long,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    contentPadding: Int = 3
 ) {
     var aspectRatio by remember { mutableFloatStateOf(1f) }
     var isLoading by remember { mutableStateOf(true) }
@@ -41,7 +43,7 @@ fun PictureCard(
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(5.dp),
         modifier = Modifier
-            .padding(4.dp)
+            .padding(contentPadding.dp)
             .fillMaxWidth()
             .clickable(enabled = !isLoading && !isError) { onClick() }
     ) {

@@ -1,6 +1,7 @@
 package com.example.diplomwork.ui.screens.profile_screen
 
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
@@ -10,7 +11,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,7 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -55,7 +55,7 @@ import com.example.diplomwork.R
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.components.PictureCard
-import com.example.diplomwork.ui.theme.ColorForBackground
+import com.example.diplomwork.ui.theme.ColorForBackgroundProfile
 import com.example.diplomwork.ui.theme.ColorForFocusButton
 import com.example.diplomwork.viewmodel.ProfileViewModel
 
@@ -70,6 +70,7 @@ fun ProfileScreen(
 
     // Состояние из ViewModel
     val profileData by profileViewModel.profileData.collectAsState()
+    val profileImageUrl by profileViewModel.profileImageUrl.collectAsState()
     val likedPictures by profileViewModel.likedPictures.collectAsState()
     val isLoading by profileViewModel.isLoading.collectAsState()
     val isUploading by profileViewModel.isUploading.collectAsState()
@@ -77,7 +78,7 @@ fun ProfileScreen(
     val avatarUpdateCounter by profileViewModel.avatarUpdateCounter.collectAsState()
 
     // Управление вкладками
-    var selectedTabIndex by remember { mutableStateOf(0) }
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
     val tabTitles = listOf("Публикации", "Лайки")
 
     // Загружаем лайкнутые пины, когда выбран второй таб
@@ -87,7 +88,7 @@ fun ProfileScreen(
         }
     }
 
-    // Лаунчер для выбора изображения
+    // Лаунчер для выбора аватарки
     val pickImageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -100,7 +101,7 @@ fun ProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(ColorForBackground)
+            .background(ColorForBackgroundProfile)
     ) {
         when {
             isLoading -> {
@@ -131,7 +132,7 @@ fun ProfileScreen(
             profileData != null -> {
                 ProfileHeader(
                     username = profileData?.username ?: "Неизвестный",
-                    avatarUrl = profileData?.profileImageUrl,
+                    avatarUrl = profileImageUrl,
                     isUploading = isUploading,
                     onAvatarClick = { pickImageLauncher.launch("image/*") },
                     onLogout = onLogout,
@@ -141,7 +142,7 @@ fun ProfileScreen(
                 TabRow(
                     selectedTabIndex = selectedTabIndex,
                     contentColor = Color.White,
-                    containerColor = ColorForBackground
+                    containerColor = ColorForBackgroundProfile
                 ) {
                     tabTitles.forEachIndexed { index, title ->
                         Tab(
@@ -156,13 +157,14 @@ fun ProfileScreen(
                 Crossfade(targetState = selectedTabIndex) { currentTabIndex ->
                     when (currentTabIndex) {
                         0 -> {
-                            if (profileData?.pictures?.isEmpty() == true) {
+                            if (profileData?.pins?.isEmpty() == true) {
                                 EmptyStateMessage(message = "У вас пока нет пинов")
                             } else {
                                 PicturesGrid(
-                                    pictures = profileData?.pictures ?: emptyList(),
+                                    pictures = profileData?.pins ?: emptyList(),
                                     onPictureClick = onImageClick
                                 )
+                                Log.e("piska", "Вот твои публикации ${profileData?.pins ?: listOf("ti", "piska")}")
                             }
                         }
 
@@ -273,7 +275,6 @@ private fun PicturesGrid(pictures: List<PictureResponse>, onPictureClick: (Long,
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(3),
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(4.dp),
         content = {
             itemsIndexed(pictures) { _, picture ->
                 PictureCard(
@@ -281,7 +282,8 @@ private fun PicturesGrid(pictures: List<PictureResponse>, onPictureClick: (Long,
                     id = picture.id,
                     onClick = {
                         onPictureClick(picture.id, picture.imageUrl)
-                    }
+                    },
+                    contentPadding = 2
                 )
             }
         }

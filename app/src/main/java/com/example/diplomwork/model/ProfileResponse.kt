@@ -5,7 +5,7 @@ data class ProfileResponse(
     val username: String,
     val email: String,
     val profileImageUrl: String? = null,
-    val pictures: List<PictureResponse>,
+    val pins: List<PictureResponse>,
     val pinsCount: Int = 0,
     val followersCount: Int = 0,
     val followingCount: Int = 0,
