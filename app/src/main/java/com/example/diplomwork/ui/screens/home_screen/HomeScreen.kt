@@ -29,7 +29,7 @@ import kotlinx.coroutines.launch
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(
-    onImageClick: (String, String) -> Unit = { _, _ -> },
+    onImageClick: (Long, String) -> Unit = { _, _ -> },
     shouldRefresh: Boolean = false,
     onRefreshComplete: () -> Unit = {},
     searchQuery: String = ""
@@ -85,7 +85,7 @@ fun HomeScreen(
             modifier = Modifier.fillMaxSize(),
             onImageClick = { pictureResponse ->
                 Log.d("HomeScreen", "Нажатие на изображение с id: ${pictureResponse.id}")
-                onImageClick(pictureResponse.id.toString(), pictureResponse.imageUrl)
+                onImageClick(pictureResponse.id, pictureResponse.imageUrl)
             },
             refreshTrigger = refreshTrigger,
             isRefreshing = refreshing,

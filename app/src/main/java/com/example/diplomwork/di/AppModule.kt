@@ -5,19 +5,26 @@ import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.network.ApiService
 import com.example.diplomwork.network.ImageUploadService
-import com.example.diplomwork.repos.AuthRepository
-import com.example.diplomwork.repos.CommentRepository
-import com.example.diplomwork.repos.PictureRepository
-import com.example.diplomwork.repos.ProfileRepository
-import com.example.diplomwork.repos.SearchRepository
+import com.example.diplomwork.network.interceptors.AuthInterceptor
+import com.example.diplomwork.network.interceptors.CorsInterceptor
+import com.example.diplomwork.network.interceptors.LoggingInterceptor
+import com.example.diplomwork.network.interceptors.RetryInterceptor
+import com.example.diplomwork.network.repos.AuthRepository
+import com.example.diplomwork.network.repos.CommentRepository
+import com.example.diplomwork.network.repos.PictureRepository
+import com.example.diplomwork.network.repos.ProfileRepository
+import com.example.diplomwork.network.repos.SearchRepository
 import com.example.diplomwork.ui.util.AppConstants
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.sync.Mutex
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
 @Module
@@ -26,18 +33,8 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideRetrofit(): Retrofit {
-        return Retrofit.Builder()
-            .baseUrl(AppConstants.BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-    }
-
-
-    @Provides
-    @Singleton
-    fun provideImageUploadService(retrofit: Retrofit): ImageUploadService {
-        return retrofit.create(ImageUploadService::class.java)
+    fun provideMutex(): Mutex {
+        return Mutex()
     }
 
     @Provides
@@ -48,32 +45,41 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideAuthRepository(apiService: ApiService) = AuthRepository(apiService)
-
-    @Provides
-    @Singleton
-    fun provideCommentRepository(apiService: ApiService) = CommentRepository(apiService)
-
-    @Provides
-    @Singleton
-    fun provideProfileRepository(apiService: ApiService): ProfileRepository = ProfileRepository(apiService)
-
-    @Provides
-    @Singleton
-    fun provideSearchRepository(apiService: ApiService) = SearchRepository(apiService)
-
-    @Provides
-    @Singleton
-    fun providePictureRepository(apiService: ApiService) = PictureRepository(apiService)
-
-    @Provides
-    @Singleton
-    fun provideApiService(): ApiService {
-        return Retrofit.Builder()
-            .baseUrl(AppConstants.BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
+    fun provideOkHttpClient(
+        loggingInterceptor: LoggingInterceptor,
+        authInterceptor: AuthInterceptor,
+        corsInterceptor: CorsInterceptor
+    ): OkHttpClient {
+        return OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .addInterceptor(authInterceptor)
+            .addInterceptor(corsInterceptor)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
             .build()
-            .create(ApiService::class.java)
     }
 
+    @Provides
+    @Singleton
+    fun provideRetrofit(client: OkHttpClient): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl(AppConstants.BASE_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideApiService(retrofit: Retrofit): ApiService {
+        return retrofit.create(ApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideImageUploadService(retrofit: Retrofit): ImageUploadService {
+        return retrofit.create(ImageUploadService::class.java)
+    }
 }

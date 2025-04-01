@@ -1,4 +1,4 @@
-package com.example.diplomwork.repos
+package com.example.diplomwork.network.repos
 
 import com.example.diplomwork.model.ApiResponse
 import com.example.diplomwork.model.PageResponse

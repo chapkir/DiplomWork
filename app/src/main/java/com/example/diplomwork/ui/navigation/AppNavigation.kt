@@ -12,6 +12,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -26,6 +27,7 @@ import com.example.diplomwork.ui.screens.login_screen.LoginScreen
 import com.example.diplomwork.ui.screens.picture_detail_screen.PictureDetailScreen
 import com.example.diplomwork.ui.screens.profile_screen.ProfileScreen
 import com.example.diplomwork.ui.screens.registration_screen.RegisterScreen
+import com.example.diplomwork.viewmodel.PictureDetailScreenViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -123,7 +125,7 @@ fun AppNavigation(navController: NavHostController) {
                     onImageClick = { pictureId, imageUrl ->
                         val timestamp = System.currentTimeMillis()
                         Log.i("NAVIGATION_DEBUG", "$timestamp - НАЖАТИЕ НА ПИН С ID=$pictureId И URL=$imageUrl")
-                        navController.navigate(ViewPictureDetailScreenData(pictureId.toString(), imageUrl))
+                        navController.navigate(ViewPictureDetailScreenData(pictureId, imageUrl))
                     },
                     shouldRefresh = shouldRefresh,
                     onRefreshComplete = { shouldRefresh = false },
@@ -155,8 +157,8 @@ fun AppNavigation(navController: NavHostController) {
                         }
                     },
                     onImageClick = { pictureId, imageUrl ->
-                        navController.navigate(ViewPictureDetailScreenData(pictureId.toString(), imageUrl)) {
-                            popUpTo(ViewPictureDetailScreenData(pictureId.toString(), imageUrl))
+                        navController.navigate(ViewPictureDetailScreenData(pictureId, imageUrl)) {
+                            popUpTo(ViewPictureDetailScreenData(pictureId, imageUrl))
                             { inclusive = true }
                         }
                     }
@@ -164,12 +166,9 @@ fun AppNavigation(navController: NavHostController) {
             }
             composable<ViewPictureDetailScreenData> { backStackEntry ->
                 val viewPictureDetailScreenData = backStackEntry.toRoute<ViewPictureDetailScreenData>()
-                val timestamp = System.currentTimeMillis()
-                Log.i("NAVIGATION_DEBUG", "$timestamp - ОТКРЫТИЕ ПИНА С ID=${viewPictureDetailScreenData.pictureId} И URL=${viewPictureDetailScreenData.imageUrl}")
                 PictureDetailScreen(
                     viewPictureDetailScreenData,
-                    onNavigateBack = { navController.popBackStack() },
-                    onNavigateToLogin = { navController.navigate(Login) }
+                    onNavigateBack = { navController.popBackStack() }
                 )
                 Log.i("", "в навигации при отправке " + viewPictureDetailScreenData.pictureId + " " + viewPictureDetailScreenData.imageUrl)
             }

@@ -3,12 +3,18 @@ agp = "8.9.1"
 bucket4jCore = "7.6.0"
 caffeine = "3.1.8"
 converterGson = "2.11.0"
+
 hiltAndroid = "2.51.1"
 hiltNavigationCompose = "1.2.0"
+kspPlugin = "2.1.0-1.0.29"
+hiltPlugin = "2.51.1"
+
 httpmime = "4.5.14"
 jjwtJackson = "0.11.5"
-kotlin = "2.1.10"
+
+kotlin = "2.1.0"
 coreKtx = "1.15.0"
+
 junit = "4.13.2"
 junitVersion = "1.2.1"
 kotlinxMetadataJvm = "0.6.2"
@@ -20,13 +26,18 @@ materialVersion = "1.7.8"
 navigationCompose = "2.8.9"
 coil-compose = "2.7.0"
 compose-foundation = "1.7.8"
+
 material = "1.12.0"
 okhttp = "4.12.0"
 retrofit = "2.11.0"
+
 springBootStarter = "3.4.1"
 uiTestAndroid = "1.7.8"
+
 viewModel = "2.8.7"
+
 loggingInterceptor = "4.9.3"
+
 serializationVersion = "2.0.0"
 serializationKotlin = "1.7.1"
 
@@ -35,13 +46,16 @@ serializationKotlin = "1.7.1"
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serializationKotlin" }
 accompanist-systemuicontroller = "com.google.accompanist:accompanist-systemuicontroller:0.36.0"
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
-androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+
+hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+hilt-navigation-compose-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "hiltNavigationCompose" }
+hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hiltAndroid" }
+hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }
+
 androidx-material = { module = "androidx.compose.material:material", version.ref = "materialVersion" }
 bucket4j-core = { module = "com.github.vladimir-bukhtoyarov:bucket4j-core", version.ref = "bucket4jCore" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
 converter-gson-v290 = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
-hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }
-hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hiltAndroid" }
 httpclient = { module = "org.apache.httpcomponents:httpclient", version.ref = "httpmime" }
 httpmime = { module = "org.apache.httpcomponents:httpmime", version.ref = "httpmime" }
 jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwtJackson" }
@@ -66,6 +80,7 @@ android-material = { group = "com.google.android.material", name = "material", v
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 kotlinx-metadata-jvm = { module = "org.jetbrains.kotlinx:kotlinx-metadata-jvm", version.ref = "kotlinxMetadataJvm" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+
 postgresql = { module = "org.postgresql:postgresql" }
 projectlombok-lombok = { module = "org.projectlombok:lombok", version.ref = "lombokVersion" }
 spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter", version.ref = "springBootStarter" }
@@ -78,6 +93,7 @@ spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-start
 spring-security-test = { module = "org.springframework.security:spring-security-test" }
 squareup-retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 squareup-converter = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
+
 androidx-ui-test-android = { group = "androidx.compose.ui", name = "ui-test-android", version.ref = "uiTestAndroid" }
 androidx-lifecycle-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "viewModel" }
 logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "loggingInterceptor" }
@@ -89,4 +105,7 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 plugin_serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "serializationVersion" }
+
+ksp-plugin = { id = "com.google.devtools.ksp", version.ref = "kspPlugin" }
+hilt-plugin = { id = "com.google.dagger.hilt.android", version.ref = "hiltPlugin" }
 

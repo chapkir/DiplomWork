@@ -1,4 +1,4 @@
-package com.example.diplomwork.repos
+package com.example.diplomwork.network.repos
 
 import com.example.diplomwork.model.Comment
 import com.example.diplomwork.model.CommentRequest

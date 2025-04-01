@@ -1,8 +1,10 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-    id("com.google.devtools.ksp")
-    id("com.google.dagger.hilt.android") // Плагин для Hilt
+
+    alias(libs.plugins.ksp.plugin)
+    alias(libs.plugins.hilt.plugin)
+    
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.plugin.serialization)
 }
@@ -76,9 +78,11 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation (libs.androidx.material)
 
-    implementation (libs.androidx.hilt.navigation.compose)
-    implementation(libs.hilt.android) // Hilt
+    implementation(libs.hilt.navigation.compose)
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.navigation.compose.compiler)
     ksp(libs.hilt.android.compiler)
+
     implementation(libs.kotlinx.metadata.jvm)
 
     implementation(libs.accompanist.systemuicontroller)

@@ -1,4 +1,4 @@
-package com.example.diplomwork.repos
+package com.example.diplomwork.network.repos
 
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.model.Comment
@@ -9,8 +9,9 @@ import dagger.hilt.android.scopes.ActivityScoped
 import okhttp3.MultipartBody
 import retrofit2.Response
 import javax.inject.Inject
+import javax.inject.Singleton
 
-@ActivityScoped
+@Singleton
 class PictureRepository @Inject constructor(
     private val apiService: ApiService
 ) {

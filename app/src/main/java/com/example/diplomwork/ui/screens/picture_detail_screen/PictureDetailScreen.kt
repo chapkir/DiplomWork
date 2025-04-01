@@ -32,6 +32,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowInsetsCompat
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.toRoute
 import com.example.diplomwork.R
 import com.example.diplomwork.network.ApiClient
@@ -46,12 +47,7 @@ import com.example.diplomwork.viewmodel.PictureDetailScreenViewModel
 fun PictureDetailScreen(
     viewPictureDetailScreenData: ViewPictureDetailScreenData,
     onNavigateBack: () -> Unit,
-    onNavigateToLogin: () -> Unit,
-    viewModel: PictureDetailScreenViewModel = remember {
-        val timestamp = System.currentTimeMillis()
-        Log.i("NAVIGATION_DEBUG", "$timestamp - DETAIL: ИНИЦИАЛИЗАЦИЯ ЭКРАНА ПИНА С ID=${viewPictureDetailScreenData.pictureId}, URL=${viewPictureDetailScreenData.imageUrl}")
-        PictureDetailScreenViewModel(viewPictureDetailScreenData.pictureId.toLong())
-    }
+    viewModel: PictureDetailScreenViewModel = hiltViewModel()
 ) {
     val pictureDescription by viewModel.pictureDescription.collectAsState()
     val likesCount by viewModel.likesCount.collectAsState()

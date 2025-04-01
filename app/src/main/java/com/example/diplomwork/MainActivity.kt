@@ -18,11 +18,13 @@ import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.util.PreferencesCleaner
 import com.example.diplomwork.ui.util.ImageUtils
 import android.util.Log
+import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

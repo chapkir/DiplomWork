@@ -7,24 +7,29 @@ import android.util.Log
 import com.google.gson.Gson
 import java.util.Date
 import androidx.core.content.edit
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class SessionManager(context: Context) {
+@Singleton
+class SessionManager @Inject constructor(@ApplicationContext context: Context) {
+
     private val prefs: SharedPreferences =
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
     companion object {
         const val PREF_NAME = "app_session"
-        const val KEY_TOKEN = "auth_token"
-        const val KEY_REFRESH_TOKEN = "refresh_token"
-        const val KEY_EXPIRATION = "token_expiration"
+        private const val KEY_TOKEN = "auth_token"
+        private const val KEY_REFRESH_TOKEN = "refresh_token"
+        private const val KEY_EXPIRATION = "token_expiration"
         const val KEY_SERVER_URL = "server_url"
-        const val KEY_USERNAME = "username"
+        private const val KEY_USERNAME = "username"
+
         private const val TAG = "SessionManager"
         private const val DEFAULT_SERVER_URL = "http://spotsychlen.ddns.net:8081"
         private const val TOKEN_REFRESH_MARGIN_MS = 5 * 60 * 1000L
     }
 
-    // Получает URL сервера
     fun getServerUrl(): String {
         val url = prefs.getString(KEY_SERVER_URL, DEFAULT_SERVER_URL) ?: DEFAULT_SERVER_URL
         Log.d(TAG, "Получен URL сервера: $url")
@@ -36,140 +41,99 @@ class SessionManager(context: Context) {
         return url
     }
 
-    // Устанавливает URL сервера
     fun setServerUrl(url: String) {
         Log.d(TAG, "Сохранение URL сервера: $url")
         prefs.edit { putString(KEY_SERVER_URL, url) }
     }
 
-    // Сохраняет имя пользователя
     fun saveUsername(username: String) {
         prefs.edit { putString(KEY_USERNAME, username) }
     }
 
-    //Получает имя пользователя
     fun getUsername(): String? = prefs.getString(KEY_USERNAME, null)
 
-    //Сохраняет токен аутентификации и извлекает из него время истечения
     fun saveAuthToken(token: String) {
-        val editor = prefs.edit()
-        editor.putString(KEY_TOKEN, token)
-
-        // Извлекаем время истечения из JWT токена
-        try {
-            val parts = token.split(".")
-            if (parts.size == 3) {
-                val exp = decodeJwtPayload(parts[1])?.exp
-                exp?.let {
-                    val expirationDate = Date(it * 1000)
-                    Log.d(TAG, "Токен истекает: $expirationDate")
-                    editor.putLong(KEY_EXPIRATION, (it * 1000) - TOKEN_REFRESH_MARGIN_MS)
-                }
+        prefs.edit {
+            putString(KEY_TOKEN, token)
+            decodeJwtPayload(token)?.exp?.let {
+                val expirationDate = Date(it * 1000)
+                Log.d(TAG, "Токен истекает: $expirationDate")
+                putLong(KEY_EXPIRATION, (it * 1000) - TOKEN_REFRESH_MARGIN_MS)
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Ошибка при извлечении времени истечения токена: ${e.message}")
         }
-
-        editor.apply()
     }
 
-// Сохраняет refresh токен
+    fun fetchAuthToken(): String? {
+        return prefs.getString("auth_token", null)
+    }
+
     fun saveRefreshToken(refreshToken: String) {
-        prefs.edit().putString(KEY_REFRESH_TOKEN, refreshToken).apply()
+        prefs.edit { putString(KEY_REFRESH_TOKEN, refreshToken) }
         Log.d(TAG, "Сохранен refresh токен")
     }
 
-    //Получает refresh токен
     fun getRefreshToken(): String? = prefs.getString(KEY_REFRESH_TOKEN, null)
 
-    //Сохраняет аутентификационные данные
     fun saveAuthData(token: String, refreshToken: String?) {
         saveAuthToken(token)
         refreshToken?.let { saveRefreshToken(it) }
         Log.d(TAG, "Сохранены аутентификационные данные")
     }
 
-    //Декодирует payload JWT токена
-    private fun decodeJwtPayload(encodedPayload: String): JwtClaims? {
+    private fun decodeJwtPayload(token: String): JwtClaims? {
         return try {
-            val padding = when (encodedPayload.length % 4) {
-                0 -> ""
-                1 -> "==="
-                2 -> "=="
-                3 -> "="
-                else -> ""
-            }
-            val payload = Base64.decode(
-                encodedPayload.replace("-", "+").replace("_", "/") + padding,
-                Base64.DEFAULT
-            )
-            val payloadJson = String(payload, Charsets.UTF_8)
-            Gson().fromJson(payloadJson, JwtClaims::class.java)
+            val parts = token.split(".")
+            if (parts.size != 3) return null
+            val payload = Base64.decode(parts[1], Base64.DEFAULT)
+            Gson().fromJson(String(payload, Charsets.UTF_8), JwtClaims::class.java)
         } catch (e: Exception) {
-            Log.e(TAG, "Ошибка при декодировании JWT payload: ${e.message}")
+            Log.e(TAG, "Ошибка при декодировании JWT: ${e.message}")
             null
         }
     }
 
-    // Получает токен аутентификации
     fun getAuthToken(): String? = prefs.getString(KEY_TOKEN, null)
 
-    // Получает время истечения токена в миллисекундах
     fun getTokenExpiration(): Long? {
         return prefs.getLong(KEY_EXPIRATION, -1).takeIf { it != -1L }
     }
 
-    // Проверяет, залогинен ли пользователь
     fun isLoggedIn(): Boolean {
         val isLoggedIn = getAuthToken() != null
         Log.d(TAG, "Проверка статуса авторизации: $isLoggedIn")
         return isLoggedIn
     }
 
-    // Проверяет, истек ли срок действия токена
     fun isTokenExpired(): Boolean {
         return getTokenExpiration()?.let {
             val isExpired = it <= System.currentTimeMillis()
             if (isExpired) {
-                Log.d(TAG, "Токен истек. Текущее время: ${Date()}, время истечения: ${Date(it)}")
+                Log.d(TAG, "Токен истек. Время истечения: ${Date(it)}")
             }
             isExpired
         } ?: false
     }
 
-    // Проверяет, истечет ли токен в ближайшее время
     fun willTokenExpireSoon(timeMarginMs: Long = TOKEN_REFRESH_MARGIN_MS): Boolean {
         return getTokenExpiration()?.let {
             val willExpireSoon = it <= (System.currentTimeMillis() + timeMarginMs)
             if (willExpireSoon) {
-                Log.d(
-                    TAG,
-                    "Токен истечет в ближайшее время. Текущее время: ${Date()}, время истечения: ${
-                        Date(it)
-                    }"
-                )
+                Log.d(TAG, "Токен истечет скоро. Время истечения: ${Date(it)}")
             }
             willExpireSoon
         } ?: false
     }
 
-    // Проверяет, есть ли refresh токен
     fun hasRefreshToken(): Boolean = getRefreshToken() != null
 
-    // Очищает сессию
     fun clearSession() {
-        val editor = prefs.edit()
         val serverUrl = getServerUrl()
-        editor.clear().apply()
-
-        // Сохраняем только URL сервера
+        prefs.edit().clear().apply()
         setServerUrl(serverUrl)
-
         Log.d(TAG, "Сессия очищена")
     }
 }
 
-// Класс для хранения данных JWT payload
 data class JwtClaims(
     val sub: String? = null,
     val exp: Long? = null,

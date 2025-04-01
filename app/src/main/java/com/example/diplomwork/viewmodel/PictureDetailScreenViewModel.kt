@@ -1,17 +1,25 @@
 package com.example.diplomwork.viewmodel
 
-import android.net.Uri
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.diplomwork.model.Comment
 import com.example.diplomwork.model.CommentRequest
-import com.example.diplomwork.network.ApiClient
+import com.example.diplomwork.network.repos.PictureRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class PictureDetailScreenViewModel(private val pictureId: Long) : ViewModel() {
+@HiltViewModel
+class PictureDetailScreenViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
+    private val pictureRepository: PictureRepository
+) : ViewModel() {
+
+    private val pictureId: Long = savedStateHandle.get<Long>("pictureId") ?: 0L
 
     private val _pictureDescription = MutableStateFlow("")
     val pictureDescription: StateFlow<String> = _pictureDescription
@@ -42,7 +50,7 @@ class PictureDetailScreenViewModel(private val pictureId: Long) : ViewModel() {
         viewModelScope.launch {
             try {
                 Log.d("PictureDetailViewModel", "Начинаем загрузку данных пина с ID: $pictureId")
-                val picture = ApiClient.apiService.getPicture(pictureId)
+                val picture = pictureRepository.getPicture(pictureId)
 
                 // Логируем полученные данные для отладки
                 Log.d("PictureDetailViewModel", "Загружен пин: ID=${picture.id}, " +
@@ -57,7 +65,7 @@ class PictureDetailScreenViewModel(private val pictureId: Long) : ViewModel() {
                 _likesCount.value = picture.likesCount
                 _isLiked.value = picture.isLikedByCurrentUser
 
-                _comments.value = ApiClient.apiService.getComments(pictureId)
+                _comments.value = pictureRepository.getComments(pictureId)
                 Log.d("PictureDetailViewModel", "Загружено ${_comments.value.size} комментариев")
             } catch (e: Exception) {
                 Log.e("PictureDetailViewModel", "Error loading data: ${e.message}", e)
@@ -77,9 +85,9 @@ class PictureDetailScreenViewModel(private val pictureId: Long) : ViewModel() {
 
             try {
                 if (wasLiked) {
-                    ApiClient.apiService.unlikePicture(pictureId)
+                    pictureRepository.unlikePicture(pictureId)
                 } else {
-                    ApiClient.apiService.likePicture(pictureId)
+                    pictureRepository.likePicture(pictureId)
                 }
             } catch (e: Exception) {
                 Log.e("PictureDetailViewModel", "Error updating like: ${e.message}")
@@ -97,8 +105,8 @@ class PictureDetailScreenViewModel(private val pictureId: Long) : ViewModel() {
 
             try {
                 val commentRequest = CommentRequest(text = commentText)
-                ApiClient.apiService.addComment(pictureId, commentRequest)
-                _comments.value = ApiClient.apiService.getComments(pictureId)
+                pictureRepository.addComment(pictureId, commentRequest)
+                _comments.value = pictureRepository.getComments(pictureId)
             } catch (e: Exception) {
                 Log.e("PictureDetailViewModel", "Error adding comment: ${e.message}")
             }
