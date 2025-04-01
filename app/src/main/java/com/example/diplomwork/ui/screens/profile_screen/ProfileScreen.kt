@@ -11,13 +11,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
@@ -26,6 +29,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -43,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -53,11 +58,15 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.diplomwork.R
 import com.example.diplomwork.model.PictureResponse
+import com.example.diplomwork.model.ProfileResponse
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.components.PictureCard
 import com.example.diplomwork.ui.theme.ColorForBackgroundProfile
 import com.example.diplomwork.ui.theme.ColorForFocusButton
 import com.example.diplomwork.viewmodel.ProfileViewModel
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.rememberPagerState
 
 @Composable
 fun ProfileScreen(
@@ -139,44 +148,15 @@ fun ProfileScreen(
                     avatarUpdateKey = avatarUpdateCounter
                 )
 
-                TabRow(
+                SwipeableTabs(
+                    tabTitles = tabTitles,
                     selectedTabIndex = selectedTabIndex,
-                    contentColor = Color.White,
-                    containerColor = ColorForBackgroundProfile
-                ) {
-                    tabTitles.forEachIndexed { index, title ->
-                        Tab(
-                            selected = selectedTabIndex == index,
-                            onClick = { selectedTabIndex = index }) {
-                            Text(text = title, color = Color.White)
-                        }
-                    }
-                }
-
-                // Используем Crossfade для плавного переключения между контентом
-                Crossfade(targetState = selectedTabIndex) { currentTabIndex ->
-                    when (currentTabIndex) {
-                        0 -> {
-                            if (profileData?.pins?.isEmpty() == true) {
-                                EmptyStateMessage(message = "У вас пока нет пинов")
-                            } else {
-                                PicturesGrid(
-                                    pictures = profileData?.pins ?: emptyList(),
-                                    onPictureClick = onImageClick
-                                )
-                                Log.e("piska", "Вот твои публикации ${profileData?.pins ?: listOf("ti", "piska")}")
-                            }
-                        }
-
-                        1 -> {
-                            if (likedPictures.isEmpty()) {
-                                EmptyStateMessage(message = "У вас пока нет лайкнутых пинов")
-                            } else {
-                                PicturesGrid(pictures = likedPictures, onPictureClick = onImageClick)
-                            }
-                        }
-                    }
-                }
+                    onTabSelected = { selectedTabIndex = it },
+                    onSwipeTabChange = { selectedTabIndex = it },
+                    profileData = profileData?.pins ?: emptyList(),
+                    likedPictures = likedPictures,
+                    onImageClick = onImageClick
+                )
             }
         }
     }
@@ -221,8 +201,8 @@ private fun ProfileHeader(
                             .crossfade(true)
                             .placeholder(R.drawable.default_avatar)
                             .error(R.drawable.default_avatar)
-                            .diskCachePolicy(CachePolicy.DISABLED)
-                            .memoryCachePolicy(CachePolicy.DISABLED)
+                            .diskCachePolicy(CachePolicy.ENABLED)
+                            .memoryCachePolicy(CachePolicy.ENABLED)
                             .build(),
                         contentDescription = "Avatar",
                         contentScale = ContentScale.Crop,
@@ -257,10 +237,86 @@ private fun ProfileHeader(
             color = Color.White,
             textAlign = TextAlign.Center
         )
-        Spacer(Modifier.size(10.dp))
     }
 }
 
+@OptIn(ExperimentalPagerApi::class)
+@Composable
+fun SwipeableTabs(
+    tabTitles: List<String>,
+    selectedTabIndex: Int,
+    onTabSelected: (Int) -> Unit,
+    onSwipeTabChange: (Int) -> Unit,
+    profileData: List<PictureResponse>,
+    likedPictures: List<PictureResponse>,
+    onImageClick: (Long, String) -> Unit
+) {
+    val pagerState = rememberPagerState(initialPage = selectedTabIndex)
+
+    LaunchedEffect(pagerState.currentPage) {
+        onSwipeTabChange(pagerState.currentPage)
+    }
+
+    TabRow(
+        selectedTabIndex = pagerState.currentPage,
+        modifier = Modifier.padding(end = 30.dp, start = 30.dp, top = 13.dp, bottom = 10.dp),
+        contentColor = Color.White,
+        containerColor = ColorForBackgroundProfile,
+        indicator = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 25.dp)
+                    .background(Color.Black)
+            )
+        }
+    ) {
+        tabTitles.forEachIndexed { index, title ->
+            Tab(
+                selected = pagerState.currentPage == index,
+                onClick = {
+                    onTabSelected(index)
+                }
+            ) {
+                Text(
+                    text = title,
+                    modifier = Modifier.padding(bottom = 7.dp),
+                    color = if (pagerState.currentPage == index) Color.White else Color.Gray,
+                    style = TextStyle(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                )
+            }
+        }
+    }
+
+    HorizontalPager(
+        count = tabTitles.size,
+        state = pagerState,
+        modifier = Modifier.fillMaxSize(),
+        userScrollEnabled = true
+    ) { page ->
+        when (page) {
+            0 -> {
+                if (profileData.isEmpty()) {
+                    EmptyStateMessage(message = "У вас пока нет пинов")
+                } else {
+                    PicturesGrid(
+                        pictures = profileData,
+                        onPictureClick = onImageClick
+                    )
+                }
+            }
+            1 -> {
+                if (likedPictures.isEmpty()) {
+                    EmptyStateMessage(message = "У вас пока нет лайкнутых пинов")
+                } else {
+                    PicturesGrid(pictures = likedPictures, onPictureClick = onImageClick)
+                }
+            }
+        }
+    }
+}
 
 @Composable
 private fun EmptyStateMessage(message: String) {
@@ -275,6 +331,7 @@ private fun PicturesGrid(pictures: List<PictureResponse>, onPictureClick: (Long,
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(3),
         modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 2.dp, end = 2.dp),
         content = {
             itemsIndexed(pictures) { _, picture ->
                 PictureCard(
@@ -283,7 +340,7 @@ private fun PicturesGrid(pictures: List<PictureResponse>, onPictureClick: (Long,
                     onClick = {
                         onPictureClick(picture.id, picture.imageUrl)
                     },
-                    contentPadding = 2
+                    contentPadding = 3
                 )
             }
         }

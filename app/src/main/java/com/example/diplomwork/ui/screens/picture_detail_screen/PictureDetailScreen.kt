@@ -1,6 +1,6 @@
 package com.example.diplomwork.ui.screens.picture_detail_screen
 
-import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -27,18 +27,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowInsetsCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
-import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.system_settings.systemInsetHeight
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.navigation.ViewPictureDetailScreenData
 import com.example.diplomwork.ui.theme.ColorForArrowBack
 import com.example.diplomwork.ui.theme.ColorForBackground
+import com.example.diplomwork.util.AppConstants
 import com.example.diplomwork.viewmodel.PictureDetailScreenViewModel
 
 @Composable
@@ -70,18 +71,10 @@ fun PictureDetailScreen(
             }
         } else {
             item {
-                val timestamp = System.currentTimeMillis()
-                Log.i(
-                    "NAVIGATION_DEBUG",
-                    "$timestamp - DETAIL: ОТОБРАЖЕНИЕ ПИНА С ID=${viewPictureDetailScreenData.pictureId}, " +
-                            "Описание='$pictureDescription', Лайки=$likesCount, " +
-                            "Автор=$pictureUsername, Комментариев=${comments.size}"
-                )
-
                 ImageView(
                     imageRes =
                         if (viewPictureDetailScreenData.imageUrl.startsWith("http")) viewPictureDetailScreenData.imageUrl
-                        else ApiClient.getBaseUrl() + viewPictureDetailScreenData.imageUrl,
+                        else AppConstants.BASE_URL + viewPictureDetailScreenData.imageUrl,
                     aspectRatio = 1f
                 )
             }
@@ -99,7 +92,6 @@ fun PictureDetailScreen(
                     onProfileClick = { }
                 )
             }
-
             item {
                 Column(
                     modifier = Modifier
@@ -153,8 +145,24 @@ fun PictureDetailScreen(
     ) {
         Icon(
             painter = painterResource(id = R.drawable.ic_arrow_back),
-            contentDescription = "Назад",
+            contentDescription = "back",
             tint = ColorForArrowBack
+        )
+    }
+
+    IconButton(
+        onClick = { viewModel.deletePicture() },
+        modifier = Modifier
+            .padding(
+                top = systemInsetHeight(WindowInsetsCompat.Type.statusBars()).value + 18.dp,
+                start = 70.dp
+            )
+            .size(43.dp)
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.ic_trash),
+            contentDescription = "trash",
+            tint = Color.Gray
         )
     }
 

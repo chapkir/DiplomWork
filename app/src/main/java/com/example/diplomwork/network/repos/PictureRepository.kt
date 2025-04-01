@@ -57,4 +57,13 @@ class PictureRepository @Inject constructor(
     suspend fun searchPictures(query: String, page: Int, size: Int): List<PictureResponse> {
         return apiService.searchPictures(query, page, size).data.content
     }
+
+    suspend fun deletePicture(id: Long): Boolean {
+        return try {
+            val response = apiService.deletePicture(id)
+            response.isSuccessful // Вернет true, если удаление прошло успешно
+        } catch (e: Exception) {
+            false
+        }
+    }
 }

@@ -26,6 +26,9 @@ interface ApiService {
     @GET("api/pins/{id}")
     suspend fun getPicture(@Path("id") id: Long): PictureResponse
 
+    @DELETE("api/pins/{id}")
+    suspend fun deletePicture(@Path("id") id: Long): Response<Unit>
+
     @GET("api/search/pins")
     suspend fun searchPictures(
         @Query("query") query: String,

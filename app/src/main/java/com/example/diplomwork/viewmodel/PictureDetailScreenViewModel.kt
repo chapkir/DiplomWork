@@ -19,7 +19,7 @@ class PictureDetailScreenViewModel @Inject constructor(
     private val pictureRepository: PictureRepository
 ) : ViewModel() {
 
-    private val pictureId: Long = savedStateHandle.get<Long>("pictureId") ?: 0L
+    private val _pictureId: Long = savedStateHandle.get<Long>("pictureId") ?: 0L
 
     private val _pictureDescription = MutableStateFlow("")
     val pictureDescription: StateFlow<String> = _pictureDescription
@@ -39,6 +39,9 @@ class PictureDetailScreenViewModel @Inject constructor(
     private val _pictureUsername = MutableStateFlow("")
     val pictureUsername: StateFlow<String> = _pictureUsername
 
+    private val _deleteStatus = MutableStateFlow("")
+    val deleteStatus: StateFlow<String> = _deleteStatus
+
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading
 
@@ -49,27 +52,40 @@ class PictureDetailScreenViewModel @Inject constructor(
     private fun loadPictureData() {
         viewModelScope.launch {
             try {
-                Log.d("PictureDetailViewModel", "Начинаем загрузку данных пина с ID: $pictureId")
-                val picture = pictureRepository.getPicture(pictureId)
-
-                Log.d("PictureDetailViewModel", "Загружен пин: ID=${picture.id}, " +
-                        "URL=${picture.imageUrl}, " +
-                        "Автор=${picture.username}, " +
-                        "Лайки=${picture.likesCount}, " +
-                        "Описание='${picture.description}'")
-
+                val picture = pictureRepository.getPicture(_pictureId)
                 _pictureUsername.value = picture.username
                 _profileImageUrl.value = picture.userProfileImageUrl
                 _pictureDescription.value = picture.description
                 _likesCount.value = picture.likesCount
                 _isLiked.value = picture.isLikedByCurrentUser
-
-                _comments.value = pictureRepository.getComments(pictureId)
-                Log.d("PictureDetailViewModel", "Загружено ${_comments.value.size} комментариев")
+                _comments.value = pictureRepository.getComments(_pictureId)
             } catch (e: Exception) {
                 Log.e("PictureDetailViewModel", "Error: ${e.message}", e)
             } finally {
                 _isLoading.value = false
+            }
+        }
+    }
+
+    fun deletePicture() {
+        val id = _pictureId
+        viewModelScope.launch {
+            try {
+                Log.e("piska", "pictureId до delete: $id")
+
+                _deleteStatus.value = "Ниче не произошло"
+
+                val isDeleted = pictureRepository.deletePicture(id)
+                if (isDeleted) {
+                    _deleteStatus.value = "Картинка удалена!"
+                } else {
+                    _deleteStatus.value = "Ошибка удаления"
+                }
+
+                Log.e("piska", "pictureId после delete: $id")
+            } catch (e: Exception) {
+                Log.e("PictureDetailViewModel", "Ошибка удаления: ${e.message}", e)
+                _deleteStatus.value = "Ошибка удаления: ${e.message}"
             }
         }
     }
@@ -84,9 +100,9 @@ class PictureDetailScreenViewModel @Inject constructor(
 
             try {
                 if (wasLiked) {
-                    pictureRepository.unlikePicture(pictureId)
+                    pictureRepository.unlikePicture(_pictureId)
                 } else {
-                    pictureRepository.likePicture(pictureId)
+                    pictureRepository.likePicture(_pictureId)
                 }
             } catch (e: Exception) {
                 Log.e("PictureDetailViewModel", "Error updating like: ${e.message}")
@@ -104,8 +120,8 @@ class PictureDetailScreenViewModel @Inject constructor(
 
             try {
                 val commentRequest = CommentRequest(text = commentText)
-                pictureRepository.addComment(pictureId, commentRequest)
-                _comments.value = pictureRepository.getComments(pictureId)
+                pictureRepository.addComment(_pictureId, commentRequest)
+                _comments.value = pictureRepository.getComments(_pictureId)
             } catch (e: Exception) {
                 Log.e("PictureDetailViewModel", "Error adding comment: ${e.message}")
             }

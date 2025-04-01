@@ -83,6 +83,9 @@ dependencies {
     ksp(libs.hilt.navigation.compose.compiler)
     ksp(libs.hilt.android.compiler)
 
+    implementation (libs.accompanist.pager)
+    implementation (libs.accompanist.pager.indicators)
+
     implementation(libs.kotlinx.metadata.jvm)
 
     implementation(libs.accompanist.systemuicontroller)
