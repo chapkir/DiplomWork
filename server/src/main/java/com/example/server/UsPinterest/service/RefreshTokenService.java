@@ -78,8 +78,7 @@ public class RefreshTokenService {
 
         logger.info("Создан новый refresh токен для пользователя: {}", user.getUsername());
 
-        refreshToken = refreshTokenRepository.save(refreshToken);
-        return refreshToken;
+        return refreshTokenRepository.save(refreshToken);
     }
 
     /**

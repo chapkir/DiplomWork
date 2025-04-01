@@ -37,15 +37,7 @@ public class FollowMapper {
             // Обновляем ссылку на изображение профиля подписчика
             String followerImageUrl = follow.getFollower().getProfileImageUrl();
             if (followerImageUrl != null && !followerImageUrl.isEmpty()) {
-                try {
-                    String directUrl = fileStorageService.updateImageUrl(followerImageUrl);
-                    response.setFollowerProfileImageUrl(directUrl);
-                } catch (Exception e) {
-                    // В случае ошибки используем оригинальный URL
-                    response.setFollowerProfileImageUrl(followerImageUrl);
-                }
-            } else {
-                response.setFollowerProfileImageUrl(followerImageUrl);
+                response.setFollowerProfileImageUrl(fileStorageService.updateImageUrl(followerImageUrl));
             }
         }
 
@@ -56,15 +48,7 @@ public class FollowMapper {
             // Обновляем ссылку на изображение профиля целевого пользователя
             String followingImageUrl = follow.getFollowing().getProfileImageUrl();
             if (followingImageUrl != null && !followingImageUrl.isEmpty()) {
-                try {
-                    String directUrl = fileStorageService.updateImageUrl(followingImageUrl);
-                    response.setFollowingProfileImageUrl(directUrl);
-                } catch (Exception e) {
-                    // В случае ошибки используем оригинальный URL
-                    response.setFollowingProfileImageUrl(followingImageUrl);
-                }
-            } else {
-                response.setFollowingProfileImageUrl(followingImageUrl);
+                response.setFollowingProfileImageUrl(fileStorageService.updateImageUrl(followingImageUrl));
             }
         }
 

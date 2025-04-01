@@ -100,7 +100,7 @@ public class ProfileController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            logger.error("Ошибка при получении профиля: {}", e.getMessage(), e);
+            logger.error("Ошибка при получении профиля", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Произошла ошибка при получении профиля: " + e.getMessage());
         }
@@ -108,12 +108,9 @@ public class ProfileController {
 
     /**
      * Загрузка и обновление изображения профиля пользователя
-     *
-     * @param file файл изображения
-     * @return ответ с обновленным профилем пользователя
      */
-    @PostMapping("/image")
-    public ResponseEntity<?> updateProfileImage(@RequestParam("image") MultipartFile file) {
+    @PostMapping(value = {"/image", "/avatar"})
+    public ResponseEntity<?> updateProfileImage(@RequestParam("file") MultipartFile file) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.singletonMap("message", "Необходима авторизация"));
@@ -124,7 +121,6 @@ public class ProfileController {
             User user = userService.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-            // Update to use FileStorageService
             String imageUrl = fileStorageService.storeProfileImage(file, user.getId());
 
             user.setProfileImageUrl(imageUrl);
@@ -140,29 +136,18 @@ public class ProfileController {
 
     @GetMapping("/liked-pins")
     public ResponseEntity<?> getLikedPins(Authentication authentication) {
-        System.out.println("Получен запрос на получение лайкнутых пинов");
-
         try {
             if (authentication == null) {
-                System.err.println("Ошибка: Authentication объект равен null");
                 return ResponseEntity.status(401).build();
             }
 
             String username = authentication.getName();
-            System.out.println("Запрос лайкнутых пинов для пользователя: " + username);
-
             User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> {
-                        System.err.println("Пользователь не найден: " + username);
-                        return new ResourceNotFoundException("Пользователь не найден");
-                    });
-
-            System.out.println("Пользователь найден, ID: " + user.getId());
+                    .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
 
             List<Like> likes = likeRepository.findByUser(user);
-            System.out.println("Найдено лайков: " + likes.size());
-
             List<PinResponse> pinResponses = new ArrayList<>();
+
             for (Like like : likes) {
                 Pin pin = like.getPin();
                 if (pin != null) {
@@ -175,40 +160,11 @@ public class ProfileController {
                 }
             }
 
-            System.out.println("Подготовлено пинов для ответа: " + pinResponses.size());
             return ResponseEntity.ok(pinResponses);
-
         } catch (Exception e) {
-            System.err.println("Ошибка при получении лайкнутых пинов: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Ошибка при получении лайкнутых пинов", e);
             return ResponseEntity.status(500)
                     .body("Ошибка при получении лайкнутых пинов: " + e.getMessage());
-        }
-    }
-
-    @PostMapping("/avatar")
-    public ResponseEntity<?> uploadAvatar(@RequestParam("file") MultipartFile file) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.singletonMap("message", "Необходима авторизация"));
-        }
-
-        String username = authentication.getName();
-        try {
-            User user = userService.findByUsername(username)
-                    .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
-
-            // Update to use FileStorageService
-            String imageUrl = fileStorageService.storeProfileImage(file, user.getId());
-
-            user.setProfileImageUrl(imageUrl);
-            userRepository.save(user);
-
-            return ResponseEntity.ok(Collections.singletonMap("profileImageUrl", imageUrl));
-        } catch (IOException e) {
-            logger.error("Ошибка при загрузке аватара", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Collections.singletonMap("message", "Ошибка при загрузке аватара: " + e.getMessage()));
         }
     }
 } 

@@ -47,10 +47,6 @@ public class ApiResponse<T> {
 
     /**
      * Creates a success response with data
-     *
-     * @param data Data payload
-     * @param <T> Type of data
-     * @return ApiResponse with success flag set to true
      */
     public static <T> ApiResponse<T> success(T data) {
         ApiResponse<T> response = new ApiResponse<>();
@@ -63,41 +59,7 @@ public class ApiResponse<T> {
     }
 
     /**
-     * Creates a success response with message
-     *
-     * @param message Success message
-     * @return ApiResponse with success flag set to true
-     */
-    public static ApiResponse<Void> success(String message) {
-        ApiResponse<Void> response = new ApiResponse<>();
-        response.setSuccess(true);
-        response.setMessage(message);
-        response.setStatus(200);
-        response.setTimestamp(LocalDateTime.now());
-        return response;
-    }
-
-    /**
      * Creates an error response
-     *
-     * @param message Error message
-     * @return ApiResponse with success flag set to false
-     */
-    public static ApiResponse<Void> error(String message) {
-        ApiResponse<Void> response = new ApiResponse<>();
-        response.setSuccess(false);
-        response.setMessage(message);
-        response.setStatus(400);
-        response.setTimestamp(LocalDateTime.now());
-        return response;
-    }
-
-    /**
-     * Creates an error response with specific status code
-     *
-     * @param message Error message
-     * @param status HTTP status code
-     * @return ApiResponse with success flag set to false and the specified status
      */
     public static ApiResponse<Void> error(String message, int status) {
         ApiResponse<Void> response = new ApiResponse<>();
@@ -109,29 +71,7 @@ public class ApiResponse<T> {
     }
 
     /**
-     * Full constructor
-     *
-     * @param success Success flag
-     * @param message Response message
-     * @param status HTTP status code
-     * @param path Request path
-     */
-    public ApiResponse(boolean success, String message, int status, String path) {
-        this.success = success;
-        this.message = message;
-        this.status = status;
-        this.path = path;
-        this.timestamp = LocalDateTime.now();
-    }
-
-    /**
-     * Full constructor with data
-     *
-     * @param success Success flag
-     * @param message Response message
-     * @param status HTTP status code
-     * @param path Request path
-     * @param data Data payload
+     * Constructor with all fields
      */
     public ApiResponse(boolean success, String message, int status, String path, T data) {
         this.success = success;

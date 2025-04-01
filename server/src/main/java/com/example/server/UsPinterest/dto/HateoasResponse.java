@@ -1,7 +1,6 @@
 package com.example.server.UsPinterest.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -51,16 +50,6 @@ public class HateoasResponse<T> {
 
     public void setMeta(Meta meta) {
         this.meta = meta;
-    }
-
-    /**
-     * Direct content accessor for Kotlin clients
-     * This allows Kotlin clients to access the data directly without unwrapping
-     * @return The data content
-     */
-    @JsonProperty("content")
-    public T getContent() {
-        return data;
     }
 
     public HateoasResponse<T> addLink(String rel, String href, String method) {

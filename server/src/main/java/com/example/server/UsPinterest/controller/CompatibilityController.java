@@ -6,11 +6,6 @@ import com.example.server.UsPinterest.repository.PinRepository;
 import com.example.server.UsPinterest.service.PinService;
 import com.example.server.UsPinterest.service.UserService;
 
-import io.github.bucket4j.Bandwidth;
-import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Bucket4j;
-import io.github.bucket4j.Refill;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +19,9 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
-
+/**
+ * Special controller to provide compatibility for Kotlin clients by returning arrays instead of objects
+ */
 @RestController
 public class CompatibilityController {
 
@@ -39,17 +36,10 @@ public class CompatibilityController {
     @Autowired
     private UserService userService;
 
-    private final Bucket bucket;
-
-    public CompatibilityController() {
-        // Define rate limit
-        Bandwidth limit = Bandwidth.classic(100, Refill.greedy(100, java.time.Duration.ofMinutes(1)));
-        this.bucket = Bucket4j.builder()
-                .addLimit(limit)
-                .build();
-    }
-
-
+    /**
+     * Основной эндпоинт для получения всех пинов в формате массива JSON для Kotlin-клиентов
+     * Решает проблему "Expected BEGIN_ARRAY but was BEGIN_OBJECT"
+     */
     @GetMapping("/api/pins/all")
     public ResponseEntity<List<PinResponse>> redirectToPinsJsonAll() {
         logger.info("Предоставление списка пинов в формате массива JSON для Kotlin-клиента");
@@ -60,22 +50,25 @@ public class CompatibilityController {
                     .map(pin -> pinService.convertToPinResponse(pin, currentUser))
                     .collect(Collectors.toList());
 
-
+            // Возвращаем массив напрямую, без обертки в объект
             return ResponseEntity.ok(pinResponses);
 
         } catch (Exception e) {
-            logger.error("Ошибка при получении пинов: {}", e.getMessage(), e);
+            logger.error("Ошибка при получении пинов", e);
             return ResponseEntity.ok(new ArrayList<>());
         }
     }
 
-
+    /**
+     * Эндпоинт для получения одного пина по ID в формате объекта JSON
+     * Исправляет ошибку "Expected BEGIN_OBJECT but was BEGIN_ARRAY" при запросе единичного пина
+     */
     @GetMapping("/api/pins/{id}")
-    public ResponseEntity<List<PinResponse>> redirectToPinJsonById(
+    public ResponseEntity<PinResponse> redirectToPinJsonById(
             @PathVariable Long id,
             Authentication authentication) {
 
-        logger.info("Предоставление пина {} в формате массива JSON для Kotlin-клиента", id);
+        logger.info("Предоставление пина {} в формате объекта JSON", id);
 
         try {
             User currentUser = authentication != null ?
@@ -83,18 +76,16 @@ public class CompatibilityController {
 
             return pinRepository.findById(id)
                     .map(pin -> {
-                        List<PinResponse> responseList = new ArrayList<>();
                         PinResponse pinResponse = pinService.convertToPinResponse(pin, currentUser);
-                        responseList.add(pinResponse);
-                        return ResponseEntity.ok(responseList);
+                        return ResponseEntity.ok(pinResponse);
                     })
                     .orElseGet(() -> {
-                        return ResponseEntity.ok(new ArrayList<>());
+                        return ResponseEntity.notFound().build();
                     });
 
         } catch (Exception e) {
-            logger.error("Ошибка при получении пина {}: {}", id, e.getMessage(), e);
-            return ResponseEntity.ok(new ArrayList<>());
+            logger.error("Ошибка при получении пина {}", id, e);
+            return ResponseEntity.badRequest().build();
         }
     }
 }

@@ -17,9 +17,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 /**
  * Сервис для поиска контента
  */
@@ -46,13 +43,6 @@ public class SearchService {
 
     /**
      * Поиск пинов по ключевому слову с пагинацией
-     *
-     * @param keyword ключевое слово для поиска
-     * @param page номер страницы
-     * @param size размер страницы
-     * @param sortBy поле для сортировки
-     * @param sortDirection направление сортировки
-     * @return результаты поиска с пагинацией
      */
     @Transactional(readOnly = true)
     @Cacheable(value = "search", key = "'pins_' + #keyword + '_' + #page + '_' + #size + '_' + #sortBy + '_' + #sortDirection")
@@ -64,20 +54,11 @@ public class SearchService {
         Page<Pin> pinsPage = pinRepository.findByDescriptionContainingIgnoreCase(searchKeyword, pageable);
 
         User currentUser = userService.getCurrentUser();
-        List<PinResponse> pinResponses = pinsPage.getContent().stream()
-                .map(pin -> pinMapper.toDto(pin, currentUser))
-                .collect(Collectors.toList());
-
         return paginationService.createPageResponse(pinsPage, pin -> pinMapper.toDto(pin, currentUser));
     }
 
     /**
      * Поиск пользователей по имени с пагинацией
-     *
-     * @param username имя пользователя для поиска
-     * @param page номер страницы
-     * @param size размер страницы
-     * @return результаты поиска с пагинацией
      */
     @Transactional(readOnly = true)
     @Cacheable(value = "search", key = "'users_' + #username + '_' + #page + '_' + #size")

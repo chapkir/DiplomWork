@@ -1,6 +1,5 @@
 package com.example.server.UsPinterest.service;
 
-import com.example.server.UsPinterest.dto.CommentResponse;
 import com.example.server.UsPinterest.dto.MessageResponse;
 import com.example.server.UsPinterest.dto.PageResponse;
 import com.example.server.UsPinterest.dto.PinRequest;
@@ -19,7 +18,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +26,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,31 +52,21 @@ public class PinService {
     @Autowired
     private FileStorageService fileStorageService;
 
-    public Pin createPin(Pin pin) {
-        return pinRepository.save(pin);
-    }
-
     @Cacheable(value = "pins", key = "#id")
     public Optional<Pin> getPinById(Long id) {
-        logger.info("Загрузка пина с ID {} из базы данных (не из кэша)", id);
+        logger.debug("Загрузка пина с ID {} из базы данных", id);
         return pinRepository.findById(id);
     }
 
     @Cacheable(value = "pins", key = "'board_' + #boardId")
     public List<Pin> getPinsByBoardId(Long boardId) {
-        logger.info("Загрузка пинов для доски с ID {} из базы данных (не из кэша)", boardId);
+        logger.debug("Загрузка пинов для доски с ID {}", boardId);
         return pinRepository.findByBoardId(boardId);
-    }
-
-    @Cacheable(value = "pins", key = "'search_' + #keyword")
-    public List<Pin> searchPinsByDescription(String keyword) {
-        logger.info("Поиск пинов по ключевому слову '{}' в базе данных (не из кэша)", keyword);
-        return pinRepository.findByDescriptionContainingIgnoreCase(keyword);
     }
 
     @CacheEvict(value = "pins", allEntries = true)
     public void deletePin(Long id) {
-        logger.info("Удаление пина с ID {} и очистка всего кэша пинов", id);
+        logger.info("Удаление пина с ID {}", id);
         pinRepository.deleteById(id);
     }
 
@@ -105,17 +92,6 @@ public class PinService {
     }
 
     @CacheEvict(value = "pins", allEntries = true)
-    public Pin createPin(PinRequest pinRequest) {
-        Pin newPin = new Pin(pinRequest.getImageUrl(), pinRequest.getDescription());
-        if (pinRequest.getBoardId() != null) {
-            Board board = boardService.getBoardById(pinRequest.getBoardId())
-                    .orElseThrow(() -> new RuntimeException("Доска не найдена"));
-            newPin.setBoard(board);
-        }
-        return pinRepository.save(newPin);
-    }
-
-    @CacheEvict(value = "pins", allEntries = true)
     public Pin createPin(PinRequest pinRequest, String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
@@ -123,6 +99,13 @@ public class PinService {
         pin.setImageUrl(pinRequest.getImageUrl());
         pin.setDescription(pinRequest.getDescription());
         pin.setUser(user);
+
+        if (pinRequest.getBoardId() != null) {
+            Board board = boardService.getBoardById(pinRequest.getBoardId())
+                    .orElseThrow(() -> new RuntimeException("Доска не найдена"));
+            pin.setBoard(board);
+        }
+
         return pinRepository.save(pin);
     }
 
@@ -209,7 +192,6 @@ public class PinService {
      */
     public PinResponse convertToPinResponse(Pin pin, User currentUser) {
         try {
-            logger.debug("Converting Pin with ID {} to PinResponse", pin.getId());
             PinResponse response = new PinResponse();
             response.setId(pin.getId());
 
@@ -221,63 +203,43 @@ public class PinService {
                 }
                 response.setImageUrl(imageUrl);
             } catch (Exception e) {
-                logger.error("Error updating image URL for pin {}: {}", pin.getId(), e.getMessage(), e);
+                logger.error("Error updating image URL for pin {}: {}", pin.getId(), e.getMessage());
                 response.setImageUrl(pin.getImageUrl()); // Fallback to original URL
             }
 
             response.setDescription(pin.getDescription());
 
             if (pin.getBoard() != null) {
-                try {
-                    response.setBoardId(pin.getBoard().getId());
-                    response.setBoardTitle(pin.getBoard().getTitle());
-                } catch (Exception e) {
-                    logger.error("Error setting board info for pin {}: {}", pin.getId(), e.getMessage(), e);
-                }
+                response.setBoardId(pin.getBoard().getId());
+                response.setBoardTitle(pin.getBoard().getTitle());
             }
 
             if (pin.getUser() != null) {
-                try {
-                    response.setUserId(pin.getUser().getId());
-                    response.setUsername(pin.getUser().getUsername());
+                response.setUserId(pin.getUser().getId());
+                response.setUsername(pin.getUser().getUsername());
 
-                    String profileImageUrl = pin.getUser().getProfileImageUrl();
-                    if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
-                        try {
-                            profileImageUrl = fileStorageService.updateImageUrl(profileImageUrl);
-                        } catch (Exception e) {
-                            logger.error("Error updating profile image URL for pin {}: {}", pin.getId(), e.getMessage(), e);
-                        }
-                    }
-                    response.setUserProfileImageUrl(profileImageUrl);
-                } catch (Exception e) {
-                    logger.error("Error setting user info for pin {}: {}", pin.getId(), e.getMessage(), e);
+                String profileImageUrl = pin.getUser().getProfileImageUrl();
+                if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
+                    profileImageUrl = fileStorageService.updateImageUrl(profileImageUrl);
                 }
+                response.setUserProfileImageUrl(profileImageUrl);
             }
 
             response.setCreatedAt(pin.getCreatedAt());
+            response.setLikesCount(pin.getLikes() != null ? pin.getLikes().size() : 0);
 
-            try {
-                response.setLikesCount(pin.getLikes() != null ? pin.getLikes().size() : 0);
-
-                // Check if current user has liked this pin
-                boolean isLiked = false;
-                if (currentUser != null && pin.getLikes() != null) {
-                    isLiked = pin.getLikes().stream()
-                            .filter(like -> like.getUser() != null)
-                            .anyMatch(like -> currentUser.getId().equals(like.getUser().getId()));
-                }
-                response.setIsLikedByCurrentUser(isLiked);
-            } catch (Exception e) {
-                logger.error("Error processing likes for pin {}: {}", pin.getId(), e.getMessage(), e);
-                response.setLikesCount(0);
-                response.setIsLikedByCurrentUser(false);
+            // Check if current user has liked this pin
+            boolean isLiked = false;
+            if (currentUser != null && pin.getLikes() != null) {
+                isLiked = pin.getLikes().stream()
+                        .filter(like -> like.getUser() != null)
+                        .anyMatch(like -> currentUser.getId().equals(like.getUser().getId()));
             }
+            response.setIsLikedByCurrentUser(isLiked);
 
-            logger.debug("Successfully converted Pin with ID {} to PinResponse", pin.getId());
             return response;
         } catch (Exception e) {
-            logger.error("Error converting Pin to PinResponse: {}", e.getMessage(), e);
+            logger.error("Error converting Pin to PinResponse: {}", e.getMessage());
             // Create a minimal response to avoid null returns
             PinResponse fallbackResponse = new PinResponse();
             if (pin != null) {
@@ -292,40 +254,23 @@ public class PinService {
 
     /**
      * Find all pins with ID less than the given cursor
-     * Used for descending cursor pagination
-     *
-     * @param cursorId The cursor ID
-     * @param limit The maximum number of pins to retrieve
-     * @return List of pins with ID less than the cursor
      */
     @Cacheable(value = "pins", key = "'cursor_lt_' + #cursorId + '_' + #limit")
     public List<Pin> findPinsLessThan(Long cursorId, int limit) {
-        logger.debug("Finding pins with ID less than {} with limit {}", cursorId, limit);
         return pinRepository.findByIdLessThanOrderByIdDesc(cursorId, PageRequest.of(0, limit));
     }
 
-    /**
-     * Find all pins with ID greater than the given cursor
-     * Used for ascending cursor pagination
-     *
-     * @param cursorId The cursor ID
-     * @param limit The maximum number of pins to retrieve
-     * @return List of pins with ID greater than the cursor
-     */
+
     @Cacheable(value = "pins", key = "'cursor_gt_' + #cursorId + '_' + #limit")
     public List<Pin> findPinsGreaterThan(Long cursorId, int limit) {
-        logger.debug("Finding pins with ID greater than {} with limit {}", cursorId, limit);
         return pinRepository.findByIdGreaterThanOrderByIdAsc(cursorId, PageRequest.of(0, limit));
     }
 
     /**
      * Count total number of pins
-     *
-     * @return Total count of pins
      */
     @Cacheable(value = "pinCount")
     public long count() {
-        logger.debug("Counting all pins");
         return pinRepository.count();
     }
 }

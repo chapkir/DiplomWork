@@ -14,7 +14,6 @@ import com.example.server.UsPinterest.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -22,7 +21,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 
 /**
  * Контроллер для регистрации и авторизации пользователей
@@ -30,11 +28,10 @@ import lombok.RequiredArgsConstructor;
 @CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
-    private final UserService userService;
-    private final PasswordEncoder passwordEncoder;
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private RefreshTokenService refreshTokenService;
@@ -56,11 +53,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         String token = userService.loginUser(request.getUsername(), request.getPassword());
-
-        // Получаем пользователя
         User user = userService.findByUsername(request.getUsername()).orElseThrow();
-
-        // Создаем refresh токен
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
         Map<String, Object> response = new HashMap<>();
@@ -85,13 +78,8 @@ public class AuthController {
                             .authorities("ROLE_USER")
                             .build();
 
-                    // Генерируем новый token доступа
                     String token = jwtTokenUtil.generateToken(userDetails);
-
-                    // Создаем новый refresh токен
                     RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user.getId());
-
-                    // Возвращаем новую пару токенов
                     return ResponseEntity.ok(new TokenRefreshResponse(token, newRefreshToken.getToken()));
                 })
                 .orElseThrow(() -> new TokenRefreshException(requestRefreshToken,
@@ -102,7 +90,6 @@ public class AuthController {
     public ResponseEntity<?> logoutUser() {
         User currentUser = userService.getCurrentUser();
         if (currentUser != null) {
-            // Найти все refresh токены пользователя и отозвать их
             Optional<RefreshToken> refreshToken = refreshTokenService.findByUser(currentUser);
             refreshToken.ifPresent(token -> refreshTokenService.revokeToken(token));
 

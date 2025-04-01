@@ -38,16 +38,10 @@ public class PinMapper {
         PinResponse response = new PinResponse();
         response.setId(pin.getId());
 
-        // Обновляем ссылку на изображение, получая прямую ссылку если возможно
+        // Обновляем ссылку на изображение
         String imageUrl = pin.getImageUrl();
         if (imageUrl != null && !imageUrl.isEmpty()) {
-            try {
-                String directUrl = fileStorageService.updateImageUrl(imageUrl);
-                response.setImageUrl(directUrl);
-            } catch (Exception e) {
-                // В случае ошибки используем оригинальный URL
-                response.setImageUrl(imageUrl);
-            }
+            response.setImageUrl(fileStorageService.updateImageUrl(imageUrl));
         } else {
             response.setImageUrl(imageUrl);
         }
@@ -65,15 +59,12 @@ public class PinMapper {
             response.setUserId(pin.getUser().getId());
             response.setUsername(pin.getUser().getUsername());
 
-            // Update profile image URL
+            // Обновляем URL профиля пользователя
             String profileImageUrl = pin.getUser().getProfileImageUrl();
             if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
-                try {
-                    String directUrl = fileStorageService.updateImageUrl(profileImageUrl);
-                    response.setUserProfileImageUrl(directUrl);
-                } catch (Exception e) {
-                    response.setUserProfileImageUrl(profileImageUrl);
-                }
+                response.setUserProfileImageUrl(fileStorageService.updateImageUrl(profileImageUrl));
+            } else {
+                response.setUserProfileImageUrl(profileImageUrl);
             }
         }
 
@@ -153,13 +144,7 @@ public class PinMapper {
         return pin;
     }
 
-    /**
-     * Convert a list of Pins to a list of PinResponse DTOs
-     *
-     * @param pins the list of Pin entities
-     * @param currentUser the current authenticated user
-     * @return list of PinResponse DTOs
-     */
+
     public List<PinResponse> mapPinsToPinResponses(List<Pin> pins, User currentUser) {
         return pins.stream()
                 .map(pin -> toDto(pin, currentUser))

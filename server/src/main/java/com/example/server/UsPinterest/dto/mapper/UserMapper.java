@@ -42,18 +42,10 @@ public class UserMapper {
         response.setEmail(user.getEmail());
         response.setBio(user.getBio());
 
-        // Обновляем ссылку на изображение профиля, получая прямую ссылку если возможно
+        // Обновляем ссылку на изображение профиля
         String profileImageUrl = user.getProfileImageUrl();
         if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
-            try {
-                String directUrl = fileStorageService.updateImageUrl(profileImageUrl);
-                response.setProfileImageUrl(directUrl);
-            } catch (Exception e) {
-                // В случае ошибки используем оригинальный URL
-                response.setProfileImageUrl(profileImageUrl);
-            }
-        } else {
-            response.setProfileImageUrl(profileImageUrl);
+            response.setProfileImageUrl(fileStorageService.updateImageUrl(profileImageUrl));
         }
 
         response.setRegistrationDate(user.getRegistrationDate());

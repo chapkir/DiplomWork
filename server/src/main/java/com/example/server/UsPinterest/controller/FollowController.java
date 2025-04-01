@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/api/follows")
+@CrossOrigin(origins = "*")
 public class FollowController {
 
     private final FollowService followService;

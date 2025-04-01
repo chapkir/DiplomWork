@@ -13,7 +13,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.ServletWebRequest;
@@ -25,13 +24,11 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
  * Global exception handler for REST API
- * Provides consistent error responses across the application
  */
 @ControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
@@ -64,7 +61,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         errorDetails.setPath(extractPath(request));
         errorDetails.setFieldErrors(errors);
 
-        logger.error("Validation error: {}", errors);
+        logger.warn("Validation error: {}", errors);
 
         return new ResponseEntity<>(errorDetails, headers, status);
     }
@@ -75,13 +72,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleResourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
         String path = extractPath(request);
-        logger.error("Resource not found at {}: {}", path, ex.getMessage());
+        logger.warn("Resource not found at {}: {}", path, ex.getMessage());
 
         ApiResponse<Void> apiResponse = new ApiResponse<>(
                 false,
                 ex.getMessage(),
                 HttpStatus.NOT_FOUND.value(),
-                path
+                path,
+                null
         );
 
         return new ResponseEntity<>(apiResponse, HttpStatus.NOT_FOUND);
@@ -93,16 +91,36 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadCredentialsException(BadCredentialsException ex, WebRequest request) {
         String path = extractPath(request);
-        logger.error("Authentication failed at {}: {}", path, maskAuthenticationDetails(ex.getMessage()));
+        logger.warn("Authentication failed at {}", path);
 
         ApiResponse<Void> apiResponse = new ApiResponse<>(
                 false,
-                "Invalid username or password",
+                "Неверный логин или пароль",
                 HttpStatus.UNAUTHORIZED.value(),
-                path
+                path,
+                null
         );
 
         return new ResponseEntity<>(apiResponse, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
+     * Handle token refresh exceptions
+     */
+    @ExceptionHandler(TokenRefreshException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTokenRefreshException(TokenRefreshException ex, WebRequest request) {
+        String path = extractPath(request);
+        logger.warn("Token refresh error at {}: {}", path, ex.getMessage());
+
+        ApiResponse<Void> apiResponse = new ApiResponse<>(
+                false,
+                ex.getMessage(),
+                HttpStatus.FORBIDDEN.value(),
+                path,
+                null
+        );
+
+        return new ResponseEntity<>(apiResponse, HttpStatus.FORBIDDEN);
     }
 
     /**
@@ -111,13 +129,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ApiResponse<Void>> handleAuthenticationException(AuthenticationException ex, WebRequest request) {
         String path = extractPath(request);
-        logger.error("Authentication error at {}: {}", path, maskAuthenticationDetails(ex.getMessage()));
+        logger.warn("Authentication error at {}", path);
 
         ApiResponse<Void> apiResponse = new ApiResponse<>(
                 false,
-                "Authentication failed",
+                "Ошибка аутентификации",
                 HttpStatus.UNAUTHORIZED.value(),
-                path
+                path,
+                null
         );
 
         return new ResponseEntity<>(apiResponse, HttpStatus.UNAUTHORIZED);
@@ -129,34 +148,36 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(AccessDeniedException ex, WebRequest request) {
         String path = extractPath(request);
-        logger.error("Access denied at {}: {}", path, ex.getMessage());
+        logger.warn("Access denied at {}", path);
 
         ApiResponse<Void> apiResponse = new ApiResponse<>(
                 false,
-                "You don't have permission to access this resource",
+                "Нет доступа к данному ресурсу",
                 HttpStatus.FORBIDDEN.value(),
-                path
+                path,
+                null
         );
 
         return new ResponseEntity<>(apiResponse, HttpStatus.FORBIDDEN);
     }
 
     /**
-     * Handle file system access denied exceptions
+     * Handle follow exceptions
      */
-    @ExceptionHandler(java.nio.file.AccessDeniedException.class)
-    public ResponseEntity<ApiResponse<Void>> handleFileAccessDeniedException(java.nio.file.AccessDeniedException ex, WebRequest request) {
+    @ExceptionHandler(FollowException.class)
+    public ResponseEntity<ApiResponse<Void>> handleFollowException(FollowException ex, WebRequest request) {
         String path = extractPath(request);
-        logger.error("File access denied at {}: {}", path, ex.getMessage());
+        logger.warn("Follow error at {}: {}", path, ex.getMessage());
 
         ApiResponse<Void> apiResponse = new ApiResponse<>(
                 false,
-                "You don't have permission to access this resource",
-                HttpStatus.FORBIDDEN.value(),
-                path
+                ex.getMessage(),
+                HttpStatus.BAD_REQUEST.value(),
+                path,
+                null
         );
 
-        return new ResponseEntity<>(apiResponse, HttpStatus.FORBIDDEN);
+        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -166,50 +187,24 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolationException(
             DataIntegrityViolationException ex, WebRequest request) {
         String path = extractPath(request);
-        logger.error("Data integrity violation at {}: {}", path, ex.getMessage());
+        logger.warn("Data integrity violation at {}: {}", path, ex.getMessage());
 
-        // Extract useful information from the exception
-        String message = ex.getMostSpecificCause().getMessage();
-
-        // If it's a duplicate key violation, provide a clearer message
-        if (message != null && message.contains("duplicate key")) {
-            message = "A record with the same unique identifier already exists";
+        String message;
+        if (ex.getMostSpecificCause().getMessage().contains("duplicate key")) {
+            message = "Запись с такими данными уже существует";
         } else {
-            message = "Database constraint violation";
+            message = "Нарушение целостности данных";
         }
 
         ApiResponse<Void> apiResponse = new ApiResponse<>(
                 false,
                 message,
                 HttpStatus.CONFLICT.value(),
-                path
+                path,
+                null
         );
 
         return new ResponseEntity<>(apiResponse, HttpStatus.CONFLICT);
-    }
-
-    /**
-     * Handle constraint violations
-     */
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ApiResponse<Void>> handleConstraintViolationException(
-            ConstraintViolationException ex, WebRequest request) {
-        String path = extractPath(request);
-
-        String message = ex.getConstraintViolations().stream()
-                .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
-                .collect(Collectors.joining(", "));
-
-        logger.error("Constraint violation at {}: {}", path, message);
-
-        ApiResponse<Void> apiResponse = new ApiResponse<>(
-                false,
-                "Validation failed: " + message,
-                HttpStatus.BAD_REQUEST.value(),
-                path
-        );
-
-        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -218,36 +213,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(MultipartException.class)
     public ResponseEntity<ApiResponse<Void>> handleMultipartException(MultipartException ex, WebRequest request) {
         String path = extractPath(request);
-        logger.error("Multipart file upload error at {}: {}", path, ex.getMessage());
+        logger.warn("File upload error at {}: {}", path, ex.getMessage());
 
         ApiResponse<Void> apiResponse = new ApiResponse<>(
                 false,
-                "Error processing the uploaded file",
+                "Ошибка при загрузке файла",
                 HttpStatus.BAD_REQUEST.value(),
-                path
-        );
-
-        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
-    }
-
-    /**
-     * Handle type mismatch exceptions
-     */
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ApiResponse<Void>> handleMethodArgumentTypeMismatch(
-            MethodArgumentTypeMismatchException ex, WebRequest request) {
-        String path = extractPath(request);
-
-        String message = String.format("The parameter '%s' of value '%s' could not be converted to type '%s'",
-                ex.getName(), ex.getValue(), ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "Unknown");
-
-        logger.error("Type mismatch at {}: {}", path, message);
-
-        ApiResponse<Void> apiResponse = new ApiResponse<>(
-                false,
-                message,
-                HttpStatus.BAD_REQUEST.value(),
-                path
+                path,
+                null
         );
 
         return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
@@ -263,9 +236,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         ApiResponse<Void> apiResponse = new ApiResponse<>(
                 false,
-                "An unexpected error occurred",
+                "Произошла неожиданная ошибка",
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                path
+                path,
+                null
         );
 
         return new ResponseEntity<>(apiResponse, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -281,19 +255,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 return httpRequest.getRequestURI();
             }
         } catch (Exception e) {
-            logger.warn("Unable to extract request path: {}", e.getMessage());
+            logger.warn("Unable to extract request path", e);
         }
         return "unknown";
-    }
-
-    /**
-     * Mask sensitive information in authentication details
-     */
-    private String maskAuthenticationDetails(String message) {
-        if (message == null) return "null";
-
-        // Mask user names, emails, and any other potentially sensitive info
-        return message.replaceAll("(username|email|login):\\s*[^\\s,]+", "$1: ***MASKED***")
-                .replaceAll("(password):\\s*[^\\s,]+", "$1: ***MASKED***");
     }
 }

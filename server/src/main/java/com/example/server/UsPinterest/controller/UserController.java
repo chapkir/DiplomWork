@@ -1,4 +1,4 @@
-package com.example.server.UsPinterest.controller;//package com.example.diplomwork.backend.UsPinterest.controller;
+package com.example.server.UsPinterest.controller;
 
 import com.example.server.UsPinterest.dto.RegisterRequest;
 import com.example.server.UsPinterest.model.User;
@@ -8,8 +8,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/users")
+@CrossOrigin(origins = "*")
 public class UserController {
 
     @Autowired
@@ -25,13 +29,11 @@ public class UserController {
         return ResponseEntity.ok(responseDto);
     }
 
-    // Эндпоинт ... в будущем добавить нужно
     @GetMapping("/{username}")
     public ResponseEntity<?> getUserByUsername(@PathVariable String username) {
         return userService.findByUsername(username)
                 .map(user -> {
-                    // Создаем объект с информацией о пользователе
-                    java.util.Map<String, Object> response = new java.util.HashMap<>();
+                    Map<String, Object> response = new HashMap<>();
                     response.put("id", user.getId());
                     response.put("username", user.getUsername());
                     response.put("email", user.getEmail());
@@ -42,7 +44,7 @@ public class UserController {
                     return ResponseEntity.ok(response);
                 })
                 .orElse(ResponseEntity.status(404).body(
-                        java.util.Map.of("message", "Пользователь не найден")
+                        Map.of("message", "Пользователь не найден")
                 ));
     }
 }

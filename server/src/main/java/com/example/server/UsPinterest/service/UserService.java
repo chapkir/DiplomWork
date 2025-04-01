@@ -124,6 +124,7 @@ public class UserService {
             UserDetails userDetails = (UserDetails) auth.getPrincipal();
             return findByUsername(userDetails.getUsername()).orElse(null);
         } catch (Exception e) {
+            logger.warn("Ошибка при получении текущего пользователя: {}", e.getMessage());
             return null;
         }
     }

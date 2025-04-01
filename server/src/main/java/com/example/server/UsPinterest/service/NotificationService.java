@@ -163,13 +163,7 @@ public class NotificationService {
 
             String imageUrl = notification.getPin().getImageUrl();
             if (imageUrl != null && !imageUrl.isEmpty()) {
-                try {
-                    String directUrl = fileStorageService.updateImageUrl(imageUrl);
-                    response.setPinImageUrl(directUrl);
-                } catch (Exception e) {
-                    // If we can't get direct URL, use original
-                    response.setPinImageUrl(imageUrl);
-                }
+                response.setPinImageUrl(fileStorageService.updateImageUrl(imageUrl));
             }
         }
 

@@ -47,18 +47,12 @@ public class BoardMapper {
             response.setUserId(board.getUser().getId());
             response.setUsername(board.getUser().getUsername());
 
-            // Обновляем ссылку на изображение профиля, получая прямую ссылку если возможно
+            // Обновляем ссылку на изображение профиля
             String profileImageUrl = board.getUser().getProfileImageUrl();
             if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
-                try {
-                    String directUrl = fileStorageService.updateImageUrl(profileImageUrl);
-                    response.setUserProfileImageUrl(directUrl);
-                } catch (Exception e) {
-                    // В случае ошибки используем оригинальный URL
-                    response.setUserProfileImageUrl(profileImageUrl);
-                }
+                response.setUserProfileImageUrl(fileStorageService.updateImageUrl(profileImageUrl));
             } else {
-                response.setUserProfileImageUrl(profileImageUrl);
+                response.setUserProfileImageUrl(null);
             }
         }
 

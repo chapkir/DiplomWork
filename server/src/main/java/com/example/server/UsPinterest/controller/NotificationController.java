@@ -23,14 +23,12 @@ public class NotificationController {
     public ResponseEntity<List<NotificationResponse>> getNotifications(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        List<NotificationResponse> notifications = notificationService.getUserNotifications(page, size);
-        return ResponseEntity.ok(notifications);
+        return ResponseEntity.ok(notificationService.getUserNotifications(page, size));
     }
 
     @GetMapping("/all")
     public ResponseEntity<List<NotificationResponse>> getAllNotifications() {
-        List<NotificationResponse> notifications = notificationService.getAllUserNotifications();
-        return ResponseEntity.ok(notifications);
+        return ResponseEntity.ok(notificationService.getAllUserNotifications());
     }
 
     @GetMapping("/unread-count")
