@@ -29,8 +29,8 @@ class ProfileViewModel @Inject constructor(
     private val _profileData = MutableStateFlow<ProfileResponse?>(null)
     val profileData: StateFlow<ProfileResponse?> = _profileData
 
-    private val _likedPins = MutableStateFlow<List<PictureResponse>>(emptyList())
-    val likedPins: StateFlow<List<PictureResponse>> = _likedPins
+    private val _likedPictures = MutableStateFlow<List<PictureResponse>>(emptyList())
+    val likedPictures: StateFlow<List<PictureResponse>> = _likedPictures
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -69,14 +69,14 @@ class ProfileViewModel @Inject constructor(
     }
 
     // Загружаем лайкнутые пины
-    fun loadLikedPins() {
+    fun loadLikedPictures() {
         viewModelScope.launch {
             try {
-                val result = profileRepository.getLikedPins()
+                val result = profileRepository.getLikedPictures()
 
                 if (result.isSuccess) {
-                    _likedPins.value = result.getOrNull() ?: emptyList()
-                    Log.d("ProfileViewModel", "Загружено ${_likedPins.value.size} лайкнутых пинов")
+                    _likedPictures.value = result.getOrNull() ?: emptyList()
+                    Log.d("ProfileViewModel", "Загружено ${_likedPictures.value.size} лайкнутых пинов")
                 } else {
                     _error.value = "Ошибка при загрузке лайкнутых пинов"
                 }

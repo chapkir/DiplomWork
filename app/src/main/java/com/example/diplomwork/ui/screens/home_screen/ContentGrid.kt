@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -26,8 +27,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
+import com.example.diplomwork.ui.components.PictureCard
 import com.example.diplomwork.ui.theme.ColorForBackground
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import com.example.diplomwork.viewmodel.HomeViewModel
 
 @Composable
@@ -63,6 +64,7 @@ fun ContentGrid(
             isLoading && !isRefreshing -> {
                 LoadingSpinnerForScreen()
             }
+
             error != null -> {
                 Column(
                     modifier = Modifier
@@ -86,6 +88,7 @@ fun ContentGrid(
                     }
                 }
             }
+
             pictures.isEmpty() -> {
                 Text(
                     text = if (searchQuery.isEmpty()) "Нет доступных пинов"
@@ -94,6 +97,7 @@ fun ContentGrid(
                     modifier = Modifier.padding(16.dp)
                 )
             }
+
             else -> {
                 LazyVerticalStaggeredGrid(
                     columns = StaggeredGridCells.Fixed(2),

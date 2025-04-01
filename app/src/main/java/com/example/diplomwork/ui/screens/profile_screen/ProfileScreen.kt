@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,7 +33,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -51,12 +49,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import coil.compose.AsyncImagePainter
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.diplomwork.R
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
+import com.example.diplomwork.ui.components.PictureCard
 import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.ui.theme.ColorForFocusButton
 import com.example.diplomwork.viewmodel.ProfileViewModel
@@ -72,7 +70,7 @@ fun ProfileScreen(
 
     // Состояние из ViewModel
     val profileData by profileViewModel.profileData.collectAsState()
-    val likedPins by profileViewModel.likedPins.collectAsState()
+    val likedPictures by profileViewModel.likedPictures.collectAsState()
     val isLoading by profileViewModel.isLoading.collectAsState()
     val isUploading by profileViewModel.isUploading.collectAsState()
     val error by profileViewModel.error.collectAsState()
@@ -85,7 +83,7 @@ fun ProfileScreen(
     // Загружаем лайкнутые пины, когда выбран второй таб
     LaunchedEffect(selectedTabIndex) {
         if (selectedTabIndex == 1) {
-            profileViewModel.loadLikedPins()
+            profileViewModel.loadLikedPictures()
         }
     }
 
@@ -122,7 +120,7 @@ fun ProfileScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(onClick = {
-                            profileViewModel.loadLikedPins() // Повторная попытка загрузки
+                            profileViewModel.loadLikedPictures() // Повторная попытка загрузки
                         }) {
                             Text("Повторить")
                         }
@@ -158,21 +156,21 @@ fun ProfileScreen(
                 Crossfade(targetState = selectedTabIndex) { currentTabIndex ->
                     when (currentTabIndex) {
                         0 -> {
-                            if (profileData?.pins?.isEmpty() == true) {
+                            if (profileData?.pictures?.isEmpty() == true) {
                                 EmptyStateMessage(message = "У вас пока нет пинов")
                             } else {
-                                PinsGrid(
-                                    pins = profileData?.pins ?: emptyList(),
-                                    onPinClick = onImageClick
+                                PicturesGrid(
+                                    pictures = profileData?.pictures ?: emptyList(),
+                                    onPictureClick = onImageClick
                                 )
                             }
                         }
 
                         1 -> {
-                            if (likedPins.isEmpty()) {
+                            if (likedPictures.isEmpty()) {
                                 EmptyStateMessage(message = "У вас пока нет лайкнутых пинов")
                             } else {
-                                PinsGrid(pins = likedPins, onPinClick = onImageClick)
+                                PicturesGrid(pictures = likedPictures, onPictureClick = onImageClick)
                             }
                         }
                     }
@@ -270,40 +268,23 @@ private fun EmptyStateMessage(message: String) {
 }
 
 @Composable
-private fun PinsGrid(pins: List<PictureResponse>, onPinClick: (Long, String) -> Unit) {
-
-    var aspectRatio by remember { mutableFloatStateOf(1f) }
+private fun PicturesGrid(pictures: List<PictureResponse>, onPictureClick: (Long, String) -> Unit) {
 
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(3),
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(4.dp)
-    ) {
-        itemsIndexed(pins) { _, pin ->
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(pin.imageUrl)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = pin.description,
-                contentScale = ContentScale.Crop,
-                onState = { state ->
-                    //isLoading = state is AsyncImagePainter.State.Loading
-                    //isError = state is AsyncImagePainter.State.Error
-                    if (state is AsyncImagePainter.State.Success) {
-                        val size = state.painter.intrinsicSize
-                        if (size.width > 0 && size.height > 0) {
-                            aspectRatio = size.width / size.height
-                        }
+        contentPadding = PaddingValues(4.dp),
+        content = {
+            itemsIndexed(pictures) { _, picture ->
+                PictureCard(
+                    imageUrl = picture.imageUrl,
+                    id = picture.id,
+                    onClick = {
+                        onPictureClick(picture.id, picture.imageUrl)
                     }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp)
-                    .aspectRatio(aspectRatio)
-                    .clip(RoundedCornerShape(12.dp))
-                    .clickable { onPinClick(pin.id, pin.imageUrl) }
-            )
+                )
+            }
         }
-    }
+    )
 }
+

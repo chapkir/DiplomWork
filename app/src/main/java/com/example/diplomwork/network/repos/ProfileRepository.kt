@@ -23,7 +23,7 @@ class ProfileRepository @Inject constructor(
         return apiService.uploadProfileImage(image)
     }
 
-    suspend fun getLikedPins(): Result<List<PictureResponse>> {
+    suspend fun getLikedPictures(): Result<List<PictureResponse>> {
         return try {
             val response = apiService.getLikedPictures()
             Result.success(response)
