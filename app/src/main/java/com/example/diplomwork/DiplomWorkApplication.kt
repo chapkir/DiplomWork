@@ -24,22 +24,22 @@ class DiplomWorkApplication : Application()
         clearImageCache()
 
         // Инициализация Coil с настройками
-        configureImageLoader()
+        //configureImageLoader()
     }
 
-    private fun configureImageLoader() {
-        try {
-            // Создаем кастомный ImageLoader с настройками для обработки ошибок 410
-            val imageLoader = ApiClient.createImageLoader(this)
-
-            // Устанавливаем этот ImageLoader как дефолтный для всего приложения
-            Coil.setImageLoader(imageLoader)
-
-            Log.d("DiplomWorkApplication", "ImageLoader сконфигурирован с настройками для обработки ошибок 410")
-        } catch (e: Exception) {
-            Log.e("DiplomWorkApplication", "Ошибка при настройке ImageLoader: ${e.message}")
-        }
-    }
+//    private fun configureImageLoader() {
+//        try {
+//            // Создаем кастомный ImageLoader с настройками для обработки ошибок 410
+//            //val imageLoader = ApiClient.createImageLoader(this)
+//
+//            // Устанавливаем этот ImageLoader как дефолтный для всего приложения
+//            //Coil.setImageLoader(imageLoader)
+//
+//            Log.d("DiplomWorkApplication", "ImageLoader сконфигурирован с настройками для обработки ошибок 410")
+//        } catch (e: Exception) {
+//            Log.e("DiplomWorkApplication", "Ошибка при настройке ImageLoader: ${e.message}")
+//        }
+//    }
 
     private fun clearImageCache() {
         try {

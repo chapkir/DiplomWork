@@ -4,15 +4,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.network.ApiService
+import com.example.diplomwork.network.repos.PictureRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class ContentGridViewModel @Inject constructor(
-    private val apiService: ApiService
+class HomeViewModel @Inject constructor(
+    private val pictureRepository: PictureRepository
 ) : ViewModel() {
 
     private val _pictures = MutableStateFlow<List<PictureResponse>>(emptyList())
@@ -24,22 +26,48 @@ class ContentGridViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
-    fun loadPictures(searchQuery: String = "") {
+    private var currentPage = 0
+    private val pageSize = 20
+    private var isLastPage = false
+
+    init {
+        loadPictures()
+    }
+
+    private fun loadPictures(searchQuery: String = "", isRefreshing: Boolean = false) {
+        if (_isLoading.value || isLastPage) return
+
         viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+
             try {
-                _isLoading.value = true
-                val response = if (searchQuery.isNotEmpty()) {
-                    apiService.searchPictures(searchQuery).data.content
+                val result = if (searchQuery.isNotEmpty()) {
+                    // Для поиска картинок
+                    pictureRepository.searchPictures(searchQuery, page = if (isRefreshing) 0 else currentPage, size = pageSize)
                 } else {
-                    apiService.getPictures()
+                    // Для получения всех картинок
+                    pictureRepository.getPictures()
                 }
-                _pictures.value = response
-                _error.value = null
+
+                if (isRefreshing) {
+                    _pictures.value = result
+                    currentPage = 1
+                } else {
+                    _pictures.value += result
+                    currentPage++
+                }
+
+                isLastPage = result.size < pageSize
             } catch (e: Exception) {
-                _error.value = "Ошибка загрузки данных: ${e.message}"
+                _error.value = "Ошибка загрузки: ${e.message}"
             } finally {
                 _isLoading.value = false
             }
         }
+    }
+
+    fun refreshPictures(searchQuery: String = "") {
+        loadPictures(searchQuery, isRefreshing = true)
     }
 }

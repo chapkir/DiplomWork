@@ -1,6 +1,12 @@
 package com.example.diplomwork.di
 
 import android.content.Context
+import android.util.Log
+import coil.ImageLoader
+import coil.disk.DiskCache
+import coil.memory.MemoryCache
+import coil.request.CachePolicy
+import coil.request.ImageResult
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.network.ApiService
@@ -50,13 +56,14 @@ object AppModule {
         authInterceptor: AuthInterceptor,
         corsInterceptor: CorsInterceptor
     ): OkHttpClient {
+        Log.e("piska", "Создание окхттп в аппмодуль")
         return OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
             .addInterceptor(authInterceptor)
             .addInterceptor(corsInterceptor)
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
+            .connectTimeout(100, TimeUnit.SECONDS)
+            .readTimeout(100, TimeUnit.SECONDS)
+            .writeTimeout(100, TimeUnit.SECONDS)
             .retryOnConnectionFailure(true)
             .build()
     }
@@ -82,4 +89,33 @@ object AppModule {
     fun provideImageUploadService(retrofit: Retrofit): ImageUploadService {
         return retrofit.create(ImageUploadService::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideImageLoader(context: Context, okHttpClient: OkHttpClient): ImageLoader {
+        return ImageLoader.Builder(context)
+            .okHttpClient(okHttpClient)
+            .memoryCachePolicy(CachePolicy.ENABLED)
+            .memoryCache {
+                MemoryCache.Builder(context)
+                    .maxSizePercent(0.25)
+                    .build()
+            }
+            .diskCachePolicy(CachePolicy.ENABLED)
+            .diskCache {
+                DiskCache.Builder()
+                    .directory(context.cacheDir.resolve("image_cache"))
+                    .maxSizePercent(0.10)
+                    .build()
+            }
+            .respectCacheHeaders(false)
+            .crossfade(true)
+            .error(android.R.drawable.ic_menu_report_image)
+            .interceptorDispatcher(kotlinx.coroutines.Dispatchers.IO)
+            .fetcherDispatcher(kotlinx.coroutines.Dispatchers.IO)
+            .decoderDispatcher(kotlinx.coroutines.Dispatchers.IO)
+            .transformationDispatcher(kotlinx.coroutines.Dispatchers.Default)
+            .build()
+    }
+
 }

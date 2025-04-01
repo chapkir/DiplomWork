@@ -1,5 +1,6 @@
 package com.example.diplomwork.network.repos
 
+import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.model.ProfileResponse
 import com.example.diplomwork.network.ApiService
 import dagger.hilt.android.scopes.ActivityScoped
@@ -22,8 +23,12 @@ class ProfileRepository @Inject constructor(
         return apiService.uploadProfileImage(image)
     }
 
-    // Загрузка аватара пользователя
-    suspend fun uploadAvatar(file: MultipartBody.Part): Response<String> {
-        return apiService.uploadAvatar(file)
+    suspend fun getLikedPins(): Result<List<PictureResponse>> {
+        return try {
+            val response = apiService.getLikedPictures()
+            Result.success(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

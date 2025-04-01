@@ -1,11 +1,9 @@
 package com.example.diplomwork.ui.screens.profile_screen
 
-import android.content.Context
 import android.net.Uri
-import android.util.Log
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -34,10 +32,10 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,184 +48,56 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.diplomwork.R
-import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.model.PictureResponse
-import com.example.diplomwork.model.ProfileResponse
-import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.theme.ColorForBottomMenu
-import com.example.diplomwork.ui.util.ImageUtils
-import kotlinx.coroutines.launch
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
-import retrofit2.HttpException
-import coil.request.CachePolicy
 import com.example.diplomwork.ui.theme.ColorForFocusButton
+import com.example.diplomwork.viewmodel.ProfileViewModel
 
 @Composable
 fun ProfileScreen(
     onLogout: () -> Unit,
     onNavigateToLogin: () -> Unit,
-    onImageClick: (Long, String) -> Unit
+    onImageClick: (Long, String) -> Unit,
+    profileViewModel: ProfileViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val sessionManager = remember { SessionManager(context) }
-    val scope = rememberCoroutineScope()
 
-    var profileData by remember { mutableStateOf<ProfileResponse?>(null) }
-    var likedPins by remember { mutableStateOf<List<PictureResponse>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
-    var isUploading by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
+    // Состояние из ViewModel
+    val profileData by profileViewModel.profileData.collectAsState()
+    val likedPins by profileViewModel.likedPins.collectAsState()
+    val isLoading by profileViewModel.isLoading.collectAsState()
+    val isUploading by profileViewModel.isUploading.collectAsState()
+    val error by profileViewModel.error.collectAsState()
+    val avatarUpdateCounter by profileViewModel.avatarUpdateCounter.collectAsState()
+
+    // Управление вкладками
     var selectedTabIndex by remember { mutableStateOf(0) }
-    var profileImageUrl by remember { mutableStateOf<String?>(null) }
-    var avatarUpdateCounter by remember { mutableStateOf(0) }
     val tabTitles = listOf("Публикации", "Лайки")
 
-    suspend fun loadLikedPins() {
-        try {
-            likedPins = ApiClient.apiService.getLikedPictures()
-            Log.d("ProfileScreen", "Загружено ${likedPins.size} лайкнутых пинов")
-        } catch (e: Exception) {
-            Log.e("ProfileScreen", "Ошибка при загрузке лайкнутых пинов: ${e.message}")
-            Toast.makeText(context, "Ошибка при загрузке лайкнутых пинов", Toast.LENGTH_SHORT)
-                .show()
-        }
-    }
-
-    suspend fun loadProfile() {
-        try {
-            profileData = ApiClient.apiService.getProfile()
-            profileImageUrl = profileData?.profileImageUrl
-            Log.d("ProfileScreen", "Загружен профиль: ${profileData?.username}, аватар: $profileImageUrl")
-        } catch (e: Exception) {
-            Log.e("ProfileScreen", "Ошибка при загрузке профиля: ${e.message}")
-            throw e
-        }
-    }
-
-    // Функция для загрузки аватарки на сервер
-    fun uploadAvatarToServer(uri: Uri, context: Context) {
-        scope.launch {
-            isUploading = true
-            try {
-                val imageFile = ImageUtils.copyUriToFile(context, uri)
-
-                if (imageFile != null) {
-                    try {
-                        // Создаем MultipartBody.Part для файла изображения
-                        val requestFile = imageFile.asRequestBody("image/*".toMediaTypeOrNull())
-                        val body = MultipartBody.Part.createFormData("image", imageFile.name, requestFile)
-
-                        // Отправляем запрос на сервер
-                        val response = ApiClient.apiService.uploadProfileImage(body)
-
-                        // Обрабатываем успешный ответ
-                        if (response.isSuccessful) {
-                            // Обновляем URL аватарки
-                            val updatedProfile = response.body()
-                            val newImageUrl = updatedProfile?.get("profileImageUrl")
-
-                            // Сначала обновляем локальную переменную profileImageUrl
-                            profileImageUrl = newImageUrl
-
-                            // Увеличиваем счетчик обновлений для перерисовки UI
-                            avatarUpdateCounter++
-
-                            // Затем обновляем данные профиля
-                            try {
-                                profileData = ApiClient.apiService.getProfile()
-                                // Теперь profileData содержит актуальные данные, включая обновленный URL аватара
-
-                                Toast.makeText(context, "Аватар успешно обновлен", Toast.LENGTH_SHORT).show()
-                                Log.d("ProfileScreen", "Аватар успешно загружен: $profileImageUrl")
-                            } catch (e: Exception) {
-                                Log.e("ProfileScreen", "Ошибка при обновлении профиля после загрузки аватара: ${e.message}")
-                                // Даже если не удалось обновить полный профиль,
-                                // аватар все равно уже обновлен в интерфейсе
-                            }
-                        } else {
-                            // Обрабатываем ошибку
-                            val errorMessage = response.errorBody()?.string() ?: "Неизвестная ошибка"
-                            Toast.makeText(context, "Ошибка при загрузке аватара: $errorMessage", Toast.LENGTH_SHORT).show()
-                            Log.e("ProfileScreen", "Ошибка при загрузке аватара: $errorMessage")
-                        }
-                    } finally {
-                        // Удаляем временный файл
-                        try {
-                            imageFile.delete()
-                        } catch (e: Exception) {
-                            Log.e("ProfileScreen", "Ошибка при удалении временного файла: ${e.message}")
-                        }
-                    }
-                } else {
-                    Toast.makeText(context, "Не удалось подготовить изображение", Toast.LENGTH_SHORT).show()
-                    Log.e("ProfileScreen", "Не удалось подготовить изображение")
-                }
-            } catch (e: Exception) {
-                Log.e("ProfileScreen", "Ошибка при загрузке аватара: ${e.message}", e)
-                Toast.makeText(context, "Ошибка при загрузке аватара: ${e.message}", Toast.LENGTH_SHORT).show()
-            } finally {
-                isUploading = false
-            }
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        if (!sessionManager.isLoggedIn()) {
-            Log.d("ProfileScreen", "Пользователь не авторизован, перенаправление на экран входа")
-            onNavigateToLogin()
-            return@LaunchedEffect
-        }
-
-        try {
-            val token = sessionManager.getAuthToken()
-            if (token == null) {
-                error = "Токен авторизации отсутствует"
-                isLoading = false
-                return@LaunchedEffect
-            }
-
-            loadProfile()
-            loadLikedPins()
-            isLoading = false
-        } catch (e: HttpException) {
-            error = "Ошибка загрузки профиля (код ${e.code()})"
-            isLoading = false
-            if (e.code() == 401 || e.code() == 403) {
-                sessionManager.clearSession()
-                Toast.makeText(
-                    context,
-                    "Сессия истекла. Пожалуйста, войдите снова",
-                    Toast.LENGTH_LONG
-                ).show()
-                onNavigateToLogin()
-            }
-        } catch (e: Exception) {
-            error = "Ошибка: ${e.message}"
-            isLoading = false
-        }
-    }
-
+    // Загружаем лайкнутые пины, когда выбран второй таб
     LaunchedEffect(selectedTabIndex) {
         if (selectedTabIndex == 1) {
-            loadLikedPins()
+            profileViewModel.loadLikedPins()
         }
     }
 
+    // Лаунчер для выбора изображения
     val pickImageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
-            uploadAvatarToServer(it, context)
+            profileViewModel.uploadAvatarToServer(it, context)
         }
     }
 
+    // Основной UI
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -251,18 +121,7 @@ fun ProfileScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(onClick = {
-                            error = null
-                            isLoading = true
-                            scope.launch {
-                                try {
-                                    loadProfile()
-                                    loadLikedPins()
-                                    isLoading = false
-                                } catch (e: Exception) {
-                                    error = "Ошибка: ${e.message}"
-                                    isLoading = false
-                                }
-                            }
+                            profileViewModel.loadLikedPins() // Повторная попытка загрузки
                         }) {
                             Text("Повторить")
                         }
@@ -273,7 +132,7 @@ fun ProfileScreen(
             profileData != null -> {
                 ProfileHeader(
                     username = profileData?.username ?: "Неизвестный",
-                    avatarUrl = profileImageUrl,
+                    avatarUrl = profileData?.profileImageUrl,
                     isUploading = isUploading,
                     onAvatarClick = { pickImageLauncher.launch("image/*") },
                     onLogout = onLogout,
@@ -294,23 +153,26 @@ fun ProfileScreen(
                     }
                 }
 
-                when (selectedTabIndex) {
-                    0 -> {
-                        if (profileData?.pins?.isEmpty() == true) {
-                            EmptyStateMessage(message = "У вас пока нет пинов")
-                        } else {
-                            PinsGrid(
-                                pins = profileData?.pins ?: emptyList(),
-                                onPinClick = onImageClick
-                            )
+                // Используем Crossfade для плавного переключения между контентом
+                Crossfade(targetState = selectedTabIndex) { currentTabIndex ->
+                    when (currentTabIndex) {
+                        0 -> {
+                            if (profileData?.pins?.isEmpty() == true) {
+                                EmptyStateMessage(message = "У вас пока нет пинов")
+                            } else {
+                                PinsGrid(
+                                    pins = profileData?.pins ?: emptyList(),
+                                    onPinClick = onImageClick
+                                )
+                            }
                         }
-                    }
 
-                    1 -> {
-                        if (likedPins.isEmpty()) {
-                            EmptyStateMessage(message = "У вас пока нет лайкнутых пинов")
-                        } else {
-                            PinsGrid(pins = likedPins, onPinClick = onImageClick)
+                        1 -> {
+                            if (likedPins.isEmpty()) {
+                                EmptyStateMessage(message = "У вас пока нет лайкнутых пинов")
+                            } else {
+                                PinsGrid(pins = likedPins, onPinClick = onImageClick)
+                            }
                         }
                     }
                 }

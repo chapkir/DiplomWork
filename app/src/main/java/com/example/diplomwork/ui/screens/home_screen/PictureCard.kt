@@ -45,10 +45,6 @@ fun PictureCard(
     var aspectRatio by remember { mutableFloatStateOf(1f) }
     var isLoading by remember { mutableStateOf(true) }
     var isError by remember { mutableStateOf(false) }
-    var retryCount by rememberSaveable { mutableIntStateOf(0) }
-    val originalUrl = remember { imageUrl }
-    var displayUrl by rememberSaveable { mutableStateOf(processImageUrl(imageUrl)) }
-    val maxRetryCount = 2
 
     Card(
         shape = RoundedCornerShape(12.dp),
@@ -63,7 +59,7 @@ fun PictureCard(
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(displayUrl)
+                    .data(imageUrl)
                     .crossfade(true)
                     .build(),
                 contentDescription = null,
@@ -73,36 +69,6 @@ fun PictureCard(
 
                     if (state is AsyncImagePainter.State.Error) {
                         isError = true
-                        val exception = state.result.throwable
-                        Log.e("PictureCard", "Ошибка загрузки изображения: $displayUrl", exception)
-
-                        if (retryCount < maxRetryCount) {
-                            retryCount++
-                            val errorCode = when {
-                                exception.message?.contains("410") == true -> 410
-                                exception.message?.contains("404") == true -> 404
-                                exception.message?.contains("400") == true -> 400
-                                exception.message?.contains("500") == true -> 500
-                                else -> -1
-                            }
-
-                            displayUrl = when (errorCode) {
-                                410, 404 -> {
-                                    Log.w("PictureCard", "Ссылка недействительна ($errorCode), пробуем через прокси")
-                                    forceProxyImageUrl(imageUrl)
-                                }
-                                in 400..499 -> {
-                                    Log.w("PictureCard", "Клиентская ошибка ($errorCode), пробуем другой URL")
-                                    tryAlternativeUrl(imageUrl, retryCount)
-                                }
-                                else -> {
-                                    Log.w("PictureCard", "Неизвестная ошибка, пробуем через прокси")
-                                    forceProxyImageUrl(imageUrl)
-                                }
-                            }
-                        } else {
-                            Log.e("PictureCard", "Все попытки загрузки исчерпаны для: $imageUrl")
-                        }
                     }
 
                     if (state is AsyncImagePainter.State.Success) {
@@ -137,42 +103,6 @@ fun PictureCard(
                             .align(Alignment.Center)
                     )
                 }
-            }
-        }
-    }
-}
-
-private fun processImageUrl(imageUrl: String): String {
-    val url = if (imageUrl.startsWith("@")) imageUrl.substring(1) else imageUrl
-
-    return when {
-        url.startsWith("http://") || url.startsWith("https://") -> url
-        else -> "${ApiClient.getBaseUrl()}$url"
-    }
-}
-
-private fun forceProxyImageUrl(imageUrl: String): String {
-    val url = if (imageUrl.startsWith("@")) imageUrl.substring(1) else imageUrl
-
-    val baseUrl = if (url.startsWith("http")) {
-        url
-    } else {
-        "${ApiClient.getBaseUrl()}$url"
-    }
-
-    return "$baseUrl${if (url.contains("?")) "&" else "?"}cache_bust=${System.currentTimeMillis()}"
-}
-
-private fun tryAlternativeUrl(imageUrl: String, attemptNumber: Int): String {
-    val url = if (imageUrl.startsWith("@")) imageUrl.substring(1) else imageUrl
-
-    return when (attemptNumber) {
-        1 -> forceProxyImageUrl(url)
-        else -> {
-            if (url.startsWith("http")) {
-                url
-            } else {
-                "${ApiClient.getBaseUrl()}$url"
             }
         }
     }

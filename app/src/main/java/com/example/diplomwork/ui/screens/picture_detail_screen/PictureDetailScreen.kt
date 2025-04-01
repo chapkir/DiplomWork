@@ -1,6 +1,5 @@
 package com.example.diplomwork.ui.screens.picture_detail_screen
 
-import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -33,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowInsetsCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.toRoute
 import com.example.diplomwork.R
 import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.system_settings.systemInsetHeight
@@ -73,14 +71,17 @@ fun PictureDetailScreen(
         } else {
             item {
                 val timestamp = System.currentTimeMillis()
-                Log.i("NAVIGATION_DEBUG", "$timestamp - DETAIL: ОТОБРАЖЕНИЕ ПИНА С ID=${viewPictureDetailScreenData.pictureId}, " +
-                        "Описание='$pictureDescription', Лайки=$likesCount, " +
-                        "Автор=$pictureUsername, Комментариев=${comments.size}")
+                Log.i(
+                    "NAVIGATION_DEBUG",
+                    "$timestamp - DETAIL: ОТОБРАЖЕНИЕ ПИНА С ID=${viewPictureDetailScreenData.pictureId}, " +
+                            "Описание='$pictureDescription', Лайки=$likesCount, " +
+                            "Автор=$pictureUsername, Комментариев=${comments.size}"
+                )
 
                 ImageView(
                     imageRes =
-                    if (viewPictureDetailScreenData.imageUrl.startsWith("http")) viewPictureDetailScreenData.imageUrl
-                    else ApiClient.getBaseUrl() + viewPictureDetailScreenData.imageUrl,
+                        if (viewPictureDetailScreenData.imageUrl.startsWith("http")) viewPictureDetailScreenData.imageUrl
+                        else ApiClient.getBaseUrl() + viewPictureDetailScreenData.imageUrl,
                     aspectRatio = 1f
                 )
             }
@@ -105,7 +106,7 @@ fun PictureDetailScreen(
                         .fillMaxWidth()
                         .padding(
                             bottom =
-                            systemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value
+                                systemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value
                         )
                 ) {
                     if (comments.isNotEmpty()) {

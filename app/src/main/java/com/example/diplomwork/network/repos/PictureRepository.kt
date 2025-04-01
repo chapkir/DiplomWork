@@ -4,6 +4,7 @@ import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.model.Comment
 import com.example.diplomwork.model.CommentRequest
 import com.example.diplomwork.model.CommentResponse
+import com.example.diplomwork.model.PageResponse
 import com.example.diplomwork.network.ApiService
 import dagger.hilt.android.scopes.ActivityScoped
 import okhttp3.MultipartBody
@@ -49,5 +50,10 @@ class PictureRepository @Inject constructor(
     // Загрузка картинки
     suspend fun uploadImage(file: MultipartBody.Part, description: String): PictureResponse {
         return apiService.uploadImage(file, description)
+    }
+
+    //Поиск картинки
+    suspend fun searchPictures(query: String, page: Int, size: Int): List<PictureResponse> {
+        return apiService.searchPictures(query, page, size).data.content
     }
 }

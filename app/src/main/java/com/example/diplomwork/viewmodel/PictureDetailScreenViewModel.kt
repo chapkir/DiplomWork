@@ -52,7 +52,6 @@ class PictureDetailScreenViewModel @Inject constructor(
                 Log.d("PictureDetailViewModel", "Начинаем загрузку данных пина с ID: $pictureId")
                 val picture = pictureRepository.getPicture(pictureId)
 
-                // Логируем полученные данные для отладки
                 Log.d("PictureDetailViewModel", "Загружен пин: ID=${picture.id}, " +
                         "URL=${picture.imageUrl}, " +
                         "Автор=${picture.username}, " +
@@ -68,7 +67,7 @@ class PictureDetailScreenViewModel @Inject constructor(
                 _comments.value = pictureRepository.getComments(pictureId)
                 Log.d("PictureDetailViewModel", "Загружено ${_comments.value.size} комментариев")
             } catch (e: Exception) {
-                Log.e("PictureDetailViewModel", "Error loading data: ${e.message}", e)
+                Log.e("PictureDetailViewModel", "Error: ${e.message}", e)
             } finally {
                 _isLoading.value = false
             }

@@ -29,8 +29,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Инициализация ApiClient
-        Log.d("MainActivity", "Инициализация ApiClient")
         ApiClient.init(this)
 
         // Проверяем и сбрасываем настройки URL
