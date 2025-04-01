@@ -1,6 +1,7 @@
 package com.example.server.UsPinterest.repository;
 
 import com.example.server.UsPinterest.model.Notification;
+import com.example.server.UsPinterest.model.Pin;
 import com.example.server.UsPinterest.model.User;
 
 import org.springframework.data.domain.Page;
@@ -25,4 +26,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Modifying
     @Query("UPDATE Notification n SET n.isRead = true WHERE n.recipient = ?1")
     void markAllAsRead(User user);
+
+    @Modifying
+    @Query("DELETE FROM Notification n WHERE n.pin = ?1")
+    void deleteByPin(Pin pin);
 }

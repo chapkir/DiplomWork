@@ -8,6 +8,7 @@ import com.example.diplomwork.network.repos.ImageRepository
 import com.example.diplomwork.network.repos.PictureRepository
 import com.example.diplomwork.network.repos.ProfileRepository
 import com.example.diplomwork.network.repos.SearchRepository
+import com.example.diplomwork.auth.SessionManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -41,6 +42,7 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun providePictureRepository(apiService: ApiService) = PictureRepository(apiService)
+    fun providePictureRepository(apiService: ApiService, sessionManager: SessionManager) =
+        PictureRepository(apiService, sessionManager)
 
 }

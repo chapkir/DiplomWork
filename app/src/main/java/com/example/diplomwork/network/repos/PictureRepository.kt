@@ -12,10 +12,12 @@ import okhttp3.MultipartBody
 import retrofit2.Response
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.example.diplomwork.auth.SessionManager
 
 @Singleton
 class PictureRepository @Inject constructor(
-    private val apiService: ApiService
+    private val apiService: ApiService,
+    private val sessionManager: SessionManager
 ) {
 
     // Получение всех картинок
@@ -40,7 +42,12 @@ class PictureRepository @Inject constructor(
 
     // Получение комментариев для картинки
     suspend fun getComments(pinId: Long): List<Comment> {
-        return apiService.getComments(pinId)
+        return try {
+            val response = apiService.getComments(pinId)
+            response.data ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 
     // Добавление комментария
@@ -61,9 +68,14 @@ class PictureRepository @Inject constructor(
     suspend fun deletePicture(id: Long): Boolean {
         return try {
             val response = apiService.deletePicture(id)
-            response.isSuccessful // Вернет true, если удаление прошло успешно
+            response.isSuccessful
         } catch (e: Exception) {
             false
         }
+    }
+
+    // Получение имени текущего пользователя
+    fun getCurrentUsername(): String {
+        return sessionManager.getUsername() ?: ""
     }
 }

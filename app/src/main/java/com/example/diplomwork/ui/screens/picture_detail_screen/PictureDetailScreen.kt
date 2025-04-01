@@ -55,8 +55,18 @@ fun PictureDetailScreen(
     val profileImageUrl by viewModel.profileImageUrl.collectAsState()
     val comments by viewModel.comments.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val deleteStatus by viewModel.deleteStatus.collectAsState()
+    val isCurrentUserOwner by viewModel.isCurrentUserOwner.collectAsState()
 
     var showCommentsSheet by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    if (deleteStatus.isNotEmpty()) {
+        Toast.makeText(context, deleteStatus, Toast.LENGTH_SHORT).show()
+        if (deleteStatus == "Ну тут вроде удаляется, но нужно обновлять страницу") {
+            onNavigateBack()
+        }
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -73,8 +83,8 @@ fun PictureDetailScreen(
             item {
                 ImageView(
                     imageRes =
-                        if (viewPictureDetailScreenData.imageUrl.startsWith("http")) viewPictureDetailScreenData.imageUrl
-                        else AppConstants.BASE_URL + viewPictureDetailScreenData.imageUrl,
+                    if (viewPictureDetailScreenData.imageUrl.startsWith("http")) viewPictureDetailScreenData.imageUrl
+                    else AppConstants.BASE_URL + viewPictureDetailScreenData.imageUrl,
                     aspectRatio = 1f
                 )
             }
@@ -98,7 +108,7 @@ fun PictureDetailScreen(
                         .fillMaxWidth()
                         .padding(
                             bottom =
-                                systemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value
+                            systemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value
                         )
                 ) {
                     if (comments.isNotEmpty()) {

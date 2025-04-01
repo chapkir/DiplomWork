@@ -504,8 +504,39 @@ public class PinController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> deletePin(@PathVariable Long id) {
-        pinService.deletePin(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> deletePin(@PathVariable Long id, Authentication authentication) {
+        try {
+            // Получаем текущего пользователя
+            User currentUser = userService.getCurrentUser();
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new MessageResponse("Пользователь не авторизован"));
+            }
+
+            // Получаем пин
+            Pin pin = pinRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Пин с ID " + id + " не найден"));
+
+            // Проверяем, является ли текущий пользователь владельцем пина
+            if (!pin.getUser().getId().equals(currentUser.getId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new MessageResponse("У вас нет прав на удаление этого пина"));
+            }
+
+            // Удаляем связанные уведомления перед удалением пина
+            notificationService.deleteNotificationsByPin(pin);
+
+            // Удаляем пин
+            pinService.deletePin(id);
+
+            return ResponseEntity.noContent().build();
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new MessageResponse(e.getMessage()));
+        } catch (Exception e) {
+            logger.error("Ошибка при удалении пина: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResponse("Ошибка при удалении пина: " + e.getMessage()));
+        }
     }
 }

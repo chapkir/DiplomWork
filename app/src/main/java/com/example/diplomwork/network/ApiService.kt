@@ -55,7 +55,7 @@ interface ApiService {
     suspend fun unlikePicture(@Path("pinId") pinId: Long): Response<Unit>
 
     @GET("api/pins/{pinId}/comments")
-    suspend fun getComments(@Path("pinId") pinId: Long): List<Comment>
+    suspend fun getComments(@Path("pinId") pinId: Long): ApiResponse<List<Comment>>
 
     @POST("api/pins/{pinId}/comments")
     suspend fun addComment(

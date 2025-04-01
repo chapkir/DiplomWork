@@ -45,6 +45,9 @@ class PictureDetailScreenViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading
 
+    private val _isCurrentUserOwner = MutableStateFlow(false)
+    val isCurrentUserOwner: StateFlow<Boolean> = _isCurrentUserOwner
+
     init {
         loadPictureData()
     }
@@ -58,7 +61,14 @@ class PictureDetailScreenViewModel @Inject constructor(
                 _pictureDescription.value = picture.description
                 _likesCount.value = picture.likesCount
                 _isLiked.value = picture.isLikedByCurrentUser
-                _comments.value = pictureRepository.getComments(_pictureId)
+
+                try {
+                    _comments.value = pictureRepository.getComments(_pictureId)
+                } catch (e: Exception) {
+                    Log.e("PictureDetailViewModel", "Ошибка при загрузке комментариев: ${e.message}", e)
+                    _comments.value = emptyList()
+                }
+
             } catch (e: Exception) {
                 Log.e("PictureDetailViewModel", "Error: ${e.message}", e)
             } finally {
@@ -77,7 +87,7 @@ class PictureDetailScreenViewModel @Inject constructor(
 
                 val isDeleted = pictureRepository.deletePicture(id)
                 if (isDeleted) {
-                    _deleteStatus.value = "Картинка удалена!"
+                    _deleteStatus.value = "Ну тут вроде удаляется, но нужно обновлять страницу"
                 } else {
                     _deleteStatus.value = "Ошибка удаления"
                 }

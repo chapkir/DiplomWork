@@ -144,6 +144,16 @@ public class NotificationService {
         notificationRepository.save(notification);
     }
 
+    // Удалить все уведомления, связанные с определенным пином
+    @Transactional
+    public void deleteNotificationsByPin(Pin pin) {
+        if (pin == null) {
+            return;
+        }
+
+        notificationRepository.deleteByPin(pin);
+    }
+
     // Преобразовать уведомление в DTO
     private NotificationResponse convertToNotificationResponse(Notification notification) {
         NotificationResponse response = new NotificationResponse();
