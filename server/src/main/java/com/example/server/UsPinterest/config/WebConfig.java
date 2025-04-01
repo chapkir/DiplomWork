@@ -2,14 +2,19 @@ package com.example.server.UsPinterest.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 import org.springframework.web.servlet.config.annotation.*;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -19,6 +24,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
@@ -33,6 +39,9 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Value("${api.current-version:v1}")
     private String currentApiVersion;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
@@ -64,7 +73,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .addResourceLocations("file:" + profileImagesPath + "/")
                 .setCachePeriod(3600);
 
-        // Swagger UI resources
+
         registry.addResourceHandler("/swagger-ui/**")
                 .addResourceLocations("classpath:/META-INF/resources/webjars/swagger-ui/")
                 .setCachePeriod(3600);
@@ -89,17 +98,21 @@ public class WebConfig implements WebMvcConfigurer {
                 .maxAge(3600);
     }
 
-    /**
-     * Configure API versioning paths
-     */
+
     @Override
     public void configurePathMatch(PathMatchConfigurer configurer) {
-        // Отключаем версионирование API через путь из-за проблем с совместимостью
-        // В будущем можно использовать заголовок X-API-Version вместо префикса пути
+
 
         logger.info("API versioning set to version: {}", currentApiVersion);
 
-        // Добавляем заголовок версии API к ответам через headerFilter Bean
+    }
+
+    @Override
+    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+        converter.setObjectMapper(objectMapper);
+        converters.add(0, converter); // Add at first position to ensure it's used
+        logger.info("Configured custom Jackson message converter");
     }
 
     @Bean
@@ -115,7 +128,6 @@ public class WebConfig implements WebMvcConfigurer {
             protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
                     throws ServletException, IOException {
 
-                // Set security headers
                 response.setHeader("X-Content-Type-Options", "nosniff");
                 response.setHeader("X-Frame-Options", "DENY");
                 response.setHeader("X-XSS-Protection", "1; mode=block");
@@ -123,7 +135,6 @@ public class WebConfig implements WebMvcConfigurer {
                 response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
                 response.setHeader("Pragma", "no-cache");
 
-                // API version header
                 if (request.getRequestURI().contains("/api/")) {
                     response.setHeader("X-API-Version", currentApiVersion);
                 }

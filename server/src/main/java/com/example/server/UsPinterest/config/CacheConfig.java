@@ -7,20 +7,21 @@ import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.CacheControl;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Конфигурация кэширования с использованием Caffeine
- */
+
+        //Конфигурация кэширования с использованием Caffeine
+
 @Configuration
 @EnableCaching
 public class CacheConfig {
 
-    /**
-     * Определяет доступные кэши
-     */
+
     private static final String[] CACHE_NAMES = {
             "pins",
             "users",
@@ -31,24 +32,23 @@ public class CacheConfig {
             "notifications"
     };
 
-    /**
-     * Создает и настраивает основной менеджер кэширования
-     *
-     * @return настроенный CacheManager
-     */
+
+    public static final CacheControl API_CACHE_CONTROL = CacheControl
+            .maxAge(Duration.ofMinutes(5))
+            .mustRevalidate()
+            .cachePrivate();
+
+
     @Bean
     @Primary
     public CacheManager cacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager(CACHE_NAMES);
         cacheManager.setCaffeine(caffeineCacheBuilder());
+        cacheManager.setAllowNullValues(true); // Allow null values to be cached
         return cacheManager;
     }
 
-    /**
-     * Конфигурирует Caffeine с настройками производительности
-     *
-     * @return настроенный билдер Caffeine
-     */
+
     private Caffeine<Object, Object> caffeineCacheBuilder() {
         return Caffeine.newBuilder()
                 .initialCapacity(100)     // Начальная емкость кэша
@@ -58,11 +58,7 @@ public class CacheConfig {
                 .recordStats();           // Включение статистики кэша
     }
 
-    /**
-     * Создает отдельный кэш для пинов с более длительным сроком жизни
-     *
-     * @return настроенный CacheManager для пинов
-     */
+
     @Bean(name = "extendedPinCacheManager")
     public CacheManager extendedPinCacheManager() {
         CaffeineCacheManager pinCacheManager = new CaffeineCacheManager("extended_pins");
@@ -74,6 +70,7 @@ public class CacheConfig {
                         .expireAfterAccess(15, TimeUnit.MINUTES)
                         .recordStats()
         );
+        pinCacheManager.setAllowNullValues(true);
         return pinCacheManager;
     }
 }

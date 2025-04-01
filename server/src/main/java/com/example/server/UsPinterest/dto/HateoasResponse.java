@@ -1,5 +1,8 @@
 package com.example.server.UsPinterest.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +14,7 @@ import java.util.List;
  *
  * @param <T> Type of the data payload
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class HateoasResponse<T> {
     private T data;
     private List<Link> links = new ArrayList<>();
@@ -49,6 +53,16 @@ public class HateoasResponse<T> {
         this.meta = meta;
     }
 
+    /**
+     * Direct content accessor for Kotlin clients
+     * This allows Kotlin clients to access the data directly without unwrapping
+     * @return The data content
+     */
+    @JsonProperty("content")
+    public T getContent() {
+        return data;
+    }
+
     public HateoasResponse<T> addLink(String rel, String href, String method) {
         links.add(new Link(rel, href, method));
         return this;
@@ -78,6 +92,7 @@ public class HateoasResponse<T> {
     /**
      * HATEOAS Link representation
      */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Link {
         private String rel;
         private String href;
@@ -120,6 +135,7 @@ public class HateoasResponse<T> {
     /**
      * Metadata for the response
      */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Meta {
         private LocalDateTime timestamp;
         private String message;

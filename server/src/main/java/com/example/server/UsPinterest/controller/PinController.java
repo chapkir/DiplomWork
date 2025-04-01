@@ -48,7 +48,7 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 /**
- * REST controller for managing Pins with API versioning
+ * REST контроллер для управления пинами (изображениями)
  */
 @RestController
 @RequestMapping("/api/pins")
@@ -90,13 +90,7 @@ public class PinController {
     private UserService userService;
 
     /**
-     * Get all pins with pagination and cursor-based navigation
-     *
-     * @param cursor Current cursor for pagination
-     * @param size Number of pins per page
-     * @param sortBy Field to sort by
-     * @param sortDirection Sort direction (asc/desc)
-     * @return Paginated list of pins with hypermedia links
+     * Получить все пины с пагинацией и курсорной навигацией
      */
     @GetMapping
     public ResponseEntity<?> getAllPins(
@@ -106,44 +100,37 @@ public class PinController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDirection) {
 
+        // Проверка лимита запросов
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
         if (!probe.isConsumed()) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .body(new MessageResponse("Too many requests"));
+                    .body(new MessageResponse("Слишком много запросов"));
         }
 
-        // If search is provided, use traditional pagination
+        // Если есть параметр поиска, используем обычную пагинацию
         if (search != null && !search.isEmpty()) {
             try {
-                logger.info("Searching pins with keyword: {}", search);
+                logger.info("Поиск пинов по ключевому слову: {}", search);
                 PageResponse<Pin> response = pinService.getPins(search, 0, size);
                 return ResponseEntity.ok(response);
             } catch (Exception e) {
-                logger.error("Error searching pins: {}", e.getMessage(), e);
+                logger.error("Ошибка поиска пинов: {}", e.getMessage(), e);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(new MessageResponse("Error searching pins: " + e.getMessage()));
+                        .body(new MessageResponse("Ошибка поиска пинов: " + e.getMessage()));
             }
         }
 
-        // Otherwise use cursor-based pagination
-        logger.info("Getting pins with cursor: {}, size: {}, sortBy: {}, sortDirection: {}",
-                cursor, size, sortBy, sortDirection);
-
+        // Иначе используем курсорную пагинацию
         try {
-            // Получаем текущего пользователя для проверки лайков
-            logger.info("Retrieving current user");
             User currentUser = userService.getCurrentUser();
-            logger.info("Current user: {}", currentUser != null ? currentUser.getUsername() : "anonymous");
 
             // Декодируем курсор, если он есть
             Long cursorId = null;
             if (cursor != null && !cursor.isEmpty()) {
                 try {
-                    logger.info("Decoding cursor: {}", cursor);
                     cursorId = paginationService.decodeCursor(cursor, Long.class);
-                    logger.info("Decoded cursor ID: {}", cursorId);
                 } catch (Exception e) {
-                    logger.error("Error decoding cursor: {}", e.getMessage(), e);
+                    logger.error("Ошибка декодирования курсора: {}", e.getMessage());
                 }
             }
 
@@ -154,86 +141,54 @@ public class PinController {
             Long nextCursorValue = null;
             Long prevCursorValue = null;
 
-            logger.info("Creating pageable with size: {}", size + 1);
             Pageable pageable = PageRequest.of(0, size + 1);
 
             if (sortDirection.equalsIgnoreCase("desc")) {
-                logger.info("Sorting direction: DESC");
                 // Для сортировки по убыванию
                 if (cursorId == null) {
-                    logger.info("No cursor provided, retrieving all pins");
-                    List<Pin> tempPins = pinRepository.findAll(pageable).getContent();
-                    pins = new ArrayList<>(tempPins);
-                    logger.info("Retrieved {} pins", pins.size());
+                    pins = new ArrayList<>(pinRepository.findAll(pageable).getContent());
                 } else {
-                    logger.info("Finding pins with ID less than {}", cursorId);
                     pins = new ArrayList<>(pinRepository.findByIdLessThanOrderByIdDesc(cursorId, pageable));
-                    logger.info("Retrieved {} pins", pins.size());
                 }
 
                 if (pins.size() > size) {
                     hasNext = true;
                     pins.remove(pins.size() - 1);
                     nextCursorValue = pins.isEmpty() ? null : pins.get(pins.size() - 1).getId();
-                    logger.info("Has next page: true, next cursor value: {}", nextCursorValue);
-                } else {
-                    logger.info("Has next page: false");
                 }
 
                 if (hasPrevious && cursorId != null) {
-                    logger.info("Checking for previous page");
                     Pageable prevPageable = PageRequest.of(0, 1);
                     List<Pin> prevPins = pinRepository.findByIdGreaterThanOrderByIdAsc(cursorId, prevPageable);
                     prevCursorValue = prevPins.isEmpty() ? null : prevPins.get(0).getId();
-                    logger.info("Has previous page: {}, prev cursor value: {}", !prevPins.isEmpty(), prevCursorValue);
                 }
             } else {
-                logger.info("Sorting direction: ASC");
                 // Для сортировки по возрастанию
                 if (cursorId == null) {
-                    logger.info("No cursor provided, retrieving all pins");
-                    List<Pin> tempPins = pinRepository.findAll(pageable).getContent();
-                    pins = new ArrayList<>(tempPins);
-                    logger.info("Retrieved {} pins", pins.size());
+                    pins = new ArrayList<>(pinRepository.findAll(pageable).getContent());
                 } else {
-                    logger.info("Finding pins with ID greater than {}", cursorId);
                     pins = new ArrayList<>(pinRepository.findByIdGreaterThanOrderByIdAsc(cursorId, pageable));
-                    logger.info("Retrieved {} pins", pins.size());
                 }
 
                 if (pins.size() > size) {
                     hasNext = true;
                     pins.remove(pins.size() - 1);
                     nextCursorValue = pins.isEmpty() ? null : pins.get(pins.size() - 1).getId();
-                    logger.info("Has next page: true, next cursor value: {}", nextCursorValue);
-                } else {
-                    logger.info("Has next page: false");
                 }
 
                 if (hasPrevious && cursorId != null) {
-                    logger.info("Checking for previous page");
                     Pageable prevPageable = PageRequest.of(0, 1);
                     List<Pin> prevPins = pinRepository.findByIdLessThanOrderByIdDesc(cursorId, prevPageable);
                     prevCursorValue = prevPins.isEmpty() ? null : prevPins.get(0).getId();
-                    logger.info("Has previous page: {}, prev cursor value: {}", !prevPins.isEmpty(), prevCursorValue);
                 }
             }
 
-            // Преобразуем список пинов в список PinResponse с учетом текущего пользователя
-            logger.info("Converting {} pins to PinResponse", pins.size());
-            List<PinResponse> pinResponses = new ArrayList<>();
-            for (Pin pin : pins) {
-                try {
-                    PinResponse response = pinService.convertToPinResponse(pin, currentUser);
-                    pinResponses.add(response);
-                } catch (Exception e) {
-                    logger.error("Error converting pin with ID {}: {}", pin.getId(), e.getMessage(), e);
-                }
-            }
-            logger.info("Converted {} pins to responses", pinResponses.size());
+            // Преобразуем список пинов в список PinResponse
+            List<PinResponse> pinResponses = pins.stream()
+                    .map(pin -> pinService.convertToPinResponse(pin, currentUser))
+                    .collect(Collectors.toList());
 
             // Создаем ответ с курсорной пагинацией
-            logger.info("Creating cursor page response");
             CursorPageResponse<PinResponse, String> pageResponse = paginationService.createCursorPageResponse(
                     pinResponses,
                     nextCursorValue,
@@ -245,96 +200,68 @@ public class PinController {
             );
 
             // Добавляем HATEOAS ссылки
-            logger.info("Adding HATEOAS links");
             HateoasResponse<CursorPageResponse<PinResponse, String>> response = new HateoasResponse<>(pageResponse);
             response.addSelfLink("/api/pins?cursor=" + cursor + "&size=" + size);
 
             if (hasNext && nextCursorValue != null) {
                 String nextCursor = paginationService.encodeCursor(nextCursorValue);
                 response.addLink("next", "/api/pins?cursor=" + nextCursor + "&size=" + size, "GET");
-                logger.info("Added next link with cursor: {}", nextCursor);
             }
 
             if (hasPrevious && prevCursorValue != null) {
                 String prevCursor = paginationService.encodeCursor(prevCursorValue);
                 response.addLink("prev", "/api/pins?cursor=" + prevCursor + "&size=" + size, "GET");
-                logger.info("Added prev link with cursor: {}", prevCursor);
             }
 
             response.addLink("create", "/api/pins", "POST");
 
-            logger.info("Successfully built response");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            logger.error("Error getting pins: {}", e.getMessage(), e);
+            logger.error("Ошибка получения пинов: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new MessageResponse("Error retrieving pins: " + (e.getMessage() != null ? e.getMessage() : "Unknown error, check server logs")));
+                    .body(new MessageResponse("Ошибка получения пинов: " + e.getMessage()));
         }
     }
 
     /**
-     * Get all pins without pagination
-     *
-     * @return All pins with hypermedia links
+     * Получить все пины без пагинации
      */
-    @GetMapping("/all")
+    @GetMapping("/list-all")
     public ResponseEntity<?> getAllPinsWithoutPagination(Authentication authentication) {
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
         if (!probe.isConsumed()) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .body(new MessageResponse("Too many requests"));
+                    .body(new MessageResponse("Слишком много запросов"));
         }
 
-        logger.info("Getting all pins without pagination");
-
         try {
-            // Получаем текущего пользователя для проверки лайков
             User currentUser = userService.getCurrentUser();
-            logger.info("Current user: {}", currentUser != null ? currentUser.getUsername() : "anonymous");
-
-            // Получаем все пины
             List<Pin> pins = pinRepository.findAll();
-            logger.info("Retrieved {} pins", pins.size());
 
-            // Преобразуем список пинов в список PinResponse с учетом текущего пользователя
-            List<PinResponse> pinResponses = new ArrayList<>();
-            for (Pin pin : pins) {
-                try {
-                    PinResponse response = pinService.convertToPinResponse(pin, currentUser);
-                    pinResponses.add(response);
-                } catch (Exception e) {
-                    logger.error("Error converting pin with ID {}: {}", pin.getId(), e.getMessage(), e);
-                }
-            }
-            logger.info("Converted {} pins to responses", pinResponses.size());
+            List<PinResponse> pinResponses = pins.stream()
+                    .map(pin -> pinService.convertToPinResponse(pin, currentUser))
+                    .collect(Collectors.toList());
 
-            // Добавляем HATEOAS ссылки
             HateoasResponse<List<PinResponse>> response = new HateoasResponse<>(pinResponses);
-            response.addSelfLink("/api/pins/all");
+            response.addSelfLink("/api/pins/list-all");
             response.addLink("paginated", "/api/pins", "GET");
             response.addLink("create", "/api/pins", "POST");
 
-            logger.info("Successfully built response");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            logger.error("Error getting all pins: {}", e.getMessage(), e);
+            logger.error("Ошибка получения всех пинов: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new MessageResponse("Error retrieving pins: " + (e.getMessage() != null ? e.getMessage() : "Unknown error, check server logs")));
+                    .body(new MessageResponse("Ошибка получения пинов: " + e.getMessage()));
         }
     }
 
     /**
-     * Get pin by ID with HATEOAS links
-     *
-     * @param id Pin ID
-     * @return Pin with hypermedia links
+     * Получить пин по ID
      */
-    @GetMapping("/{id}")
+    @GetMapping("/detail/{id}")
     public ResponseEntity<?> getPinById(@PathVariable Long id, Authentication authentication) {
-        logger.info("Getting pin by id: {}", id);
-
         Pin pin = pinRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Pin not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Пин не найден с id: " + id));
 
         String username = authentication != null ? authentication.getName() : null;
         User currentUser = username != null ? userRepository.findByUsername(username).orElse(null) : null;
@@ -342,24 +269,19 @@ public class PinController {
         PinResponse pinResponse = pinService.convertToPinResponse(pin, currentUser);
         HateoasResponse<PinResponse> response = new HateoasResponse<>(pinResponse);
 
-        // Add HATEOAS links
-        response.addSelfLink("/api/pins/" + id);
+        // Добавляем HATEOAS ссылки
+        response.addSelfLink("/api/pins/detail/" + id);
         response.addLink("all-pins", "/api/pins", "GET");
-        response.addUpdateLink("/api/pins/" + id);
-        response.addDeleteLink("/api/pins/" + id);
-
-        // Add related resources links
-        response.addLink("comments", "/api/pins/" + id + "/comments", "GET");
-        response.addLink("likes", "/api/pins/" + id + "/likes", "GET");
+        response.addUpdateLink("/api/pins/detail/" + id);
+        response.addDeleteLink("/api/pins/detail/" + id);
+        response.addLink("comments", "/api/pins/detail/" + id + "/comments", "GET");
+        response.addLink("likes", "/api/pins/detail/" + id + "/likes", "GET");
 
         return ResponseEntity.ok(response);
     }
 
     /**
-     * Create a new pin
-     *
-     * @param pinRequest Pin creation request
-     * @return Created pin with hypermedia links
+     * Создать новый пин
      */
     @PostMapping
     @PreAuthorize("hasRole('USER')")
@@ -367,10 +289,8 @@ public class PinController {
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
         if (!probe.isConsumed()) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .body(new MessageResponse("Too many requests"));
+                    .body(new MessageResponse("Слишком много запросов"));
         }
-
-        logger.info("Creating pin: {}", pinRequest);
 
         String username = authentication.getName();
         Pin pin = pinService.createPin(pinRequest, username);
@@ -379,20 +299,17 @@ public class PinController {
 
         HateoasResponse<PinResponse> response = new HateoasResponse<>(pinResponse);
 
-        // Add HATEOAS links
-        response.addSelfLink("/api/pins/" + pin.getId());
+        // Добавляем HATEOAS ссылки
+        response.addSelfLink("/api/pins/detail/" + pin.getId());
         response.addLink("all-pins", "/api/pins", "GET");
-        response.addUpdateLink("/api/pins/" + pin.getId());
-        response.addDeleteLink("/api/pins/" + pin.getId());
+        response.addUpdateLink("/api/pins/detail/" + pin.getId());
+        response.addDeleteLink("/api/pins/detail/" + pin.getId());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /**
-     * Like a pin
-     *
-     * @param id Pin ID
-     * @return Success message with metadata
+     * Поставить лайк пину
      */
     @PostMapping("/{id}/like")
     @PreAuthorize("hasRole('USER')")
@@ -400,10 +317,8 @@ public class PinController {
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
         if (!probe.isConsumed()) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .body(new MessageResponse("Too many requests"));
+                    .body(new MessageResponse("Слишком много запросов"));
         }
-
-        logger.info("Liking pin with id: {}", id);
 
         try {
             Map<String, Object> likeResult = pinService.likePin(id, authentication.getName());
@@ -418,22 +333,19 @@ public class PinController {
 
             HateoasResponse<Void> response = new HateoasResponse<>(null);
             response.addSelfLink("/api/pins/" + id + "/like");
-            response.addLink("pin", "/api/pins/" + id, "GET");
+            response.addLink("pin", "/api/pins/detail/" + id, "GET");
             response.addLink("unlike", "/api/pins/" + id + "/unlike", "POST");
-            response.getMeta().setMessage("Pin liked successfully");
+            response.getMeta().setMessage("Лайк успешно добавлен");
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            logger.error("Error processing like for pin: {}: {}", id, e.getMessage());
+            logger.error("Ошибка при добавлении лайка для пина {}: {}", id, e.getMessage());
             throw e;
         }
     }
 
     /**
-     * Unlike a pin
-     *
-     * @param id Pin ID
-     * @return Success message with metadata
+     * Убрать лайк с пина
      */
     @PostMapping("/{id}/unlike")
     @PreAuthorize("hasRole('USER')")
@@ -441,34 +353,27 @@ public class PinController {
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
         if (!probe.isConsumed()) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .body(new MessageResponse("Too many requests"));
+                    .body(new MessageResponse("Слишком много запросов"));
         }
-
-        logger.info("Unliking pin with id: {}", id);
 
         try {
             Map<String, Object> unlikeResult = pinService.unlikePin(id, authentication.getName());
 
             HateoasResponse<Void> response = new HateoasResponse<>(null);
             response.addSelfLink("/api/pins/" + id + "/unlike");
-            response.addLink("pin", "/api/pins/" + id, "GET");
+            response.addLink("pin", "/api/pins/detail/" + id, "GET");
             response.addLink("like", "/api/pins/" + id + "/like", "POST");
-            response.getMeta().setMessage("Pin unliked successfully");
+            response.getMeta().setMessage("Лайк успешно удален");
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            logger.error("Error processing unlike for pin: {}: {}", id, e.getMessage());
+            logger.error("Ошибка при удалении лайка для пина {}: {}", id, e.getMessage());
             throw e;
         }
     }
 
     /**
-     * Add a comment to a pin
-     *
-     * @param id Pin ID
-     * @param commentRequest Comment content
-     * @param authentication Current user
-     * @return Success message with metadata
+     * Добавить комментарий к пину
      */
     @PostMapping("/{id}/comments")
     @PreAuthorize("hasRole('USER')")
@@ -480,11 +385,8 @@ public class PinController {
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
         if (!probe.isConsumed()) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .body(new MessageResponse("Too many requests"));
+                    .body(new MessageResponse("Слишком много запросов"));
         }
-
-        logger.info("Adding comment to pin with id: {}", id);
-        logger.info("Comment text: {}", commentRequest.getText());
 
         try {
             User user = userRepository.findByUsername(authentication.getName())
@@ -504,28 +406,23 @@ public class PinController {
 
             HateoasResponse<Void> response = new HateoasResponse<>(null);
             response.addSelfLink("/api/pins/" + id + "/comments");
-            response.addLink("pin", "/api/pins/" + id, "GET");
+            response.addLink("pin", "/api/pins/detail/" + id, "GET");
             response.addLink("all-comments", "/api/pins/" + id + "/comments", "GET");
-            response.getMeta().setMessage("Comment added successfully");
+            response.getMeta().setMessage("Комментарий успешно добавлен");
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            logger.error("Error adding comment to pin: {}: {}", id, e.getMessage());
+            logger.error("Ошибка при добавлении комментария к пину {}: {}", id, e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResponse("Ошибка при добавлении комментария: " + e.getMessage()));
         }
     }
 
     /**
-     * Get comments for a pin
-     *
-     * @param id Pin ID
-     * @return List of comments
+     * Получить комментарии к пину
      */
     @GetMapping("/{id}/comments")
     public ResponseEntity<?> getPinComments(@PathVariable Long id) {
-        logger.info("Getting comments for pin with id: {}", id);
-
         Pin pin = pinRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Пин не найден"));
 
@@ -540,19 +437,14 @@ public class PinController {
 
         HateoasResponse<List<CommentResponse>> response = new HateoasResponse<>(comments);
         response.addSelfLink("/api/pins/" + id + "/comments");
-        response.addLink("pin", "/api/pins/" + id, "GET");
+        response.addLink("pin", "/api/pins/detail/" + id, "GET");
         response.addLink("add-comment", "/api/pins/" + id + "/comments", "POST");
 
         return ResponseEntity.ok(response);
     }
 
     /**
-     * Upload image for a pin
-     *
-     * @param file Image file
-     * @param description Pin description
-     * @param authentication Current user authentication
-     * @return Updated pin with hypermedia links
+     * Загрузить изображение для пина
      */
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('USER')")
@@ -561,7 +453,7 @@ public class PinController {
             @RequestParam("description") String description,
             Authentication authentication) {
 
-        // Check rate limiting
+        // Проверяем лимит запросов
         if (!bucket.tryConsume(1)) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                     .body(new MessageResponse("Слишком много запросов. Пожалуйста, попробуйте позже."));
@@ -575,8 +467,6 @@ public class PinController {
         if (contentType == null || !contentType.startsWith("image/")) {
             return ResponseEntity.badRequest().body(new MessageResponse("Файл должен быть изображением"));
         }
-
-        logger.info("Uploading image for pin with description: {}", description);
 
         String username = authentication.getName();
         User user = userRepository.findByUsername(username)
@@ -596,8 +486,8 @@ public class PinController {
             PinResponse pinResponse = pinService.convertToPinResponse(pin, user);
             HateoasResponse<PinResponse> response = new HateoasResponse<>(pinResponse);
 
-            // Add HATEOAS links
-            response.addSelfLink("/api/pins/" + pin.getId());
+            // Добавляем HATEOAS ссылки
+            response.addSelfLink("/api/pins/detail/" + pin.getId());
             response.addLink("image", pin.getImageUrl(), "GET");
             response.addLink("all-pins", "/api/pins", "GET");
 
@@ -610,60 +500,12 @@ public class PinController {
     }
 
     /**
-     * Upload image for an existing pin
-     *
-     * @param id Pin ID
-     * @param file Image file
-     * @return Updated pin with hypermedia links
-     */
-    @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> uploadPinImage(
-            @PathVariable Long id,
-            @RequestParam("file") MultipartFile file) {
-        logger.info("Uploading image for pin with id: {}", id);
-
-        try {
-            // Получаем пин
-            Pin pin = pinRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("Pin not found with id: " + id));
-
-            // Сохраняем файл
-            String imageUrl = fileStorageService.storeFile(file);
-
-            // Обновляем URL изображения для пина
-            pin.setImageUrl(imageUrl);
-            pinRepository.save(pin);
-
-            PinResponse pinResponse = pinService.convertToPinResponse(pin, pin.getUser());
-
-            HateoasResponse<PinResponse> response = new HateoasResponse<>(pinResponse);
-
-            // Add HATEOAS links
-            response.addSelfLink("/api/pins/" + id);
-            response.addLink("image", pin.getImageUrl(), "GET");
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            logger.error("Error uploading image for pin: {}", id, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new MessageResponse("Error uploading image: " + e.getMessage()));
-        }
-    }
-
-    /**
-     * Delete a pin by ID
-     *
-     * @param id Pin ID
-     * @return No content response
+     * Удалить пин по ID
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deletePin(@PathVariable Long id) {
-        logger.info("Deleting pin with id: {}", id);
-
         pinService.deletePin(id);
-
         return ResponseEntity.noContent().build();
     }
 }
