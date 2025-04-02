@@ -27,17 +27,12 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * Global exception handler for REST API
- */
+
 @ControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    /**
-     * Handle validation exceptions with detailed field errors
-     */
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex,
             HttpHeaders headers,
@@ -66,9 +61,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(errorDetails, headers, status);
     }
 
-    /**
-     * Handle resource not found exceptions
-     */
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleResourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
         String path = extractPath(request);
@@ -85,9 +77,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(apiResponse, HttpStatus.NOT_FOUND);
     }
 
-    /**
-     * Handle bad credentials exceptions
-     */
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadCredentialsException(BadCredentialsException ex, WebRequest request) {
         String path = extractPath(request);
@@ -104,9 +93,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(apiResponse, HttpStatus.UNAUTHORIZED);
     }
 
-    /**
-     * Handle token refresh exceptions
-     */
     @ExceptionHandler(TokenRefreshException.class)
     public ResponseEntity<ApiResponse<Void>> handleTokenRefreshException(TokenRefreshException ex, WebRequest request) {
         String path = extractPath(request);
@@ -123,9 +109,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(apiResponse, HttpStatus.FORBIDDEN);
     }
 
-    /**
-     * Handle general authentication exceptions
-     */
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ApiResponse<Void>> handleAuthenticationException(AuthenticationException ex, WebRequest request) {
         String path = extractPath(request);
@@ -142,9 +125,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(apiResponse, HttpStatus.UNAUTHORIZED);
     }
 
-    /**
-     * Handle access denied exceptions
-     */
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(AccessDeniedException ex, WebRequest request) {
         String path = extractPath(request);
@@ -161,9 +141,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(apiResponse, HttpStatus.FORBIDDEN);
     }
 
-    /**
-     * Handle follow exceptions
-     */
     @ExceptionHandler(FollowException.class)
     public ResponseEntity<ApiResponse<Void>> handleFollowException(FollowException ex, WebRequest request) {
         String path = extractPath(request);
@@ -180,9 +157,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
     }
 
-    /**
-     * Handle data integrity violations
-     */
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolationException(
             DataIntegrityViolationException ex, WebRequest request) {
@@ -207,9 +182,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(apiResponse, HttpStatus.CONFLICT);
     }
 
-    /**
-     * Handle multipart file upload exceptions
-     */
     @ExceptionHandler(MultipartException.class)
     public ResponseEntity<ApiResponse<Void>> handleMultipartException(MultipartException ex, WebRequest request) {
         String path = extractPath(request);
@@ -226,13 +198,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
     }
 
-    /**
-     * Handle global exceptions that weren't caught by other handlers
-     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGlobalException(Exception ex, WebRequest request) {
         String path = extractPath(request);
-        logger.error("Unexpected error at {}: {}", path, ex.getMessage(), ex);
+
 
         ApiResponse<Void> apiResponse = new ApiResponse<>(
                 false,
@@ -245,9 +214,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(apiResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    /**
-     * Extract request path from WebRequest
-     */
     private String extractPath(WebRequest request) {
         try {
             if (request instanceof ServletWebRequest) {

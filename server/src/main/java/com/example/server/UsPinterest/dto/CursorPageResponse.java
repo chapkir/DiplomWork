@@ -2,13 +2,6 @@ package com.example.server.UsPinterest.dto;
 
 import java.util.List;
 
-/**
- * Response DTO for cursor-based pagination.
- * Better suited for large datasets than traditional offset-based pagination.
- *
- * @param <T> Type of the data items
- * @param <C> Type of the cursor (typically String or Long)
- */
 public class CursorPageResponse<T, C> {
     private List<T> content;
     private C nextCursor;

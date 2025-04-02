@@ -106,9 +106,6 @@ public class ProfileController {
         }
     }
 
-    /**
-     * Загрузка и обновление изображения профиля пользователя
-     */
     @PostMapping(value = {"/image", "/avatar"})
     public ResponseEntity<?> updateProfileImage(@RequestParam("file") MultipartFile file) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

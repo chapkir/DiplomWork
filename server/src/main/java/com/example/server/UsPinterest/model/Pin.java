@@ -111,7 +111,6 @@ public class Pin {
         this.likes = likes;
     }
 
-    // Добавляем геттер и сеттер для поля user
     public User getUser() {
         return user;
     }

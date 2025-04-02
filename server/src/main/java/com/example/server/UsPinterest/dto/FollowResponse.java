@@ -2,9 +2,6 @@ package com.example.server.UsPinterest.dto;
 
 import java.time.LocalDateTime;
 
-/**
- * DTO для представления информации о подписке пользователя
- */
 public class FollowResponse {
     private Long id;
     private Long followerId;

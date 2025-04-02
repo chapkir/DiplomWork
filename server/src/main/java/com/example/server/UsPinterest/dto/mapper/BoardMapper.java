@@ -13,9 +13,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Маппер для преобразования между сущностью Board и DTO
- */
+
 @Component
 public class BoardMapper {
 
@@ -25,14 +23,7 @@ public class BoardMapper {
     @Autowired
     private PinMapper pinMapper;
 
-    /**
-     * Преобразует Board в BoardResponse
-     *
-     * @param board сущность доски
-     * @param currentUser текущий пользователь (для проверки лайков)
-     * @param includePins включать ли пины в ответ
-     * @return объект BoardResponse
-     */
+
     public BoardResponse toDto(Board board, User currentUser, boolean includePins) {
         if (board == null) {
             return null;
@@ -47,7 +38,7 @@ public class BoardMapper {
             response.setUserId(board.getUser().getId());
             response.setUsername(board.getUser().getUsername());
 
-            // Обновляем ссылку на изображение профиля
+
             String profileImageUrl = board.getUser().getProfileImageUrl();
             if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
                 response.setUserProfileImageUrl(fileStorageService.updateImageUrl(profileImageUrl));
@@ -72,13 +63,6 @@ public class BoardMapper {
         return response;
     }
 
-    /**
-     * Создает сущность Board из BoardRequest
-     *
-     * @param request запрос на создание доски
-     * @param user пользователь, создающий доску
-     * @return сущность Board
-     */
     public Board toEntity(BoardRequest request, User user) {
         if (request == null) {
             return null;
@@ -93,13 +77,6 @@ public class BoardMapper {
         return board;
     }
 
-    /**
-     * Обновляет существующую сущность Board из BoardRequest
-     *
-     * @param board существующая доска
-     * @param request запрос на обновление
-     * @return обновленная сущность Board
-     */
     public Board updateEntity(Board board, BoardRequest request) {
         if (board == null || request == null) {
             return board;
@@ -116,13 +93,6 @@ public class BoardMapper {
         return board;
     }
 
-    /**
-     * Convert a list of Board entities to BoardResponse DTOs
-     *
-     * @param boards The list of Board entities
-     * @param includePins Whether to include pin data
-     * @return List of BoardResponse DTOs
-     */
     public List<BoardResponse> mapBoardsToBoardResponses(List<Board> boards, boolean includePins) {
         if (boards == null) {
             return new ArrayList<>();

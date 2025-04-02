@@ -16,9 +16,6 @@ import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-/**
- * Controller for handling file uploads and downloads
- */
 @RestController
 @RequestMapping("/api/files")
 @CrossOrigin(origins = "*")
@@ -33,9 +30,6 @@ public class FileController {
     @Value("${file.profile-images-dir:profile-images}")
     private String profileImagesDir;
 
-    /**
-     * Serve general uploaded files
-     */
     @GetMapping("/{filename:.+}")
     public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
         try {
@@ -55,9 +49,6 @@ public class FileController {
         }
     }
 
-    /**
-     * Serve profile images
-     */
     @GetMapping("/profiles/{filename:.+}")
     public ResponseEntity<Resource> serveProfileImage(@PathVariable String filename) {
         try {
@@ -77,9 +68,6 @@ public class FileController {
         }
     }
 
-    /**
-     * Determine the media type based on file extension
-     */
     private MediaType getMediaTypeForFile(String filename) {
         String extension = "";
         if (filename.contains(".")) {

@@ -20,9 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * Сервис для работы с досками пользователей
- */
+
 @Service
 public class BoardService {
     private static final Logger logger = LoggerFactory.getLogger(BoardService.class);
@@ -36,12 +34,7 @@ public class BoardService {
     @Autowired
     private BoardMapper boardMapper;
 
-    /**
-     * Создает новую доску для текущего пользователя
-     *
-     * @param boardRequest данные для создания доски
-     * @return информация о созданной доске
-     */
+
     @Transactional
     @CacheEvict(value = "boards", allEntries = true)
     public BoardResponse createBoard(BoardRequest boardRequest) {
@@ -58,13 +51,7 @@ public class BoardService {
         return boardMapper.toDto(board, currentUser, false);
     }
 
-    /**
-     * Получает информацию о доске по ID
-     *
-     * @param id ID доски
-     * @param includePins включать ли пины в ответ
-     * @return информация о доске
-     */
+
     @Transactional(readOnly = true)
     @Cacheable(value = "boards", key = "#id + '_' + #includePins")
     public BoardResponse getBoardResponseById(Long id, boolean includePins) {
@@ -74,24 +61,13 @@ public class BoardService {
         return boardMapper.toDto(board, null, includePins);
     }
 
-    /**
-     * Получает доску по ID
-     *
-     * @param id ID доски
-     * @return Optional с найденной доской или пустой
-     */
+
     @Transactional(readOnly = true)
     public Optional<Board> getBoardById(Long id) {
         return boardRepository.findById(id);
     }
 
-    /**
-     * Получает список досок пользователя
-     *
-     * @param userId ID пользователя
-     * @param includePins включать ли пины в ответ
-     * @return список DTO досок
-     */
+
     @Transactional(readOnly = true)
     @Cacheable(value = "boards", key = "'user_' + #userId + '_' + #includePins")
     public List<BoardResponse> getBoardsByUserId(Long userId, boolean includePins) {
@@ -102,11 +78,7 @@ public class BoardService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Удаляет доску по ID (только если пользователь является владельцем)
-     *
-     * @param id ID доски для удаления
-     */
+
     @Transactional
     @CacheEvict(value = "boards", allEntries = true)
     public void deleteBoard(Long id) {
@@ -126,13 +98,7 @@ public class BoardService {
         logger.info("Удалена доска: {}, пользователь: {}", board.getTitle(), currentUser.getUsername());
     }
 
-    /**
-     * Обновляет существующую доску
-     *
-     * @param id ID доски
-     * @param boardRequest данные для обновления
-     * @return обновленная информация о доске
-     */
+
     @Transactional
     @CacheEvict(value = "boards", allEntries = true)
     public BoardResponse updateBoard(Long id, BoardRequest boardRequest) {

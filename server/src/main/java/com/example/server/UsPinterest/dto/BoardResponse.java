@@ -2,9 +2,6 @@ package com.example.server.UsPinterest.dto;
 
 import java.util.List;
 
-/**
- * DTO для отображения информации о доске
- */
 public class BoardResponse {
     private Long id;
     private String title;

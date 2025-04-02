@@ -6,21 +6,12 @@ import com.example.server.UsPinterest.service.FileStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-/**
- * Маппер для преобразования сущности Follow в DTO
- */
 @Component
 public class FollowMapper {
 
     @Autowired
     private FileStorageService fileStorageService;
 
-    /**
-     * Преобразует сущность Follow в FollowResponse
-     *
-     * @param follow сущность подписки
-     * @return объект FollowResponse
-     */
     public FollowResponse toDto(Follow follow) {
         if (follow == null) {
             return null;
@@ -34,7 +25,6 @@ public class FollowMapper {
             response.setFollowerId(follow.getFollower().getId());
             response.setFollowerUsername(follow.getFollower().getUsername());
 
-            // Обновляем ссылку на изображение профиля подписчика
             String followerImageUrl = follow.getFollower().getProfileImageUrl();
             if (followerImageUrl != null && !followerImageUrl.isEmpty()) {
                 response.setFollowerProfileImageUrl(fileStorageService.updateImageUrl(followerImageUrl));
@@ -45,7 +35,6 @@ public class FollowMapper {
             response.setFollowingId(follow.getFollowing().getId());
             response.setFollowingUsername(follow.getFollowing().getUsername());
 
-            // Обновляем ссылку на изображение профиля целевого пользователя
             String followingImageUrl = follow.getFollowing().getProfileImageUrl();
             if (followingImageUrl != null && !followingImageUrl.isEmpty()) {
                 response.setFollowingProfileImageUrl(fileStorageService.updateImageUrl(followingImageUrl));

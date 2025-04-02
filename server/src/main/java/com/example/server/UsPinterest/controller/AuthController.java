@@ -22,9 +22,6 @@ import java.util.Optional;
 
 import jakarta.validation.Valid;
 
-/**
- * Контроллер для регистрации и авторизации пользователей
- */
 @CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/auth")

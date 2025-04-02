@@ -3,9 +3,6 @@ package com.example.server.UsPinterest.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-/**
- * DTO для создания и обновления доски
- */
 public class BoardRequest {
     @NotBlank(message = "Название доски не может быть пустым")
     @Size(max = 100, message = "Название доски не может быть длиннее 100 символов")

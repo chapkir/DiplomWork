@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 
-        //Конфигурация кэширования с использованием Caffeine
+        //Конфигурация кэширования с использованием Caffeine с редисом проьбелсмы
 
 @Configuration
 @EnableCaching
@@ -51,11 +51,11 @@ public class CacheConfig {
 
     private Caffeine<Object, Object> caffeineCacheBuilder() {
         return Caffeine.newBuilder()
-                .initialCapacity(100)     // Начальная емкость кэша
-                .maximumSize(1000)        // Максимальное количество элементов
-                .expireAfterWrite(10, TimeUnit.MINUTES) // Время жизни элемента после записи
-                .expireAfterAccess(5, TimeUnit.MINUTES) // Время жизни элемента после последнего доступа
-                .recordStats();           // Включение статистики кэша
+                .initialCapacity(100)
+                .maximumSize(1000)
+                .expireAfterWrite(10, TimeUnit.MINUTES)
+                .expireAfterAccess(5, TimeUnit.MINUTES)
+                .recordStats();
     }
 
 

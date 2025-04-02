@@ -14,18 +14,13 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import org.springframework.beans.factory.annotation.Value;
 
-/**
- * Контроллер для обработки запросов валидации от Let's Encrypt (ACME протокол)
- */
 @RestController
 public class AcmeController {
 
     private static final Logger logger = LoggerFactory.getLogger(AcmeController.class);
 
-    // Временное хранилище токенов для Let's Encrypt
     private final ConcurrentHashMap<String, String> tokens = new ConcurrentHashMap<>();
 
-    // Директория для сохранения файлов ACME-challenge
     @Value("${file.upload-dir:./uploads}")
     private String uploadDir;
 
@@ -41,12 +36,9 @@ public class AcmeController {
         return acmeDir;
     }
 
-    /**
-     * Обрабатывает запросы валидации от Let's Encrypt
-     */
+
     @GetMapping("/.well-known/acme-challenge/{token}")
     public String getToken(@PathVariable String token) {
-        // Сначала проверяем файл на диске
         Path tokenFile = getAcmeChallengeDir().resolve(token);
         if (Files.exists(tokenFile)) {
             try {
@@ -56,11 +48,9 @@ public class AcmeController {
             }
         }
 
-        // Затем проверяем in-memory хранилище
         if (tokens.containsKey(token)) {
             String value = tokens.get(token);
 
-            // Сохраняем его в файл для надежности
             try {
                 saveTokenToFile(token, value);
             } catch (IOException e) {
@@ -70,13 +60,11 @@ public class AcmeController {
             return value;
         }
 
-        // Если нет сохраненного значения, возвращаем сообщение об ошибке
+
         return "Token not found";
     }
 
-    /**
-     * Метод для сохранения токена и соответствующего ключа авторизации
-     */
+
     @PostMapping("/save-acme-token")
     public ResponseEntity<String> saveToken(@RequestParam String token, @RequestParam String keyAuth) {
         tokens.put(token, keyAuth);
@@ -90,23 +78,15 @@ public class AcmeController {
         }
     }
 
-    /**
-     * Сохраняет токен в файл
-     */
     private void saveTokenToFile(String token, String keyAuth) throws IOException {
         Path tokenFile = getAcmeChallengeDir().resolve(token);
         Files.writeString(tokenFile, keyAuth, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     }
 
-    /**
-     * Метод для получения всех текущих токенов (для страницы администрирования)
-     */
     @GetMapping("/acme-tokens")
     public ResponseEntity<Map<String, String>> getAllTokens() {
-        // Собираем токены из памяти
         Map<String, String> tokenMap = new HashMap<>(tokens);
 
-        // Добавляем токены из файловой системы
         try {
             Path acmeDir = getAcmeChallengeDir();
             if (Files.exists(acmeDir)) {
@@ -127,17 +107,11 @@ public class AcmeController {
         return ResponseEntity.ok(tokenMap);
     }
 
-    /**
-     * Тестовый метод для проверки работоспособности
-     */
     @GetMapping("/acme-test")
     public String test() {
         return "ACME контроллер работает!";
     }
 
-    /**
-     * Метод для программного сохранения токена
-     */
     public void addToken(String token, String keyAuth) {
         tokens.put(token, keyAuth);
 

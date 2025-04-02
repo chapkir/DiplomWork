@@ -17,9 +17,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Сервис для поиска контента
- */
 @Service
 public class SearchService {
 
@@ -41,9 +38,6 @@ public class SearchService {
     @Autowired
     private UserService userService;
 
-    /**
-     * Поиск пинов по ключевому слову с пагинацией
-     */
     @Transactional(readOnly = true)
     @Cacheable(value = "search", key = "'pins_' + #keyword + '_' + #page + '_' + #size + '_' + #sortBy + '_' + #sortDirection")
     public PageResponse<PinResponse> searchPins(String keyword, int page, int size,
@@ -57,9 +51,6 @@ public class SearchService {
         return paginationService.createPageResponse(pinsPage, pin -> pinMapper.toDto(pin, currentUser));
     }
 
-    /**
-     * Поиск пользователей по имени с пагинацией
-     */
     @Transactional(readOnly = true)
     @Cacheable(value = "search", key = "'users_' + #username + '_' + #page + '_' + #size")
     public PageResponse<ProfileResponse> searchUsers(String username, int page, int size) {

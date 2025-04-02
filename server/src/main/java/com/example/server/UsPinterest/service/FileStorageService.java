@@ -18,9 +18,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Service for storing files on local filesystem
- */
+
 @Service
 public class FileStorageService {
 
@@ -44,24 +42,17 @@ public class FileStorageService {
             Files.createDirectories(fileStorageLocation);
             Files.createDirectories(profileImagesLocation);
 
-            logger.info("File storage initialized at: {}", fileStorageLocation);
-            logger.info("Profile images storage initialized at: {}", profileImagesLocation);
+
         } catch (IOException ex) {
-            logger.error("Could not create file upload directories", ex);
             throw new RuntimeException("Could not create directories for file storage", ex);
         }
     }
 
-    /**
-     * Store a file and return its public URL
-     */
     public String storeFile(MultipartFile file) throws IOException {
         return storeFile(file, null);
     }
 
-    /**
-     * Store a file with a specific filename and return its public URL
-     */
+
     public String storeFile(MultipartFile file, String customFilename) throws IOException {
         String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
 
@@ -86,9 +77,6 @@ public class FileStorageService {
                 .toUriString();
     }
 
-    /**
-     * Store a profile image for a user and return its public URL
-     */
     public String storeProfileImage(MultipartFile file, Long userId) throws IOException {
         String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
 
@@ -110,9 +98,6 @@ public class FileStorageService {
                 .toUriString();
     }
 
-    /**
-     * Helper method to parse existing image URL to retrieve filename
-     */
     public String getFilenameFromUrl(String imageUrl) {
         if (imageUrl == null || imageUrl.isEmpty()) {
             return null;
@@ -125,9 +110,6 @@ public class FileStorageService {
         return null;
     }
 
-    /**
-     * Updates an image URL to ensure it uses the correct host
-     */
     public String updateImageUrl(String imageUrl) {
         if (imageUrl == null || imageUrl.isEmpty()) {
             return imageUrl;
@@ -162,7 +144,7 @@ public class FileStorageService {
             return imageUrl;
         } catch (Exception e) {
             logger.error("Error updating image URL: {}", e.getMessage());
-            return imageUrl; // Return original URL on error
+            return imageUrl;
         }
     }
 }

@@ -82,10 +82,8 @@ public class TestController {
         logger.info("Тестирование кэша для пина с ID: {}", id);
 
         try {
-            // Первый вызов должен обратиться к базе данных
             Optional<Pin> firstCall = pinService.getPinById(id);
 
-            // Второй вызов должен использовать кэш
             Optional<Pin> secondCall = pinService.getPinById(id);
 
             Map<String, Object> response = new LinkedHashMap<>();
@@ -132,7 +130,6 @@ public class TestController {
         logger.info("Очистка всех кэшей");
 
         try {
-            // Очищаем все кэши
             cacheManager.getCacheNames().forEach(cacheName -> {
                 logger.info("Очистка кэша: {}", cacheName);
                 cacheManager.getCache(cacheName).clear();
@@ -156,20 +153,16 @@ public class TestController {
         logger.info("Исправление целостности базы данных");
 
         try {
-            // Находим комментарии с несуществующими пинами
             List<Comment> invalidComments = commentRepository.findAll().stream()
                     .filter(comment -> comment.getPin() == null || pinRepository.findById(comment.getPin().getId()).isEmpty())
                     .collect(Collectors.toList());
 
-            // Находим лайки с несуществующими пинами
             List<Like> invalidLikes = likeRepository.findAll().stream()
                     .filter(like -> like.getPin() == null || pinRepository.findById(like.getPin().getId()).isEmpty())
                     .collect(Collectors.toList());
 
-            // Удаляем невалидные комментарии
             commentRepository.deleteAll(invalidComments);
 
-            // Удаляем невалидные лайки
             likeRepository.deleteAll(invalidLikes);
 
             Map<String, Object> response = new LinkedHashMap<>();

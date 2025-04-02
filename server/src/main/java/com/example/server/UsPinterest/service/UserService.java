@@ -77,36 +77,24 @@ public class UserService {
         return userRepository.findById(id);
     }
 
-    /**
-     * Обновляет изображение профиля пользователя
-     *
-     * @param userId идентификатор пользователя
-     * @param file файл изображения
-     * @return обновленный пользователь
-     * @throws IOException если произошла ошибка при загрузке файла
-     */
     public User updateProfileImage(Long userId, MultipartFile file) throws IOException {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
 
-        // Проверяем размер файла (максимум 5MB)
         if (file.getSize() > 5 * 1024 * 1024) {
             throw new IllegalArgumentException("Размер файла не должен превышать 5MB");
         }
 
-        // Проверяем тип файла
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
             throw new IllegalArgumentException("Файл должен быть изображением");
         }
 
-        // Загружаем изображение на Яндекс Диск
         String profileImageUrl = fileStorageService.storeProfileImage(file, userId);
         if (profileImageUrl == null || profileImageUrl.isEmpty()) {
             throw new IOException("Не удалось получить URL загруженного изображения");
         }
 
-        // Обновляем поле profileImageUrl пользователя
         user.setProfileImageUrl(profileImageUrl);
 
         return userRepository.save(user);

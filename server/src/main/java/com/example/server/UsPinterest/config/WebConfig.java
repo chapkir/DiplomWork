@@ -52,12 +52,10 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Конфигурация для статических ресурсов веб-приложения
         registry.addResourceHandler("/**")
                 .addResourceLocations("classpath:/static/")
                 .setCachePeriod(3600);
 
-        // Конфигурация для загруженных файлов
         String uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize().toString();
         logger.info("Configuring resource handler for uploads. Path: {}", uploadPath);
 
@@ -65,7 +63,6 @@ public class WebConfig implements WebMvcConfigurer {
                 .addResourceLocations("file:" + uploadPath + "/")
                 .setCachePeriod(3600);
 
-        // Конфигурация для изображений профилей
         String profileImagesPath = Paths.get(uploadDir, profileImagesDir).toAbsolutePath().normalize().toString();
         logger.info("Configuring resource handler for profile images. Path: {}", profileImagesPath);
 

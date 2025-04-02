@@ -17,9 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Контроллер для поиска контента
- */
 @RestController
 @RequestMapping("/api/search")
 @CrossOrigin(origins = "*")
@@ -32,16 +29,6 @@ public class SearchController {
     @Autowired
     private Bucket bucket;
 
-    /**
-     * Поиск пинов по ключевому слову
-     *
-     * @param query ключевое слово для поиска
-     * @param page номер страницы
-     * @param size размер страницы
-     * @param sortBy поле для сортировки
-     * @param sortDirection направление сортировки
-     * @return результаты поиска пинов
-     */
     @GetMapping("/pins")
     public ResponseEntity<ApiResponse<PageResponse<PinResponse>>> searchPins(
             @RequestParam(required = false) String query,
@@ -59,14 +46,6 @@ public class SearchController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
-    /**
-     * Поиск пользователей по имени
-     *
-     * @param query имя пользователя для поиска
-     * @param page номер страницы
-     * @param size размер страницы
-     * @return результаты поиска пользователей
-     */
     @GetMapping("/users")
     public ResponseEntity<ApiResponse<PageResponse<ProfileResponse>>> searchUsers(
             @RequestParam(required = false) String query,
@@ -82,14 +61,6 @@ public class SearchController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
-    /**
-     * Общий поиск (пины + пользователи)
-     *
-     * @param query поисковый запрос
-     * @param page номер страницы
-     * @param size размер страницы
-     * @return результаты поиска
-     */
     @GetMapping
     public ResponseEntity<ApiResponse<Map<String, Object>>> search(
             @RequestParam(required = false) String query,
@@ -105,7 +76,6 @@ public class SearchController {
         PageResponse<PinResponse> pinsResult = searchService.searchPins(query, page, size, "createdAt", "desc");
         PageResponse<ProfileResponse> usersResult = searchService.searchUsers(query, page, size);
 
-        // Создаем Map с результатами поиска
         Map<String, Object> result = new HashMap<>();
         result.put("pins", pinsResult);
         result.put("users", usersResult);

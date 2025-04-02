@@ -17,9 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import java.util.List;
 
-/**
- * Контроллер для работы с досками пользователей
- */
 @RestController
 @RequestMapping("/api/boards")
 @Validated
@@ -33,12 +30,6 @@ public class BoardController {
     @Autowired
     private Bucket bucket;
 
-    /**
-     * Создание новой доски
-     *
-     * @param boardRequest данные для создания доски
-     * @return информация о созданной доске
-     */
     @PostMapping
     public ResponseEntity<BoardResponse> createBoard(@Valid @RequestBody BoardRequest boardRequest) {
         if (!bucket.tryConsume(1)) {
@@ -50,13 +41,6 @@ public class BoardController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdBoard);
     }
 
-    /**
-     * Получение информации о доске по ID
-     *
-     * @param id ID доски
-     * @param includePins включать ли пины в ответ
-     * @return информация о доске
-     */
     @GetMapping("/{id}")
     public ResponseEntity<BoardResponse> getBoard(
             @PathVariable Long id,
@@ -71,13 +55,6 @@ public class BoardController {
         return ResponseEntity.ok(board);
     }
 
-    /**
-     * Получение списка досок пользователя
-     *
-     * @param userId ID пользователя
-     * @param includePins включать ли пины в ответ
-     * @return список досок пользователя
-     */
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<BoardResponse>> getBoardsByUser(
             @PathVariable Long userId,
@@ -92,12 +69,6 @@ public class BoardController {
         return ResponseEntity.ok(boards);
     }
 
-    /**
-     * Получение списка досок текущего пользователя
-     *
-     * @param includePins включать ли пины в ответ
-     * @return список досок текущего пользователя
-     */
     @GetMapping("/me")
     public ResponseEntity<List<BoardResponse>> getMyBoards(
             @RequestParam(defaultValue = "false") boolean includePins,
@@ -116,13 +87,6 @@ public class BoardController {
         return ResponseEntity.ok(boards);
     }
 
-    /**
-     * Обновление существующей доски
-     *
-     * @param id ID доски
-     * @param boardRequest данные для обновления
-     * @return обновленная информация о доске
-     */
     @PutMapping("/{id}")
     public ResponseEntity<BoardResponse> updateBoard(
             @PathVariable Long id,
@@ -137,12 +101,6 @@ public class BoardController {
         return ResponseEntity.ok(updatedBoard);
     }
 
-    /**
-     * Удаление доски
-     *
-     * @param id ID доски для удаления
-     * @return статус операции
-     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBoard(@PathVariable Long id) {
         if (!bucket.tryConsume(1)) {

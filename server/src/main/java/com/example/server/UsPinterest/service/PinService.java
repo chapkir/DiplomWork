@@ -162,9 +162,6 @@ public class PinService {
         return responseMap;
     }
 
-    /**
-     * Update image URL to ensure it's using the current environment's base URL
-     */
     public String updatePinImageUrl(Pin pin) {
         if (pin == null || pin.getImageUrl() == null) {
             return null;
@@ -174,7 +171,6 @@ public class PinService {
             String imageUrl = pin.getImageUrl();
             String updatedImageUrl = fileStorageService.updateImageUrl(imageUrl);
 
-            // Only update in database if URL has changed
             if (!imageUrl.equals(updatedImageUrl)) {
                 pin.setImageUrl(updatedImageUrl);
                 pinRepository.save(pin);
@@ -187,15 +183,13 @@ public class PinService {
         }
     }
 
-    /**
-     * Convert Pin to PinResponse with current user's like status
-     */
+
     public PinResponse convertToPinResponse(Pin pin, User currentUser) {
         try {
             PinResponse response = new PinResponse();
             response.setId(pin.getId());
 
-            // Update image URL to use current environment's base URL
+
             try {
                 String imageUrl = pin.getImageUrl();
                 if (imageUrl != null && !imageUrl.isEmpty()) {
@@ -204,7 +198,7 @@ public class PinService {
                 response.setImageUrl(imageUrl);
             } catch (Exception e) {
                 logger.error("Error updating image URL for pin {}: {}", pin.getId(), e.getMessage());
-                response.setImageUrl(pin.getImageUrl()); // Fallback to original URL
+                response.setImageUrl(pin.getImageUrl());
             }
 
             response.setDescription(pin.getDescription());
@@ -228,7 +222,7 @@ public class PinService {
             response.setCreatedAt(pin.getCreatedAt());
             response.setLikesCount(pin.getLikes() != null ? pin.getLikes().size() : 0);
 
-            // Check if current user has liked this pin
+
             boolean isLiked = false;
             if (currentUser != null && pin.getLikes() != null) {
                 isLiked = pin.getLikes().stream()
@@ -252,9 +246,6 @@ public class PinService {
         }
     }
 
-    /**
-     * Find all pins with ID less than the given cursor
-     */
     @Cacheable(value = "pins", key = "'cursor_lt_' + #cursorId + '_' + #limit")
     public List<Pin> findPinsLessThan(Long cursorId, int limit) {
         return pinRepository.findByIdLessThanOrderByIdDesc(cursorId, PageRequest.of(0, limit));
@@ -266,9 +257,6 @@ public class PinService {
         return pinRepository.findByIdGreaterThanOrderByIdAsc(cursorId, PageRequest.of(0, limit));
     }
 
-    /**
-     * Count total number of pins
-     */
     @Cacheable(value = "pinCount")
     public long count() {
         return pinRepository.count();

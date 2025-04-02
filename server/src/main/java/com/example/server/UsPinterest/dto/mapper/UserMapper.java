@@ -13,9 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Маппер для преобразования между сущностью User и DTO
- */
+
 @Component
 public class UserMapper {
 
@@ -25,12 +23,7 @@ public class UserMapper {
     @Autowired
     private FileStorageService fileStorageService;
 
-    /**
-     * Преобразует User в объект ProfileResponse
-     *
-     * @param user сущность пользователя
-     * @return объект ProfileResponse
-     */
+
     public ProfileResponse toProfileDto(User user) {
         if (user == null) {
             return null;
@@ -42,7 +35,7 @@ public class UserMapper {
         response.setEmail(user.getEmail());
         response.setBio(user.getBio());
 
-        // Обновляем ссылку на изображение профиля
+
         String profileImageUrl = user.getProfileImageUrl();
         if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
             response.setProfileImageUrl(fileStorageService.updateImageUrl(profileImageUrl));
@@ -50,19 +43,11 @@ public class UserMapper {
 
         response.setRegistrationDate(user.getRegistrationDate());
 
-        // По умолчанию, пины не загружаем в маппере,
-        // их нужно загружать отдельно через PinService
         response.setPins(new ArrayList<>());
 
         return response;
     }
 
-    /**
-     * Создает сущность User из данных RegisterRequest
-     *
-     * @param request запрос на регистрацию
-     * @return сущность User
-     */
     public User toEntity(RegisterRequest request) {
         if (request == null) {
             return null;
@@ -77,13 +62,6 @@ public class UserMapper {
         return user;
     }
 
-    /**
-     * Обновляет данные пользователя из ProfileResponse
-     *
-     * @param user     существующий пользователь
-     * @param profile  данные профиля для обновления
-     * @return обновленная сущность User
-     */
     public User updateFromProfile(User user, ProfileResponse profile) {
         if (user == null || profile == null) {
             return user;
@@ -100,12 +78,6 @@ public class UserMapper {
         return user;
     }
 
-    /**
-     * Convert a list of User entities to a list of ProfileResponse DTOs
-     *
-     * @param users list of User entities
-     * @return list of ProfileResponse DTOs
-     */
     public List<ProfileResponse> mapUsersToProfileResponses(List<User> users) {
         return users.stream()
                 .map(this::toProfileDto)

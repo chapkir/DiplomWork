@@ -43,7 +43,7 @@ public class NotificationService {
     // Создать уведомление о лайке
     public void createLikeNotification(User sender, Pin pin) {
         if (pin.getUser().getId().equals(sender.getId())) {
-            return; // Не уведомляем, если пользователь лайкнул свой пин
+            return;
         }
 
         Notification notification = new Notification();
@@ -60,7 +60,7 @@ public class NotificationService {
     // Создать уведомление о комментарии
     public void createCommentNotification(User sender, Pin pin, String commentText) {
         if (pin.getUser().getId().equals(sender.getId())) {
-            return; // Не уведомляем, если пользователь прокомментировал свой пин
+            return;
         }
 
         Notification notification = new Notification();
@@ -75,7 +75,6 @@ public class NotificationService {
         notificationRepository.save(notification);
     }
 
-    // Получить уведомления пользователя
     public List<NotificationResponse> getUserNotifications(int page, int size) {
         User currentUser = userService.getCurrentUser();
         if (currentUser == null) {
@@ -90,7 +89,6 @@ public class NotificationService {
                 .collect(Collectors.toList());
     }
 
-    // Получить все уведомления пользователя
     public List<NotificationResponse> getAllUserNotifications() {
         User currentUser = userService.getCurrentUser();
         if (currentUser == null) {
@@ -104,7 +102,6 @@ public class NotificationService {
                 .collect(Collectors.toList());
     }
 
-    // Получить количество непрочитанных уведомлений
     public Long getUnreadNotificationsCount() {
         User currentUser = userService.getCurrentUser();
         if (currentUser == null) {
@@ -114,7 +111,6 @@ public class NotificationService {
         return notificationRepository.countUnreadNotificationsByUser(currentUser);
     }
 
-    // Пометить все уведомления как прочитанные
     @Transactional
     public void markAllNotificationsAsRead() {
         User currentUser = userService.getCurrentUser();
@@ -125,7 +121,6 @@ public class NotificationService {
         notificationRepository.markAllAsRead(currentUser);
     }
 
-    // Пометить одно уведомление как прочитанное
     @Transactional
     public void markNotificationAsRead(Long notificationId) {
         User currentUser = userService.getCurrentUser();
@@ -144,7 +139,6 @@ public class NotificationService {
         notificationRepository.save(notification);
     }
 
-    // Удалить все уведомления, связанные с определенным пином
     @Transactional
     public void deleteNotificationsByPin(Pin pin) {
         if (pin == null) {
@@ -154,7 +148,6 @@ public class NotificationService {
         notificationRepository.deleteByPin(pin);
     }
 
-    // Преобразовать уведомление в DTO
     private NotificationResponse convertToNotificationResponse(Notification notification) {
         NotificationResponse response = new NotificationResponse();
         response.setId(notification.getId());

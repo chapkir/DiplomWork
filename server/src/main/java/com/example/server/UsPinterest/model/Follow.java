@@ -3,9 +3,6 @@ package com.example.server.UsPinterest.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-/**
- * Сущность для представления подписки одного пользователя на другого
- */
 @Entity
 @Table(name = "follows", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"follower_id", "following_id"})

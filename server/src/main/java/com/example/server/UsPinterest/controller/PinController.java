@@ -47,9 +47,6 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
-/**
- * REST контроллер для управления пинами (изображениями)
- */
 @RestController
 @RequestMapping("/api/pins")
 public class PinController {
@@ -89,9 +86,7 @@ public class PinController {
     @Autowired
     private UserService userService;
 
-    /**
-     * Получить все пины с пагинацией и курсорной навигацией
-     */
+
     @GetMapping
     public ResponseEntity<?> getAllPins(
             @RequestParam(required = false) String cursor,
@@ -100,14 +95,12 @@ public class PinController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDirection) {
 
-        // Проверка лимита запросов
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
         if (!probe.isConsumed()) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                     .body(new MessageResponse("Слишком много запросов"));
         }
 
-        // Если есть параметр поиска, используем обычную пагинацию
         if (search != null && !search.isEmpty()) {
             try {
                 logger.info("Поиск пинов по ключевому слову: {}", search);
@@ -120,11 +113,9 @@ public class PinController {
             }
         }
 
-        // Иначе используем курсорную пагинацию
         try {
             User currentUser = userService.getCurrentUser();
 
-            // Декодируем курсор, если он есть
             Long cursorId = null;
             if (cursor != null && !cursor.isEmpty()) {
                 try {
@@ -134,7 +125,7 @@ public class PinController {
                 }
             }
 
-            // Получаем пины с учетом направления сортировки
+
             List<Pin> pins = new ArrayList<>();
             boolean hasNext = false;
             boolean hasPrevious = cursor != null && !cursor.isEmpty();
@@ -144,7 +135,6 @@ public class PinController {
             Pageable pageable = PageRequest.of(0, size + 1);
 
             if (sortDirection.equalsIgnoreCase("desc")) {
-                // Для сортировки по убыванию
                 if (cursorId == null) {
                     pins = new ArrayList<>(pinRepository.findAll(pageable).getContent());
                 } else {
@@ -163,7 +153,6 @@ public class PinController {
                     prevCursorValue = prevPins.isEmpty() ? null : prevPins.get(0).getId();
                 }
             } else {
-                // Для сортировки по возрастанию
                 if (cursorId == null) {
                     pins = new ArrayList<>(pinRepository.findAll(pageable).getContent());
                 } else {
@@ -188,7 +177,6 @@ public class PinController {
                     .map(pin -> pinService.convertToPinResponse(pin, currentUser))
                     .collect(Collectors.toList());
 
-            // Создаем ответ с курсорной пагинацией
             CursorPageResponse<PinResponse, String> pageResponse = paginationService.createCursorPageResponse(
                     pinResponses,
                     nextCursorValue,
@@ -199,7 +187,7 @@ public class PinController {
                     pinRepository.count()
             );
 
-            // Добавляем HATEOAS ссылки
+
             HateoasResponse<CursorPageResponse<PinResponse, String>> response = new HateoasResponse<>(pageResponse);
             response.addSelfLink("/api/pins?cursor=" + cursor + "&size=" + size);
 
@@ -223,9 +211,6 @@ public class PinController {
         }
     }
 
-    /**
-     * Получить все пины без пагинации
-     */
     @GetMapping("/list-all")
     public ResponseEntity<?> getAllPinsWithoutPagination(Authentication authentication) {
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
@@ -255,9 +240,6 @@ public class PinController {
         }
     }
 
-    /**
-     * Получить пин по ID
-     */
     @GetMapping("/detail/{id}")
     public ResponseEntity<?> getPinById(@PathVariable Long id, Authentication authentication) {
         Pin pin = pinRepository.findById(id)
@@ -280,9 +262,6 @@ public class PinController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Создать новый пин
-     */
     @PostMapping
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> createPin(@Valid @RequestBody PinRequest pinRequest, Authentication authentication) {
@@ -308,9 +287,6 @@ public class PinController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /**
-     * Поставить лайк пину
-     */
     @PostMapping("/{id}/likes")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> likePin(@PathVariable Long id, Authentication authentication) {
@@ -323,7 +299,7 @@ public class PinController {
         try {
             Map<String, Object> likeResult = pinService.likePin(id, authentication.getName());
 
-            // Создаем уведомление о лайке
+
             User user = userRepository.findByUsername(authentication.getName())
                     .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
             Pin pin = pinRepository.findById(id)
@@ -344,9 +320,7 @@ public class PinController {
         }
     }
 
-    /**
-     * Убрать лайк с пина
-     */
+
     @DeleteMapping("/{id}/likes")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> unlikePin(@PathVariable Long id, Authentication authentication) {
@@ -372,9 +346,7 @@ public class PinController {
         }
     }
 
-    /**
-     * Добавить комментарий к пину
-     */
+
     @PostMapping("/{id}/comments")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> addComment(
@@ -401,7 +373,7 @@ public class PinController {
             comment.setCreatedAt(LocalDateTime.now());
             commentRepository.save(comment);
 
-            // Создаем уведомление о комментарии
+
             notificationService.createCommentNotification(user, pin, commentRequest.getText());
 
             HateoasResponse<Void> response = new HateoasResponse<>(null);
@@ -418,9 +390,7 @@ public class PinController {
         }
     }
 
-    /**
-     * Получить комментарии к пину
-     */
+
     @GetMapping("/{id}/comments")
     public ResponseEntity<?> getPinComments(@PathVariable Long id) {
         Pin pin = pinRepository.findById(id)
@@ -443,9 +413,7 @@ public class PinController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Загрузить изображение для пина
-     */
+
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> uploadImage(
@@ -453,7 +421,7 @@ public class PinController {
             @RequestParam("description") String description,
             Authentication authentication) {
 
-        // Проверяем лимит запросов
+
         if (!bucket.tryConsume(1)) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                     .body(new MessageResponse("Слишком много запросов. Пожалуйста, попробуйте позже."));
@@ -499,34 +467,26 @@ public class PinController {
         }
     }
 
-    /**
-     * Удалить пин по ID
-     */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> deletePin(@PathVariable Long id, Authentication authentication) {
         try {
-            // Получаем текущего пользователя
             User currentUser = userService.getCurrentUser();
             if (currentUser == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new MessageResponse("Пользователь не авторизован"));
             }
 
-            // Получаем пин
             Pin pin = pinRepository.findById(id)
                     .orElseThrow(() -> new ResourceNotFoundException("Пин с ID " + id + " не найден"));
 
-            // Проверяем, является ли текущий пользователь владельцем пина
             if (!pin.getUser().getId().equals(currentUser.getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(new MessageResponse("У вас нет прав на удаление этого пина"));
             }
 
-            // Удаляем связанные уведомления перед удалением пина
             notificationService.deleteNotificationsByPin(pin);
 
-            // Удаляем пин
             pinService.deletePin(id);
 
             return ResponseEntity.noContent().build();

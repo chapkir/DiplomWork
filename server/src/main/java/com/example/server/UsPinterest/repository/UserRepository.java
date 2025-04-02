@@ -26,21 +26,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email);
 
-    /**
-     * Подсчитывает количество подписчиков у пользователя
-     *
-     * @param userId ID пользователя
-     * @return количество подписчиков
-     */
     @Query(value = "SELECT COUNT(*) FROM followers WHERE following_id = :userId", nativeQuery = true)
     long countFollowersByUserId(@Param("userId") Long userId);
 
-    /**
-     * Подсчитывает количество пользователей, на которых подписан данный пользователь
-     *
-     * @param userId ID пользователя
-     * @return количество подписок
-     */
+
     @Query(value = "SELECT COUNT(*) FROM followers WHERE follower_id = :userId", nativeQuery = true)
     long countFollowingByUserId(@Param("userId") Long userId);
 }

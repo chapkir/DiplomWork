@@ -14,22 +14,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Маппер для преобразования между сущностью Pin и DTO PinResponse/PinRequest
- */
 @Component
 public class PinMapper {
 
     @Autowired
     private FileStorageService fileStorageService;
 
-    /**
-     * Преобразует сущность Pin в DTO PinResponse с указанием, лайкнул ли текущий пользователь пин
-     *
-     * @param pin          сущность пина
-     * @param currentUser  текущий пользователь (может быть null)
-     * @return             объект PinResponse с данными пина
-     */
     public PinResponse toDto(Pin pin, User currentUser) {
         if (pin == null) {
             return null;
@@ -38,7 +28,6 @@ public class PinMapper {
         PinResponse response = new PinResponse();
         response.setId(pin.getId());
 
-        // Обновляем ссылку на изображение
         String imageUrl = pin.getImageUrl();
         if (imageUrl != null && !imageUrl.isEmpty()) {
             response.setImageUrl(fileStorageService.updateImageUrl(imageUrl));
@@ -48,18 +37,15 @@ public class PinMapper {
 
         response.setDescription(pin.getDescription());
 
-        // Информация о доске
         if (pin.getBoard() != null) {
             response.setBoardId(pin.getBoard().getId());
             response.setBoardTitle(pin.getBoard().getTitle());
         }
 
-        // Информация о пользователе
         if (pin.getUser() != null) {
             response.setUserId(pin.getUser().getId());
             response.setUsername(pin.getUser().getUsername());
 
-            // Обновляем URL профиля пользователя
             String profileImageUrl = pin.getUser().getProfileImageUrl();
             if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
                 response.setUserProfileImageUrl(fileStorageService.updateImageUrl(profileImageUrl));
@@ -68,13 +54,10 @@ public class PinMapper {
             }
         }
 
-        // Добавление даты создания
         response.setCreatedAt(pin.getCreatedAt());
 
-        // Счетчик лайков
         response.setLikesCount(pin.getLikes() != null ? pin.getLikes().size() : 0);
 
-        // Флаг, лайкнул ли текущий пользователь пин
         boolean isLikedByCurrentUser = false;
         if (currentUser != null && pin.getLikes() != null) {
             isLikedByCurrentUser = pin.getLikes().stream()
@@ -82,7 +65,6 @@ public class PinMapper {
         }
         response.setIsLikedByCurrentUser(isLikedByCurrentUser);
 
-        // Добавление комментариев
         if (pin.getComments() != null) {
             response.setComments(
                     pin.getComments().stream()
@@ -102,12 +84,6 @@ public class PinMapper {
         return response;
     }
 
-    /**
-     * Создает новую сущность Pin из данных PinRequest
-     *
-     * @param request объект запроса на создание пина
-     * @return        сущность Pin (без сохранения в БД)
-     */
     public Pin toEntity(PinRequest request) {
         if (request == null) {
             return null;
@@ -121,13 +97,6 @@ public class PinMapper {
         return pin;
     }
 
-    /**
-     * Обновляет существующую сущность Pin данными из PinRequest
-     *
-     * @param pin     существующая сущность пина
-     * @param request объект запроса с новыми данными
-     * @return        обновленная сущность Pin
-     */
     public Pin updateEntity(Pin pin, PinRequest request) {
         if (pin == null || request == null) {
             return pin;

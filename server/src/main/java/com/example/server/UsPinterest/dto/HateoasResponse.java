@@ -6,13 +6,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Base response class with HATEOAS support.
- * Implements Hypermedia as the Engine of Application State (HATEOAS)
- * for improved REST API design.
- *
- * @param <T> Type of the data payload
- */
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class HateoasResponse<T> {
     private T data;
@@ -78,9 +72,6 @@ public class HateoasResponse<T> {
         return this;
     }
 
-    /**
-     * HATEOAS Link representation
-     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Link {
         private String rel;
@@ -121,9 +112,6 @@ public class HateoasResponse<T> {
         }
     }
 
-    /**
-     * Metadata for the response
-     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Meta {
         private LocalDateTime timestamp;
