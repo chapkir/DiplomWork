@@ -1,6 +1,5 @@
 package com.example.diplomwork.network.repos
 
-import android.util.Log
 import com.example.diplomwork.model.Comment
 import com.example.diplomwork.model.CommentRequest
 import com.example.diplomwork.model.CommentResponse

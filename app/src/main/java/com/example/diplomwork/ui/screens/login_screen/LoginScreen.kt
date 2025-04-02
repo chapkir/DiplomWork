@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +44,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.model.LoginRequest
@@ -50,27 +52,29 @@ import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.ui.theme.ColorForFocusButton
+import com.example.diplomwork.viewmodel.LoginViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onNavigateToRegister: () -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    loginViewModel: LoginViewModel = hiltViewModel() // Получаем ViewModel
 ) {
     val focusRequester = FocusRequester()
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
     }
-    var username by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
-    var isLoading by rememberSaveable { mutableStateOf(false) }
+
+    val username by loginViewModel.username.collectAsState()
+    val password by loginViewModel.password.collectAsState()
+    val isLoading by loginViewModel.isLoading.collectAsState()
+    val loginError by loginViewModel.loginError.collectAsState()
 
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
     val context = LocalContext.current
-    val sessionManager = remember { SessionManager(context) }
-    val scope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -90,15 +94,9 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(25.dp))
 
-
         OutlinedTextField(
             value = username,
-            onValueChange =
-            {
-                username = it
-                    .replace(" ", "")
-                    .filter { c -> c.code in 32..126 }
-            },
+            onValueChange = { loginViewModel.onUsernameChange(it) },
             label = { Text("Логин") },
             leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
             modifier = Modifier
@@ -124,17 +122,10 @@ fun LoginScreen(
 
         OutlinedTextField(
             value = password,
-            onValueChange =
-            {
-                password = it
-                    .replace(" ", "")
-                    .filter { c -> c.code in 32..126 }
-            },
+            onValueChange = { loginViewModel.onPasswordChange(it) },
             label = { Text("Пароль") },
             leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
-            visualTransformation =
-            if (!passwordVisible) PasswordVisualTransformation()
-            else VisualTransformation.None,
+            visualTransformation = if (!passwordVisible) PasswordVisualTransformation() else VisualTransformation.None,
             trailingIcon = {
                 val image = if (passwordVisible) R.drawable.ic_eye_crossed else R.drawable.ic_eye
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -170,21 +161,9 @@ fun LoginScreen(
 
         Button(
             onClick = {
-                scope.launch {
-                    try {
-                        isLoading = true
-                        val response = ApiClient.apiService.login(LoginRequest(username, password))
-                        sessionManager.saveAuthData(response.token, response.refreshToken)
-                        sessionManager.saveUsername(username)
-                        onLoginSuccess()
-                    } catch (e: Exception) {
-                        Toast.makeText(
-                            context, "Ошибка авторизации: ${e.message}",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    } finally {
-                        isLoading = false
-                    }
+                loginViewModel.login()
+                if (loginError == null) {
+                    onLoginSuccess()
                 }
             },
             modifier = Modifier.fillMaxWidth(0.85f),
@@ -193,7 +172,6 @@ fun LoginScreen(
                 contentColor = Color.White,
                 disabledContainerColor = Color.Gray,
                 disabledContentColor = Color.White
-
             ),
             enabled = !isLoading && username.isNotBlank() && password.isNotBlank()
         ) {
@@ -206,6 +184,15 @@ fun LoginScreen(
                     fontSize = 20.sp
                 )
             }
+        }
+
+        loginError?.let {
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = it,
+                color = Color.Red,
+                fontSize = 16.sp
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))

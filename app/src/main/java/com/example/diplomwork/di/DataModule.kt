@@ -1,14 +1,13 @@
 package com.example.diplomwork.di
 
 import com.example.diplomwork.network.ApiService
-import com.example.diplomwork.network.ImageUploadService
 import com.example.diplomwork.network.repos.AuthRepository
 import com.example.diplomwork.network.repos.CommentRepository
-import com.example.diplomwork.network.repos.ImageRepository
 import com.example.diplomwork.network.repos.PictureRepository
 import com.example.diplomwork.network.repos.ProfileRepository
 import com.example.diplomwork.network.repos.SearchRepository
 import com.example.diplomwork.auth.SessionManager
+import com.example.diplomwork.network.repos.UploadRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -21,8 +20,7 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun provideImageRepository(imageUploadService: ImageUploadService) =
-        ImageRepository(imageUploadService)
+    fun provideUploadRepository(apiService: ApiService) = UploadRepository(apiService)
 
     @Provides
     @Singleton

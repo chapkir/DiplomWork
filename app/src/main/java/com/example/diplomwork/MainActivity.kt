@@ -66,7 +66,7 @@ class MainActivity : ComponentActivity() {
 
         // Принудительно устанавливаем URL DDNS
         val ddnsUrl = "http://spotsychlen.ddns.net:8081/" // Замените на свой DDNS
-        ApiClient.setBaseUrl(ddnsUrl)
+        //ApiClient.setBaseUrl(ddnsUrl)
         Log.d("MainActivity", "Установлен URL сервера: $ddnsUrl")
 
         // Сохраняем DDNS URL в SharedPreferences

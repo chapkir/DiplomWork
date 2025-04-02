@@ -116,7 +116,10 @@ fun ContentGrid(
                             }
                         }
 
-                        itemsIndexed(pictures) { _, picture ->
+                        itemsIndexed(
+                            items = pictures,
+                            key = {_, picture -> picture.id}
+                        ) { _, picture ->
                             PictureCard(
                                 imageUrl = picture.imageUrl,
                                 id = picture.id,

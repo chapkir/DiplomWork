@@ -262,13 +262,6 @@ fun SwipeableTabs(
         modifier = Modifier.padding(end = 30.dp, start = 30.dp, top = 13.dp, bottom = 10.dp),
         contentColor = Color.White,
         containerColor = ColorForBackgroundProfile,
-        indicator = {
-            Box(
-                modifier = Modifier
-                    .padding(top = 25.dp)
-                    .background(Color.Black)
-            )
-        }
     ) {
         tabTitles.forEachIndexed { index, title ->
             Tab(
@@ -333,7 +326,10 @@ private fun PicturesGrid(pictures: List<PictureResponse>, onPictureClick: (Long,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 2.dp, end = 2.dp),
         content = {
-            itemsIndexed(pictures) { _, picture ->
+            itemsIndexed(
+                items = pictures,
+                key = {_, picture -> picture.id}
+            ) { _, picture ->
                 PictureCard(
                     imageUrl = picture.imageUrl,
                     id = picture.id,

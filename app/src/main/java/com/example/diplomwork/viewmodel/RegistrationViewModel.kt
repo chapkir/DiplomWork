@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.model.LoginRequest
 import com.example.diplomwork.model.RegisterRequest
+import com.example.diplomwork.network.ApiService
 import com.example.diplomwork.network.repos.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,53 +39,54 @@ class RegisterViewModel @Inject constructor(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
-    fun onUsernameChanged(newUsername: String) {
-        _username.value = newUsername
-    }
-
-    fun onEmailChanged(newEmail: String) {
-        _email.value = newEmail
-    }
-
-    fun onPasswordChanged(newPassword: String) {
-        _password.value = newPassword
-    }
-
-    fun onNextStep() {
+    fun nextStep() {
         if (_step.value < 2) {
-            _step.value++
+            _step.value += 1
         }
     }
 
-    fun onPreviousStep() {
+    fun previousStep() {
         if (_step.value > 0) {
-            _step.value--
+            _step.value -= 1
         }
     }
 
-    fun registerUser(context: Context, onCompleteRegistration: () -> Unit) {
+    fun updateUsername(newUsername: String) {
+        _username.value = newUsername
+        _errorMessage.value = null
+    }
+
+    fun updateEmail(newEmail: String) {
+        _email.value = newEmail
+        _errorMessage.value = null
+    }
+
+    fun updatePassword(newPassword: String) {
+        _password.value = newPassword
+        _errorMessage.value = null
+    }
+
+    fun register(onCompleteRegistration: () -> Unit) {
         viewModelScope.launch {
-            if (!_isLoading.value) {
+            try {
                 _isLoading.value = true
-                try {
-                    val registerResponse = authRepository.register(
-                        RegisterRequest(username.value, email.value, password.value)
-                    )
+                _errorMessage.value = null
 
-                    val loginResponse = authRepository.login(
-                        LoginRequest(username.value, password.value)
-                    )
+                // Регистрация
+                val registerResponse = authRepository.register(RegisterRequest(_username.value, _email.value, _password.value))
 
-                    sessionManager.saveAuthToken(loginResponse.token)
+                // Автоматическая авторизация
+                val loginResponse = authRepository.login(LoginRequest(_username.value, _password.value))
 
-                    Toast.makeText(context, "Регистрация успешна!", Toast.LENGTH_SHORT).show()
-                    onCompleteRegistration()
+                // Сохранение токена
+                sessionManager.saveAuthToken(loginResponse.token)
 
-                } catch (e: Exception) {
-                    _errorMessage.value = "Ошибка: ${e.message}"
-                } finally {
-                    _isLoading.value = false
-                }
+                onCompleteRegistration()
+
+            } catch (e: Exception) {
+                _errorMessage.value = "Ошибка: ${e.message}"
+            } finally {
+                _isLoading.value = false
             }
         }
     }

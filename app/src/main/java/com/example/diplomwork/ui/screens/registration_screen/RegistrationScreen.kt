@@ -28,6 +28,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -51,6 +52,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.model.LoginRequest
@@ -60,6 +62,7 @@ import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.ui.theme.ColorForFocusButton
 import com.example.diplomwork.ui.theme.ColorForHint
+import com.example.diplomwork.viewmodel.RegisterViewModel
 import kotlinx.coroutines.launch
 
 fun hideKeyboard(context: Context) {
@@ -73,17 +76,16 @@ fun hideKeyboard(context: Context) {
 }
 
 @Composable
-fun RegisterScreen(onCompleteRegistration: () -> Unit) {
-    var step by rememberSaveable { mutableIntStateOf(0) }
-    var username by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
-    var email by rememberSaveable { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
-
+fun RegisterScreen(onCompleteRegistration: () -> Unit, registerViewModel: RegisterViewModel = hiltViewModel()) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val sessionManager = remember { SessionManager(context) }
     val focusManager = LocalFocusManager.current
+
+    val step by registerViewModel.step.collectAsState()
+    val username by registerViewModel.username.collectAsState()
+    val email by registerViewModel.email.collectAsState()
+    val password by registerViewModel.password.collectAsState()
+    val isLoading by  registerViewModel.isLoading.collectAsState()
+    val errorMessage by registerViewModel.errorMessage.collectAsState()
 
     Column(
         modifier = Modifier
@@ -102,17 +104,14 @@ fun RegisterScreen(onCompleteRegistration: () -> Unit) {
                 "Введите имя пользователя",
                 "Логин",
                 username,
-                {
-                    username = it.replace(" ", "")
-                        .filter { c -> c.code in 32..126 }
-                }
+                { registerViewModel.updateUsername(it.replace(" ", "").filter { c -> c.code in 32..126 }) }
             )
 
             1 -> StepField(
                 "Введите email",
                 "Email",
                 email,
-                { email = it.replace(" ", "") },
+                { registerViewModel.updateEmail(it.replace(" ", "")) },
                 KeyboardType.Email
             )
 
@@ -120,7 +119,7 @@ fun RegisterScreen(onCompleteRegistration: () -> Unit) {
                 "Придумайте пароль",
                 "Пароль",
                 password,
-                { password = it.replace(" ", "") },
+                { registerViewModel.updatePassword(it.replace(" ", "")) },
                 KeyboardType.Password,
                 isPassword = true
             )
@@ -134,7 +133,7 @@ fun RegisterScreen(onCompleteRegistration: () -> Unit) {
         ) {
             if (step > 0) {
                 Button(
-                    onClick = { step-- },
+                    onClick = { registerViewModel.previousStep() },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = ColorForFocusButton,
                         contentColor = Color.White,
@@ -154,38 +153,13 @@ fun RegisterScreen(onCompleteRegistration: () -> Unit) {
             Button(
                 onClick = {
                     if (step < 2) {
-                        step++
+                        registerViewModel.nextStep()
                     } else {
-                        scope.launch {
-                            try {
-                                isLoading = true
-
-                                // Регистрация
-                                val registerResponse = ApiClient.apiService.register(
-                                    RegisterRequest(username, email, password)
-                                )
-
-                                // Автоматическая авторизация
-                                val loginResponse = ApiClient.apiService.login(
-                                    LoginRequest(username, password)
-                                )
-
-                                // Сохранение токена
-                                sessionManager.saveAuthToken(loginResponse.token)
-
-                                // Очистка фокуса и скрытие клавиатуры
-                                focusManager.clearFocus()
-                                hideKeyboard(context)
-
-                                Toast.makeText(context, "Регистрация успешна!", Toast.LENGTH_SHORT)
-                                    .show()
-                                onCompleteRegistration()
-                            } catch (e: Exception) {
-                                Toast.makeText(context, "Ошибка: ${e.message}", Toast.LENGTH_LONG)
-                                    .show()
-                            } finally {
-                                isLoading = false
-                            }
+                        registerViewModel.register {
+                            focusManager.clearFocus()
+                            hideKeyboard(context)
+                            Toast.makeText(context, "Регистрация успешна!", Toast.LENGTH_SHORT).show()
+                            onCompleteRegistration()
                         }
                     }
                 },
@@ -200,11 +174,18 @@ fun RegisterScreen(onCompleteRegistration: () -> Unit) {
                 if (isLoading && step == 2) {
                     LoadingSpinnerForElement()
                 } else {
-                    Text(
-                        text = if (step < 2) "Далее" else "Завершить"
-                    )
+                    Text(text = if (step < 2) "Далее" else "Завершить")
                 }
             }
+        }
+
+        errorMessage?.let {
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = it,
+                color = Color.Red,
+                fontSize = 16.sp
+            )
         }
 
         Text(

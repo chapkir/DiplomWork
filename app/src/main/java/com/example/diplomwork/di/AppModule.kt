@@ -6,20 +6,12 @@ import coil.ImageLoader
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
-import coil.request.ImageResult
 import com.example.diplomwork.auth.SessionManager
-import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.network.ApiService
-import com.example.diplomwork.network.ImageUploadService
 import com.example.diplomwork.network.interceptors.AuthInterceptor
 import com.example.diplomwork.network.interceptors.CorsInterceptor
 import com.example.diplomwork.network.interceptors.LoggingInterceptor
-import com.example.diplomwork.network.interceptors.RetryInterceptor
-import com.example.diplomwork.network.repos.AuthRepository
-import com.example.diplomwork.network.repos.CommentRepository
-import com.example.diplomwork.network.repos.PictureRepository
-import com.example.diplomwork.network.repos.ProfileRepository
-import com.example.diplomwork.network.repos.SearchRepository
+import com.example.diplomwork.network.repos.UploadRepository
 import com.example.diplomwork.util.AppConstants
 import dagger.Module
 import dagger.Provides
@@ -82,12 +74,6 @@ object AppModule {
     @Singleton
     fun provideApiService(retrofit: Retrofit): ApiService {
         return retrofit.create(ApiService::class.java)
-    }
-
-    @Provides
-    @Singleton
-    fun provideImageUploadService(retrofit: Retrofit): ImageUploadService {
-        return retrofit.create(ImageUploadService::class.java)
     }
 
     @Provides
