@@ -98,7 +98,7 @@ class ProfileViewModel @Inject constructor(
 
                 if (imageFile != null) {
                     val requestFile = imageFile.asRequestBody("image/*".toMediaTypeOrNull())
-                    val body = MultipartBody.Part.createFormData("image", imageFile.name, requestFile)
+                    val body = MultipartBody.Part.createFormData("file", imageFile.name, requestFile)
 
                     val response = profileRepository.uploadProfileImage(body)
 

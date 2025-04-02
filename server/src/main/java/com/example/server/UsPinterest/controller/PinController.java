@@ -311,7 +311,7 @@ public class PinController {
     /**
      * Поставить лайк пину
      */
-    @PostMapping("/{id}/like")
+    @PostMapping("/{id}/likes")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> likePin(@PathVariable Long id, Authentication authentication) {
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
@@ -347,7 +347,7 @@ public class PinController {
     /**
      * Убрать лайк с пина
      */
-    @PostMapping("/{id}/unlike")
+    @DeleteMapping("/{id}/likes")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> unlikePin(@PathVariable Long id, Authentication authentication) {
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
