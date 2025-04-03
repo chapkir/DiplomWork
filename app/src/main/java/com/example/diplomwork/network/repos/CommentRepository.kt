@@ -3,7 +3,7 @@ package com.example.diplomwork.network.repos
 import com.example.diplomwork.model.Comment
 import com.example.diplomwork.model.CommentRequest
 import com.example.diplomwork.model.CommentResponse
-import com.example.diplomwork.network.ApiService
+import com.example.diplomwork.network.api.ApiService
 import javax.inject.Inject
 import javax.inject.Singleton
 

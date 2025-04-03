@@ -7,11 +7,10 @@ import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
 import com.example.diplomwork.auth.SessionManager
-import com.example.diplomwork.network.ApiService
+import com.example.diplomwork.network.api.ApiService
 import com.example.diplomwork.network.interceptors.AuthInterceptor
 import com.example.diplomwork.network.interceptors.CorsInterceptor
 import com.example.diplomwork.network.interceptors.LoggingInterceptor
-import com.example.diplomwork.network.repos.UploadRepository
 import com.example.diplomwork.util.AppConstants
 import dagger.Module
 import dagger.Provides

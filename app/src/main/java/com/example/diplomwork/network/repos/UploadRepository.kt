@@ -1,7 +1,7 @@
 package com.example.diplomwork.network.repos
 
 import com.example.diplomwork.model.PictureResponse
-import com.example.diplomwork.network.ApiService
+import com.example.diplomwork.network.api.ApiService
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response

@@ -15,7 +15,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.viewmodel.AddPictureDialogViewModel
 
 @Composable
-fun OpenGalleryAndSavePicture(
+fun OpenGalleryForAddPicture(
     isDialogOpen: MutableState<Boolean>,
     onRefresh: () -> Unit,
     viewModel: AddPictureDialogViewModel = hiltViewModel()

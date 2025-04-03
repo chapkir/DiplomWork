@@ -1,9 +1,8 @@
 package com.example.diplomwork.network.repos
 
-import android.util.Log
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.model.ProfileResponse
-import com.example.diplomwork.network.ApiService
+import com.example.diplomwork.network.api.ApiService
 import dagger.hilt.android.scopes.ActivityScoped
 import okhttp3.MultipartBody
 import retrofit2.Response

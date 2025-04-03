@@ -6,7 +6,7 @@ import com.example.diplomwork.model.TokenRefreshRequest
 import com.example.diplomwork.model.TokenRefreshResponse
 import com.example.diplomwork.model.RegisterRequest
 import com.example.diplomwork.model.RegisterResponse
-import com.example.diplomwork.network.ApiService
+import com.example.diplomwork.network.api.ApiService
 import dagger.hilt.android.scopes.ActivityScoped
 import retrofit2.Response
 import javax.inject.Inject

@@ -1,4 +1,4 @@
-package com.example.diplomwork.network
+package com.example.diplomwork.network.api
 
 import com.example.diplomwork.model.LoginRequest
 import com.example.diplomwork.model.LoginResponse

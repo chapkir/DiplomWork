@@ -3,7 +3,7 @@ package com.example.diplomwork.network.repos
 import com.example.diplomwork.model.ApiResponse
 import com.example.diplomwork.model.PageResponse
 import com.example.diplomwork.model.PictureResponse
-import com.example.diplomwork.network.ApiService
+import com.example.diplomwork.network.api.ApiService
 import dagger.hilt.android.scopes.ActivityScoped
 import javax.inject.Inject
 

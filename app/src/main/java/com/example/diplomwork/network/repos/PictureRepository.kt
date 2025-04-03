@@ -1,19 +1,14 @@
 package com.example.diplomwork.network.repos
 
-import android.util.Log
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.model.Comment
 import com.example.diplomwork.model.CommentRequest
 import com.example.diplomwork.model.CommentResponse
-import com.example.diplomwork.model.PageResponse
-import com.example.diplomwork.network.ApiService
-import dagger.hilt.android.scopes.ActivityScoped
-import okhttp3.MultipartBody
+import com.example.diplomwork.network.api.ApiService
 import retrofit2.Response
 import javax.inject.Inject
 import javax.inject.Singleton
 import com.example.diplomwork.auth.SessionManager
-import okhttp3.RequestBody
 
 @Singleton
 class PictureRepository @Inject constructor(

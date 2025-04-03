@@ -1,6 +1,6 @@
 package com.example.diplomwork.di
 
-import com.example.diplomwork.network.ApiService
+import com.example.diplomwork.network.api.ApiService
 import com.example.diplomwork.network.repos.AuthRepository
 import com.example.diplomwork.network.repos.CommentRepository
 import com.example.diplomwork.network.repos.PictureRepository
