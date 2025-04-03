@@ -36,7 +36,7 @@ function initApp() {
     const pinId = urlParams.get('id');
 
     if (!pinId) {
-        showError('Идентификатор идеи не найден');
+        showMessage('Идентификатор идеи не найден', 'error');
         return;
     }
 
@@ -64,38 +64,32 @@ function setupEventListeners() {
     }
 
     // Like button
-    const likeBtn = document.getElementById('likeBtn');
     if (likeBtn) {
         likeBtn.addEventListener('click', toggleLike);
     }
 
     // Save button
-    const saveBtn = document.getElementById('saveBtn');
     if (saveBtn) {
         saveBtn.addEventListener('click', savePin);
     }
 
     // Share button
-    const shareBtn = document.getElementById('shareBtn');
     if (shareBtn) {
         shareBtn.addEventListener('click', sharePin);
     }
 
     // Follow button
-    const followBtn = document.getElementById('followBtn');
     if (followBtn) {
         followBtn.addEventListener('click', toggleFollow);
     }
 
     // Login/Register buttons
-    const loginBtn = document.getElementById('loginBtn');
     if (loginBtn) {
         loginBtn.addEventListener('click', function() {
             openModal(document.getElementById('loginModal'));
         });
     }
 
-    const registerBtn = document.getElementById('registerBtn');
     if (registerBtn) {
         registerBtn.addEventListener('click', function() {
             openModal(document.getElementById('registerModal'));
@@ -103,7 +97,6 @@ function setupEventListeners() {
     }
 
     // Logout button
-    const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', logout);
     }
@@ -119,18 +112,6 @@ function setupEventListeners() {
             const modal = btn.closest('.modal');
             if (modal) modal.classList.remove('active');
         });
-    });
-
-    // Login form submission
-    document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        // Login logic...
-    });
-
-    // Register form submission
-    document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        // Registration logic...
     });
 }
 
@@ -181,13 +162,6 @@ async function checkAuth() {
 }
 
 function updateAuthUI(isAuthenticated) {
-    const loginBtn = document.getElementById('loginBtn');
-    const registerBtn = document.getElementById('registerBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const profileBtn = document.getElementById('profileBtn');
-    const commentForm = document.getElementById('commentForm');
-    const loginForComments = document.getElementById('loginForComments');
-
     if (isAuthenticated) {
         // Пользователь авторизован
         if (loginBtn) loginBtn.style.display = 'none';
@@ -200,6 +174,8 @@ function updateAuthUI(isAuthenticated) {
         }
 
         // Показываем форму комментариев и скрываем приглашение войти
+        const commentForm = document.getElementById('commentForm');
+        const loginForComments = document.getElementById('loginForComments');
         if (commentForm) commentForm.style.display = 'block';
         if (loginForComments) loginForComments.style.display = 'none';
     } else {
@@ -210,50 +186,44 @@ function updateAuthUI(isAuthenticated) {
         if (profileBtn) profileBtn.style.display = 'none';
 
         // Скрываем форму комментариев и показываем приглашение войти
+        const commentForm = document.getElementById('commentForm');
+        const loginForComments = document.getElementById('loginForComments');
         if (commentForm) commentForm.style.display = 'none';
         if (loginForComments) loginForComments.style.display = 'block';
     }
 }
 
 async function loadPin(pinId) {
-    showLoading();
     try {
-        const token = localStorage.getItem('token');
-        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        showLoading();
 
-        const response = await fetch(`/api/pins/${pinId}`, { headers });
+        // Fetch pin data
+        const response = await fetch(`/api/pins/${pinId}`);
 
         if (!response.ok) {
-            if (response.status === 404) {
-                throw new Error("Идея не найдена");
-            }
-            throw new Error("Ошибка при загрузке идеи");
+            throw new Error('Failed to load pin data');
         }
 
         const data = await response.json();
         currentPin = data;
 
-        // Обновляем метаданные для SEO
-        document.title = `${data.description ? data.description.substring(0, 50) + '...' : 'Просмотр идеи'} | ИнспирЭхо`;
+        // Load author data
+        await loadAuthorData(data.userId);
 
-        // Загружаем данные об авторе
-        await loadAuthorData(data.user);
-
-        // Обновляем UI
+        // Update UI with pin data
         updatePinUI();
 
-        // Загружаем комментарии для пина
+        // Load comments
         await loadComments(pinId);
 
-        // Загружаем похожие пины (потенциально на основе тегов или категории)
-        const category = data.description ? data.description.split(' ')[0] : '';
-        await loadRelatedPins(category);
+        // Load related pins
+        await loadRelatedPins(data.category);
 
         hideLoading();
     } catch (error) {
-        console.error('Ошибка при загрузке пина:', error);
         hideLoading();
-        showError(error.message || "Произошла ошибка при загрузке идеи");
+        showMessage('Ошибка при загрузке пина', 'error');
+        console.error('Error loading pin:', error);
     }
 }
 
@@ -268,56 +238,54 @@ async function loadAuthorData(userId) {
         pinAuthor = data;
     } catch (error) {
         console.error('Ошибка при загрузке данных автора:', error);
-        // Ошибка загрузки автора не должна прерывать отображение пина
     }
 }
 
 function updatePinUI() {
-    const pinImage = document.getElementById('pinImage');
-    const pinTitle = document.getElementById('pinTitle');
-    const pinDescription = document.getElementById('pinDescription');
-    const likesCount = document.getElementById('likesCount');
-    const commentsCount = document.getElementById('commentsCount');
+    if (pinImage) pinImage.src = currentPin.imageUrl;
+    if (pinImage) pinImage.alt = currentPin.description || "Изображение идеи";
+
+    if (pinTitle) {
+        pinTitle.textContent = currentPin.description ?
+            currentPin.description.substring(0, 50) + (currentPin.description.length > 50 ? '...' : '') :
+            "Идея без описания";
+    }
+
+    if (pinDescription) pinDescription.textContent = currentPin.description || "Для этой идеи не добавлено описание.";
+
+    if (likesCount) likesCount.textContent = currentPin.likesCount || 0;
+
+    const commentCountValue = currentPin.comments ? currentPin.comments.length : 0;
+    if (commentsCount) commentsCount.textContent = commentCountValue;
+
     const commentCountLabel = document.getElementById('commentCountLabel');
-    const createdAt = document.getElementById('createdAt');
-    const authorName = document.getElementById('authorName');
-    const authorAvatar = document.getElementById('authorAvatar');
-    const authorBio = document.getElementById('authorBio');
-
-    // Отображаем данные пина
-    pinImage.src = currentPin.imageUrl;
-    pinImage.alt = currentPin.description || "Изображение идеи";
-
-    pinTitle.textContent = currentPin.description ?
-        currentPin.description.substring(0, 50) + (currentPin.description.length > 50 ? '...' : '') :
-        "Идея без описания";
-
-    pinDescription.textContent = currentPin.description || "Для этой идеи не добавлено описание.";
-
-    likesCount.textContent = currentPin.likesCount || 0;
-    commentsCount.textContent = currentPin.comments ? currentPin.comments.length : 0;
-    commentCountLabel.textContent = `(${currentPin.comments ? currentPin.comments.length : 0})`;
+    if (commentCountLabel) commentCountLabel.textContent = `(${commentCountValue})`;
 
     // Форматируем дату
-    if (currentPin.createdAt) {
-        createdAt.textContent = formatDate(currentPin.createdAt);
-    } else {
-        createdAt.textContent = "Недавно";
+    const createdAt = document.getElementById('createdAt');
+    if (createdAt) {
+        createdAt.textContent = currentPin.createdAt ? formatDate(currentPin.createdAt) : "Недавно";
     }
 
     // Отображаем данные автора
     if (pinAuthor) {
-        authorName.textContent = pinAuthor.username || "Неизвестный автор";
+        if (authorName) authorName.textContent = pinAuthor.username || "Неизвестный автор";
 
-        if (pinAuthor.profileImageUrl) {
-            authorAvatar.src = pinAuthor.profileImageUrl;
-        } else {
-            // Генерируем цвет аватара на основе имени пользователя
-            const color = getRandomColor(pinAuthor.username);
-            authorAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(pinAuthor.username)}&background=${color.replace('#', '')}&color=fff`;
+        const authorAvatar = document.getElementById('authorAvatar');
+        if (authorAvatar) {
+            if (pinAuthor.profileImageUrl) {
+                authorAvatar.src = pinAuthor.profileImageUrl;
+            } else {
+                // Генерируем цвет аватара на основе имени пользователя
+                const color = getRandomColor(pinAuthor.username);
+                authorAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(pinAuthor.username)}&background=${color.replace('#', '')}&color=fff`;
+            }
         }
 
-        authorBio.textContent = pinAuthor.bio || "У этого пользователя нет описания.";
+        const authorBio = document.getElementById('authorBio');
+        if (authorBio) {
+            authorBio.textContent = pinAuthor.bio || "У этого пользователя нет описания.";
+        }
     }
 
     // Обновляем статус кнопок лайка и сохранения
@@ -352,15 +320,10 @@ async function loadComments(pinId) {
         renderComments();
     } catch (error) {
         console.error('Ошибка при загрузке комментариев:', error);
-        // Ошибка загрузки комментариев не должна прерывать отображение пина
     }
 }
 
 function renderComments() {
-    const commentsList = document.getElementById('commentsList');
-    const commentsCount = document.getElementById('commentsCount');
-    const commentCountLabel = document.getElementById('commentCountLabel');
-
     if (!commentsList) return;
 
     commentsList.innerHTML = '';
@@ -371,13 +334,17 @@ function renderComments() {
                 <p>Пока нет комментариев. Будьте первым!</p>
             </div>
         `;
-        commentsCount.textContent = '0';
-        commentCountLabel.textContent = '(0)';
+        if (commentsCount) commentsCount.textContent = '0';
+
+        const commentCountLabel = document.getElementById('commentCountLabel');
+        if (commentCountLabel) commentCountLabel.textContent = '(0)';
         return;
     }
 
-    commentsCount.textContent = currentPin.comments.length;
-    commentCountLabel.textContent = `(${currentPin.comments.length})`;
+    if (commentsCount) commentsCount.textContent = currentPin.comments.length;
+
+    const commentCountLabel = document.getElementById('commentCountLabel');
+    if (commentCountLabel) commentCountLabel.textContent = `(${currentPin.comments.length})`;
 
     currentPin.comments.forEach(comment => {
         const commentElement = document.createElement('div');
@@ -402,24 +369,25 @@ async function loadRelatedPins(category) {
         }
 
         const data = await response.json();
+        let relatedPins = [];
 
         if (data.content && Array.isArray(data.content)) {
-            relatedPins = data.content.filter(relatedPin => relatedPin.id !== pin.id).slice(0, 4);
+            relatedPins = data.content.filter(relatedPin => relatedPin.id !== currentPin.id).slice(0, 4);
         } else if (Array.isArray(data)) {
-            relatedPins = data.filter(relatedPin => relatedPin.id !== pin.id).slice(0, 4);
+            relatedPins = data.filter(relatedPin => relatedPin.id !== currentPin.id).slice(0, 4);
         }
 
-        renderRelatedPins();
+        renderRelatedPins(relatedPins);
     } catch (error) {
         console.error('Error loading related pins:', error);
     }
 }
 
-function renderRelatedPins() {
+function renderRelatedPins(relatedPins) {
     const relatedPinsGrid = document.querySelector('.related-pins .grid');
     if (!relatedPinsGrid) return;
 
-    if (relatedPins.length === 0) {
+    if (!relatedPins || relatedPins.length === 0) {
         relatedPinsGrid.innerHTML = '<p class="no-related">Нет похожих изображений</p>';
         return;
     }
@@ -453,19 +421,16 @@ async function submitComment() {
         return;
     }
 
-    const commentInput = document.getElementById('commentInput');
-    const submitButton = document.getElementById('submitCommentBtn');
-
     const comment = commentInput.value.trim();
 
     if (!comment) {
-        showError('Пожалуйста, введите комментарий');
+        showMessage('Пожалуйста, введите комментарий', 'error');
         return;
     }
 
     try {
         commentInput.disabled = true;
-        submitButton.disabled = true;
+        submitCommentBtn.disabled = true;
 
         const token = localStorage.getItem('token');
         const response = await fetch(`/api/pins/${currentPin.id}/comments`, {
@@ -480,8 +445,6 @@ async function submitComment() {
         if (!response.ok) {
             throw new Error('Не удалось добавить комментарий');
         }
-
-        const data = await response.json();
 
         // Очищаем поле ввода
         commentInput.value = '';
@@ -503,10 +466,10 @@ async function submitComment() {
         showMessage('Комментарий успешно добавлен', 'success');
     } catch (error) {
         console.error('Ошибка при добавлении комментария:', error);
-        showError('Произошла ошибка при добавлении комментария');
+        showMessage('Произошла ошибка при добавлении комментария', 'error');
     } finally {
         commentInput.disabled = false;
-        submitButton.disabled = false;
+        submitCommentBtn.disabled = false;
     }
 }
 
@@ -516,9 +479,6 @@ async function toggleLike() {
         openModal(document.getElementById('loginModal'));
         return;
     }
-
-    const likeBtn = document.getElementById('likeBtn');
-    const likesCount = document.getElementById('likesCount');
 
     try {
         likeBtn.disabled = true; // Отключаем кнопку на время запроса
@@ -557,7 +517,7 @@ async function toggleLike() {
 
     } catch (error) {
         console.error('Ошибка при изменении статуса лайка:', error);
-        showError('Произошла ошибка при обновлении статуса лайка');
+        showMessage('Произошла ошибка при обновлении статуса лайка', 'error');
     } finally {
         likeBtn.disabled = false; // Включаем кнопку после завершения запроса
     }
@@ -570,8 +530,6 @@ async function savePin() {
         return;
     }
 
-    // In a real application, you would send a request to save the pin
-    // For now, we'll just show a success message
     showMessage('Изображение сохранено в вашей коллекции', 'success');
 }
 
@@ -617,11 +575,12 @@ async function toggleFollow() {
         return;
     }
 
-    if (!pin || !pin.user) return;
+    if (!currentPin || !pinAuthor) return;
 
     try {
-        const method = pin.user.isFollowedByCurrentUser ? 'DELETE' : 'POST';
-        const response = await fetch(`${API_BASE_URL}/api/users/${pin.user.id}/follow`, {
+        const isFollowed = pinAuthor.isFollowedByCurrentUser;
+        const method = isFollowed ? 'DELETE' : 'POST';
+        const response = await fetch(`${API_BASE_URL}/api/users/${pinAuthor.id}/follow`, {
             method: method,
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -632,16 +591,17 @@ async function toggleFollow() {
             throw new Error('Не удалось обновить статус подписки');
         }
 
-        // Update pin data
-        pin.user.isFollowedByCurrentUser = !pin.user.isFollowedByCurrentUser;
+        // Update author data
+        pinAuthor.isFollowedByCurrentUser = !isFollowed;
 
         // Update UI
-        const followBtn = document.getElementById('followBtn');
         if (followBtn) {
-            followBtn.textContent = pin.user.isFollowedByCurrentUser ? 'Отписаться' : 'Подписаться';
+            followBtn.textContent = pinAuthor.isFollowedByCurrentUser ? 'Отписаться' : 'Подписаться';
         }
 
-        showMessage(pin.user.isFollowedByCurrentUser ? `Вы подписались на ${pin.user.username}` : `Вы отписались от ${pin.user.username}`, 'success');
+        showMessage(pinAuthor.isFollowedByCurrentUser ?
+            `Вы подписались на ${pinAuthor.username}` :
+            `Вы отписались от ${pinAuthor.username}`, 'success');
     } catch (error) {
         console.error('Error toggling follow:', error);
         showMessage(error.message || 'Произошла ошибка при обновлении статуса подписки', 'error');
@@ -649,46 +609,31 @@ async function toggleFollow() {
 }
 
 async function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('currentUser');
+    currentUser = null;
+    isAuthenticated = false;
+    updateAuthUI(false);
+    showMessage('Вы успешно вышли из системы', 'success');
     try {
-        localStorage.removeItem('token');
-        localStorage.removeItem('currentUser');
-        currentUser = null;
-        updateAuthUI(false);
-        showMessage('Вы успешно вышли из системы', 'success');
+        await fetch('/api/auth/logout');
     } catch (error) {
-        console.error('Error during logout:', error);
         showMessage('Произошла ошибка при выходе из системы', 'error');
     }
 }
 
 function formatDate(dateString) {
-    if (!dateString) return '';
-
     const date = new Date(dateString);
-
-    // Check if date is valid
-    if (isNaN(date.getTime())) return '';
-
-    // Format date as DD.MM.YYYY HH:MM
-    return `${date.toLocaleDateString('ru-RU')} ${date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`;
+    const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+    return date.toLocaleDateString('ru-RU', options);
 }
 
 function showLoading() {
-    const loadingIndicator = document.createElement('div');
-    loadingIndicator.className = 'loading-indicator';
-    loadingIndicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-    document.body.appendChild(loadingIndicator);
+    document.body.classList.add('loading');
 }
 
 function hideLoading() {
-    const loadingIndicator = document.querySelector('.loading-indicator');
-    if (loadingIndicator) {
-        loadingIndicator.remove();
-    }
-}
-
-function showError(message) {
-    showMessage(message, 'error');
+    document.body.classList.remove('loading');
 }
 
 function showMessage(message, type = 'info') {
@@ -736,8 +681,6 @@ function hideMessage(messageEl) {
 }
 
 function updateLikeButtonStatus() {
-    const likeBtn = document.getElementById('likeBtn');
-
     if (likeBtn) {
         // Обновляем иконку в зависимости от статуса лайка
         const likeIcon = likeBtn.querySelector('i');
@@ -748,5 +691,11 @@ function updateLikeButtonStatus() {
             likeIcon.className = 'far fa-heart'; // Контурное сердце
             likeBtn.classList.remove('active');
         }
+    }
+}
+
+function openModal(modal) {
+    if (modal) {
+        modal.classList.add('active');
     }
 }

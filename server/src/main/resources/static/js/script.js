@@ -40,27 +40,21 @@ document.addEventListener('DOMContentLoaded', () => {
     initApp();
     setupEventListeners();
     checkAuthStatus();
-
-    // Добавляем анимацию появления для элементов героя
     animateHeroElements();
 });
 
 // Функция инициализации приложения
 function initApp() {
-    // Загрузка первой страницы пинов
     loadPins();
 
-    // Настройка Intersection Observer для бесконечной прокрутки
     if (isIntersectionObserverSupported) {
         setupInfiniteScroll();
     }
 
-    // Добавляем темную тему, если пользователь предпочитает ее
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
         document.body.classList.add('dark-theme');
     }
 
-    // Анимация появления элементов при загрузке
     animateOnScroll();
 }
 
@@ -120,39 +114,23 @@ function setupEventListeners() {
 
 // Функция для анимации элементов героя
 function animateHeroElements() {
-    const heroTitle = document.querySelector('.hero h1');
-    const heroText = document.querySelector('.hero p');
-    const searchBar = document.querySelector('.search-bar');
+    const elements = [
+        { element: document.querySelector('.hero h1'), delay: 100 },
+        { element: document.querySelector('.hero p'), delay: 300 },
+        { element: document.querySelector('.search-bar'), delay: 500 }
+    ];
 
-    if (heroTitle) {
-        heroTitle.style.opacity = '0';
-        heroTitle.style.transform = 'translateY(20px)';
-        setTimeout(() => {
-            heroTitle.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
-            heroTitle.style.opacity = '1';
-            heroTitle.style.transform = 'translateY(0)';
-        }, 100);
-    }
-
-    if (heroText) {
-        heroText.style.opacity = '0';
-        heroText.style.transform = 'translateY(20px)';
-        setTimeout(() => {
-            heroText.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
-            heroText.style.opacity = '1';
-            heroText.style.transform = 'translateY(0)';
-        }, 300);
-    }
-
-    if (searchBar) {
-        searchBar.style.opacity = '0';
-        searchBar.style.transform = 'translateY(20px)';
-        setTimeout(() => {
-            searchBar.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
-            searchBar.style.opacity = '1';
-            searchBar.style.transform = 'translateY(0)';
-        }, 500);
-    }
+    elements.forEach(({element, delay}) => {
+        if (element) {
+            element.style.opacity = '0';
+            element.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                element.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+                element.style.opacity = '1';
+                element.style.transform = 'translateY(0)';
+            }, delay);
+        }
+    });
 }
 
 // Функция для анимации элементов при прокрутке
@@ -187,12 +165,10 @@ function setupInfiniteScroll() {
         });
     }, options);
 
-    // Создаем и добавляем сентинел-элемент в конец сетки
     const sentinel = document.createElement('div');
     sentinel.className = 'sentinel';
     imageGrid.appendChild(sentinel);
 
-    // Наблюдаем за сентинел-элементом
     observer.observe(sentinel);
 }
 
@@ -206,13 +182,11 @@ async function loadPins(page = 0, size = 12, search = '') {
     try {
         let url;
         if (search) {
-            // Используем новый API поиска
             url = `/api/search/pins?query=${encodeURIComponent(search)}&page=${page}&size=${size}`;
         } else {
             url = `/api/pins?page=${page}&size=${size}`;
         }
 
-        console.log('Загрузка пинов: ' + url);
         const response = await fetch(url);
 
         if (!response.ok) {
@@ -220,7 +194,6 @@ async function loadPins(page = 0, size = 12, search = '') {
         }
 
         const data = await response.json();
-        console.log('Получено пинов: ' + (data.content?.length || 0));
 
         if (data.content.length === 0) {
             hasMorePins = false;
@@ -235,10 +208,8 @@ async function loadPins(page = 0, size = 12, search = '') {
 
         // Обработка URL изображений для каждого пина
         const processedPins = data.content.map(pin => {
-            // Если URL изображения битый или содержит Яндекс Диск, заменяем на прокси
             if (pin.imageUrl && (pin.imageUrl.includes('yandex') || pin.imageUrl.includes('disk.'))) {
                 pin.imageUrl = `/api/pins/proxy-image?url=${encodeURIComponent(pin.imageUrl)}`;
-                console.log('Обработанный URL изображения: ' + pin.imageUrl);
             }
             return pin;
         });
@@ -258,7 +229,7 @@ async function loadPins(page = 0, size = 12, search = '') {
 
 // Функция для загрузки дополнительных пинов
 function loadMorePins() {
-    loadPins();
+    loadPins(currentPage);
 }
 
 // Функция отображения пинов
@@ -277,9 +248,6 @@ function createPinElement(pin) {
 
     // Проверяем и обрабатываем URL изображения
     let imageUrl = pin.imageUrl || '';
-
-    // Добавляем логгинг для отладки изображений
-    console.log('Pin ID: ' + pin.id + ', Image URL: ' + imageUrl);
 
     // Если ссылка битая или отсутствует, заменяем на заглушку
     if (!imageUrl || imageUrl === 'null' || imageUrl === 'undefined') {
@@ -345,7 +313,6 @@ function handleSearch() {
     const query = searchInput.value.trim();
 
     if (query) {
-        // Перенаправляем на страницу explore.html с параметром query
         window.location.href = `/explore.html?query=${encodeURIComponent(query)}`;
     }
 }
@@ -402,7 +369,6 @@ function showErrorMessage(message) {
 
     document.body.appendChild(errorElement);
 
-    // Анимация появления и исчезновения
     setTimeout(() => {
         errorElement.classList.add('show');
     }, 10);
@@ -473,10 +439,6 @@ async function handleLogin(e) {
     }
 
     try {
-        // Добавим логирование для отладки
-        console.log('Отправка запроса на аутентификацию...');
-
-        // Показываем индикатор загрузки в кнопке
         const submitButton = document.querySelector('#loginForm button[type="submit"]');
         const originalButtonText = submitButton.innerHTML;
         submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Вход...';
@@ -491,8 +453,6 @@ async function handleLogin(e) {
             body: JSON.stringify({ username, password })
         });
 
-        console.log('Статус ответа:', response.status);
-
         // Восстанавливаем кнопку
         submitButton.innerHTML = originalButtonText;
         submitButton.disabled = false;
@@ -502,11 +462,8 @@ async function handleLogin(e) {
 
             try {
                 const errorData = await response.json();
-                console.error('Данные ошибки:', errorData);
                 errorMessage = errorData.message || 'Неверное имя пользователя или пароль';
             } catch (e) {
-                console.error('Не удалось разобрать JSON ответ:', e);
-
                 if (response.status === 403) {
                     errorMessage = 'Доступ запрещен. Проверьте правильность учетных данных.';
                 } else if (response.status === 401) {
@@ -521,11 +478,9 @@ async function handleLogin(e) {
         }
 
         const data = await response.json();
-        console.log('Успешный вход, токен получен');
 
         // Сохраняем токен в localStorage
         localStorage.setItem('token', data.token);
-        console.log('Токен сохранен в localStorage');
 
         // Закрываем модальное окно
         closeModal();
@@ -626,15 +581,11 @@ async function checkAuthStatus() {
     try {
         // Получаем токен из localStorage
         const token = localStorage.getItem('token');
-        console.log('Проверка аутентификации...');
 
         if (!token) {
-            console.log('Токен не найден, пользователь не аутентифицирован');
             updateUIForGuest();
             return;
         }
-
-        console.log('Токен найден, проверяем валидность...');
 
         const response = await fetch('/api/auth/check', {
             method: 'GET',
@@ -644,12 +595,9 @@ async function checkAuthStatus() {
             }
         });
 
-        console.log('Статус ответа проверки аутентификации:', response.status);
-
         if (!response.ok) {
             // Если статус указывает на проблемы с авторизацией
             if (response.status === 401 || response.status === 403) {
-                console.log('Токен недействителен или просрочен');
                 localStorage.removeItem('token'); // Удаляем невалидный токен
                 updateUIForGuest();
                 return;
@@ -661,7 +609,6 @@ async function checkAuthStatus() {
         }
 
         const userData = await response.json();
-        console.log('Пользователь аутентифицирован:', userData.username);
         currentUser = userData;
 
         updateUIForUser(userData);
@@ -671,7 +618,6 @@ async function checkAuthStatus() {
 
         // В случае проблем с сетью, сохраняем состояние на основе наличия токена
         if (localStorage.getItem('token')) {
-            console.log('Сохраняем предыдущее состояние аутентификации из-за ошибки сети');
             // Если есть сохраненное состояние пользователя, используем его
             if (currentUser) {
                 updateUIForUser(currentUser);
@@ -805,11 +751,6 @@ async function handleLike(pinId) {
     }
 }
 
-// Открытие деталей пина
-function openPinDetails(pinId) {
-    window.location.href = `/pin.html?id=${pinId}`;
-}
-
 // Обработчик поделиться пином
 function handleShare(pinId) {
     const url = `${window.location.origin}/pin.html?id=${pinId}`;
@@ -881,143 +822,6 @@ function debounce(func, wait) {
         timeout = setTimeout(() => func.apply(this, args), wait);
     };
 }
-
-// Добавляем стили для новых элементов
-function addDynamicStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
-        .loading-indicator {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            width: 100%;
-        }
-
-        .spinner {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 1rem;
-        }
-
-        .spinner > div {
-            width: 12px;
-            height: 12px;
-            background-color: var(--primary-color);
-            border-radius: 100%;
-            display: inline-block;
-            animation: bounce 1.4s infinite ease-in-out both;
-            margin: 0 3px;
-        }
-
-        .spinner .bounce1 {
-            animation-delay: -0.32s;
-        }
-
-        .spinner .bounce2 {
-            animation-delay: -0.16s;
-        }
-
-        @keyframes bounce {
-            0%, 80%, 100% {
-                transform: scale(0);
-            } 40% {
-                transform: scale(1.0);
-            }
-        }
-
-        .no-results {
-            text-align: center;
-            padding: 3rem;
-            width: 100%;
-        }
-
-        .no-results i {
-            font-size: 3rem;
-            color: var(--text-light);
-            margin-bottom: 1rem;
-        }
-
-        .no-results h3 {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-            color: var(--text-color);
-        }
-
-        .no-results p {
-            color: var(--text-light);
-        }
-
-        .error-message, .success-message {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            padding: 12px 20px;
-            border-radius: var(--border-radius);
-            color: white;
-            font-size: 0.9rem;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            opacity: 0;
-            transition: transform 0.3s ease, opacity 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .error-message {
-            background-color: var(--error-color);
-        }
-
-        .success-message {
-            background-color: var(--success-color);
-        }
-
-        .error-message.show, .success-message.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-
-        .animate-on-scroll {
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.5s ease, transform 0.5s ease;
-        }
-
-        .animate-on-scroll.animated {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .like-btn.liked {
-            animation: pulse 0.5s ease-out;
-        }
-
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.2);
-            }
-            100% {
-                transform: scale(1);
-            }
-        }
-
-        .sentinel {
-            width: 100%;
-            height: 20px;
-        }
-    `;
-
-    document.head.appendChild(style);
-}
-
-// Вызываем функцию добавления стилей
-addDynamicStyles();
 
 // Обработчик сохранения пина
 async function handleSavePin(pinId) {

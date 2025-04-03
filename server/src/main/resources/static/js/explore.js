@@ -9,7 +9,6 @@ let selectedCategory = '';
 let sortBy = 'createdAt';
 let sortDirection = 'desc';
 let currentUser = null;
-const API_BASE_URL = window.location.origin;
 
 // DOM elements
 const pinsGrid = document.getElementById('pinsGrid');
@@ -26,30 +25,15 @@ const registerBtn = document.getElementById('registerBtn');
 const profileBtn = document.getElementById('profileBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 
-document.addEventListener('DOMContentLoaded', function() {
-    initApp();
-});
+document.addEventListener('DOMContentLoaded', initApp);
 
 function initApp() {
-    // Check authentication status
     checkAuth();
-
-    // Check URL parameters
     checkUrlParams();
-
-    // Setup event listeners
     setupEventListeners();
-
-    // Load categories for filter
     loadCategories();
-
-    // Load initial pins
     loadPins();
-
-    // Setup infinite scroll
     setupInfiniteScroll();
-
-    // Update page title based on search/category
     updateTitle();
 }
 
@@ -61,35 +45,29 @@ function setupEventListeners() {
     logoutBtn.addEventListener('click', logout);
 
     // Search handler
-    searchButton.addEventListener('click', handleSearch);
-    searchInput.addEventListener('keydown', (e) => {
+    searchButton?.addEventListener('click', handleSearch);
+    searchInput?.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             handleSearch();
         }
     });
 
     // Category filter
-    if (categorySelect) {
-        categorySelect.addEventListener('change', () => {
-            selectedCategory = categorySelect.value;
-            resetAndReload();
-        });
-    }
+    categorySelect?.addEventListener('change', () => {
+        selectedCategory = categorySelect.value;
+        resetAndReload();
+    });
 
     // Sort filter
-    if (sortSelect) {
-        sortSelect.addEventListener('change', () => {
-            const [newSortBy, newSortDirection] = sortSelect.value.split(':');
-            sortBy = newSortBy;
-            sortDirection = newSortDirection;
-            resetAndReload();
-        });
-    }
+    sortSelect?.addEventListener('change', () => {
+        const [newSortBy, newSortDirection] = sortSelect.value.split(':');
+        sortBy = newSortBy;
+        sortDirection = newSortDirection;
+        resetAndReload();
+    });
 
     // Load more pins
-    if (loadMoreBtn) {
-        loadMoreBtn.addEventListener('click', loadMorePins);
-    }
+    loadMoreBtn?.addEventListener('click', loadPins);
 }
 
 async function checkAuth() {
@@ -115,6 +93,17 @@ async function checkAuth() {
     }
 }
 
+function updateUIForGuest() {
+    updateAuthUI(false);
+}
+
+function updateUIForUser(user) {
+    updateAuthUI(true);
+    if (profileBtn) {
+        profileBtn.innerHTML = `<i class="fas fa-user"></i> ${user.username}`;
+    }
+}
+
 function updateAuthUI(isAuthenticated) {
     if (isAuthenticated) {
         loginBtn.style.display = 'none';
@@ -129,20 +118,7 @@ function updateAuthUI(isAuthenticated) {
     }
 }
 
-function updateUIForGuest() {
-    updateAuthUI(false);
-}
-
-function updateUIForUser(user) {
-    updateAuthUI(true);
-    if (profileBtn) {
-        profileBtn.innerHTML = `<i class="fas fa-user"></i> ${user.username}`;
-    }
-}
-
 function loadCategories() {
-    // In a real application, you would fetch categories from the server
-    // For now, we'll use mock data
     const categories = getMockCategories();
     populateCategorySelect(categories);
 }
@@ -180,18 +156,12 @@ function checkUrlParams() {
     }
 
     // Check for sort
-    if (params.has('sortBy')) {
-        sortBy = params.get('sortBy');
-    }
-
-    if (params.has('sortDirection')) {
-        sortDirection = params.get('sortDirection');
-    }
+    if (params.has('sortBy')) sortBy = params.get('sortBy');
+    if (params.has('sortDirection')) sortDirection = params.get('sortDirection');
 
     // Set sort value
     if (sortSelect && sortBy && sortDirection) {
-        const sortValue = `${sortBy}:${sortDirection}`;
-        sortSelect.value = sortValue;
+        sortSelect.value = `${sortBy}:${sortDirection}`;
     }
 }
 
@@ -201,7 +171,6 @@ function updateTitle() {
     if (searchQuery) {
         exploreTitle.textContent = `Результаты поиска: "${searchQuery}"`;
     } else if (selectedCategory) {
-        // Here you can get the category name by ID
         const categories = getMockCategories();
         const category = categories.find(c => c.id.toString() === selectedCategory.toString());
 
@@ -224,7 +193,7 @@ function setupInfiniteScroll() {
         const clientHeight = document.documentElement.clientHeight;
 
         if (scrollTop + clientHeight >= scrollHeight - 300) {
-            loadMorePins();
+            loadPins();
         }
     });
 }
@@ -236,7 +205,6 @@ async function loadPins() {
     showLoading();
 
     try {
-        // Use search API instead of mock data
         const searchEndpoint = searchQuery
             ? `/api/search/pins?query=${encodeURIComponent(searchQuery)}&page=${currentPage}&size=${currentSize}&sortBy=${sortBy}&sortDirection=${sortDirection}`
             : `/api/search/pins?page=${currentPage}&size=${currentSize}&sortBy=${sortBy}&sortDirection=${sortDirection}`;
@@ -254,28 +222,20 @@ async function loadPins() {
         }
 
         const data = await response.json();
-
-        // Check API response structure
         const pinsData = data.data || data;
 
         if (pinsData.content && Array.isArray(pinsData.content)) {
-            // If first load, clear grid
             if (currentPage === 0) {
                 pinsGrid.innerHTML = '';
             }
 
-            // Render pins
             renderPins(pinsData.content);
-
-            // Check for more pages
             hasMorePins = !pinsData.last;
 
-            // Update load more button state
             if (loadMoreBtn) {
                 loadMoreBtn.style.display = hasMorePins ? 'block' : 'none';
             }
 
-            // Check for empty result
             if (pinsData.content.length === 0 && currentPage === 0) {
                 pinsGrid.innerHTML = `
                     <div class="no-results">
@@ -289,7 +249,6 @@ async function loadPins() {
                 }
             }
 
-            // Increase page number for next load
             currentPage++;
         } else {
             console.error('Неверный формат данных:', pinsData);
@@ -302,10 +261,6 @@ async function loadPins() {
         isLoading = false;
         hideLoading();
     }
-}
-
-function loadMorePins() {
-    loadPins();
 }
 
 function renderPins(pins) {
@@ -370,7 +325,6 @@ function renderPins(pins) {
         shareBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            // Implementation of sharing
             const shareUrl = `${window.location.origin}/pin.html?id=${pin.id}`;
             navigator.clipboard.writeText(shareUrl)
                 .then(() => showMessage('Ссылка скопирована в буфер обмена', 'success'))
@@ -410,13 +364,11 @@ function resetAndReload() {
 }
 
 function savePin(pinId) {
-    // Implementation of saving pin to user collection
     if (!currentUser) {
         showMessage('Для сохранения пина необходимо авторизоваться', 'info');
         return;
     }
 
-    // TODO: Add API for saving pin
     showMessage('Функция сохранения будет доступна в следующем обновлении', 'info');
 }
 
@@ -432,7 +384,7 @@ async function likePin(pinId, button) {
         // Optimistic UI update
         button.querySelector('i').className = isLiked ? 'far fa-heart' : 'fas fa-heart';
 
-        const endpoint = isLiked ? `/api/pins/${pinId}/likes` : `/api/pins/${pinId}/likes`;
+        const endpoint = `/api/pins/${pinId}/likes`;
         const method = isLiked ? 'DELETE' : 'POST';
 
         const response = await fetch(endpoint, {
@@ -472,13 +424,11 @@ function hideLoading() {
 }
 
 function showMessage(message, type = 'info') {
-    // Remove any existing message
     const existingMessage = document.querySelector('.message-toast');
     if (existingMessage) {
         existingMessage.remove();
     }
 
-    // Create message element
     const messageEl = document.createElement('div');
     messageEl.className = `message-toast ${type}`;
     messageEl.innerHTML = `
@@ -491,18 +441,15 @@ function showMessage(message, type = 'info') {
 
     document.body.appendChild(messageEl);
 
-    // Animation appearance
     setTimeout(() => {
         messageEl.style.transform = 'translateY(0)';
         messageEl.style.opacity = '1';
     }, 10);
 
-    // Auto-hide after 5 seconds
     const timeout = setTimeout(() => {
         hideMessage(messageEl);
     }, 5000);
 
-    // Close button handler
     messageEl.querySelector('.close-btn').addEventListener('click', () => {
         clearTimeout(timeout);
         hideMessage(messageEl);
@@ -518,7 +465,6 @@ function hideMessage(messageEl) {
     }, 300);
 }
 
-// Mock data for categories (in a real app, this would come from the server)
 function getMockCategories() {
     return [
         { id: 1, name: 'Искусство' },

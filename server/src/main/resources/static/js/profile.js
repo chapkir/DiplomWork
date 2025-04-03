@@ -3,7 +3,6 @@ let currentUser = null;
 let profileUser = null;
 let userPins = [];
 let isOwnProfile = false;
-const API_BASE_URL = window.location.origin;
 
 // DOM elements
 const profileDetails = document.querySelector('.profile-details');
@@ -23,9 +22,7 @@ loadingIndicator.innerHTML = `
     <p>Загрузка...</p>
 `;
 
-document.addEventListener('DOMContentLoaded', function() {
-    initApp();
-});
+document.addEventListener('DOMContentLoaded', initApp);
 
 function initApp() {
     // Get username from URL
@@ -48,46 +45,26 @@ function initApp() {
         loadUserProfile(username);
     }
 
-    // Setup event listeners
     setupEventListeners();
-
-    // Animate elements
     animateElements();
-
-    // Setup scroll animations
     window.addEventListener('scroll', animateOnScroll);
-
-    // Add dynamic styles
-    addDynamicStyles();
 }
 
 function setupEventListeners() {
     // Add pin button
-    const addPinBtn = document.getElementById('addPinBtn');
-    if (addPinBtn) {
-        addPinBtn.addEventListener('click', handleAddPin);
-    }
+    document.getElementById('addPinBtn')?.addEventListener('click', handleAddPin);
 
     // Login/Register buttons
-    const loginBtn = document.getElementById('loginBtn');
-    if (loginBtn) {
-        loginBtn.addEventListener('click', function() {
-            window.location.href = '/?login=true';
-        });
-    }
+    document.getElementById('loginBtn')?.addEventListener('click', () => {
+        window.location.href = '/?login=true';
+    });
 
-    const registerBtn = document.getElementById('registerBtn');
-    if (registerBtn) {
-        registerBtn.addEventListener('click', function() {
-            window.location.href = '/?register=true';
-        });
-    }
+    document.getElementById('registerBtn')?.addEventListener('click', () => {
+        window.location.href = '/?register=true';
+    });
 
     // Logout button
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', handleLogout);
-    }
+    logoutBtn?.addEventListener('click', handleLogout);
 }
 
 function animateElements() {
@@ -135,7 +112,7 @@ async function checkAuthStatus() {
             return false;
         }
 
-        const response = await fetch(`${API_BASE_URL}/api/auth/check`, {
+        const response = await fetch('/api/auth/check', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -196,8 +173,8 @@ function updateUIForUser(user) {
 
     // Show add pin section only if viewing own profile
     const addPinSection = document.querySelector('.add-pin');
-    if (addPinSection) {
-        if (profileUser && user.username === profileUser.username) {
+    if (addPinSection && profileUser) {
+        if (user.username === profileUser.username) {
             addPinSection.style.display = 'block';
             isOwnProfile = true;
         } else {
@@ -212,7 +189,7 @@ async function loadUserProfile(username) {
 
     try {
         // First, get user profile data
-        const userResponse = await fetch(`${API_BASE_URL}/api/users/${username}`);
+        const userResponse = await fetch(`/api/users/${username}`);
 
         if (!userResponse.ok) {
             if (userResponse.status === 404) {
@@ -230,16 +207,12 @@ async function loadUserProfile(username) {
         // Check if this is the current user's profile
         if (currentUser && currentUser.username === profileUser.username) {
             isOwnProfile = true;
-
-            // Show add pin section
             const addPinSection = document.querySelector('.add-pin');
             if (addPinSection) {
                 addPinSection.style.display = 'block';
             }
         } else {
             isOwnProfile = false;
-
-            // Hide add pin section
             const addPinSection = document.querySelector('.add-pin');
             if (addPinSection) {
                 addPinSection.style.display = 'none';
@@ -287,32 +260,26 @@ function updateProfileInfo(user) {
         }
     }
 
-    // Update profile image if available
-    if (user.profileImageUrl) {
-        const profileImage = document.createElement('img');
-        profileImage.src = user.profileImageUrl;
-        profileImage.alt = user.username;
-        profileImage.className = 'profile-image';
-
-        const profileDetails = document.querySelector('.profile-details');
-        if (profileDetails) {
+    // Update profile image
+    const profileDetails = document.querySelector('.profile-details');
+    if (profileDetails) {
+        if (user.profileImageUrl) {
+            const profileImage = document.createElement('img');
+            profileImage.src = user.profileImageUrl;
+            profileImage.alt = user.username;
+            profileImage.className = 'profile-image';
             profileDetails.insertBefore(profileImage, profileDetails.firstChild);
-        }
-    } else {
-        // Create default profile image with user's initials
-        const profileImage = document.createElement('div');
-        profileImage.className = 'profile-image profile-initials';
-        profileImage.textContent = user.username.substring(0, 2).toUpperCase();
-        profileImage.style.backgroundColor = getRandomColor(user.username);
-
-        const profileDetails = document.querySelector('.profile-details');
-        if (profileDetails) {
+        } else {
+            // Create default profile image with user's initials
+            const profileImage = document.createElement('div');
+            profileImage.className = 'profile-image profile-initials';
+            profileImage.textContent = user.username.substring(0, 2).toUpperCase();
+            profileImage.style.backgroundColor = getRandomColor(user.username);
             profileDetails.insertBefore(profileImage, profileDetails.firstChild);
         }
     }
 }
 
-// Function to generate a consistent color based on username
 function getRandomColor(username) {
     let hash = 0;
     for (let i = 0; i < username.length; i++) {
@@ -340,7 +307,7 @@ async function loadUserPins(userId) {
             headers['Authorization'] = `Bearer ${token}`;
         }
 
-        const response = await fetch(`${API_BASE_URL}/api/pins?userId=${userId}`, {
+        const response = await fetch(`/api/pins?userId=${userId}`, {
             method: 'GET',
             headers: headers
         });
@@ -369,7 +336,6 @@ async function loadUserPins(userId) {
 }
 
 function renderPins(pins) {
-    const pinsGrid = document.querySelector('.pins-list .grid');
     if (!pinsGrid) return;
 
     pinsGrid.innerHTML = '';
@@ -379,46 +345,9 @@ function renderPins(pins) {
         return;
     }
 
-    pins.forEach((pin, index) => {
-        const pinElement = document.createElement('div');
-        pinElement.className = 'pin-item';
-        pinElement.setAttribute('data-id', pin.id);
-
-        pinElement.innerHTML = `
-            <a href="/pin.html?id=${pin.id}">
-                <img src="${pin.imageUrl}" alt="${pin.description || 'Изображение'}">
-                <p>${pin.description || 'Без описания'}</p>
-            </a>
-            ${isOwnProfile ? `
-                <div class="pin-actions">
-                    <button class="edit-btn" data-id="${pin.id}"><i class="fas fa-edit"></i></button>
-                    <button class="delete-btn" data-id="${pin.id}"><i class="fas fa-trash"></i></button>
-                </div>
-            ` : ''}
-        `;
-
+    pins.forEach((pin) => {
+        const pinElement = createPinElement(pin);
         pinsGrid.appendChild(pinElement);
-
-        // Add event listeners for edit and delete buttons
-        if (isOwnProfile) {
-            const editBtn = pinElement.querySelector('.edit-btn');
-            if (editBtn) {
-                editBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleEditPin(pin.id);
-                });
-            }
-
-            const deleteBtn = pinElement.querySelector('.delete-btn');
-            if (deleteBtn) {
-                deleteBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleDeletePin(pin.id);
-                });
-            }
-        }
     });
 }
 
@@ -440,37 +369,39 @@ function createPinElement(pin) {
         ` : ''}
     `;
 
+    // Add event listeners for edit and delete buttons
+    if (isOwnProfile) {
+        pinElement.querySelector('.edit-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            handleEditPin(pin.id);
+        });
+
+        pinElement.querySelector('.delete-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            handleDeletePin(pin.id);
+        });
+    }
+
     return pinElement;
 }
 
 function showNoPinsMessage() {
-    const pinsGrid = document.querySelector('.pins-list .grid');
     if (!pinsGrid) return;
 
-    const message = document.createElement('div');
-    message.className = 'no-pins-message';
+    const messageElement = document.createElement('div');
+    messageElement.className = 'no-pins-message';
+    messageElement.innerHTML = `
+        <i class="fas fa-image"></i>
+        <h3>Нет пинов</h3>
+        <p>${isOwnProfile ? 'У вас пока нет пинов. Добавьте свой первый пин!' : 'У этого пользователя пока нет пинов.'}</p>
+        ${isOwnProfile ? '<button class="add-pin-btn">Добавить пин</button>' : ''}
+    `;
 
+    pinsGrid.appendChild(messageElement);
+
+    // Add event listener for add pin button
     if (isOwnProfile) {
-        message.innerHTML = `
-            <i class="fas fa-image"></i>
-            <h3>У вас пока нет изображений</h3>
-            <p>Нажмите кнопку "Добавить изображение", чтобы загрузить свое первое изображение</p>
-            <button id="addFirstPinBtn" class="btn btn-primary">Добавить изображение</button>
-        `;
-    } else {
-        message.innerHTML = `
-            <i class="fas fa-image"></i>
-            <h3>У пользователя пока нет изображений</h3>
-            <p>Загляните позже, возможно, появятся новые изображения</p>
-        `;
-    }
-
-    pinsGrid.appendChild(message);
-
-    // Add event listener for add first pin button
-    const addFirstPinBtn = document.getElementById('addFirstPinBtn');
-    if (addFirstPinBtn) {
-        addFirstPinBtn.addEventListener('click', handleAddPin);
+        messageElement.querySelector('.add-pin-btn').addEventListener('click', handleAddPin);
     }
 }
 
@@ -478,171 +409,124 @@ async function handleLogout() {
     try {
         localStorage.removeItem('token');
         currentUser = null;
-        isOwnProfile = false;
-        updateUIForGuest();
         showSuccessMessage('Вы успешно вышли из системы');
-
-        // Redirect to home page after logout
         setTimeout(() => {
             window.location.href = '/';
-        }, 1500);
+        }, 1000);
     } catch (error) {
         console.error('Error during logout:', error);
-        showErrorMessage('Произошла ошибка при выходе из системы');
+        showErrorMessage('Ошибка при выходе из системы');
     }
 }
 
 async function handleAddPin(e) {
-    e.preventDefault();
+    if (e) e.preventDefault();
 
-    if (!currentUser) {
-        showErrorMessage('Пожалуйста, войдите в систему, чтобы добавлять изображения');
-        return;
-    }
+    const addPinModal = document.getElementById('addPinModal');
+    if (!addPinModal) return;
 
-    // Create modal for adding pin
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Добавить изображение</h2>
-                <button class="close-btn">&times;</button>
-            </div>
-            <form id="addPinForm" class="form">
-                <div class="form-group">
-                    <label for="pinImage">Изображение</label>
-                    <input type="file" id="pinImage" accept="image/*" required>
-                    <div id="imagePreview" class="image-preview"></div>
-                </div>
-                <div class="form-group">
-                    <label for="pinDescription">Описание</label>
-                    <textarea id="pinDescription" rows="3" placeholder="Добавьте описание..."></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">Добавить</button>
-            </form>
-        </div>
-    `;
-
-    document.body.appendChild(modal);
+    // Clear form
+    const form = addPinModal.querySelector('form');
+    if (form) form.reset();
 
     // Show modal
-    setTimeout(() => {
-        modal.classList.add('active');
-    }, 10);
+    addPinModal.style.display = 'flex';
 
-    // Add event listener for close button
-    const closeBtn = modal.querySelector('.close-btn');
-    closeBtn.addEventListener('click', () => {
-        modal.classList.remove('active');
-        setTimeout(() => {
-            modal.remove();
-        }, 300);
-    });
-
-    // Add event listener for image preview
-    const pinImage = document.getElementById('pinImage');
-    const imagePreview = document.getElementById('imagePreview');
-
-    pinImage.addEventListener('change', function() {
-        const file = this.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                imagePreview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
-            };
-            reader.readAsDataURL(file);
+    // Close modal when clicking outside
+    addPinModal.addEventListener('click', (e) => {
+        if (e.target === addPinModal) {
+            addPinModal.style.display = 'none';
         }
     });
 
-    // Add event listener for form submission
-    const addPinForm = document.getElementById('addPinForm');
-    addPinForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
+    // Close button
+    const closeBtn = addPinModal.querySelector('.close-btn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            addPinModal.style.display = 'none';
+        });
+    }
 
-        const file = pinImage.files[0];
-        const description = document.getElementById('pinDescription').value.trim();
+    // Form submission
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-        if (!file) {
-            showErrorMessage('Пожалуйста, выберите изображение');
-            return;
-        }
+            const formData = new FormData(form);
+            const image = formData.get('image');
+            const description = formData.get('description');
 
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                showErrorMessage('Пожалуйста, войдите в систему, чтобы добавлять изображения');
+            if (!image || !description) {
+                showErrorMessage('Пожалуйста, заполните все поля');
                 return;
             }
 
-            // Create form data
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('description', description);
+            try {
+                showLoading(form);
 
-            // Show loading indicator
-            const submitBtn = addPinForm.querySelector('button[type="submit"]');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка...';
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    showErrorMessage('Необходимо авторизоваться');
+                    hideLoading(form);
+                    return;
+                }
 
-            // Upload image
-            const response = await fetch(`${API_BASE_URL}/api/pins/upload`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                body: formData
-            });
+                const formDataToSend = new FormData();
+                formDataToSend.append('image', image);
+                formDataToSend.append('description', description);
 
-            if (!response.ok) {
-                throw new Error('Failed to upload image');
+                const response = await fetch('/api/pins', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formDataToSend
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to add pin');
+                }
+
+                const newPin = await response.json();
+
+                // Add new pin to the list
+                userPins.unshift(newPin);
+                renderPins(userPins);
+
+                showSuccessMessage('Пин успешно добавлен');
+                addPinModal.style.display = 'none';
+            } catch (error) {
+                console.error('Error adding pin:', error);
+                showErrorMessage('Ошибка при добавлении пина');
+            } finally {
+                hideLoading(form);
             }
-
-            const newPin = await response.json();
-
-            // Add new pin to the list
-            userPins.unshift(newPin);
-
-            // Re-render pins
-            renderPins(userPins);
-
-            // Close modal
-            modal.classList.remove('active');
-            setTimeout(() => {
-                modal.remove();
-            }, 300);
-
-            showSuccessMessage('Изображение успешно добавлено');
-        } catch (error) {
-            console.error('Error adding pin:', error);
-            showErrorMessage('Не удалось добавить изображение. Пожалуйста, попробуйте позже.');
-        }
-    });
+        });
+    }
 }
 
 function handleEditPin(pinId) {
-    // In a real application, you would implement pin editing functionality
-    showErrorMessage('Функция редактирования изображения пока не реализована');
+    // Find the pin to edit
+    const pin = userPins.find(p => p.id == pinId);
+    if (!pin) return;
+
+    // This function would be implemented to edit an existing pin
+    console.log('Edit pin:', pin);
 }
 
 async function handleDeletePin(pinId) {
-    if (!currentUser) {
-        showErrorMessage('Пожалуйста, войдите в систему, чтобы удалять изображения');
-        return;
-    }
-
-    if (!confirm('Вы уверены, что хотите удалить это изображение?')) {
-        return;
-    }
+    if (!confirm('Вы уверены, что хотите удалить этот пин?')) return;
 
     try {
+        showLoading(document.querySelector(`[data-id="${pinId}"]`));
+
         const token = localStorage.getItem('token');
         if (!token) {
-            showErrorMessage('Пожалуйста, войдите в систему, чтобы удалять изображения');
+            showErrorMessage('Необходимо авторизоваться');
             return;
         }
 
-        const response = await fetch(`${API_BASE_URL}/api/pins/${pinId}`, {
+        const response = await fetch(`/api/pins/${pinId}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -653,211 +537,105 @@ async function handleDeletePin(pinId) {
             throw new Error('Failed to delete pin');
         }
 
-        // Remove pin from the list
-        userPins = userPins.filter(pin => pin.id !== pinId);
+        // Remove pin from list
+        userPins = userPins.filter(p => p.id != pinId);
 
-        // Remove pin element from the DOM
-        const pinElement = document.querySelector(`.pin-item[data-id="${pinId}"]`);
+        // Update UI
+        const pinElement = document.querySelector(`[data-id="${pinId}"]`);
         if (pinElement) {
-            pinElement.classList.add('removing');
-            setTimeout(() => {
-                pinElement.remove();
-
-                // Show no pins message if there are no pins left
-                if (userPins.length === 0) {
-                    showNoPinsMessage();
-                }
-            }, 300);
+            pinElement.remove();
         }
 
-        showSuccessMessage('Изображение успешно удалено');
+        if (userPins.length === 0) {
+            showNoPinsMessage();
+        }
+
+        showSuccessMessage('Пин успешно удален');
     } catch (error) {
         console.error('Error deleting pin:', error);
-        showErrorMessage('Не удалось удалить изображение. Пожалуйста, попробуйте позже.');
+        showErrorMessage('Ошибка при удалении пина');
+    } finally {
+        hideLoading(document.querySelector(`[data-id="${pinId}"]`));
     }
 }
 
 function showLoading(container) {
     if (!container) return;
 
-    const existingIndicator = container.querySelector('.loading-indicator');
-    if (!existingIndicator) {
-        const indicator = loadingIndicator.cloneNode(true);
-        container.appendChild(indicator);
-    }
+    loadingIndicator.style.display = 'flex';
+    container.appendChild(loadingIndicator);
 }
 
 function hideLoading(container) {
     if (!container) return;
 
-    const indicator = container.querySelector('.loading-indicator');
-    if (indicator) {
-        indicator.remove();
+    loadingIndicator.style.display = 'none';
+    if (container.contains(loadingIndicator)) {
+        container.removeChild(loadingIndicator);
     }
 }
 
 function showErrorMessage(message) {
-    const errorElement = document.createElement('div');
-    errorElement.className = 'error-message';
-    errorElement.innerHTML = `
-        <i class="fas fa-exclamation-circle"></i>
-        <span>${message}</span>
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-error';
+    toast.innerHTML = `
+        <div class="toast-content">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>${message}</span>
+        </div>
+        <button class="toast-close"><i class="fas fa-times"></i></button>
     `;
 
-    document.body.appendChild(errorElement);
+    document.body.appendChild(toast);
 
-    // Анимация появления и исчезновения
     setTimeout(() => {
-        errorElement.classList.add('show');
+        toast.classList.add('show');
     }, 10);
 
-    setTimeout(() => {
-        errorElement.classList.remove('show');
+    toast.querySelector('.toast-close').addEventListener('click', () => {
+        toast.classList.remove('show');
         setTimeout(() => {
-            errorElement.remove();
+            toast.remove();
         }, 300);
-    }, 3000);
+    });
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, 5000);
 }
 
 function showSuccessMessage(message) {
-    const successElement = document.createElement('div');
-    successElement.className = 'success-message';
-    successElement.innerHTML = `
-        <i class="fas fa-check-circle"></i>
-        <span>${message}</span>
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-success';
+    toast.innerHTML = `
+        <div class="toast-content">
+            <i class="fas fa-check-circle"></i>
+            <span>${message}</span>
+        </div>
+        <button class="toast-close"><i class="fas fa-times"></i></button>
     `;
 
-    document.body.appendChild(successElement);
+    document.body.appendChild(toast);
 
-    // Анимация появления и исчезновения
     setTimeout(() => {
-        successElement.classList.add('show');
+        toast.classList.add('show');
     }, 10);
 
-    setTimeout(() => {
-        successElement.classList.remove('show');
+    toast.querySelector('.toast-close').addEventListener('click', () => {
+        toast.classList.remove('show');
         setTimeout(() => {
-            successElement.remove();
+            toast.remove();
         }, 300);
-    }, 3000);
-}
+    });
 
-function debounce(func, wait) {
-    let timeout;
-    return function() {
-        const context = this, args = arguments;
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(context, args), wait);
-    };
-}
-
-function addDynamicStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
-        .pin-item.removing {
-            animation: fadeOut 0.3s ease-out forwards;
-        }
-
-        @keyframes fadeOut {
-            to {
-                opacity: 0;
-                transform: scale(0.8);
-            }
-        }
-
-        .no-pins-message {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 3rem;
-            background-color: var(--white-color);
-            border-radius: var(--border-radius);
-            box-shadow: 0 4px 6px var(--shadow-color);
-        }
-
-        .no-pins-message i {
-            font-size: 3rem;
-            color: var(--secondary-color);
-            margin-bottom: 1rem;
-        }
-
-        .no-pins-message h3 {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-            color: var(--text-color);
-        }
-
-        .no-pins-message p {
-            color: var(--secondary-color);
-            margin-bottom: 1.5rem;
-        }
-
-        .image-preview {
-            margin-top: 1rem;
-            max-width: 100%;
-            overflow: hidden;
-            border-radius: var(--border-radius);
-        }
-
-        .image-preview img {
-            max-width: 100%;
-            max-height: 300px;
-            object-fit: contain;
-        }
-
-        .profile-image {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-bottom: 1rem;
-            border: 3px solid var(--primary-color);
-        }
-
-        .registration-date {
-            font-size: 0.9rem;
-            color: var(--secondary-color);
-            margin-top: 0.5rem;
-        }
-
-        .pin-actions {
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
-            display: flex;
-            gap: 0.5rem;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .pin-item:hover .pin-actions {
-            opacity: 1;
-        }
-
-        .pin-actions button {
-            background-color: var(--white-color);
-            color: var(--text-color);
-            border: none;
-            border-radius: 50%;
-            width: 2rem;
-            height: 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        .pin-actions .edit-btn:hover {
-            background-color: var(--accent-color);
-            color: var(--primary-color);
-        }
-
-        .pin-actions .delete-btn:hover {
-            background-color: var(--error-color);
-            color: var(--white-color);
-        }
-    `;
-
-    document.head.appendChild(style);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, 5000);
 }
 

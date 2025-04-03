@@ -117,7 +117,7 @@ function loadCategories() {
             hideLoading();
         })
         .catch(error => {
-            showError(error.message);
+            showMessage(error.message, 'error');
             hideLoading();
         });
     */
@@ -270,10 +270,6 @@ function hideLoading() {
     }
 }
 
-function showError(message) {
-    showMessage(message, 'error');
-}
-
 function showMessage(message, type = 'info') {
     // Удаляем предыдущее сообщение, если оно есть
     const existingMessage = document.querySelector('.message-toast');
@@ -320,115 +316,3 @@ function hideMessage(messageEl) {
         messageEl.remove();
     }, 300);
 }
-
-// Добавляем стили для элементов, созданных динамически
-const dynamicStyles = document.createElement('style');
-dynamicStyles.textContent = `
-    #loading-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(255, 255, 255, 0.8);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-        backdrop-filter: blur(3px);
-    }
-
-    .loading-spinner {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 1rem;
-        color: var(--primary-color);
-        font-size: 1.5rem;
-    }
-
-    .loading-spinner i {
-        font-size: 3rem;
-    }
-
-    .message-toast {
-        position: fixed;
-        bottom: 2rem;
-        left: 50%;
-        transform: translateX(-50%) translateY(20px);
-        background-color: white;
-        color: var(--text-color);
-        padding: 1rem 1.5rem;
-        border-radius: var(--border-radius);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        z-index: 1000;
-        opacity: 0;
-        transition: transform 0.3s ease, opacity 0.3s ease;
-        max-width: 90%;
-        width: auto;
-    }
-
-    .message-toast.success {
-        border-left: 4px solid var(--success-color);
-    }
-
-    .message-toast.error {
-        border-left: 4px solid var(--error-color);
-    }
-
-    .message-toast.info {
-        border-left: 4px solid var(--primary-color);
-    }
-
-    .message-content {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-
-    .message-content i {
-        font-size: 1.25rem;
-    }
-
-    .message-toast.success i {
-        color: var(--success-color);
-    }
-
-    .message-toast.error i {
-        color: var(--error-color);
-    }
-
-    .message-toast.info i {
-        color: var(--primary-color);
-    }
-
-    .close-btn {
-        background: none;
-        border: none;
-        cursor: pointer;
-        color: var(--text-light);
-        padding: 0.25rem;
-        font-size: 0.9rem;
-        transition: color 0.2s;
-    }
-
-    .close-btn:hover {
-        color: var(--text-color);
-    }
-
-    @media (prefers-color-scheme: dark) {
-        #loading-overlay {
-            background-color: rgba(17, 24, 39, 0.8);
-        }
-
-        .message-toast {
-            background-color: var(--background-alt);
-        }
-    }
-`;
-
-document.head.appendChild(dynamicStyles);
