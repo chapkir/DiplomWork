@@ -79,7 +79,7 @@ class RegisterViewModel @Inject constructor(
                 val loginResponse = authRepository.login(LoginRequest(_username.value, _password.value))
 
                 // Сохранение токена
-                sessionManager.saveAuthToken(loginResponse.token)
+                sessionManager.authToken = loginResponse.token
 
                 onCompleteRegistration()
 

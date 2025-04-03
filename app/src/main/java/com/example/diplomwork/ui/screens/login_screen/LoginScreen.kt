@@ -1,6 +1,5 @@
 package com.example.diplomwork.ui.screens.login_screen
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,8 +27,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -37,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -46,14 +42,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
-import com.example.diplomwork.auth.SessionManager
-import com.example.diplomwork.model.LoginRequest
-import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.ui.theme.ColorForFocusButton
 import com.example.diplomwork.viewmodel.LoginViewModel
-import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
@@ -73,8 +65,6 @@ fun LoginScreen(
     val loginError by loginViewModel.loginError.collectAsState()
 
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
-
-    val context = LocalContext.current
 
     Column(
         modifier = Modifier

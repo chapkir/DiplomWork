@@ -43,7 +43,7 @@ class LoginViewModel @Inject constructor(
                 _isLoading.value = true
                 val response = authRepository.login(LoginRequest(_username.value, _password.value))
                 sessionManager.saveAuthData(response.token, response.refreshToken)
-                sessionManager.saveUsername(_username.value)
+                sessionManager.username = _username.value
                 _loginError.value = null
             } catch (e: Exception) {
                 _loginError.value = "Ошибка авторизации: ${e.message}"

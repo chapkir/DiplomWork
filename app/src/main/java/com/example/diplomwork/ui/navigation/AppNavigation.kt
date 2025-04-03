@@ -135,7 +135,7 @@ fun AppNavigation(navController: NavHostController) {
             composable<Login> {
                 LoginScreen(
                     onLoginSuccess = {
-                        navController.navigate(Profile) {
+                        navController.navigate(Home) {
                             popUpTo(Login) { inclusive = true }
                         }
                     },

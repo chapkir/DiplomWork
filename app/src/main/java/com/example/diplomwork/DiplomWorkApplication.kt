@@ -8,8 +8,10 @@ import coil.ImageLoader
 import coil.request.CachePolicy
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.network.ApiClient
+import com.example.diplomwork.util.AppConstants
 import com.example.diplomwork.util.ImageUtils
 import dagger.hilt.android.HiltAndroidApp
+import androidx.core.content.edit
 
 @HiltAndroidApp
 class DiplomWorkApplication : Application()
@@ -73,10 +75,10 @@ class DiplomWorkApplication : Application()
 
                 // Устанавливаем новый URL в SessionManager
                 val sessionManager = SessionManager(this)
-                sessionManager.setServerUrl("http://spotsychlen.ddns.net:8081")
+                sessionManager.serverUrl = AppConstants.BASE_URL
 
                 // Отмечаем, что первый запуск выполнен
-                prefs.edit().putBoolean("is_first_run", false).apply()
+                prefs.edit { putBoolean("is_first_run", false) }
             }
         } catch (e: Exception) {
             Log.e("DiplomWorkApplication", "Ошибка при сбросе URL: ${e.message}")

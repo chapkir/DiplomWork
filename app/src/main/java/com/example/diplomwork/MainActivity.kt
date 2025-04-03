@@ -14,8 +14,6 @@ import androidx.navigation.compose.rememberNavController
 import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.system_settings.SetSystemBarsColor
 import com.example.diplomwork.ui.theme.ColorForBackground
-import com.example.diplomwork.auth.SessionManager
-import com.example.diplomwork.util.PreferencesCleaner
 import com.example.diplomwork.util.ImageUtils
 import android.util.Log
 import dagger.hilt.android.AndroidEntryPoint
@@ -31,11 +29,8 @@ class MainActivity : ComponentActivity() {
 
         ApiClient.init(this)
 
-        // Проверяем и сбрасываем настройки URL
-        checkAndResetServerUrl()
-
         // Очищаем кэш изображений при каждом запуске
-        clearImageCaches()
+        //clearImageCaches()
 
         enableEdgeToEdge()
         setContent {
@@ -50,37 +45,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    private fun checkAndResetServerUrl() {
-        // Сбрасываем настройки URL, если обнаружен локальный IP
-        if (PreferencesCleaner.hasLocalIpInUrl(this)) {
-            Log.d("MainActivity", "Обнаружен локальный IP в настройках, выполняется сброс")
-            PreferencesCleaner.resetServerUrl(this)
-        }
-
-        // Получаем сохраненный URL сервера и устанавливаем его
-        val sessionManager = SessionManager(this)
-        val serverUrl = sessionManager.getServerUrl()
-        Log.d("MainActivity", "URL сервера из SessionManager: $serverUrl")
-
-        // Принудительно устанавливаем URL DDNS
-        val ddnsUrl = "http://spotsychlen.ddns.net:8081/" // Замените на свой DDNS
-        //ApiClient.setBaseUrl(ddnsUrl)
-        Log.d("MainActivity", "Установлен URL сервера: $ddnsUrl")
-
-        // Сохраняем DDNS URL в SharedPreferences
-        sessionManager.setServerUrl(ddnsUrl)
-        Log.d("MainActivity", "URL сервера сохранен в SessionManager")
-
-        // Проверяем базовый URL в ApiClient после установки
-        Log.d("MainActivity", "Текущий базовый URL в ApiClient: ${ApiClient.getBaseUrl()}")
-
-        // Проверяем состояние авторизации
-        val isLoggedIn = sessionManager.isLoggedIn()
-        val token = sessionManager.getAuthToken()
-        Log.d("MainActivity", "Состояние авторизации: $isLoggedIn")
-        Log.d("MainActivity", "Токен: ${token?.take(10)}...")
     }
 
     private fun clearImageCaches() {

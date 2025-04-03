@@ -60,7 +60,7 @@ object ApiClient {
     fun init(context: Context) {
         sessionManager = SessionManager(context)
         // Получаем сохраненный URL сервера
-        var savedUrl = sessionManager.getServerUrl()
+        var savedUrl = sessionManager.serverUrl
 
         // Проверяем, не локальный ли это IP
         val localIpRegex = Regex("192\\.168\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\.")
@@ -68,7 +68,7 @@ object ApiClient {
             // Если это локальный IP, заменяем на DDNS
             Log.d(TAG, "Найден локальный IP в URL: $savedUrl, заменяем на DDNS")
             savedUrl = "http://spotsychlen.ddns.net:8081/"
-            sessionManager.setServerUrl(savedUrl)
+            sessionManager.serverUrl = savedUrl
         }
 
         serverUrl = savedUrl
@@ -125,7 +125,7 @@ object ApiClient {
             }
 
             // После возможного обновления токена добавляем актуальный токен в запрос
-            sessionManager.getAuthToken()?.let { token ->
+            sessionManager.authToken?.let { token ->
                 requestBuilder.addHeader("Authorization", "Bearer $token")
                 Log.d(TAG, "Добавлен токен авторизации: Bearer ${token.take(10)}...")
             } ?: Log.w(TAG, "Токен авторизации отсутствует")
@@ -168,7 +168,7 @@ object ApiClient {
                     if (refreshSuccess) {
                         response.close() // Закрываем старый ответ
 
-                        val newToken = sessionManager.getAuthToken()
+                        val newToken = sessionManager.authToken
                         if (newToken != null) {
                             val newRequest = original.newBuilder()
                                 .header("Authorization", "Bearer $newToken")
@@ -237,10 +237,10 @@ object ApiClient {
             refreshAttempts++  // Увеличиваем счетчик попыток
 
             Log.d(TAG, "Обновление токена, попытка #$refreshAttempts")
-            val refreshToken = sessionManager.getRefreshToken()
+            val refreshToken = sessionManager.refreshToken
 
             if (refreshToken != null) {
-                val username = sessionManager.getUsername()
+                val username = sessionManager.username
                 Log.d(TAG, "Отправляем запрос на обновление токена для пользователя: $username")
 
                 runBlocking {
@@ -413,13 +413,13 @@ object ApiClient {
             .writeTimeout(60, TimeUnit.SECONDS)
             .addInterceptor { chain ->
                 val originalRequest = chain.request()
-                val token = sessionManager.getAuthToken()
+                val token = sessionManager.authToken
 
                 // Логируем информацию о запросе
                 Log.d(TAG, "Аутентифицированный запрос: ${originalRequest.method} ${originalRequest.url}")
 
                 val newRequest = if (token != null) {
-                    val tokenExpiration = sessionManager.getTokenExpiration()
+                    val tokenExpiration = sessionManager.tokenExpiration
                     val isExpired = tokenExpiration != null && tokenExpiration < System.currentTimeMillis()
 
                     if (isExpired) {

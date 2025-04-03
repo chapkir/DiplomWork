@@ -31,7 +31,7 @@ class AuthInterceptor @Inject constructor(
                 }
             }
 
-            sessionManager.getAuthToken()?.let { token ->
+            sessionManager.authToken?.let { token ->
                 requestBuilder.addHeader("Authorization", "Bearer $token")
             }
         }
@@ -57,7 +57,7 @@ class AuthInterceptor @Inject constructor(
                     if (refreshSuccess) {
                         response.close()
 
-                        val newToken = sessionManager.getAuthToken()
+                        val newToken = sessionManager.authToken
                         if (newToken != null) {
                             val newRequest = original.newBuilder()
                                 .header("Authorization", "Bearer $newToken")
@@ -88,7 +88,7 @@ class AuthInterceptor @Inject constructor(
         var success = false
         try {
             isRefreshingToken = true
-            val refreshToken = sessionManager.getRefreshToken()
+            val refreshToken = sessionManager.refreshToken
 
             if (refreshToken != null) {
                 // Call your API to refresh the token here and save it to SessionManager
