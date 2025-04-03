@@ -30,10 +30,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -54,16 +52,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
-import com.example.diplomwork.auth.SessionManager
-import com.example.diplomwork.model.LoginRequest
-import com.example.diplomwork.model.RegisterRequest
-import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.ui.theme.ColorForFocusButton
 import com.example.diplomwork.ui.theme.ColorForHint
 import com.example.diplomwork.viewmodel.RegisterViewModel
-import kotlinx.coroutines.launch
 
 fun hideKeyboard(context: Context) {
     val inputMethodManager =
@@ -76,7 +69,10 @@ fun hideKeyboard(context: Context) {
 }
 
 @Composable
-fun RegisterScreen(onCompleteRegistration: () -> Unit, registerViewModel: RegisterViewModel = hiltViewModel()) {
+fun RegisterScreen(
+    onCompleteRegistration: () -> Unit,
+    registerViewModel: RegisterViewModel = hiltViewModel()
+) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
 
@@ -84,7 +80,7 @@ fun RegisterScreen(onCompleteRegistration: () -> Unit, registerViewModel: Regist
     val username by registerViewModel.username.collectAsState()
     val email by registerViewModel.email.collectAsState()
     val password by registerViewModel.password.collectAsState()
-    val isLoading by  registerViewModel.isLoading.collectAsState()
+    val isLoading by registerViewModel.isLoading.collectAsState()
     val errorMessage by registerViewModel.errorMessage.collectAsState()
 
     Column(
@@ -104,7 +100,10 @@ fun RegisterScreen(onCompleteRegistration: () -> Unit, registerViewModel: Regist
                 "Введите имя пользователя",
                 "Логин",
                 username,
-                { registerViewModel.updateUsername(it.replace(" ", "").filter { c -> c.code in 32..126 }) }
+                {
+                    registerViewModel.updateUsername(
+                        it.replace(" ", "").filter { c -> c.code in 32..126 })
+                }
             )
 
             1 -> StepField(
@@ -158,7 +157,8 @@ fun RegisterScreen(onCompleteRegistration: () -> Unit, registerViewModel: Regist
                         registerViewModel.register {
                             focusManager.clearFocus()
                             hideKeyboard(context)
-                            Toast.makeText(context, "Регистрация успешна!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Регистрация успешна!", Toast.LENGTH_SHORT)
+                                .show()
                             onCompleteRegistration()
                         }
                     }
@@ -259,8 +259,8 @@ fun CustomOutlinedTextField(
         singleLine = true,
         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = keyboardType),
         visualTransformation =
-        if (isPassword && !passwordVisible) PasswordVisualTransformation()
-        else VisualTransformation.None,
+            if (isPassword && !passwordVisible) PasswordVisualTransformation()
+            else VisualTransformation.None,
         trailingIcon = {
             if (isPassword) {
                 val image = if (passwordVisible) R.drawable.ic_eye_crossed else R.drawable.ic_eye

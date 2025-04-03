@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
-import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 
 @Composable
@@ -38,35 +37,18 @@ fun ImageView(imageRes: String, aspectRatio: Float) {
 
     val context = LocalContext.current
 
-    // Сохраняем оригинальный URL
-    val originalUrl = remember { imageRes }
-
-    // Обрабатываем URL для отображения изображения
-    var displayUrl by remember {
-        mutableStateOf(
-            if (imageRes.startsWith("http")) {
-                imageRes
-            } else {
-                "${ApiClient.getBaseUrl()}$imageRes"
-            }
-        )
-    }
+    var displayUrl = imageRes
 
     Card(
         shape = RoundedCornerShape(30.dp),
         elevation = CardDefaults.cardElevation(15.dp),
-        modifier = Modifier
-            .padding(top = 10.dp, start = 7.dp, end = 7.dp)
+        modifier = Modifier.padding(top = 10.dp, start = 7.dp, end = 7.dp)
     ) {
         Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(30.dp))
+            modifier = Modifier.clip(RoundedCornerShape(30.dp))
         ) {
             AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(displayUrl)
-                    .crossfade(true)
-                    .build(),
+                model = ImageRequest.Builder(context).data(displayUrl).crossfade(true).build(),
                 contentDescription = null,
                 onState = { state ->
                     isLoading = state is AsyncImagePainter.State.Loading
@@ -76,50 +58,16 @@ fun ImageView(imageRes: String, aspectRatio: Float) {
                         val exception = state.result.throwable
 
                         // Логируем ошибку
-                        Log.e("ImageView", "Ошибка загрузки изображения: $displayUrl (оригинальный URL: $originalUrl)", exception)
+                        Log.e(
+                            "ImageView",
+                            "Ошибка загрузки изображения: $displayUrl",
+                            exception
+                        )
 
                         // Пробуем восстановиться
                         if (retryCount < 2) {
                             retryCount++
-
-                            // Определяем тип ошибки по сообщению
-                            val errorCode = when {
-                                exception.message?.contains("410") == true -> 410
-                                exception.message?.contains("404") == true -> 404
-                                exception.message?.contains("400") == true -> 400
-                                exception.message?.contains("500") == true -> 500
-                                else -> -1
-                            }
-
-                            // Выбираем стратегию обработки в зависимости от ошибки
-                            displayUrl = when (errorCode) {
-                                410, 404 -> {
-                                    // Для устаревших или отсутствующих ссылок
-                                    Log.w(
-                                        "ImageView",
-                                        "Ссылка недействительна, пробуем с другим timestamp"
-                                    )
-                                    val separator = if (displayUrl.contains("?")) "&" else "?"
-                                    "${displayUrl}${separator}cache_bust=${System.currentTimeMillis()}"
-                                }
-
-                                in 400..499 -> {
-                                    // Для клиентских ошибок, пробуем напрямую с сервера
-                                    if (originalUrl.startsWith("http")) {
-                                        originalUrl
-                                    } else {
-                                        // Добавляем параметр для обхода кэша
-                                        val separator = if (originalUrl.contains("?")) "&" else "?"
-                                        "${ApiClient.getBaseUrl()}$originalUrl${separator}cache_bust=${System.currentTimeMillis()}"
-                                    }
-                                }
-
-                                else -> {
-                                    // Для всех остальных случаев
-                                    val separator = if (displayUrl.contains("?")) "&" else "?"
-                                    "${displayUrl}${separator}cache_bust=${System.currentTimeMillis()}"
-                                }
-                            }
+                            displayUrl = "${displayUrl}?cache_bust=${System.currentTimeMillis()}"
                         }
                     }
 

@@ -11,7 +11,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.compose.rememberNavController
-import com.example.diplomwork.network.ApiClient
 import com.example.diplomwork.system_settings.SetSystemBarsColor
 import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.util.ImageUtils
@@ -27,7 +26,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        ApiClient.init(this)
+        //ApiClient.init(this)
 
         // Очищаем кэш изображений при каждом запуске
         //clearImageCaches()

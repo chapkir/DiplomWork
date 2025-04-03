@@ -13,6 +13,7 @@ import retrofit2.Response
 import javax.inject.Inject
 import javax.inject.Singleton
 import com.example.diplomwork.auth.SessionManager
+import okhttp3.RequestBody
 
 @Singleton
 class PictureRepository @Inject constructor(
@@ -53,11 +54,6 @@ class PictureRepository @Inject constructor(
     // Добавление комментария
     suspend fun addComment(pinId: Long, comment: CommentRequest): CommentResponse {
         return apiService.addComment(pinId, comment)
-    }
-
-    // Загрузка картинки
-    suspend fun uploadImage(file: MultipartBody.Part, description: String): PictureResponse {
-        return apiService.uploadImage(file, description)
     }
 
     //Поиск картинки

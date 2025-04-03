@@ -1,6 +1,5 @@
 package com.example.diplomwork.ui.screens.picture_detail_screen
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,8 +29,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.diplomwork.R
-import com.example.diplomwork.network.ApiClient
-import com.example.diplomwork.network.ApiService
 
 @Composable
 fun ActionBar(
@@ -82,8 +78,8 @@ fun ActionBar(
                     Icon(
                         painter = painterResource(
                             id =
-                            if (isLiked) R.drawable.ic_favs_filled
-                            else R.drawable.ic_favs
+                                if (isLiked) R.drawable.ic_favs_filled
+                                else R.drawable.ic_favs
                         ),
                         contentDescription = "Лайк",
                         tint = if (isLiked) Color.Red else Color.White,
@@ -129,7 +125,7 @@ fun ActionBar(
                 .clickable { onProfileClick() },
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.Bottom
-        ){
+        ) {
             Box(
                 modifier = Modifier
                     .size(35.dp)

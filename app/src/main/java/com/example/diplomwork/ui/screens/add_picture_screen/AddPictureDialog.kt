@@ -1,10 +1,5 @@
 package com.example.diplomwork.ui.screens.add_picture_screen
 
-import android.content.Context
-import android.net.Uri
-import android.util.Log
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,116 +18,27 @@ import androidx.compose.ui.window.Dialog
 import com.example.diplomwork.R
 import com.example.diplomwork.ui.theme.ColorForAddPhotoDialog
 import com.example.diplomwork.ui.theme.ColorForBackground
-import android.widget.Toast
-import com.example.diplomwork.network.ApiClient
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
-import java.io.File
-import android.provider.MediaStore
-import android.provider.OpenableColumns
-import java.io.FileOutputStream
-import java.io.IOException
+import com.example.diplomwork.viewmodel.AddPictureDialogViewModel
 
 @Composable
 fun AddPictureDialog(
     onDismiss: () -> Unit,
     onAddPhoto: () -> Unit,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    viewModel: AddPictureDialogViewModel
 ) {
-    val context = LocalContext.current
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-    var showPreview by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
+    val selectedImageUri by viewModel.selectedImageUri.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val showPreview by viewModel.showPreview.collectAsState()
 
-    val filePicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        selectedImageUri = uri
-        if (uri != null) {
-            showPreview = true
-        }
-    }
+    var description by remember { mutableStateOf("") }
 
     if (showPreview && selectedImageUri != null) {
         PicturePreviewDialog(
             imageUri = selectedImageUri!!,
             onDismiss = {
-                showPreview = false
+                viewModel.onDismissPreview()
                 onDismiss()
-            },
-            onPublish = { description ->
-                scope.launch {
-                    try {
-                        isLoading = true
-                        val file = createTempFileFromUri(context, selectedImageUri!!)
-                        if (file != null) {
-                            val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
-                            val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
-                            val descriptionBody = description.toRequestBody("text/plain".toMediaTypeOrNull())
-
-                            withContext(Dispatchers.IO) {
-                                try {
-                                    val response = ApiClient.imageUploadService.uploadImage(body, descriptionBody)
-                                    withContext(Dispatchers.Main) {
-                                        if (response.isSuccessful) {
-                                            val pin = response.body()
-                                            if (pin != null) {
-                                                Toast.makeText(context, "Изображение успешно загружено", Toast.LENGTH_SHORT).show()
-                                                showPreview = false
-                                                onRefresh()
-                                                onDismiss()
-                                            } else {
-                                                Toast.makeText(context, "Ошибка при загрузке изображения", Toast.LENGTH_SHORT).show()
-                                            }
-                                        } else {
-                                            Log.e("AddPhotoDialog", "Ошибка загрузки: ${response.code()} - ${response.message()}")
-                                            val errorBody = response.errorBody()?.string() ?: "Неизвестная ошибка"
-                                            Log.e("AddPhotoDialog", "Содержимое ошибки: $errorBody")
-
-                                            // Попытка восстановления при ошибке сервера
-                                            if (response.code() >= 500) {
-                                                Toast.makeText(context, "Ошибка сервера. Повторите попытку позже.", Toast.LENGTH_SHORT).show()
-                                            } else if (response.code() == 413) {
-                                                Toast.makeText(context, "Файл слишком большой", Toast.LENGTH_SHORT).show()
-                                            } else {
-                                                Toast.makeText(context, "Ошибка: ${response.message()}", Toast.LENGTH_SHORT).show()
-                                            }
-                                        }
-                                    }
-                                } catch (e: Exception) {
-                                    Log.e("AddPhotoDialog", "Ошибка при загрузке", e)
-                                    withContext(Dispatchers.Main) {
-                                        val errorMessage = when {
-                                            e.message?.contains("timeout") == true -> "Истекло время ожидания. Проверьте подключение к сети."
-                                            e.message?.contains("Unable to resolve host") == true -> "Нет подключения к серверу. Проверьте Интернет."
-                                            else -> "Ошибка при загрузке: ${e.localizedMessage}"
-                                        }
-                                        Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
-                                    }
-                                } finally {
-                                    withContext(Dispatchers.Main) {
-                                        isLoading = false
-                                    }
-                                }
-                            }
-                        } else {
-                            Toast.makeText(context, "Ошибка при подготовке файла", Toast.LENGTH_LONG).show()
-                            isLoading = false
-                        }
-                    } catch (e: Exception) {
-                        Log.e("AddPhotoDialog", "Ошибка", e)
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(context, "Ошибка: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
-                            isLoading = false
-                        }
-                    }
-                }
             },
             onPublishSuccess = {
                 onRefresh()
@@ -173,9 +79,7 @@ fun AddPictureDialog(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Button(
-                                onClick = {
-                                    filePicker.launch("image/*")
-                                },
+                                onClick = { onAddPhoto() },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = ColorForBackground
                                 ),
@@ -225,86 +129,3 @@ fun AddPictureDialog(
     }
 }
 
-private fun createTempFileFromUri(context: Context, uri: Uri): File? {
-    return try {
-        // Получаем имя файла
-        val fileName = getFileName(context, uri)
-
-        // Создаем временный файл
-        val tempFile = File(context.cacheDir, fileName)
-        tempFile.createNewFile()
-
-        // Проверяем размер файла перед началом копирования
-        val fileSize = getFileSize(context, uri)
-        if (fileSize > 50 * 1024 * 1024) { // 50MB лимит
-            throw IllegalArgumentException("Файл слишком большой. Максимальный размер: 50MB")
-        }
-
-        // Копируем данные с использованием буфера
-        context.contentResolver.openInputStream(uri)?.use { inputStream ->
-            val bufferedInputStream = inputStream.buffered(8192)
-            FileOutputStream(tempFile).buffered(8192).use { outputStream ->
-                val buffer = ByteArray(8192)
-                var bytesRead: Int
-                var totalBytesRead = 0L
-
-                while (bufferedInputStream.read(buffer).also { bytesRead = it } != -1) {
-                    outputStream.write(buffer, 0, bytesRead)
-                    totalBytesRead += bytesRead
-
-                    // Логируем прогресс
-                    if (fileSize > 0) {
-                        val progress = (totalBytesRead.toFloat() / fileSize * 100).toInt()
-                        Log.d("AddPhotoDialog", "Прогресс подготовки файла: $progress%")
-                    }
-                }
-                outputStream.flush()
-            }
-        }
-
-        // Проверяем, что файл был создан успешно
-        if (!tempFile.exists() || tempFile.length() == 0L) {
-            throw IOException("Не удалось создать файл")
-        }
-
-        Log.d("AddPhotoDialog", "Файл создан успешно: ${tempFile.absolutePath}, размер: ${tempFile.length()} байт")
-        tempFile
-    } catch (e: Exception) {
-        Log.e("AddPhotoDialog", "Ошибка при подготовке файла", e)
-        null
-    }
-}
-
-/**
- * Получает имя файла из URI
- */
-private fun getFileName(context: Context, uri: Uri): String {
-    // Пытаемся получить имя файла из метаданных
-    val fileName = context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-        val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-        if (nameIndex != -1 && cursor.moveToFirst()) {
-            cursor.getString(nameIndex)
-        } else null
-    }
-
-    // Если не получилось, генерируем уникальное имя
-    return fileName ?: "image_${System.currentTimeMillis()}.jpg"
-}
-
-private fun getFileSize(context: Context, uri: Uri): Long {
-    return context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-        val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
-        cursor.moveToFirst()
-        cursor.getLong(sizeIndex)
-    } ?: -1
-}
-
-private fun getRealPathFromURI(context: Context, uri: Uri): String? {
-    val projection = arrayOf(MediaStore.Images.Media.DATA)
-    val cursor = context.contentResolver.query(uri, projection, null, null, null)
-    return cursor?.use {
-        val columnIndex = it.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
-        it.moveToFirst()
-        it.getString(columnIndex)
-    }
-}

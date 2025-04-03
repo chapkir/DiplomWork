@@ -178,7 +178,6 @@ fun AppNavigation(navController: NavHostController) {
     if (isDialogOpen.value) {
         OpenGalleryAndSavePicture(
             isDialogOpen = isDialogOpen,
-            context = context,
             onRefresh = {
                 triggerRefresh()
             }

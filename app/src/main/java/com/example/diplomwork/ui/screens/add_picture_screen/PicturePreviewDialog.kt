@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,21 +34,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.theme.ColorForAddPhotoDialog
 import com.example.diplomwork.ui.theme.ColorForBackground
+import com.example.diplomwork.viewmodel.AddPictureDialogViewModel
 
 @Composable
 fun PicturePreviewDialog(
     imageUri: Uri,
     onDismiss: () -> Unit,
-    onPublish: (String) -> Unit,
-    onPublishSuccess: () -> Unit
+    onPublishSuccess: () -> Unit,
+    viewModel: AddPictureDialogViewModel = hiltViewModel()  // Используем ViewModel
 ) {
     var description by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
+
+    val isLoading by viewModel.isLoading.collectAsState()
+    val isError by viewModel.isError.collectAsState()
 
     Dialog(
         onDismissRequest = { onDismiss() },
@@ -132,6 +137,15 @@ fun PicturePreviewDialog(
                     )
                 }
 
+                // Ошибка, если есть
+                if (isError != null) {
+                    Text(
+                        text = isError ?: "",
+                        color = Color.Red,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+
                 // Кнопки действий
                 Row(
                     modifier = Modifier
@@ -160,8 +174,7 @@ fun PicturePreviewDialog(
                     // Кнопка публикации
                     Button(
                         onClick = {
-                            isLoading = true
-                            onPublish(description)
+                            viewModel.uploadImage(description)  // Используем метод из ViewModel
                             onPublishSuccess()
                         },
                         modifier = Modifier
