@@ -8,18 +8,16 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.diplomwork.viewmodel.AddPictureDialogViewModel
+import com.example.diplomwork.viewmodel.AddContentViewModel
 
 @Composable
 fun OpenGalleryForAddPicture(
-    isDialogOpen: MutableState<Boolean>,
-    onRefresh: () -> Unit,
-    viewModel: AddPictureDialogViewModel = hiltViewModel()
+    viewModel: AddContentViewModel
 ) {
+
     val context = LocalContext.current
 
     // Лаунчер для выбора фото из галереи
@@ -27,6 +25,20 @@ fun OpenGalleryForAddPicture(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let { viewModel.onImageSelected(it) }
+    }
+
+    val mediaPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            galleryLauncher.launch("image/*")
+        } else {
+            Toast.makeText(
+                context,
+                "Необходимо разрешение для доступа к изображениям",
+                Toast.LENGTH_LONG
+            ).show()
+        }
     }
 
     // Запрос разрешения на доступ к файлам
@@ -39,21 +51,6 @@ fun OpenGalleryForAddPicture(
             Toast.makeText(
                 context,
                 "Необходимо разрешение для доступа к галерее",
-                Toast.LENGTH_LONG
-            ).show()
-        }
-    }
-
-    // Для устройств с Android 10 (API 29) и выше
-    val mediaPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        if (isGranted) {
-            galleryLauncher.launch("image/*")
-        } else {
-            Toast.makeText(
-                context,
-                "Необходимо разрешение для доступа к изображениям",
                 Toast.LENGTH_LONG
             ).show()
         }
@@ -94,12 +91,4 @@ fun OpenGalleryForAddPicture(
         }
     }
 
-    if (isDialogOpen.value) {
-        AddPictureDialog(
-            onDismiss = { isDialogOpen.value = false },
-            onAddPhoto = openGallery,
-            onRefresh = onRefresh,
-            viewModel = viewModel
-        )
-    }
 }

@@ -40,14 +40,14 @@ import coil.request.ImageRequest
 import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.theme.ColorForAddPhotoDialog
 import com.example.diplomwork.ui.theme.ColorForBackground
-import com.example.diplomwork.viewmodel.AddPictureDialogViewModel
+import com.example.diplomwork.viewmodel.AddContentViewModel
 
 @Composable
 fun PicturePreviewDialog(
     imageUri: Uri,
     onDismiss: () -> Unit,
     onPublishSuccess: () -> Unit,
-    viewModel: AddPictureDialogViewModel = hiltViewModel()  // Используем ViewModel
+    viewModel: AddContentViewModel = hiltViewModel()
 ) {
     var description by remember { mutableStateOf("") }
 
@@ -171,10 +171,9 @@ fun PicturePreviewDialog(
                         )
                     }
 
-                    // Кнопка публикации
                     Button(
                         onClick = {
-                            viewModel.uploadImage(description)  // Используем метод из ViewModel
+                            viewModel.uploadImage(description)
                             onPublishSuccess()
                         },
                         modifier = Modifier

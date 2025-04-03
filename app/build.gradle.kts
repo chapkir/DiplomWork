@@ -85,6 +85,7 @@ dependencies {
 
     implementation (libs.accompanist.pager)
     implementation (libs.accompanist.pager.indicators)
+    implementation(libs.accompanist.permissions)
 
     implementation(libs.kotlinx.metadata.jvm)
 

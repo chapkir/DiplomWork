@@ -20,7 +20,7 @@ import androidx.navigation.toRoute
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.ui.components.bottom_menu.BottomNavigationBar
 import com.example.diplomwork.ui.components.top_bar.GetTopBars
-import com.example.diplomwork.ui.screens.add_picture_screen.OpenGalleryForAddPicture
+import com.example.diplomwork.ui.screens.add_picture_screen.AddPictureDialog
 import com.example.diplomwork.ui.screens.home_screen.HomeScreen
 import com.example.diplomwork.ui.screens.login_screen.LoginScreen
 import com.example.diplomwork.ui.screens.picture_detail_screen.PictureDetailScreen
@@ -44,12 +44,9 @@ fun AppNavigation(navController: NavHostController) {
             Register::class.simpleName
         )
 
-    val showBottomBar = currentRoute?.let { route ->
+    val showBottomBar = currentRoute.let { route ->
         hiddenScreens.none { it != null && route.startsWith(it) }
-    } ?: true
-
-    val isDialogOpen = remember { mutableStateOf(false) }
-    val openDialog = { isDialogOpen.value = true }
+    }
 
     var shouldRefresh by remember { mutableStateOf(false) }
     var lastRefreshTimestamp by remember { mutableStateOf(0L) }
@@ -57,6 +54,9 @@ fun AppNavigation(navController: NavHostController) {
     var lastSearchJob by remember { mutableStateOf<Job?>(null) }
     var isSearchActive by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+
+    val isDialogOpen = remember { mutableStateOf(false) }
+    val openDialog = { isDialogOpen.value = true }
 
     val triggerRefresh = {
         shouldRefresh = true
@@ -175,9 +175,10 @@ fun AppNavigation(navController: NavHostController) {
             }
         }
     }
+
     if (isDialogOpen.value) {
-        OpenGalleryForAddPicture(
-            isDialogOpen = isDialogOpen,
+        AddPictureDialog(
+            onDismiss = { isDialogOpen.value = false },
             onRefresh = {
                 triggerRefresh()
             }
