@@ -71,7 +71,6 @@ import com.google.accompanist.pager.rememberPagerState
 @Composable
 fun ProfileScreen(
     onLogout: () -> Unit,
-    onNavigateToLogin: () -> Unit,
     onImageClick: (Long, String) -> Unit,
     profileViewModel: ProfileViewModel = hiltViewModel()
 ) {

@@ -72,13 +72,10 @@ class RegisterViewModel @Inject constructor(
                 _isLoading.value = true
                 _errorMessage.value = null
 
-                // Регистрация
                 val registerResponse = authRepository.register(RegisterRequest(_username.value, _email.value, _password.value))
 
-                // Автоматическая авторизация
                 val loginResponse = authRepository.login(LoginRequest(_username.value, _password.value))
 
-                // Сохранение токена
                 sessionManager.authToken = loginResponse.token
 
                 onCompleteRegistration()

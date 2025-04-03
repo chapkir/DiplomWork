@@ -12,7 +12,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -27,7 +26,6 @@ import com.example.diplomwork.ui.screens.login_screen.LoginScreen
 import com.example.diplomwork.ui.screens.picture_detail_screen.PictureDetailScreen
 import com.example.diplomwork.ui.screens.profile_screen.ProfileScreen
 import com.example.diplomwork.ui.screens.registration_screen.RegisterScreen
-import com.example.diplomwork.viewmodel.PictureDetailScreenViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -36,10 +34,8 @@ import kotlinx.coroutines.launch
 fun AppNavigation(navController: NavHostController) {
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
-    val currentRoute = navController.
-    currentBackStackEntryAsState().value?.destination?.route?.substringAfterLast('.')
-
-    Log.i("appnav", "сейчас путь - $currentRoute")
+    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+        ?.substringAfterLast('.') ?: ""
 
     val hiddenScreens =
         listOf(
@@ -49,7 +45,7 @@ fun AppNavigation(navController: NavHostController) {
         )
 
     val showBottomBar = currentRoute?.let { route ->
-        hiddenScreens.all { !route.startsWith(it ?: "") }
+        hiddenScreens.none { it != null && route.startsWith(it) }
     } ?: true
 
     val isDialogOpen = remember { mutableStateOf(false) }
@@ -85,7 +81,6 @@ fun AppNavigation(navController: NavHostController) {
 
     // Обработка системной кнопки назад для закрытия поиска
     BackHandler(enabled = isSearchActive) {
-        Log.d("AppNavigation", "Нажата системная кнопка назад, закрываем поиск")
         performSearch("")
     }
 
@@ -101,14 +96,14 @@ fun AppNavigation(navController: NavHostController) {
         },
         bottomBar = {
             if (showBottomBar) BottomNavigationBar(
-                currentRoute = currentRoute ?: "",
+                currentRoute = currentRoute,
                 onNavigate = { route ->
                     if (route == Home && searchQuery.isNotEmpty()) {
                         searchQuery = ""
                         isSearchActive = false
                     }
                     navController.navigate(route) {
-                        popUpTo(route) { inclusive = true }
+                        popUpTo(route) { inclusive = false }
                     }
                 },
                 onAddClicked = openDialog
@@ -123,8 +118,6 @@ fun AppNavigation(navController: NavHostController) {
             composable<Home> {
                 HomeScreen(
                     onImageClick = { pictureId, imageUrl ->
-                        val timestamp = System.currentTimeMillis()
-                        Log.i("NAVIGATION_DEBUG", "$timestamp - НАЖАТИЕ НА ПИН С ID=$pictureId И URL=$imageUrl")
                         navController.navigate(ViewPictureDetailScreenData(pictureId, imageUrl))
                     },
                     shouldRefresh = shouldRefresh,
@@ -135,7 +128,7 @@ fun AppNavigation(navController: NavHostController) {
             composable<Login> {
                 LoginScreen(
                     onLoginSuccess = {
-                        navController.navigate(Home) {
+                        navController.navigate(Profile) {
                             popUpTo(Login) { inclusive = true }
                         }
                     },
@@ -147,30 +140,24 @@ fun AppNavigation(navController: NavHostController) {
                 ProfileScreen(
                     onLogout = {
                         sessionManager.clearSession()
-                        navController.navigate(Home) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                    },
-                    onNavigateToLogin = {
                         navController.navigate(Login) {
-                            popUpTo(0) { inclusive = true }
+                            popUpTo(Login) { inclusive = true }
                         }
                     },
                     onImageClick = { pictureId, imageUrl ->
                         navController.navigate(ViewPictureDetailScreenData(pictureId, imageUrl)) {
-                            popUpTo(ViewPictureDetailScreenData(pictureId, imageUrl))
-                            { inclusive = true }
+                            popUpTo(Profile) { inclusive = false }
                         }
                     }
                 )
             }
             composable<ViewPictureDetailScreenData> { backStackEntry ->
-                val viewPictureDetailScreenData = backStackEntry.toRoute<ViewPictureDetailScreenData>()
+                val viewPictureDetailScreenData =
+                    backStackEntry.toRoute<ViewPictureDetailScreenData>()
                 PictureDetailScreen(
                     viewPictureDetailScreenData,
                     onNavigateBack = { navController.popBackStack() }
                 )
-                Log.i("", "в навигации при отправке " + viewPictureDetailScreenData.pictureId + " " + viewPictureDetailScreenData.imageUrl)
             }
             composable<Posts> {
                 /* InfoScreen() */
