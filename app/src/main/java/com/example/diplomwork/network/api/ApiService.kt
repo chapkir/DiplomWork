@@ -3,7 +3,6 @@ package com.example.diplomwork.network.api
 import com.example.diplomwork.model.LoginRequest
 import com.example.diplomwork.model.LoginResponse
 import com.example.diplomwork.model.ProfileResponse
-import com.example.diplomwork.model.Comment
 import com.example.diplomwork.model.CommentRequest
 import com.example.diplomwork.model.CommentResponse
 import com.example.diplomwork.model.PictureResponse
@@ -56,7 +55,7 @@ interface ApiService {
     suspend fun unlikePicture(@Path("pinId") pinId: Long): Response<Unit>
 
     @GET("api/pins/{pinId}/comments")
-    suspend fun getComments(@Path("pinId") pinId: Long): ApiResponse<List<Comment>>
+    suspend fun getComments(@Path("pinId") pinId: Long): ApiResponse<List<CommentResponse>>
 
     @POST("api/pins/{pinId}/comments")
     suspend fun addComment(
@@ -86,7 +85,4 @@ interface ApiService {
         @Part file: MultipartBody.Part
     ): Response<Map<String, String>>
 
-    @Multipart
-    @POST("api/profile/avatar")
-    suspend fun uploadAvatar(@Part file: MultipartBody.Part): Response<String>
 }

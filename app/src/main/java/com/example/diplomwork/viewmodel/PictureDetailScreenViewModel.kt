@@ -4,8 +4,9 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.diplomwork.model.Comment
 import com.example.diplomwork.model.CommentRequest
+import com.example.diplomwork.model.CommentResponse
+import com.example.diplomwork.network.repos.CommentRepository
 import com.example.diplomwork.network.repos.PictureRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class PictureDetailScreenViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val pictureRepository: PictureRepository
+    private val pictureRepository: PictureRepository,
+    private val commentRepository: CommentRepository
 ) : ViewModel() {
 
     private val _pictureId: Long = savedStateHandle.get<Long>("pictureId") ?: 0L
@@ -30,8 +32,8 @@ class PictureDetailScreenViewModel @Inject constructor(
     private val _isLiked = MutableStateFlow(false)
     val isLiked: StateFlow<Boolean> = _isLiked
 
-    private val _comments = MutableStateFlow<List<Comment>>(emptyList())
-    val comments: StateFlow<List<Comment>> = _comments
+    private val _comments = MutableStateFlow<List<CommentResponse>>(emptyList())
+    val comments: StateFlow<List<CommentResponse>> = _comments
 
     private val _profileImageUrl = MutableStateFlow("")
     val profileImageUrl: StateFlow<String> = _profileImageUrl
@@ -63,9 +65,13 @@ class PictureDetailScreenViewModel @Inject constructor(
                 _isLiked.value = picture.isLikedByCurrentUser
 
                 try {
-                    _comments.value = pictureRepository.getComments(_pictureId)
+                    _comments.value = commentRepository.getComments(_pictureId)
                 } catch (e: Exception) {
-                    Log.e("PictureDetailViewModel", "Ошибка при загрузке комментариев: ${e.message}", e)
+                    Log.e(
+                        "PictureDetailViewModel",
+                        "Ошибка при загрузке комментариев: ${e.message}",
+                        e
+                    )
                     _comments.value = emptyList()
                 }
 
@@ -130,8 +136,8 @@ class PictureDetailScreenViewModel @Inject constructor(
 
             try {
                 val commentRequest = CommentRequest(text = commentText)
-                pictureRepository.addComment(_pictureId, commentRequest)
-                _comments.value = pictureRepository.getComments(_pictureId)
+                commentRepository.addComment(_pictureId, commentRequest)
+                _comments.value = commentRepository.getComments(_pictureId)
             } catch (e: Exception) {
                 Log.e("PictureDetailViewModel", "Error adding comment: ${e.message}")
             }

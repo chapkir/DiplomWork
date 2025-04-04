@@ -24,6 +24,7 @@ import com.example.diplomwork.ui.screens.add_picture_screen.AddPictureDialog
 import com.example.diplomwork.ui.screens.home_screen.HomeScreen
 import com.example.diplomwork.ui.screens.login_screen.LoginScreen
 import com.example.diplomwork.ui.screens.picture_detail_screen.PictureDetailScreen
+import com.example.diplomwork.ui.screens.posts_screen.PostsScreen
 import com.example.diplomwork.ui.screens.profile_screen.ProfileScreen
 import com.example.diplomwork.ui.screens.registration_screen.RegisterScreen
 import kotlinx.coroutines.Job
@@ -160,7 +161,7 @@ fun AppNavigation(navController: NavHostController) {
                 )
             }
             composable<Posts> {
-                /* InfoScreen() */
+                PostsScreen()
             }
 
             composable<Notification> {

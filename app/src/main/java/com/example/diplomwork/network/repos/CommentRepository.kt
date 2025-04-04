@@ -1,6 +1,5 @@
 package com.example.diplomwork.network.repos
 
-import com.example.diplomwork.model.Comment
 import com.example.diplomwork.model.CommentRequest
 import com.example.diplomwork.model.CommentResponse
 import com.example.diplomwork.network.api.ApiService
@@ -10,7 +9,7 @@ import javax.inject.Singleton
 @Singleton
 class CommentRepository @Inject constructor(private val apiService: ApiService) {
 
-    suspend fun getComments(pinId: Long): List<Comment> {
+    suspend fun getComments(pinId: Long): List<CommentResponse> {
         return try {
             val response = apiService.getComments(pinId)
             response.data ?: emptyList()

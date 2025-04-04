@@ -5,7 +5,7 @@ data class Picture(
     val imageUrl: String,
     val description: String = "",
     val likesCount: Int = 0,
-    val comments: List<Comment> = emptyList(),
+    val comments: List<CommentResponse> = emptyList(),
     val username: String? = null,
     val isLikedByCurrentUser: Boolean = false
 )

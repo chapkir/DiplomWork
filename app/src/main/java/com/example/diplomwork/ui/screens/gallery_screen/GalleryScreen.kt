@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.screens
+package com.example.diplomwork.ui.screens.gallery_screen
 
 import android.net.Uri
 import androidx.compose.foundation.Image
@@ -25,8 +25,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Tab
@@ -53,11 +51,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
-import coil.compose.rememberImagePainter
 import com.example.diplomwork.ui.components.checkGalleryPermission
 import com.example.diplomwork.ui.components.requestGalleryPermission
 import com.example.diplomwork.ui.theme.ColorForBackground
-import com.example.diplomwork.ui.theme.ColorForFocusButton
 import com.example.diplomwork.viewmodel.GalleryViewModel
 
 @Composable

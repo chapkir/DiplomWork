@@ -45,11 +45,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.diplomwork.R
-import com.example.diplomwork.model.Comment
+import com.example.diplomwork.model.CommentResponse
 import com.example.diplomwork.ui.theme.ColorForBackground
 
 @Composable
-fun CommentItem(comment: Comment) {
+fun CommentItem(comment: CommentResponse) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -81,7 +81,7 @@ fun CommentItem(comment: Comment) {
 @Composable
 fun CommentsBottomSheet(
     show: Boolean,
-    comments: List<Comment>,
+    comments: List<CommentResponse>,
     onDismiss: () -> Unit,
     onAddComment: (String) -> Unit
 ) {
@@ -135,7 +135,7 @@ fun CommentsBottomSheet(
 
 @Composable
 fun CommentsContent(
-    comments: List<Comment>,
+    comments: List<CommentResponse>,
     onDismiss: () -> Unit,
     onAddComment: (String) -> Unit
 ) {

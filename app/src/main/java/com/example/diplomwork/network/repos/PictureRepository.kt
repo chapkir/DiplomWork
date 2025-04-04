@@ -1,7 +1,6 @@
 package com.example.diplomwork.network.repos
 
 import com.example.diplomwork.model.PictureResponse
-import com.example.diplomwork.model.Comment
 import com.example.diplomwork.model.CommentRequest
 import com.example.diplomwork.model.CommentResponse
 import com.example.diplomwork.network.api.ApiService
@@ -34,21 +33,6 @@ class PictureRepository @Inject constructor(
     // Убрать лайк с картинки
     suspend fun unlikePicture(pinId: Long): Response<Unit> {
         return apiService.unlikePicture(pinId)
-    }
-
-    // Получение комментариев для картинки
-    suspend fun getComments(pinId: Long): List<Comment> {
-        return try {
-            val response = apiService.getComments(pinId)
-            response.data ?: emptyList()
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    // Добавление комментария
-    suspend fun addComment(pinId: Long, comment: CommentRequest): CommentResponse {
-        return apiService.addComment(pinId, comment)
     }
 
     //Поиск картинки

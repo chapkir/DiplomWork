@@ -100,7 +100,7 @@ fun ActionBar(
                     modifier = Modifier.clickable { onCommentClick() }
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_comment),
+                        painter = painterResource(id = R.drawable.ic_comments),
                         contentDescription = "Комментарии",
                         tint = Color.White,
                         modifier = Modifier.size(24.dp)

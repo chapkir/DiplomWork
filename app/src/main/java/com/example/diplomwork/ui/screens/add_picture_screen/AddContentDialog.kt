@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
-import com.example.diplomwork.ui.screens.GalleryDialog
+import com.example.diplomwork.ui.screens.gallery_screen.GalleryDialog
 import com.example.diplomwork.ui.theme.ColorForAddPhotoDialog
 import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.viewmodel.AddContentViewModel
