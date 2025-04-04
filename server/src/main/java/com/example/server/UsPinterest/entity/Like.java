@@ -2,13 +2,11 @@ package com.example.server.UsPinterest.entity;
 
 import com.example.server.UsPinterest.model.Photo;
 import com.example.server.UsPinterest.model.Pin;
+import com.example.server.UsPinterest.model.Post;
 import com.example.server.UsPinterest.model.User;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
-import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "likes")
@@ -17,24 +15,28 @@ public class Like {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    @JsonIgnoreProperties({"password", "email", "boards", "comments", "likes", "registrationDate", "profileImageUrl", "bio"})
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id", nullable = true)
+    private Post post;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pin_id", nullable = true)
+    private Pin pin;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "photo_id", nullable = true)
     private Photo photo;
 
-    @ManyToOne
-    @JoinColumn(name = "pin_id")
-    @JsonIgnoreProperties({"likes", "comments", "board", "user"})
-    private Pin pin;
+    @Column(name = "created_at")
+    private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
+    public Like() {
+    }
 
-    // Геттеры и сеттеры
     public Long getId() {
         return id;
     }
@@ -51,12 +53,12 @@ public class Like {
         this.user = user;
     }
 
-    public Photo getPhoto() {
-        return photo;
+    public Post getPost() {
+        return post;
     }
 
-    public void setPhoto(Photo photo) {
-        this.photo = photo;
+    public void setPost(Post post) {
+        this.post = post;
     }
 
     public Pin getPin() {
@@ -65,6 +67,14 @@ public class Like {
 
     public void setPin(Pin pin) {
         this.pin = pin;
+    }
+
+    public Photo getPhoto() {
+        return photo;
+    }
+
+    public void setPhoto(Photo photo) {
+        this.photo = photo;
     }
 
     public LocalDateTime getCreatedAt() {

@@ -82,6 +82,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOrigins(
                         "http://localhost:8081",
                         "http://127.0.0.1:8081",
+                        "http://spotsychlen.ddns.net:8081",
                         "capacitor://localhost",
                         "ionic://localhost",
                         "http://localhost",
@@ -93,6 +94,15 @@ public class WebConfig implements WebMvcConfigurer {
                 .exposedHeaders("Content-Disposition")
                 .allowCredentials(false)
                 .maxAge(3600);
+
+        // Добавляем специальную конфигурацию для тестового эндпоинта
+        registry.addMapping("/api/posts/test-upload-image")
+                .allowedOrigins("*")
+                .allowedMethods("POST", "OPTIONS")
+                .allowedHeaders("*")
+                .maxAge(3600);
+
+        logger.info("CORS mapping configured for all origins and methods");
     }
 
 

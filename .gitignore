@@ -39,6 +39,7 @@ Thumbs.db
 .idea/assetWizardSettings.xml
 .idea/caches/
 .idea/httpRequests/
+.idea/misc.xml
 
 # Локальные настройки пользователя
 *.keystore
