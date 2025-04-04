@@ -45,7 +45,6 @@ class AddContentViewModel @Inject constructor(
 
     fun onImageSelected(uri: Uri) {
         _selectedImageUri.value = uri
-        _showPreview.value = true
     }
 
     fun onDismissPreview() {
@@ -69,11 +68,11 @@ class AddContentViewModel @Inject constructor(
         _showAddPostScreen.value = false
     }
 
-    fun uploadImage(description: String) {
+    fun uploadImage(imageUri: Uri?, description: String) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val file = selectedImageUri.value?.let { uri -> createTempFileFromUri(uri) }
+                val file = createTempFileFromUri(imageUri!!)
                 if (file != null) {
                     val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
                     val body = MultipartBody.Part.createFormData("file", file.name, requestFile)

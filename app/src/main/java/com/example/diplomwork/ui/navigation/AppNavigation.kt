@@ -1,5 +1,6 @@
 package com.example.diplomwork.ui.navigation
 
+import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.padding
@@ -12,6 +13,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.os.persistableBundleOf
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -20,7 +22,9 @@ import androidx.navigation.toRoute
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.ui.components.bottom_menu.BottomNavigationBar
 import com.example.diplomwork.ui.components.top_bar.GetTopBars
+import com.example.diplomwork.ui.screens.add_content_screens.AddContentScreen
 import com.example.diplomwork.ui.screens.add_content_screens.WhichAddContentDialog
+import com.example.diplomwork.ui.screens.gallery_screen.GalleryScreen
 import com.example.diplomwork.ui.screens.home_screen.HomeScreen
 import com.example.diplomwork.ui.screens.login_screen.LoginScreen
 import com.example.diplomwork.ui.screens.picture_detail_screen.PictureDetailScreen
@@ -173,6 +177,25 @@ fun AppNavigation(navController: NavHostController) {
                         popUpTo(Register) { inclusive = true }
                     }
                 })
+            }
+            composable("gallery") {
+                GalleryScreen(
+                    onImageSelected = { uri ->
+                        val encodedUri = Uri.encode(uri.toString()) // Кодируем URI
+                        Log.e("Gallery", "Navigating to addContent with URI: $encodedUri")
+                        navController.navigate("addContent/$encodedUri")
+                    },
+                    onClose = { navController.popBackStack() }
+                )
+            }
+            composable("addContent/{encodedUri}") { backStackEntry ->
+                val imageUri = backStackEntry.arguments?.getString("encodedUri")?.let { Uri.parse(it) }
+
+                AddContentScreen(
+                    imageUri = imageUri, // Передаём в экран
+                    onContentAdded = { navController.navigate(Home) },
+                    onBack = { navController.popBackStack() }
+                )
             }
         }
     }

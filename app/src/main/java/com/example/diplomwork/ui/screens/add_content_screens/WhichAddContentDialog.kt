@@ -1,6 +1,5 @@
 package com.example.diplomwork.ui.screens.add_content_screens
 
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,11 +19,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,13 +28,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.diplomwork.R
-import com.example.diplomwork.ui.screens.gallery_screen.GalleryDialog
 import com.example.diplomwork.ui.theme.ColorForAddPhotoDialog
 import com.example.diplomwork.ui.theme.ColorForBackground
-import com.example.diplomwork.viewmodel.AddContentViewModel
 
 
 @Composable
@@ -48,9 +39,7 @@ fun WhichAddContentDialog(
     navController: NavController,
     onDismiss: () -> Unit,
     onRefresh: () -> Unit,
-    viewModel: AddContentViewModel = hiltViewModel()
 ) {
-    var isGalleryOpen by remember { mutableStateOf(false) }
 
     Dialog(onDismissRequest = { onDismiss() }) {
         Card(
@@ -84,7 +73,10 @@ fun WhichAddContentDialog(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Button(
-                            onClick = { isGalleryOpen = true }, // Открываем галерею
+                            onClick = {
+                                onDismiss()
+                                navController.navigate("gallery")
+                            }, // Открываем галерею
                             colors = ButtonDefaults.buttonColors(containerColor = ColorForBackground),
                             modifier = Modifier.width(120.dp)
                         ) {
@@ -106,7 +98,6 @@ fun WhichAddContentDialog(
                         Button(
                             onClick = {
                                 onDismiss()
-                                navController.navigate("addContent/post")
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = ColorForBackground),
                             modifier = Modifier.width(120.dp)
@@ -129,18 +120,6 @@ fun WhichAddContentDialog(
                 }
             }
         }
-    }
-
-    // Открытие галереи
-    if (isGalleryOpen) {
-        GalleryDialog(
-            onImageSelected = { uri ->
-                isGalleryOpen = false
-                onDismiss()
-                navController.navigate("addContent/picture/${Uri.encode(uri.toString())}")
-            },
-            onDismiss = { isGalleryOpen = false }
-        )
     }
 }
 
