@@ -65,6 +65,11 @@ public class SecurityConfig {
                     auth.requestMatchers("/api/category/**").permitAll();
                     auth.requestMatchers("/api/piner/uploadImage/**").permitAll();
                     auth.requestMatchers("/api/pins/uploadImage/**").permitAll();
+                    auth.requestMatchers("/api/posts/with-image").permitAll();
+                    auth.requestMatchers("/api/files/**").permitAll();
+                    auth.requestMatchers("/api/posts/with-image").permitAll();
+                    auth.requestMatchers("/api/posts/test-upload-image").permitAll();
+                    auth.requestMatchers("/api/posts/**").permitAll();
                     auth.requestMatchers("/", "/js/**", "/css/**", "/img/**", "/favicon.ico").permitAll();
                     auth.requestMatchers("/index.html", "/pin.html", "/profile.html", "/search.html", "/acme-manager.html").permitAll();
                     auth.requestMatchers("/save-acme-token", "/acme-test").permitAll();

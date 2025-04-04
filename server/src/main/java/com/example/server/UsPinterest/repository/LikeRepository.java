@@ -4,16 +4,26 @@ import com.example.server.UsPinterest.entity.Like;
 import com.example.server.UsPinterest.model.Photo;
 import com.example.server.UsPinterest.model.Pin;
 import com.example.server.UsPinterest.model.User;
-
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
 import java.util.List;
+import java.util.Optional;
 
+@Repository
 public interface LikeRepository extends JpaRepository<Like, Long> {
-    Optional<Like> findByPhotoAndUser(Photo photo, User user);
+    boolean existsByUserIdAndPostId(Long userId, Long postId);
 
+    @Transactional
+    void deleteByUserIdAndPostId(Long userId, Long postId);
+
+    int countByPostId(Long postId);
+
+    // Для совместимости с Pin
+    List<Like> findByUser(User user);
     Optional<Like> findByPinAndUser(Pin pin, User user);
 
-    List<Like> findByUser(User user);
+    // Для совместимости с Photo
+    Optional<Like> findByPhotoAndUser(Photo photo, User user);
 } 

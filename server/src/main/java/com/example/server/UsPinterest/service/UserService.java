@@ -1,7 +1,10 @@
 package com.example.server.UsPinterest.service;
 
 import com.example.server.UsPinterest.dto.RegisterRequest;
+import com.example.server.UsPinterest.entity.Like;
+import com.example.server.UsPinterest.model.Post;
 import com.example.server.UsPinterest.model.User;
+import com.example.server.UsPinterest.repository.LikeRepository;
 import com.example.server.UsPinterest.repository.UserRepository;
 import com.example.server.UsPinterest.security.JwtTokenUtil;
 import com.example.server.UsPinterest.exception.ResourceNotFoundException;
@@ -12,6 +15,7 @@ import org.springframework.security.authentication.*;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -39,6 +43,9 @@ public class UserService {
 
     @Autowired
     private FileStorageService fileStorageService;
+
+    @Autowired
+    private LikeRepository likeRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
@@ -75,6 +82,11 @@ public class UserService {
 
     public Optional<User> findById(Long id) {
         return userRepository.findById(id);
+    }
+
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден с id: " + id));
     }
 
     public User updateProfileImage(Long userId, MultipartFile file) throws IOException {
@@ -115,5 +127,25 @@ public class UserService {
             logger.warn("Ошибка при получении текущего пользователя: {}", e.getMessage());
             return null;
         }
+    }
+
+    @Transactional
+    public boolean hasUserLikedPost(Long userId, Long postId) {
+        return likeRepository.existsByUserIdAndPostId(userId, postId);
+    }
+
+    @Transactional
+    public void addLikeToPost(User user, Post post) {
+        if (!hasUserLikedPost(user.getId(), post.getId())) {
+            Like like = new Like();
+            like.setUser(user);
+            like.setPost(post);
+            likeRepository.save(like);
+        }
+    }
+
+    @Transactional
+    public void removeLikeFromPost(User user, Post post) {
+        likeRepository.deleteByUserIdAndPostId(user.getId(), post.getId());
     }
 } 

@@ -42,6 +42,9 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Board> boards;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Post> posts;
+
     public User() {}
 
     public User(String username, String email, String password) {
@@ -91,6 +94,11 @@ public class User {
         this.profileImageUrl = profileImageUrl;
     }
 
+    // Метод для совместимости с PostMapper
+    public String getAvatarUrl() {
+        return profileImageUrl;
+    }
+
     public String getBio() {
         return bio;
     }
@@ -129,6 +137,14 @@ public class User {
 
     public void setBoards(List<Board> boards) {
         this.boards = boards;
+    }
+
+    public List<Post> getPosts() {
+        return posts;
+    }
+
+    public void setPosts(List<Post> posts) {
+        this.posts = posts;
     }
 
     @Override

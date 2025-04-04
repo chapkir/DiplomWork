@@ -42,45 +42,62 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         try {
-            logger.info("Processing request: {} {}", request.getMethod(), request.getRequestURI());
+            logger.debug("Processing request: {} {}", request.getMethod(), request.getRequestURI());
             String jwt = parseJwt(request);
             if (jwt != null) {
-                logger.info("JWT token found in request: {}", request.getRequestURI());
+                logger.debug("JWT token found in request: {}", request.getRequestURI());
                 try {
                     if (jwtTokenUtil.validateJwtToken(jwt)) {
                         String username = jwtTokenUtil.getUsernameFromToken(jwt);
                         if (username != null) {
-                            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                            logger.debug("Username from token: {}", username);
+                            try {
+                                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                                if (userDetails != null) {
+                                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                                            userDetails, null, userDetails.getAuthorities());
+                                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                                    userDetails, null, userDetails.getAuthorities());
-                            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                            SecurityContextHolder.getContext().setAuthentication(authentication);
-                            logger.info("Authenticated user: {}, token valid until: {}",
-                                    username, new Date(jwtTokenUtil.getExpirationDateFromToken(jwt).getTime()));
+                                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                                    logger.info("Authenticated user: {}, URI: {}, token valid until: {}",
+                                            username, request.getRequestURI(), new Date(jwtTokenUtil.getExpirationDateFromToken(jwt).getTime()));
+                                } else {
+                                    logger.warn("UserDetails is null for username: {}", username);
+                                }
+                            } catch (Exception e) {
+                                logger.error("Error loading user by username {}: {}", username, e.getMessage());
+                            }
                         } else {
-                            logger.warn("Username is null from token");
+                            logger.warn("Username is null from token, URI: {}", request.getRequestURI());
                         }
+                    } else {
+                        logger.warn("JWT token validation failed for URI: {}", request.getRequestURI());
                     }
                 } catch (ExpiredJwtException e) {
-                    logger.warn("JWT токен просрочен: {}", e.getMessage());
+                    logger.warn("JWT токен просрочен: {}, URI: {}", e.getMessage(), request.getRequestURI());
                     logger.info("Пользователь с просроченным токеном: {}", e.getClaims().getSubject());
                     response.setHeader("X-Token-Expired", "true");
                 } catch (SignatureException e) {
-                    logger.error("Неверная подпись JWT: {}", e.getMessage());
+                    logger.error("Неверная подпись JWT: {}, URI: {}", e.getMessage(), request.getRequestURI());
                 } catch (MalformedJwtException e) {
-                    logger.error("Неверный формат токена: {}", e.getMessage());
+                    logger.error("Неверный формат токена: {}, URI: {}", e.getMessage(), request.getRequestURI());
                 } catch (UnsupportedJwtException e) {
-                    logger.error("Неподдерживаемый JWT токен: {}", e.getMessage());
+                    logger.error("Неподдерживаемый JWT токен: {}, URI: {}", e.getMessage(), request.getRequestURI());
                 } catch (IllegalArgumentException e) {
-                    logger.error("JWT строка пуста: {}", e.getMessage());
+                    logger.error("JWT строка пуста: {}, URI: {}", e.getMessage(), request.getRequestURI());
                 } catch (JwtException e) {
-                    logger.error("Ошибка проверки JWT: {}", e.getMessage());
+                    logger.error("Ошибка проверки JWT: {}, URI: {}", e.getMessage(), request.getRequestURI());
+                }
+            } else {
+                // Только для важных эндпоинтов логируем отсутствие токена
+                if (request.getRequestURI().startsWith("/api/posts") ||
+                        request.getRequestURI().startsWith("/api/auth") ||
+                        request.getRequestURI().startsWith("/api/piner")) {
+                    logger.debug("No JWT token found in request: {}", request.getRequestURI());
                 }
             }
         } catch (Exception e) {
-            logger.error("Не удалось установить аутентификацию пользователя: {}", e.getMessage());
+            logger.error("Не удалось установить аутентификацию пользователя: {}, URI: {}", e.getMessage(), request.getRequestURI());
         }
 
         filterChain.doFilter(request, response);
