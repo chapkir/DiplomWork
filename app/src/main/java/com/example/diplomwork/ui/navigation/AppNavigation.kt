@@ -20,7 +20,7 @@ import androidx.navigation.toRoute
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.ui.components.bottom_menu.BottomNavigationBar
 import com.example.diplomwork.ui.components.top_bar.GetTopBars
-import com.example.diplomwork.ui.screens.add_picture_screen.AddPictureDialog
+import com.example.diplomwork.ui.screens.add_content_screens.WhichAddContentDialog
 import com.example.diplomwork.ui.screens.home_screen.HomeScreen
 import com.example.diplomwork.ui.screens.login_screen.LoginScreen
 import com.example.diplomwork.ui.screens.picture_detail_screen.PictureDetailScreen
@@ -178,7 +178,8 @@ fun AppNavigation(navController: NavHostController) {
     }
 
     if (isDialogOpen.value) {
-        AddPictureDialog(
+        WhichAddContentDialog(
+            navController = navController,
             onDismiss = { isDialogOpen.value = false },
             onRefresh = {
                 triggerRefresh()

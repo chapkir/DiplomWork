@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.screens.add_picture_screen
+package com.example.diplomwork.ui.screens.add_content_screens
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -10,7 +10,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.viewmodel.AddContentViewModel
 
 @Composable

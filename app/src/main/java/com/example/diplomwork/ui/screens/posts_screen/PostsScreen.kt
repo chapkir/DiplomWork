@@ -18,34 +18,43 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.example.diplomwork.R
-import com.example.diplomwork.model.Post
+import com.example.diplomwork.model.PostResponse
 import com.example.diplomwork.ui.theme.ColorForBackground
+import com.example.diplomwork.viewmodel.PostsScreenViewModel
 
 @Composable
-fun PostsScreen() {
-    val posts = listOf(
-        Post(
+fun PostsScreen(
+    viewModel: PostsScreenViewModel = hiltViewModel()
+) {
+
+    val posts by viewModel.posts.collectAsState()
+
+
+        val exPosts = listOf(
+        PostResponse(
             id = 1,
-            userAvatar = R.drawable.default_avatar,
+            userAvatar = "R.drawable.default_avatar",
             username = "Сашка Север",
             text = "Какой прекрасный вид",
-            imageUrl = R.drawable.defoult_image,
+            imageUrl = "R.drawable.defoult_image",
             likesCount = 10,
             comments = null
         ),
-        Post(
+        PostResponse(
             id = 2,
-            userAvatar = R.drawable.default_avatar,
+            userAvatar = "R.drawable.default_avatar",
             username = "Кирюха Член",
             text = "Вот это да, офигеть, надо туда сходить всей семьей",
-            imageUrl = R.drawable.default_img_1,
+            imageUrl = "R.drawable.default_img_1",
             likesCount = 15,
             comments = null
         ),
-        Post(
+        PostResponse(
             id = 3,
-            userAvatar = R.drawable.default_avatar,
+            userAvatar = "R.drawable.default_avatar",
             username = "Алексей Сосиска",
             text = "Ммм, как же я люблю макароны с сосисками есть, это просто блаженство, каждый день их ем и всем советую, после них какать круто!!!!",
             imageUrl = null,
@@ -68,7 +77,7 @@ fun PostsScreen() {
 }
 
 @Composable
-fun PostCard(post: Post) {
+fun PostCard(post: PostResponse) {
     var likes by remember { mutableStateOf(post.likesCount) }
     var isLiked by remember { mutableStateOf(false) }
 
@@ -82,12 +91,11 @@ fun PostCard(post: Post) {
         Column(modifier = Modifier.padding(8.dp)) {
             // Аватарка и никнейм
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(id = post.userAvatar ?: R.drawable.default_avatar),
+                AsyncImage(
+                    model = post.userAvatar,
                     contentDescription = "Avatar",
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(40.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
@@ -107,8 +115,8 @@ fun PostCard(post: Post) {
 
             // Картинка поста (если есть)
             post.imageUrl?.let {
-                Image(
-                    painter = painterResource(id = it),
+                AsyncImage(
+                    model = it,
                     contentDescription = "Post Image",
                     modifier = Modifier
                         .fillMaxWidth()

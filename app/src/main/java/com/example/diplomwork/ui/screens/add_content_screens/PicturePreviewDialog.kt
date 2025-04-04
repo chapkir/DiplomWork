@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.screens.add_picture_screen
+package com.example.diplomwork.ui.screens.add_content_screens
 
 import android.net.Uri
 import androidx.compose.foundation.background
