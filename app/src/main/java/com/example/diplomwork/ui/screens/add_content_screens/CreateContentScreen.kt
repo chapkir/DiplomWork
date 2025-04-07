@@ -1,75 +1,64 @@
 package com.example.diplomwork.ui.screens.add_content_screens
 
-import android.net.Uri
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.example.diplomwork.ui.navigation.CreateContentScreenData
 import com.example.diplomwork.viewmodel.AddContentViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddContentScreen(
-    imageUri: Uri?,
+fun CreateContentScreen(
+    createContentScreenData: CreateContentScreenData,
     onContentAdded: () -> Unit,
     onBack: () -> Unit,
     viewModel: AddContentViewModel = hiltViewModel()
 ) {
     var description by remember { mutableStateOf("") }
+    val imageUri = createContentScreenData.imageUrl.toUri()
+    val whatContentCreate = createContentScreenData.whatContentCreate
 
-
-    Log.e("piska", "v kartinke seichas - $imageUri")
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Добавить контент") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Назад")
-                    }
-                },
-                actions = {
-                    TextButton(onClick = {
-                        viewModel.uploadPost(imageUri, description)
-                        onContentAdded()
-                    }) {
-                        Text("Опубликовать")
-                    }
-                }
+    // Верхняя панель с заголовком
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Заголовок
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Добавление $whatContentCreate",
             )
         }
-    ) { paddingValues ->
+
+        // Контент
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
+                .padding(16.dp)
+                .weight(1f),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             AsyncImage(
@@ -90,6 +79,23 @@ fun AddContentScreen(
                 modifier = Modifier.fillMaxWidth()
             )
         }
+
+        // Кнопка "Опубликовать" во весь экран снизу
+        Button(
+            onClick = {
+                when (whatContentCreate) {
+                    "Picture" -> viewModel.uploadImage(imageUri, description)
+                    "Post" -> viewModel.uploadPost(imageUri, description)
+                }
+                onContentAdded()
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            content = {
+                Text(text = "Опубликовать", modifier = Modifier.fillMaxWidth())
+            }
+        )
     }
 }
 

@@ -15,7 +15,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.net.toUri
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -24,7 +23,7 @@ import androidx.navigation.toRoute
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.ui.components.bottom_menu.BottomNavigationBar
 import com.example.diplomwork.ui.components.top_bar.GetTopBars
-import com.example.diplomwork.ui.screens.add_content_screens.AddContentScreen
+import com.example.diplomwork.ui.screens.add_content_screens.CreateContentScreen
 import com.example.diplomwork.ui.screens.add_content_screens.WhatCreateBottomSheet
 import com.example.diplomwork.ui.screens.gallery_screen.GalleryScreen
 import com.example.diplomwork.ui.screens.home_screen.HomeScreen
@@ -50,7 +49,7 @@ fun AppNavigation(navController: NavHostController) {
             ViewPictureDetailScreenData::class.simpleName,
             Login::class.simpleName,
             Register::class.simpleName,
-            Gallery::class.simpleName,
+            GalleryScreenData::class.simpleName,
             CreateContentScreenData::class.simpleName
         )
 
@@ -185,10 +184,16 @@ fun AppNavigation(navController: NavHostController) {
                     }
                 })
             }
-            composable<Gallery> {
+            composable<GalleryScreenData> { backStackEntry ->
+                val galleryScreenData =
+                    backStackEntry.toRoute<GalleryScreenData>()
+                val whatContentCreate = galleryScreenData.whatContentCreate
                 GalleryScreen(
                     onImageSelected = { uri ->
-                        navController.navigate(CreateContentScreenData(uri.toString()))
+                        navController.navigate(CreateContentScreenData(
+                            uri.toString(),
+                            whatContentCreate
+                        ))
                     },
                     onClose = { navController.popBackStack() }
                 )
@@ -197,10 +202,9 @@ fun AppNavigation(navController: NavHostController) {
             composable<CreateContentScreenData> { backStackEntry ->
                 val createContentScreenData =
                     backStackEntry.toRoute<CreateContentScreenData>()
-                val imageUri =
-                    createContentScreenData.imageUrl.toUri()
-                AddContentScreen(
-                    imageUri = imageUri, // Передаём в экран
+
+                CreateContentScreen(
+                    createContentScreenData = createContentScreenData, // Передаём в экран
                     onContentAdded = { navController.navigate(Home) },
                     onBack = { navController.popBackStack() }
                 )
@@ -211,9 +215,9 @@ fun AppNavigation(navController: NavHostController) {
 
         if (sheetState.isVisible) {
             WhatCreateBottomSheet(
-                onAddContent = { whichContent ->
+                onAddContent = { whatContentCreate ->
                     coroutineScope.launch { sheetState.hide() }
-                    navController.navigate(Gallery)
+                    navController.navigate(GalleryScreenData(whatContentCreate = whatContentCreate))
                 },
                 onDismiss = {
                     coroutineScope.launch { sheetState.hide() }
