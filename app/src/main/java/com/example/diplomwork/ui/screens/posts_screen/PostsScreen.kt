@@ -1,27 +1,46 @@
 package com.example.diplomwork.ui.screens.posts_screen
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.diplomwork.R
 import com.example.diplomwork.model.PostResponse
+import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.viewmodel.PostsScreenViewModel
 
@@ -29,61 +48,48 @@ import com.example.diplomwork.viewmodel.PostsScreenViewModel
 fun PostsScreen(
     viewModel: PostsScreenViewModel = hiltViewModel()
 ) {
-
     val posts by viewModel.posts.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
 
-
-        val exPosts = listOf(
-        PostResponse(
-            id = 1,
-            userAvatar = "R.drawable.default_avatar",
-            username = "Сашка Север",
-            text = "Какой прекрасный вид",
-            imageUrl = "R.drawable.defoult_image",
-            likesCount = 10,
-            comments = null
-        ),
-        PostResponse(
-            id = 2,
-            userAvatar = "R.drawable.default_avatar",
-            username = "Кирюха Член",
-            text = "Вот это да, офигеть, надо туда сходить всей семьей",
-            imageUrl = "R.drawable.default_img_1",
-            likesCount = 15,
-            comments = null
-        ),
-        PostResponse(
-            id = 3,
-            userAvatar = "R.drawable.default_avatar",
-            username = "Алексей Сосиска",
-            text = "Ммм, как же я люблю макароны с сосисками есть, это просто блаженство, каждый день их ем и всем советую, после них какать круто!!!!",
-            imageUrl = null,
-            likesCount = 15,
-            comments = null
-        )
-    )
-
-    LazyColumn(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black),
-        contentPadding = PaddingValues(8.dp)
+            .background(Color.Black)
     ) {
-        items(posts) { post ->
-            PostCard(post)
-            Spacer(modifier = Modifier.height(8.dp))
+        LazyColumn(
+            contentPadding = PaddingValues(8.dp)
+        ) {
+            items(posts) { post ->
+                PostCard(post)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+
+        if (isLoading) {
+            LoadingSpinnerForElement()
+        }
+
+        error?.let {
+            Text(
+                text = it,
+                color = Color.Red,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .background(Color.Black.copy(alpha = 0.7f))
+                    .padding(16.dp)
+            )
         }
     }
 }
 
 @Composable
 fun PostCard(post: PostResponse) {
-    var likes by remember { mutableStateOf(post.likesCount) }
     var isLiked by remember { mutableStateOf(false) }
+    var isImageLoading by remember { mutableStateOf(true) }
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = ColorForBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -95,13 +101,16 @@ fun PostCard(post: PostResponse) {
                     model = post.userAvatar,
                     contentDescription = "Avatar",
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = post.username,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White)
+                    color = Color.White
+                )
             }
 
             // Текст поста
@@ -113,22 +122,33 @@ fun PostCard(post: PostResponse) {
                 )
             }
 
-            // Картинка поста (если есть)
-            post.imageUrl?.let {
-                AsyncImage(
-                    model = it,
-                    contentDescription = "Post Image",
+            // Картинка поста
+            post.imageUrl?.let { imageUrl ->
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(200.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
-                )
+                        .clip(RoundedCornerShape(8.dp))
+                ) {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = "Post Image",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.matchParentSize(),
+                        onSuccess = { isImageLoading = false },
+                        onError = { isImageLoading = false },
+                        onLoading = { isImageLoading = true }
+                    )
+
+                    if (isImageLoading) {
+                        LoadingSpinnerForElement()
+                    }
+                }
             }
 
+            // Лайки и комментарии
             Row(
                 modifier = Modifier.padding(top = 10.dp, start = 10.dp, end = 10.dp),
-                horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
@@ -137,27 +157,25 @@ fun PostCard(post: PostResponse) {
                 ) {
                     Icon(
                         painter = painterResource(
-                            id =
-                                if (isLiked) R.drawable.ic_favs_filled
-                                else R.drawable.ic_favs
+                            id = if (isLiked) R.drawable.ic_favs_filled else R.drawable.ic_favs
                         ),
                         contentDescription = "Лайк",
                         tint = if (isLiked) Color.Red else Color.White,
                         modifier = Modifier.size(24.dp)
                     )
-
                     Spacer(modifier = Modifier.width(6.dp))
-
                     Text(
-                        text = "10",
+                        text = post.likesCount.toString(),
                         style = MaterialTheme.typography.titleSmall,
                         color = Color.White
                     )
                 }
+
                 Spacer(modifier = Modifier.width(12.dp))
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable { }
+                    modifier = Modifier.clickable { /* TODO: Open comments */ }
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_comments),
@@ -165,9 +183,7 @@ fun PostCard(post: PostResponse) {
                         tint = Color.White,
                         modifier = Modifier.size(24.dp)
                     )
-
                     Spacer(modifier = Modifier.width(6.dp))
-
                     Text(
                         text = "2",
                         style = MaterialTheme.typography.titleSmall,

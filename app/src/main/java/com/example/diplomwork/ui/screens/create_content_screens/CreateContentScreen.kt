@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.screens.add_content_screens
+package com.example.diplomwork.ui.screens.create_content_screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,6 +12,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,11 +20,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.navigation.CreateContentScreenData
 import com.example.diplomwork.viewmodel.AddContentViewModel
 
@@ -38,27 +42,26 @@ fun CreateContentScreen(
     val imageUri = createContentScreenData.imageUrl.toUri()
     val whatContentCreate = createContentScreenData.whatContentCreate
 
-    // Верхняя панель с заголовком
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.isError.collectAsState()
+
     Column(modifier = Modifier.fillMaxSize()) {
         // Заголовок
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Добавление $whatContentCreate",
-            )
+            Text("Добавление $whatContentCreate")
         }
 
         // Контент
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-                .weight(1f),
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             AsyncImage(
@@ -71,31 +74,39 @@ fun CreateContentScreen(
                 contentScale = ContentScale.Crop
             )
 
-            // Поле ввода описания
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
                 label = { Text("Краткое описание") },
                 modifier = Modifier.fillMaxWidth()
             )
+
+            error?.let {
+                Text(text = it, color = Color.Red)
+            }
         }
 
-        // Кнопка "Опубликовать" во весь экран снизу
+        // Кнопка
         Button(
             onClick = {
-                when (whatContentCreate) {
-                    "Picture" -> viewModel.uploadImage(imageUri, description)
-                    "Post" -> viewModel.uploadPost(imageUri, description)
-                }
-                onContentAdded()
+                viewModel.uploadContent(
+                    type = whatContentCreate,
+                    imageUri = imageUri,
+                    description = description,
+                    onSuccess = onContentAdded
+                )
             },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            content = {
-                Text(text = "Опубликовать", modifier = Modifier.fillMaxWidth())
+            enabled = !isLoading
+        ) {
+            if (isLoading) {
+             LoadingSpinnerForScreen()
+            } else {
+                Text("Опубликовать", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
             }
-        )
+        }
     }
 }
 

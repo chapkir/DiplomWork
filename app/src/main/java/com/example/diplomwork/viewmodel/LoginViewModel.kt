@@ -17,42 +17,47 @@ class LoginViewModel @Inject constructor(
     private val sessionManager: SessionManager
 ) : ViewModel() {
 
-    // Состояния для логина и пароля
     private val _username = MutableStateFlow("")
-    val username: StateFlow<String> get() = _username
+    val username: StateFlow<String> = _username
 
     private val _password = MutableStateFlow("")
-    val password: StateFlow<String> get() = _password
+    val password: StateFlow<String> = _password
 
     private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> get() = _isLoading
+    val isLoading: StateFlow<Boolean> = _isLoading
 
     private val _loginError = MutableStateFlow<String?>(null)
-    val loginError: StateFlow<String?> get() = _loginError
+    val loginError: StateFlow<String?> = _loginError
 
-    // Логика авторизации
+    private val _loginSuccess = MutableStateFlow<Boolean?>(null)
+    val loginSuccess: StateFlow<Boolean?> = _loginSuccess
+
     fun login() {
         if (_username.value.isBlank() || _password.value.isBlank()) {
             _loginError.value = "Логин и пароль не могут быть пустыми"
+            _loginSuccess.value = false
             return
         }
 
         viewModelScope.launch {
+            _isLoading.value = true
+            _loginError.value = null
+            _loginSuccess.value = null
+
             try {
-                _isLoading.value = true
                 val response = authRepository.login(LoginRequest(_username.value, _password.value))
                 sessionManager.saveAuthData(response.token, response.refreshToken)
                 sessionManager.username = _username.value
-                _loginError.value = null
+                _loginSuccess.value = true
             } catch (e: Exception) {
                 _loginError.value = "Ошибка авторизации: ${e.message}"
+                _loginSuccess.value = false
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
-    // Обработчики изменений для логина и пароля
     fun onUsernameChange(newUsername: String) {
         _username.value = newUsername
         _loginError.value = null

@@ -27,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -34,10 +35,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -51,20 +54,26 @@ import com.example.diplomwork.viewmodel.LoginViewModel
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onNavigateToRegister: () -> Unit,
-    onNavigateBack: () -> Unit,
-    loginViewModel: LoginViewModel = hiltViewModel() // Получаем ViewModel
+    loginViewModel: LoginViewModel = hiltViewModel()
 ) {
-    val focusRequester = FocusRequester()
+    val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
     }
 
     val username by loginViewModel.username.collectAsState()
     val password by loginViewModel.password.collectAsState()
+    val loginSuccess by loginViewModel.loginSuccess.collectAsState()
     val isLoading by loginViewModel.isLoading.collectAsState()
     val loginError by loginViewModel.loginError.collectAsState()
-
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
+
+    // Успешный вход → перейти
+    LaunchedEffect(loginSuccess) {
+        if (loginSuccess == true) {
+            onLoginSuccess()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -84,78 +93,35 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(25.dp))
 
-        OutlinedTextField(
+        LoginTextField(
             value = username,
-            onValueChange = { loginViewModel.onUsernameChange(it) },
-            label = { Text("Логин") },
-            leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+            onValueChange = loginViewModel::onUsernameChange,
+            label = "Логин",
+            icon = Icons.Default.Person,
+            enabled = !isLoading,
             modifier = Modifier
                 .fillMaxWidth(0.85f)
-                .focusRequester(focusRequester),
-            enabled = !isLoading,
-            maxLines = 1,
-            shape = RoundedCornerShape(15.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color.White,
-                unfocusedBorderColor = Color.Gray,
-                focusedLabelColor = Color.White,
-                unfocusedLabelColor = Color.Gray,
-                focusedLeadingIconColor = Color.White,
-                unfocusedLeadingIconColor = Color.Gray,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.Gray,
-                cursorColor = Color.White,
-            )
+                .focusRequester(focusRequester)
         )
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        OutlinedTextField(
+        LoginTextField(
             value = password,
-            onValueChange = { loginViewModel.onPasswordChange(it) },
-            label = { Text("Пароль") },
-            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
-            visualTransformation = if (!passwordVisible) PasswordVisualTransformation() else VisualTransformation.None,
-            trailingIcon = {
-                val image = if (passwordVisible) R.drawable.ic_eye_crossed else R.drawable.ic_eye
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(
-                        painter = painterResource(image),
-                        modifier = Modifier
-                            .size(26.dp)
-                            .padding(end = 4.dp),
-                        contentDescription = "Toggle password visibility"
-                    )
-                }
-            },
-            modifier = Modifier.fillMaxWidth(0.85f),
+            onValueChange = loginViewModel::onPasswordChange,
+            label = "Пароль",
+            icon = Icons.Default.Lock,
             enabled = !isLoading,
-            maxLines = 1,
-            shape = RoundedCornerShape(15.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color.White,
-                unfocusedBorderColor = Color.Gray,
-                focusedLabelColor = Color.White,
-                unfocusedLabelColor = Color.Gray,
-                focusedLeadingIconColor = Color.White,
-                unfocusedLeadingIconColor = Color.Gray,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.Gray,
-                cursorColor = Color.White,
-                focusedTrailingIconColor = Color.Gray,
-                unfocusedTrailingIconColor = Color.Gray,
-            )
+            modifier = Modifier.fillMaxWidth(0.85f),
+            isPassword = true,
+            passwordVisible = passwordVisible,
+            onTogglePassword = { passwordVisible = !passwordVisible }
         )
 
         Spacer(modifier = Modifier.height(18.dp))
 
         Button(
-            onClick = {
-                loginViewModel.login()
-                if (loginError == null) {
-                    onLoginSuccess()
-                }
-            },
+            onClick = { loginViewModel.login() },
             modifier = Modifier.fillMaxWidth(0.85f),
             colors = ButtonDefaults.buttonColors(
                 containerColor = ColorForFocusButton,
@@ -168,11 +134,7 @@ fun LoginScreen(
             if (isLoading) {
                 LoadingSpinnerForElement()
             } else {
-                Text(
-                    text = "Войти",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
-                )
+                Text("Войти", fontWeight = FontWeight.Bold, fontSize = 20.sp)
             }
         }
 
@@ -181,14 +143,70 @@ fun LoginScreen(
             Text(
                 text = it,
                 color = Color.Red,
-                fontSize = 16.sp
-            )
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        TextButton(onClick = { onNavigateToRegister() }) {
+        TextButton(onClick = onNavigateToRegister) {
             Text("Нет аккаунта? Зарегистрируйтесь!", color = Color.White)
         }
     }
+}
+
+@Composable
+fun LoginTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    icon: ImageVector,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    isPassword: Boolean = false,
+    passwordVisible: Boolean = false,
+    onTogglePassword: (() -> Unit)? = null
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        leadingIcon = { Icon(icon, contentDescription = null) },
+        visualTransformation = if (isPassword && !passwordVisible) PasswordVisualTransformation() else VisualTransformation.None,
+        trailingIcon = if (isPassword && onTogglePassword != null) {
+            {
+                val image = if (passwordVisible) R.drawable.ic_eye_crossed else R.drawable.ic_eye
+                IconButton(onClick = onTogglePassword) {
+                    Icon(
+                        painter = painterResource(image),
+                        modifier = Modifier.size(26.dp).padding(end = 4.dp),
+                        contentDescription = "Toggle password visibility"
+                    )
+                }
+            }
+        } else null,
+        enabled = enabled,
+        maxLines = 1,
+        shape = RoundedCornerShape(15.dp),
+        modifier = modifier,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = Color.White,
+            unfocusedBorderColor = Color.Gray,
+            focusedLabelColor = Color.White,
+            unfocusedLabelColor = Color.Gray,
+            focusedLeadingIconColor = Color.White,
+            unfocusedLeadingIconColor = Color.Gray,
+            focusedTextColor = Color.White,
+            unfocusedTextColor = Color.Gray,
+            cursorColor = Color.White,
+            focusedTrailingIconColor = Color.Gray,
+            unfocusedTrailingIconColor = Color.Gray,
+            disabledTextColor = Color.Gray,
+            disabledBorderColor = Color.Gray,
+            disabledLabelColor = Color.Gray,
+            disabledSupportingTextColor = Color.Gray,
+            disabledLeadingIconColor = Color.Gray,
+            disabledTrailingIconColor = Color.Gray
+        )
+    )
 }

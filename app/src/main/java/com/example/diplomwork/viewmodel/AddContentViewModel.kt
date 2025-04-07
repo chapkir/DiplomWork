@@ -25,102 +25,66 @@ class AddContentViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
-    private val _selectedImageUri = MutableStateFlow<Uri?>(null)
-    val selectedImageUri: StateFlow<Uri?> = _selectedImageUri
-
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
     private val _isError = MutableStateFlow<String?>(null)
     val isError: StateFlow<String?> = _isError
 
-    fun uploadImage(imageUri: Uri?, description: String) {
+    fun uploadContent(type: String, imageUri: Uri?, description: String, onSuccess: () -> Unit) {
         viewModelScope.launch {
             _isLoading.value = true
+            _isError.value = null
             try {
-                val file = createTempFileFromUri(imageUri!!)
-                if (file != null) {
-                    val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
-                    val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
-                    val descriptionBody = description.toRequestBody("text/plain".toMediaTypeOrNull())
+                val file = prepareFile(imageUri ?: throw Exception("URI отсутствует"))
+                val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+                val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
+                val descriptionBody = description.toRequestBody("text/plain".toMediaTypeOrNull())
 
-                    val response = uploadRepository.uploadImage(body, descriptionBody)
-                    if (response.isSuccessful) {
-                        _isError.value = null
-                    } else {
-                        _isError.value = "Ошибка при загрузке изображения"
-                    }
+                val response = when (type) {
+                    "Picture" -> uploadRepository.uploadImage(body, descriptionBody)
+                    "Post" -> uploadRepository.uploadPost(body, descriptionBody)
+                    else -> throw IllegalArgumentException("Неизвестный тип: $type")
+                }
+
+                if (response.isSuccessful) {
+                    onSuccess()
                 } else {
-                    _isError.value = "Ошибка при подготовке файла"
+                    _isError.value = "Ошибка сервера: ${response.code()}"
                 }
             } catch (e: Exception) {
-                _isError.value = "Ошибка при загрузке: ${e.localizedMessage}"
+                _isError.value = "Ошибка загрузки: ${e.localizedMessage}"
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
-    fun uploadPost(imageUri: Uri?, description: String) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                val file = createTempFileFromUri(imageUri!!)
-                if (file != null) {
-                    val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
-                    val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
-                    val descriptionBody = description.toRequestBody("text/plain".toMediaTypeOrNull())
+    private fun prepareFile(uri: Uri): File {
+        val (name, size) = getFileDetails(uri)
+        require(size <= 50 * 1024 * 1024) { "Файл больше 50MB" }
 
-                    val response = uploadRepository.uploadPost(body, descriptionBody)
-                    if (response.isSuccessful) {
-                        _isError.value = null
-                    } else {
-                        _isError.value = "Ошибка при загрузке изображения"
-                    }
-                } else {
-                    _isError.value = "Ошибка при подготовке файла"
-                }
-            } catch (e: Exception) {
-                _isError.value = "Ошибка при загрузке: ${e.localizedMessage}"
-            } finally {
-                _isLoading.value = false
-            }
+        val tempFile = File(context.cacheDir, name).apply { createNewFile() }
+        context.contentResolver.openInputStream(uri)?.use { input ->
+            tempFile.outputStream().use { output -> input.copyTo(output) }
         }
-    }
 
-    private fun createTempFileFromUri(uri: Uri): File? {
-        return try {
-            val (fileName, fileSize) = getFileDetails(uri)
-            if (fileSize > 50 * 1024 * 1024) throw IllegalArgumentException("Файл слишком большой. Максимальный размер: 50MB")
-
-            val tempFile = File(context.cacheDir, fileName).apply { createNewFile() }
-            context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                inputStream.copyTo(tempFile.outputStream())
-            }
-
-            if (tempFile.exists() && tempFile.length() > 0) {
-                tempFile
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            Log.e("AddPhotoDialog", "Ошибка при подготовке файла", e)
-            null
-        }
+        require(tempFile.exists() && tempFile.length() > 0) { "Не удалось создать файл" }
+        return tempFile
     }
 
     private fun getFileDetails(uri: Uri): Pair<String, Long> {
-        val fileName = context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-            val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-            if (nameIndex != -1 && cursor.moveToFirst()) cursor.getString(nameIndex) else null
+        val cursor = context.contentResolver.query(uri, null, null, null, null)
+        val name = cursor?.use {
+            val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            if (it.moveToFirst() && nameIndex != -1) it.getString(nameIndex) else null
         } ?: "image_${System.currentTimeMillis()}.jpg"
 
-        val fileSize = context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-            val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
-            cursor.moveToFirst()
-            cursor.getLong(sizeIndex)
+        val size = context.contentResolver.query(uri, null, null, null, null)?.use {
+            val sizeIndex = it.getColumnIndex(OpenableColumns.SIZE)
+            if (it.moveToFirst() && sizeIndex != -1) it.getLong(sizeIndex) else -1
         } ?: -1
 
-        return fileName to fileSize
+        return name to size
     }
 }

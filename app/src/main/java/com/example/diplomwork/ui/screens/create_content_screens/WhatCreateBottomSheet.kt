@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.screens.add_content_screens
+package com.example.diplomwork.ui.screens.create_content_screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

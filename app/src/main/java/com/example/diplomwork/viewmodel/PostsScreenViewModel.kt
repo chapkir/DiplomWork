@@ -19,13 +19,28 @@ class PostsScreenViewModel @Inject constructor(
     private val _posts = MutableStateFlow<List<PostResponse>>(emptyList())
     val posts: StateFlow<List<PostResponse>> = _posts
 
-    init{
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error
+
+    init {
         loadPosts()
     }
 
-    private fun loadPosts(){
+    private fun loadPosts() {
         viewModelScope.launch {
-            _posts.value = postRepository.getPosts()
+            _isLoading.value = true
+            _error.value = null
+            try {
+                val result = postRepository.getPosts()
+                _posts.value = result
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Unknown error"
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 }
