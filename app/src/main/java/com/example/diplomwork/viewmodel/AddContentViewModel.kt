@@ -31,42 +31,8 @@ class AddContentViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    private val _showPreview = MutableStateFlow(false)
-    val showPreview: StateFlow<Boolean> = _showPreview
-
     private val _isError = MutableStateFlow<String?>(null)
     val isError: StateFlow<String?> = _isError
-
-    private val _showAddPhotoScreen = MutableStateFlow(false)
-    val showAddPhotoScreen: StateFlow<Boolean> = _showAddPhotoScreen
-
-    private val _showAddPostScreen = MutableStateFlow(false)
-    val showAddPostScreen: StateFlow<Boolean> = _showAddPostScreen
-
-    fun onImageSelected(uri: Uri) {
-        _selectedImageUri.value = uri
-    }
-
-    fun onDismissPreview() {
-        _showPreview.value = false
-    }
-
-    fun onAddPhotoClicked() {
-        // Показываем экран добавления фото
-        _showAddPhotoScreen.value = true
-        _showAddPostScreen.value = false
-    }
-
-    fun onAddPostClicked() {
-        // Показываем экран добавления поста
-        _showAddPostScreen.value = true
-        _showAddPhotoScreen.value = false
-    }
-
-    fun onDismissAddScreens() {
-        _showAddPhotoScreen.value = false
-        _showAddPostScreen.value = false
-    }
 
     fun uploadImage(imageUri: Uri?, description: String) {
         viewModelScope.launch {
@@ -80,7 +46,6 @@ class AddContentViewModel @Inject constructor(
 
                     val response = uploadRepository.uploadImage(body, descriptionBody)
                     if (response.isSuccessful) {
-                        _showPreview.value = false
                         _isError.value = null
                     } else {
                         _isError.value = "Ошибка при загрузке изображения"
@@ -96,7 +61,34 @@ class AddContentViewModel @Inject constructor(
         }
     }
 
-    private suspend fun createTempFileFromUri(uri: Uri): File? {
+    fun uploadPost(imageUri: Uri?, description: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val file = createTempFileFromUri(imageUri!!)
+                if (file != null) {
+                    val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+                    val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
+                    val descriptionBody = description.toRequestBody("text/plain".toMediaTypeOrNull())
+
+                    val response = uploadRepository.uploadPost(body, descriptionBody)
+                    if (response.isSuccessful) {
+                        _isError.value = null
+                    } else {
+                        _isError.value = "Ошибка при загрузке изображения"
+                    }
+                } else {
+                    _isError.value = "Ошибка при подготовке файла"
+                }
+            } catch (e: Exception) {
+                _isError.value = "Ошибка при загрузке: ${e.localizedMessage}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    private fun createTempFileFromUri(uri: Uri): File? {
         return try {
             val (fileName, fileSize) = getFileDetails(uri)
             if (fileSize > 50 * 1024 * 1024) throw IllegalArgumentException("Файл слишком большой. Максимальный размер: 50MB")

@@ -1,19 +1,21 @@
 package com.example.diplomwork.ui.navigation
 
-import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.os.persistableBundleOf
+import androidx.core.net.toUri
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -23,7 +25,7 @@ import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.ui.components.bottom_menu.BottomNavigationBar
 import com.example.diplomwork.ui.components.top_bar.GetTopBars
 import com.example.diplomwork.ui.screens.add_content_screens.AddContentScreen
-import com.example.diplomwork.ui.screens.add_content_screens.WhichAddContentDialog
+import com.example.diplomwork.ui.screens.add_content_screens.WhatCreateBottomSheet
 import com.example.diplomwork.ui.screens.gallery_screen.GalleryScreen
 import com.example.diplomwork.ui.screens.home_screen.HomeScreen
 import com.example.diplomwork.ui.screens.login_screen.LoginScreen
@@ -35,6 +37,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavigation(navController: NavHostController) {
     val context = LocalContext.current
@@ -46,7 +49,9 @@ fun AppNavigation(navController: NavHostController) {
         listOf(
             ViewPictureDetailScreenData::class.simpleName,
             Login::class.simpleName,
-            Register::class.simpleName
+            Register::class.simpleName,
+            Gallery::class.simpleName,
+            CreateContentScreenData::class.simpleName
         )
 
     val showBottomBar = currentRoute.let { route ->
@@ -54,14 +59,16 @@ fun AppNavigation(navController: NavHostController) {
     }
 
     var shouldRefresh by remember { mutableStateOf(false) }
-    var lastRefreshTimestamp by remember { mutableStateOf(0L) }
+    var lastRefreshTimestamp by remember { mutableLongStateOf(0L) }
     var searchQuery by remember { mutableStateOf("") }
     var lastSearchJob by remember { mutableStateOf<Job?>(null) }
     var isSearchActive by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
-    val isDialogOpen = remember { mutableStateOf(false) }
-    val openDialog = { isDialogOpen.value = true }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val openSheet = {
+        coroutineScope.launch { sheetState.show() }
+    }
 
     val triggerRefresh = {
         shouldRefresh = true
@@ -111,7 +118,7 @@ fun AppNavigation(navController: NavHostController) {
                         popUpTo(route) { inclusive = false }
                     }
                 },
-                onAddClicked = openDialog
+                onAddClicked = { openSheet() }
             )
         }
     ) { paddingValues ->
@@ -178,35 +185,41 @@ fun AppNavigation(navController: NavHostController) {
                     }
                 })
             }
-            composable("gallery") {
+            composable<Gallery> {
                 GalleryScreen(
                     onImageSelected = { uri ->
-                        val encodedUri = Uri.encode(uri.toString()) // Кодируем URI
-                        Log.e("Gallery", "Navigating to addContent with URI: $encodedUri")
-                        navController.navigate("addContent/$encodedUri")
+                        navController.navigate(CreateContentScreenData(uri.toString()))
                     },
                     onClose = { navController.popBackStack() }
                 )
             }
-            composable("addContent/{encodedUri}") { backStackEntry ->
-                val imageUri = backStackEntry.arguments?.getString("encodedUri")?.let { Uri.parse(it) }
 
+            composable<CreateContentScreenData> { backStackEntry ->
+                val createContentScreenData =
+                    backStackEntry.toRoute<CreateContentScreenData>()
+                val imageUri =
+                    createContentScreenData.imageUrl.toUri()
                 AddContentScreen(
                     imageUri = imageUri, // Передаём в экран
                     onContentAdded = { navController.navigate(Home) },
                     onBack = { navController.popBackStack() }
                 )
             }
-        }
-    }
 
-    if (isDialogOpen.value) {
-        WhichAddContentDialog(
-            navController = navController,
-            onDismiss = { isDialogOpen.value = false },
-            onRefresh = {
-                triggerRefresh()
-            }
-        )
+
+        }
+
+        if (sheetState.isVisible) {
+            WhatCreateBottomSheet(
+                onAddContent = { whichContent ->
+                    coroutineScope.launch { sheetState.hide() }
+                    navController.navigate(Gallery)
+                },
+                onDismiss = {
+                    coroutineScope.launch { sheetState.hide() }
+                },
+                sheetState = sheetState
+            )
+        }
     }
 }

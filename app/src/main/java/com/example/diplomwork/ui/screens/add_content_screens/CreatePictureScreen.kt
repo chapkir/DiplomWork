@@ -43,7 +43,7 @@ fun AddContentScreen(
     var description by remember { mutableStateOf("") }
 
 
-    Log.e("piska", "v kartince seichas - $imageUri")
+    Log.e("piska", "v kartinke seichas - $imageUri")
 
     Scaffold(
         topBar = {
@@ -56,7 +56,7 @@ fun AddContentScreen(
                 },
                 actions = {
                     TextButton(onClick = {
-                        viewModel.uploadImage(imageUri, description)
+                        viewModel.uploadPost(imageUri, description)
                         onContentAdded()
                     }) {
                         Text("Опубликовать")

@@ -76,6 +76,13 @@ interface ApiService {
         @Part("description") description: RequestBody
     ): Response<PictureResponse>
 
+    @Multipart
+    @POST("api/posts/with-image")
+    suspend fun uploadPost(
+        @Part file: MultipartBody.Part,
+        @Part("text") text: RequestBody
+    ): Response<PostResponse>
+
     @GET("api/auth/check-user")
     suspend fun checkUserExists(@Query("login") login: String): Response<Boolean>
 

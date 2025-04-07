@@ -1,10 +1,8 @@
 package com.example.diplomwork.ui.screens.profile_screen
 
 import android.net.Uri
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,10 +15,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
@@ -29,7 +25,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -58,7 +53,6 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.diplomwork.R
 import com.example.diplomwork.model.PictureResponse
-import com.example.diplomwork.model.ProfileResponse
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.components.PictureCard
 import com.example.diplomwork.ui.theme.ColorForBackgroundProfile
@@ -76,7 +70,6 @@ fun ProfileScreen(
 ) {
     val context = LocalContext.current
 
-    // Состояние из ViewModel
     val profileData by profileViewModel.profileData.collectAsState()
     val profileImageUrl by profileViewModel.profileImageUrl.collectAsState()
     val likedPictures by profileViewModel.likedPictures.collectAsState()
@@ -299,6 +292,7 @@ fun SwipeableTabs(
                     )
                 }
             }
+
             1 -> {
                 if (likedPictures.isEmpty()) {
                     EmptyStateMessage(message = "У вас пока нет лайкнутых пинов")
@@ -327,7 +321,7 @@ private fun PicturesGrid(pictures: List<PictureResponse>, onPictureClick: (Long,
         content = {
             itemsIndexed(
                 items = pictures,
-                key = {_, picture -> picture.id}
+                key = { _, picture -> picture.id }
             ) { _, picture ->
                 PictureCard(
                     imageUrl = picture.imageUrl,
