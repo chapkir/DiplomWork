@@ -42,7 +42,7 @@ fun ImageView(imageRes: String, aspectRatio: Float) {
     Card(
         shape = RoundedCornerShape(30.dp),
         elevation = CardDefaults.cardElevation(15.dp),
-        modifier = Modifier.padding(top = 10.dp, start = 7.dp, end = 7.dp)
+        modifier = Modifier.padding(start = 7.dp, end = 7.dp)
     ) {
         Box(
             modifier = Modifier.clip(RoundedCornerShape(30.dp))

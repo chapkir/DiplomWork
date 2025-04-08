@@ -9,16 +9,29 @@ import javax.inject.Singleton
 @Singleton
 class CommentRepository @Inject constructor(private val apiService: ApiService) {
 
-    suspend fun getComments(pinId: Long): List<CommentResponse> {
+    suspend fun getPictureComments(pictureId: Long): List<CommentResponse> {
         return try {
-            val response = apiService.getComments(pinId)
+            val response = apiService.getPictureComments(pictureId)
             response.data ?: emptyList()
         } catch (e: Exception) {
             emptyList()
         }
     }
 
-    suspend fun addComment(pinId: Long, comment: CommentRequest): CommentResponse {
-        return apiService.addComment(pinId, comment)
+    suspend fun addPictureComment(pictureId: Long, comment: CommentRequest): CommentResponse {
+        return apiService.addPictureComment(pictureId, comment)
+    }
+
+    suspend fun getPostComments(postId: Long): List<CommentResponse> {
+        return try {
+            val response = apiService.getPostComments(postId)
+            response.data ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    suspend fun addPostComment(postId: Long, comment: CommentRequest): CommentResponse {
+        return apiService.addPostComment(postId, comment)
     }
 }

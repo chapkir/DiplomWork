@@ -65,7 +65,7 @@ class PictureDetailScreenViewModel @Inject constructor(
                 _isLiked.value = picture.isLikedByCurrentUser
 
                 try {
-                    _comments.value = commentRepository.getComments(_pictureId)
+                    _comments.value = commentRepository.getPictureComments(_pictureId)
                 } catch (e: Exception) {
                     Log.e(
                         "PictureDetailViewModel",
@@ -136,8 +136,8 @@ class PictureDetailScreenViewModel @Inject constructor(
 
             try {
                 val commentRequest = CommentRequest(text = commentText)
-                commentRepository.addComment(_pictureId, commentRequest)
-                _comments.value = commentRepository.getComments(_pictureId)
+                commentRepository.addPictureComment(_pictureId, commentRequest)
+                _comments.value = commentRepository.getPictureComments(_pictureId)
             } catch (e: Exception) {
                 Log.e("PictureDetailViewModel", "Error adding comment: ${e.message}")
             }

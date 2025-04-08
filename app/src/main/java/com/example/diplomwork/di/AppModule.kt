@@ -47,7 +47,6 @@ object AppModule {
         authInterceptor: AuthInterceptor,
         corsInterceptor: CorsInterceptor
     ): OkHttpClient {
-        Log.e("piska", "Создание окхттп в аппмодуль")
         return OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
             .addInterceptor(authInterceptor)

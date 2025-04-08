@@ -51,18 +51,18 @@ interface ApiService {
     @GET("api/profile")
     suspend fun getProfile(): ProfileResponse
 
-    @POST("api/pins/{pinId}/likes")
-    suspend fun likePicture(@Path("pinId") pinId: Long): Response<Unit>
+    @POST("api/pins/{pictureId}/likes")
+    suspend fun likePicture(@Path("pictureId") pictureId: Long): Response<Unit>
 
-    @DELETE("api/pins/{pinId}/likes")
-    suspend fun unlikePicture(@Path("pinId") pinId: Long): Response<Unit>
+    @DELETE("api/pins/{pictureId}/likes")
+    suspend fun unlikePicture(@Path("pictureId") pictureId: Long): Response<Unit>
 
-    @GET("api/pins/{pinId}/comments")
-    suspend fun getComments(@Path("pinId") pinId: Long): ApiResponse<List<CommentResponse>>
+    @GET("api/pins/{pictureId}/comments")
+    suspend fun getPictureComments(@Path("pictureId") pictureId: Long): ApiResponse<List<CommentResponse>>
 
-    @POST("api/pins/{pinId}/comments")
-    suspend fun addComment(
-        @Path("pinId") pictureId: Long,
+    @POST("api/pins/{pictureId}/comments")
+    suspend fun addPictureComment(
+        @Path("pictureId") pictureId: Long,
         @Body comment: CommentRequest
     ): CommentResponse
 
@@ -82,6 +82,21 @@ interface ApiService {
         @Part file: MultipartBody.Part,
         @Part("text") text: RequestBody
     ): Response<PostResponse>
+
+    @POST("api/posts/{postId}/like")
+    suspend fun likePost(@Path("postId") postId: Long): Response<Unit>
+
+    @DELETE("api/posts/{postId}/like")
+    suspend fun unlikePost(@Path("postId") postId: Long): Response<Unit>
+
+    @GET("api/posts")
+    suspend fun getPostComments(@Path("postId") postId: Long): ApiResponse<List<CommentResponse>>
+
+    @POST("api/posts")
+    suspend fun addPostComment(
+        @Path("postId") postId: Long,
+        @Body comment: CommentRequest
+    ): CommentResponse
 
     @GET("api/auth/check-user")
     suspend fun checkUserExists(@Query("login") login: String): Response<Boolean>

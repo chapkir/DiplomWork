@@ -26,13 +26,13 @@ class PictureRepository @Inject constructor(
     }
 
     // Лайк картинки
-    suspend fun likePicture(pinId: Long): Response<Unit> {
-        return apiService.likePicture(pinId)
+    suspend fun likePicture(pictureId: Long): Response<Unit> {
+        return apiService.likePicture(pictureId)
     }
 
     // Убрать лайк с картинки
-    suspend fun unlikePicture(pinId: Long): Response<Unit> {
-        return apiService.unlikePicture(pinId)
+    suspend fun unlikePicture(pictureId: Long): Response<Unit> {
+        return apiService.unlikePicture(pictureId)
     }
 
     //Поиск картинки

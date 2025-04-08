@@ -35,6 +35,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
 import com.example.diplomwork.system_settings.systemInsetHeight
+import com.example.diplomwork.ui.components.CommentItem
+import com.example.diplomwork.ui.components.CommentsBottomSheet
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.navigation.ViewPictureDetailScreenData
 import com.example.diplomwork.ui.theme.ColorForArrowBack

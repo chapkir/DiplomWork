@@ -2,6 +2,7 @@ package com.example.diplomwork.network.repos
 
 import com.example.diplomwork.model.PostResponse
 import com.example.diplomwork.network.api.ApiService
+import retrofit2.Response
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -11,5 +12,13 @@ class PostRepository @Inject constructor(
 ) {
     suspend fun getPosts(): List<PostResponse> {
         return apiService.getPosts()
+    }
+
+    suspend fun likePost(postId: Long): Response<Unit> {
+        return apiService.likePost(postId)
+    }
+
+    suspend fun unlikePost(postId: Long): Response<Unit> {
+        return apiService.unlikePost(postId)
     }
 }

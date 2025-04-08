@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.screens.picture_detail_screen
+package com.example.diplomwork.ui.components
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState

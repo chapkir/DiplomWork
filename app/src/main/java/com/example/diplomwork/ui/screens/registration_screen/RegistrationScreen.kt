@@ -184,7 +184,8 @@ fun RegisterScreen(
             Text(
                 text = it,
                 color = Color.Red,
-                fontSize = 16.sp
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center
             )
         }
 
@@ -312,4 +313,3 @@ fun StepIndicator(currentStep: Int) {
         }
     }
 }
-

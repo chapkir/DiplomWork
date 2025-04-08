@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -40,6 +41,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.diplomwork.R
 import com.example.diplomwork.model.PostResponse
+import com.example.diplomwork.ui.components.CommentsBottomSheet
 import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.viewmodel.PostsScreenViewModel
@@ -49,8 +51,12 @@ fun PostsScreen(
     viewModel: PostsScreenViewModel = hiltViewModel()
 ) {
     val posts by viewModel.posts.collectAsState()
+    val comments by viewModel.comments.collectAsState()
+    val selectedPostId by viewModel.selectedPostId.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+
+    var showCommentsSheet by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -61,7 +67,15 @@ fun PostsScreen(
             contentPadding = PaddingValues(8.dp)
         ) {
             items(posts) { post ->
-                PostCard(post)
+                PostCard(
+                    post = post,
+                    commentsCount = comments.size,
+                    onLikeClick = { viewModel.toggleLike(post.id) },
+                    onCommentClick = {
+                        viewModel.selectPost(post.id)
+                        showCommentsSheet = true
+                    }
+                )
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
@@ -80,12 +94,27 @@ fun PostsScreen(
                     .padding(16.dp)
             )
         }
+
+        CommentsBottomSheet(
+            show = showCommentsSheet,
+            comments = comments,
+            onDismiss = { showCommentsSheet = false },
+            onAddComment = { commentText ->
+                selectedPostId.let { postId ->
+                    viewModel.addComment(postId, commentText)
+                }
+            }
+        )
     }
 }
 
 @Composable
-fun PostCard(post: PostResponse) {
-    var isLiked by remember { mutableStateOf(false) }
+fun PostCard(
+    post: PostResponse,
+    commentsCount: Int,
+    onLikeClick: () -> Unit,
+    onCommentClick: () -> Unit,
+) {
     var isImageLoading by remember { mutableStateOf(true) }
 
     Card(
@@ -153,14 +182,14 @@ fun PostCard(post: PostResponse) {
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable { isLiked = !isLiked }
+                    modifier = Modifier.clickable { onLikeClick() }
                 ) {
                     Icon(
                         painter = painterResource(
-                            id = if (isLiked) R.drawable.ic_favs_filled else R.drawable.ic_favs
+                            id = if (post.isLiked) R.drawable.ic_favs_filled else R.drawable.ic_favs
                         ),
                         contentDescription = "Лайк",
-                        tint = if (isLiked) Color.Red else Color.White,
+                        tint = if (post.isLiked) Color.Red else Color.White,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
@@ -175,7 +204,7 @@ fun PostCard(post: PostResponse) {
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable { /* TODO: Open comments */ }
+                    modifier = Modifier.clickable { onCommentClick() }
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_comments),
@@ -185,7 +214,7 @@ fun PostCard(post: PostResponse) {
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "2",
+                        text = commentsCount.toString(),
                         style = MaterialTheme.typography.titleSmall,
                         color = Color.White
                     )
