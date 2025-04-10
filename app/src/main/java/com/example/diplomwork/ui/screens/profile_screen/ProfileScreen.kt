@@ -159,7 +159,7 @@ fun Avatar(
 ) {
     Box(
         modifier = Modifier
-            .size(140.dp)
+            .size(68.dp)
             .clip(RoundedCornerShape(50))
             .clickable { onAvatarClick() },
         contentAlignment = Alignment.Center
@@ -178,34 +178,16 @@ fun Avatar(
                     .build(),
                 contentDescription = "Avatar",
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(140.dp)
-                    .clip(CircleShape)
-                    .border(3.dp, color = ColorForFocusButton, shape = CircleShape)
             )
 
             if (avatarUrl.isNullOrEmpty()) {
                 Text(
                     text = "Добавить аватар",
                     color = Color.Gray ,
-                    style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 14.sp),
-                    modifier = Modifier.align(Alignment.Center)
+                    style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 12.sp),
+                    textAlign = TextAlign.Center
                 )
             }
-        }
-    }
-}
-
-@Composable
-fun LogoutButton(onLogout: () -> Unit) {
-    Box(modifier = Modifier.size(40.dp)) {
-        IconButton(onClick = onLogout) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_login),
-                contentDescription = "Exit",
-                tint = Color.White,
-                modifier = Modifier.size(25.dp)
-            )
         }
     }
 }
@@ -228,7 +210,7 @@ fun SwipeableTabs(
 
     TabRow(
         selectedTabIndex = pagerState.currentPage,
-        modifier = Modifier.padding(horizontal = 30.dp),
+        modifier = Modifier.padding(start = 30.dp, end = 20.dp, bottom = 10.dp),
         contentColor = Color.White,
         containerColor = ColorForBackgroundProfile
     ) {

@@ -94,7 +94,7 @@ fun GetTopBars(
             Posts::class.simpleName -> CustomTopBar(title = "Посты")
             AddContent::class.simpleName -> CustomTopBar(title = "Добавить")
             Notification::class.simpleName -> CustomTopBar(title = "Уведомления")
-            ProfileScreenData::class.simpleName -> CustomTopBar(title = "Профиль")
+            //ProfileScreenData::class.simpleName -> CustomTopBar(title = "Профиль")
             Login::class.simpleName -> CustomTopBar(title = "Авторизация")
             else -> {}
         }

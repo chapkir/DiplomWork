@@ -1,21 +1,35 @@
 package com.example.diplomwork.ui.screens.profile_screen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.diplomwork.R
 
 @Composable
 fun OwnProfileHeader(
@@ -29,51 +43,150 @@ fun OwnProfileHeader(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp),
+            .padding(7.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Топ бар
         Row(
-            modifier = Modifier.fillMaxWidth()
-        ){
+            modifier = Modifier.fillMaxWidth().padding(bottom = 3.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
             Text(
-                text = "Profile"
+                text = "Профиль",
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 21.sp,
+                modifier = Modifier.padding(start = 20.dp)
             )
+            IconButton(
+                onClick = { onLogout() },
+                modifier = Modifier
+                    .size(41.dp)
+                    .padding(end = 20.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_settings),
+                    contentDescription = "Settings",
+                    tint = Color.White
+                )
+            }
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        // Аватарка, юзернейм
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(5.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+                .height(72.dp)
+                .padding(start = 25.dp, top = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Spacer(Modifier.size(40.dp))
             Avatar(avatarUrl, isUploading, onAvatarClick, avatarUpdateKey)
-            LogoutButton(onLogout)
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .padding(start = 23.dp),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "Kiryha",
+                    fontSize = 23.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = buildAnnotatedString {
+                        withStyle(
+                            style = SpanStyle(
+                                color = Color.Gray,
+                                fontWeight = FontWeight.Medium
+                            )
+                        ) {
+                            append("@")
+                        }
+                        withStyle(
+                            style = SpanStyle(
+                                color = Color.Gray,
+                                fontWeight = FontWeight.Medium
+                            )
+                        ) {
+                            append(username)
+                        }
+                    },
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 3.dp)
+                )
+            }
         }
-        Spacer(Modifier.size(10.dp))
-        Text(
-            text = username,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-            textAlign = TextAlign.Center
+
+        // Достижения
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 10.dp, end = 10.dp, top = 20.dp, bottom = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            StatCard("Достижения", "", Modifier.weight(1f))
+        }
+
+        // Подписчики, подписки
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 10.dp, end = 10.dp, bottom = 11.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            StatCard("4", "Подписчики", Modifier.weight(1f))
+            StatCard("15", "Подписки", Modifier.weight(1f))
+            StatCard("5", "Посты", Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+fun StatCard(
+    statValue: String,
+    statLabel: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.then(
+            Modifier
+                .height(60.dp)
+                .background(
+                    Color.DarkGray.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .padding(10.dp)
         )
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Text(
+                text = statValue,
+                style = TextStyle(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            )
+            Spacer(Modifier.height(3.dp))
+            Text(
+                text = statLabel,
+                style = TextStyle(
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White
+                )
+            )
+        }
     }
 }
