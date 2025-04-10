@@ -46,6 +46,7 @@ public class PostMapper {
 
         // Устанавливаем информацию о пользователе
         if (post.getUser() != null) {
+            postResponse.setUserId(post.getUser().getId().toString());
             postResponse.setUsername(post.getUser().getUsername());
             postResponse.setUserAvatar(post.getUser().getAvatarUrl());
         }
