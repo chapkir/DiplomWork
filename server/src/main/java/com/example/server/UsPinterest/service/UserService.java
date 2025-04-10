@@ -11,6 +11,8 @@ import com.example.server.UsPinterest.exception.ResourceNotFoundException;
 import com.example.server.UsPinterest.service.FileStorageService;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -49,6 +51,8 @@ public class UserService {
 
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
+    @Transactional
+    @CacheEvict(value = "users", allEntries = true)
     public User registerUser(RegisterRequest request) {
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new RuntimeException("Пользователь с таким именем уже существует");
@@ -76,19 +80,67 @@ public class UserService {
         return jwtTokenUtil.generateToken(userDetails);
     }
 
+    @Cacheable(value = "users", key = "#username")
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
     }
 
+    @Cacheable(value = "users", key = "#id")
     public Optional<User> findById(Long id) {
         return userRepository.findById(id);
     }
 
+    @Cacheable(value = "users", key = "#id")
     public User getUserById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден с id: " + id));
     }
 
+    /**
+     * Получает пользователя с загруженными коллекциями в отдельных запросах
+     * для избежания MultipleBagFetchException
+     */
+    @Transactional(readOnly = true)
+    public User getUserWithCollections(Long id) {
+        User user = getUserById(id);
+
+        // Загружаем коллекции по отдельности
+        User withBoards = userRepository.findByIdWithBoards(id).orElse(user);
+        user.setBoards(withBoards.getBoards());
+
+        User withComments = userRepository.findByIdWithComments(id).orElse(user);
+        user.setComments(withComments.getComments());
+
+        User withLikes = userRepository.findByIdWithLikes(id).orElse(user);
+        user.setLikes(withLikes.getLikes());
+
+        return user;
+    }
+
+    /**
+     * Получает пользователя по имени с загруженными коллекциями в отдельных запросах
+     * для избежания MultipleBagFetchException
+     */
+    @Transactional(readOnly = true)
+    public User getUserWithCollectionsByUsername(String username) {
+        User user = findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден с именем: " + username));
+
+        // Загружаем коллекции по отдельности
+        User withBoards = userRepository.findByUsernameWithBoards(username).orElse(user);
+        user.setBoards(withBoards.getBoards());
+
+        User withComments = userRepository.findByUsernameWithComments(username).orElse(user);
+        user.setComments(withComments.getComments());
+
+        User withLikes = userRepository.findByUsernameWithLikes(username).orElse(user);
+        user.setLikes(withLikes.getLikes());
+
+        return user;
+    }
+
+    @Transactional
+    @CacheEvict(value = "users", key = "#userId")
     public User updateProfileImage(Long userId, MultipartFile file) throws IOException {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
@@ -103,10 +155,6 @@ public class UserService {
         }
 
         String profileImageUrl = fileStorageService.storeProfileImage(file, userId);
-        if (profileImageUrl == null || profileImageUrl.isEmpty()) {
-            throw new IOException("Не удалось получить URL загруженного изображения");
-        }
-
         user.setProfileImageUrl(profileImageUrl);
 
         return userRepository.save(user);
@@ -129,12 +177,13 @@ public class UserService {
         }
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public boolean hasUserLikedPost(Long userId, Long postId) {
         return likeRepository.existsByUserIdAndPostId(userId, postId);
     }
 
     @Transactional
+    @CacheEvict(value = {"posts", "pins"}, allEntries = true)
     public void addLikeToPost(User user, Post post) {
         if (!hasUserLikedPost(user.getId(), post.getId())) {
             Like like = new Like();
@@ -145,7 +194,14 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value = {"posts", "pins"}, allEntries = true)
     public void removeLikeFromPost(User user, Post post) {
         likeRepository.deleteByUserIdAndPostId(user.getId(), post.getId());
     }
-} 
+
+    @Transactional(readOnly = true)
+    @Cacheable(value = "posts", key = "'likes_' + #postId")
+    public int getLikesCountForPost(Long postId) {
+        return likeRepository.countByPostId(postId);
+    }
+}

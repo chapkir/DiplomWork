@@ -32,4 +32,22 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query(value = "SELECT COUNT(*) FROM followers WHERE follower_id = :userId", nativeQuery = true)
     long countFollowingByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.boards WHERE u.id = :id")
+    Optional<User> findByIdWithBoards(@Param("id") Long id);
+
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.comments WHERE u.id = :id")
+    Optional<User> findByIdWithComments(@Param("id") Long id);
+
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.likes WHERE u.id = :id")
+    Optional<User> findByIdWithLikes(@Param("id") Long id);
+
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.boards WHERE u.username = :username")
+    Optional<User> findByUsernameWithBoards(@Param("username") String username);
+
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.comments WHERE u.username = :username")
+    Optional<User> findByUsernameWithComments(@Param("username") String username);
+
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.likes WHERE u.username = :username")
+    Optional<User> findByUsernameWithLikes(@Param("username") String username);
 }

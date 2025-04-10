@@ -8,19 +8,18 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.CacheControl;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+import jakarta.persistence.EntityManagerFactory;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
-
-
-        //Конфигурация кэширования с использованием Caffeine с редисом проьбелсмы
 
 @Configuration
 @EnableCaching
+@EnableTransactionManagement
 public class CacheConfig {
-
 
     private static final String[] CACHE_NAMES = {
             "pins",
@@ -29,25 +28,24 @@ public class CacheConfig {
             "search",
             "profiles",
             "comments",
-            "notifications"
+            "notifications",
+            "posts",
+            "likes"
     };
-
 
     public static final CacheControl API_CACHE_CONTROL = CacheControl
             .maxAge(Duration.ofMinutes(5))
             .mustRevalidate()
             .cachePrivate();
 
-
     @Bean
     @Primary
     public CacheManager cacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager(CACHE_NAMES);
         cacheManager.setCaffeine(caffeineCacheBuilder());
-        cacheManager.setAllowNullValues(true); // Allow null values to be cached
+        cacheManager.setAllowNullValues(true);
         return cacheManager;
     }
-
 
     private Caffeine<Object, Object> caffeineCacheBuilder() {
         return Caffeine.newBuilder()
@@ -57,7 +55,6 @@ public class CacheConfig {
                 .expireAfterAccess(5, TimeUnit.MINUTES)
                 .recordStats();
     }
-
 
     @Bean(name = "extendedPinCacheManager")
     public CacheManager extendedPinCacheManager() {
@@ -72,5 +69,12 @@ public class CacheConfig {
         );
         pinCacheManager.setAllowNullValues(true);
         return pinCacheManager;
+    }
+
+    @Bean
+    public PlatformTransactionManager transactionManager(EntityManagerFactory entityManagerFactory) {
+        JpaTransactionManager transactionManager = new JpaTransactionManager();
+        transactionManager.setEntityManagerFactory(entityManagerFactory);
+        return transactionManager;
     }
 }

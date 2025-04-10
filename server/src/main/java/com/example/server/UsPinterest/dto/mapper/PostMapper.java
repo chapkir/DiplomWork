@@ -68,6 +68,7 @@ public class PostMapper {
         CommentResponse cr = new CommentResponse();
         cr.setId(comment.getId());
         cr.setText(comment.getText());
+        cr.setCreatedAt(comment.getCreatedAt());
 
         if (comment.getUser() != null) {
             cr.setUsername(comment.getUser().getUsername());

@@ -136,9 +136,12 @@ public class PinController {
 
             if (sortDirection.equalsIgnoreCase("desc")) {
                 if (cursorId == null) {
-                    pins = new ArrayList<>(pinRepository.findAll(pageable).getContent());
+                    pins = new ArrayList<>(pinRepository.findAllWithLikes());
+                    if (pins.size() > size) {
+                        pins = pins.subList(0, size + 1);
+                    }
                 } else {
-                    pins = new ArrayList<>(pinRepository.findByIdLessThanOrderByIdDesc(cursorId, pageable));
+                    pins = new ArrayList<>(pinRepository.findByIdLessThanWithLikesOrderByIdDesc(cursorId, pageable));
                 }
 
                 if (pins.size() > size) {
@@ -154,9 +157,12 @@ public class PinController {
                 }
             } else {
                 if (cursorId == null) {
-                    pins = new ArrayList<>(pinRepository.findAll(pageable).getContent());
+                    pins = new ArrayList<>(pinRepository.findAllWithLikes());
+                    if (pins.size() > size) {
+                        pins = pins.subList(0, size + 1);
+                    }
                 } else {
-                    pins = new ArrayList<>(pinRepository.findByIdGreaterThanOrderByIdAsc(cursorId, pageable));
+                    pins = new ArrayList<>(pinRepository.findByIdGreaterThanWithLikesOrderByIdAsc(cursorId, pageable));
                 }
 
                 if (pins.size() > size) {
@@ -221,7 +227,7 @@ public class PinController {
 
         try {
             User currentUser = userService.getCurrentUser();
-            List<Pin> pins = pinRepository.findAll();
+            List<Pin> pins = pinRepository.findAllWithLikes();
 
             List<PinResponse> pinResponses = pins.stream()
                     .map(pin -> pinService.convertToPinResponse(pin, currentUser))
@@ -242,8 +248,8 @@ public class PinController {
 
     @GetMapping("/detail/{id}")
     public ResponseEntity<?> getPinById(@PathVariable Long id, Authentication authentication) {
-        Pin pin = pinRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Пин не найден с id: " + id));
+        // Используем сервис для получения пина с комментариями и лайками
+        Pin pin = pinService.getPinWithLikesAndComments(id);
 
         String username = authentication != null ? authentication.getName() : null;
         User currentUser = username != null ? userRepository.findByUsername(username).orElse(null) : null;
@@ -363,7 +369,9 @@ public class PinController {
         try {
             User user = userRepository.findByUsername(authentication.getName())
                     .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
-            Pin pin = pinRepository.findById(id)
+
+            // Загружаем пин с комментариями
+            Pin pin = pinRepository.findByIdWithComments(id)
                     .orElseThrow(() -> new ResourceNotFoundException("Пин не найден"));
 
             Comment comment = new Comment();
@@ -373,6 +381,9 @@ public class PinController {
             comment.setCreatedAt(LocalDateTime.now());
             commentRepository.save(comment);
 
+            // Добавляем комментарий в коллекцию пина
+            pin.getComments().add(comment);
+            pinRepository.save(pin);
 
             notificationService.createCommentNotification(user, pin, commentRequest.getText());
 
@@ -393,7 +404,8 @@ public class PinController {
 
     @GetMapping("/{id}/comments")
     public ResponseEntity<?> getPinComments(@PathVariable Long id) {
-        Pin pin = pinRepository.findById(id)
+        // Загружаем пин с комментариями
+        Pin pin = pinRepository.findByIdWithComments(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Пин не найден"));
 
         List<CommentResponse> comments = pin.getComments().stream()

@@ -33,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 @RestController
 @RequestMapping("/api/profile")
@@ -51,6 +52,7 @@ public class ProfileController {
     private FileStorageService fileStorageService;
 
     @GetMapping
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getProfile() {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -74,26 +76,7 @@ public class ProfileController {
             // Получаем пины пользователя
             List<Pin> userPins = pinRepository.findByUser(user);
             List<PinResponse> pinResponses = userPins.stream()
-                    .map(pin -> {
-                        PinResponse pr = new PinResponse();
-                        pr.setId(pin.getId());
-                        pr.setImageUrl(pin.getImageUrl());
-                        pr.setDescription(pin.getDescription());
-                        pr.setLikesCount(pin.getLikes().size());
-                        pr.setUserId(user.getId());
-                        pr.setUsername(user.getUsername());
-                        pr.setUserProfileImageUrl(user.getProfileImageUrl());
-                        pr.setCreatedAt(pin.getCreatedAt());
-                        pr.setIsLikedByCurrentUser(pin.getLikes().stream()
-                                .anyMatch(like -> like.getUser().getId().equals(user.getId())));
-
-                        if (pin.getBoard() != null) {
-                            pr.setBoardId(pin.getBoard().getId());
-                            pr.setBoardTitle(pin.getBoard().getTitle());
-                        }
-
-                        return pr;
-                    })
+                    .map(pin -> pinService.convertToPinResponse(pin, user))
                     .collect(Collectors.toList());
             response.setPins(pinResponses);
             response.setPinsCount(pinResponses.size());
@@ -115,8 +98,7 @@ public class ProfileController {
 
         String username = authentication.getName();
         try {
-            User user = userService.findByUsername(username)
-                    .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+            User user = userService.getUserWithCollectionsByUsername(username);
 
             String imageUrl = fileStorageService.storeProfileImage(file, user.getId());
 
@@ -132,6 +114,7 @@ public class ProfileController {
     }
 
     @GetMapping("/liked-pins")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getLikedPins(Authentication authentication) {
         try {
             if (authentication == null) {
@@ -139,8 +122,7 @@ public class ProfileController {
             }
 
             String username = authentication.getName();
-            User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+            User user = userService.getUserWithCollectionsByUsername(username);
 
             List<Like> likes = likeRepository.findByUser(user);
             List<PinResponse> pinResponses = new ArrayList<>();
@@ -148,12 +130,7 @@ public class ProfileController {
             for (Like like : likes) {
                 Pin pin = like.getPin();
                 if (pin != null) {
-                    PinResponse pr = new PinResponse();
-                    pr.setId(pin.getId());
-                    pr.setImageUrl(pin.getImageUrl());
-                    pr.setDescription(pin.getDescription());
-                    pr.setLikesCount(pin.getLikes().size());
-                    pinResponses.add(pr);
+                    pinResponses.add(pinService.convertToPinResponse(pin, user));
                 }
             }
 
@@ -162,69 +139,6 @@ public class ProfileController {
             logger.error("Ошибка при получении лайкнутых пинов", e);
             return ResponseEntity.status(500)
                     .body("Ошибка при получении лайкнутых пинов: " + e.getMessage());
-        }
-    }
-
-    @GetMapping("/{userId}")
-    public ResponseEntity<?> getProfileById(@PathVariable Long userId, Authentication authentication) {
-        try {
-            // Проверяем аутентификацию
-            if (authentication == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Пользователь не авторизован");
-            }
-
-            // Находим пользователя по ID
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Пользователь с ID: " + userId + " не найден"));
-
-            // Создаем объект ответа
-            ProfileResponse response = new ProfileResponse();
-            response.setId(user.getId());
-            response.setUsername(user.getUsername());
-            response.setEmail(user.getEmail());
-            response.setProfileImageUrl(user.getProfileImageUrl() != null ? user.getProfileImageUrl() : "");
-            response.setRegistrationDate(user.getRegistrationDate());
-            response.setBoards(user.getBoards());
-
-            // Получаем пины пользователя
-            List<Pin> userPins = pinRepository.findByUser(user);
-            List<PinResponse> pinResponses = userPins.stream()
-                    .map(pin -> {
-                        PinResponse pr = new PinResponse();
-                        pr.setId(pin.getId());
-                        pr.setImageUrl(pin.getImageUrl());
-                        pr.setDescription(pin.getDescription());
-                        pr.setLikesCount(pin.getLikes().size());
-                        pr.setUserId(user.getId());
-                        pr.setUsername(user.getUsername());
-                        pr.setUserProfileImageUrl(user.getProfileImageUrl());
-                        pr.setCreatedAt(pin.getCreatedAt());
-
-                        // Проверяем, лайкнул ли текущий пользователь этот пин
-                        User currentUser = userService.getCurrentUser();
-                        pr.setIsLikedByCurrentUser(pin.getLikes().stream()
-                                .anyMatch(like -> like.getUser().getId().equals(currentUser.getId())));
-
-                        if (pin.getBoard() != null) {
-                            pr.setBoardId(pin.getBoard().getId());
-                            pr.setBoardTitle(pin.getBoard().getTitle());
-                        }
-
-                        return pr;
-                    })
-                    .collect(Collectors.toList());
-            response.setPins(pinResponses);
-            response.setPinsCount(pinResponses.size());
-
-            return ResponseEntity.ok(response);
-        } catch (ResourceNotFoundException e) {
-            logger.error("Ошибка при получении профиля по ID", e);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Пользователь с ID: " + userId + " не найден");
-        } catch (Exception e) {
-            logger.error("Ошибка при получении профиля по ID", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Произошла ошибка при получении профиля: " + e.getMessage());
         }
     }
 }

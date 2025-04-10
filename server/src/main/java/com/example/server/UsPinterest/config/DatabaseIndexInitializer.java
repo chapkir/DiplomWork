@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
@@ -13,6 +15,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
@@ -24,8 +29,9 @@ public class DatabaseIndexInitializer {
     private JdbcTemplate jdbcTemplate;
 
     @PostConstruct
+    @Retryable(value = {SQLException.class}, maxAttempts = 3, backoff = @Backoff(delay = 2000))
     public void initializeIndices() {
-        logger.info("Начало инициализации индексов базы данных");
+        logger.info("Starting database index initialization");
         try {
             Resource resource = new ClassPathResource("db/indices.sql");
 
@@ -35,39 +41,45 @@ public class DatabaseIndexInitializer {
                 sql = reader.lines().collect(Collectors.joining("\n"));
             }
 
-            String[] statements = sql.split(";");
+            List<String> statements = Arrays.stream(sql.split(";"))
+                    .map(String::trim)
+                    .filter(stmt -> !stmt.isEmpty())
+                    .collect(Collectors.toList());
 
             for (String statement : statements) {
-                String trimmedStatement = statement.trim();
-                if (!trimmedStatement.isEmpty()) {
-                    try {
-                        jdbcTemplate.execute(trimmedStatement);
-                        logger.debug("Успешно выполнен SQL: {}", trimmedStatement);
-                    } catch (Exception e) {
-                        logger.error("Ошибка при выполнении SQL: {}", trimmedStatement, e);
+                try {
+                    jdbcTemplate.execute(statement);
+                    logger.debug("Successfully executed SQL: {}", statement);
+                } catch (Exception e) {
+                    if (statement.contains("IF NOT EXISTS")) {
+                        logger.warn("Non-critical error executing SQL (index may already exist): {}", e.getMessage());
+                    } else {
+                        logger.error("Error executing SQL: {}", statement, e);
                     }
                 }
             }
 
-            logger.info("Индексы базы данных успешно инициализированы");
+            logger.info("Database indexes successfully initialized");
 
-            checkIndices();
+            if (logger.isDebugEnabled()) {
+                checkIndices();
+            }
 
         } catch (IOException e) {
-            logger.error("Не удалось инициализировать индексы базы данных", e);
-            throw new RuntimeException("Не удалось инициализировать индексы", e);
+            logger.error("Failed to initialize database indexes", e);
+            throw new RuntimeException("Failed to initialize indexes", e);
         }
     }
 
     private void checkIndices() {
-        logger.info("Проверка созданных индексов:");
+        logger.debug("Checking created indexes:");
 
         String sql = "SELECT tablename, indexname FROM pg_indexes WHERE schemaname = 'public' ORDER BY tablename, indexname";
 
         jdbcTemplate.query(sql, (rs, rowNum) -> {
             String tableName = rs.getString("tablename");
             String indexName = rs.getString("indexname");
-            logger.info("Таблица: {}, Индекс: {}", tableName, indexName);
+            logger.debug("Table: {}, Index: {}", tableName, indexName);
             return null;
         });
     }

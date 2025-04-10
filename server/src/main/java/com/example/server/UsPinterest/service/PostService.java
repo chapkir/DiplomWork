@@ -32,7 +32,7 @@ public class PostService {
 
     @Transactional
     public PostResponse createPost(PostRequest postRequest, Long userId) {
-        User user = userService.getUserById(userId);
+        User user = userService.getUserWithCollections(userId);
         Post post = postMapper.toEntity(postRequest, user);
 
         Post savedPost = postRepository.save(post);
@@ -45,10 +45,12 @@ public class PostService {
 
         // Если пользователь авторизован, проверяем, какие посты он лайкнул
         if (currentUser != null) {
-            User user = userService.getUserById(currentUser.getId());
+            User user = userService.getUserWithCollections(currentUser.getId());
             posts.forEach(post -> {
                 // Проверка наличия лайка от текущего пользователя
                 post.setLikedByCurrentUser(userService.hasUserLikedPost(user.getId(), post.getId()));
+                // Получаем актуальное количество лайков
+                post.setLikesCount(userService.getLikesCountForPost(post.getId()));
             });
         }
 
@@ -61,10 +63,12 @@ public class PostService {
 
         // Если пользователь авторизован, проверяем, какие посты он лайкнул
         if (currentUser != null) {
-            User user = userService.getUserById(currentUser.getId());
+            User user = userService.getUserWithCollections(currentUser.getId());
             posts.forEach(post -> {
                 // Проверка наличия лайка от текущего пользователя
                 post.setLikedByCurrentUser(userService.hasUserLikedPost(user.getId(), post.getId()));
+                // Получаем актуальное количество лайков
+                post.setLikesCount(userService.getLikesCountForPost(post.getId()));
             });
         }
 
@@ -76,9 +80,12 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
 
+        // Получаем актуальное количество лайков
+        post.setLikesCount(userService.getLikesCountForPost(post.getId()));
+
         // Если пользователь авторизован, проверяем, лайкнул ли он этот пост
         if (currentUser != null) {
-            User user = userService.getUserById(currentUser.getId());
+            User user = userService.getUserWithCollections(currentUser.getId());
             post.setLikedByCurrentUser(userService.hasUserLikedPost(user.getId(), post.getId()));
         }
 
@@ -96,6 +103,9 @@ public class PostService {
         }
 
         Post updatedPost = postRepository.save(post);
+        // Получаем актуальное количество лайков
+        updatedPost.setLikesCount(userService.getLikesCountForPost(updatedPost.getId()));
+
         return postMapper.toDto(updatedPost);
     }
 
@@ -109,7 +119,7 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
 
-        User user = userService.getUserById(userId);
+        User user = userService.getUserWithCollections(userId);
 
         // Проверяем, лайкнул ли уже пользователь этот пост
         boolean hasLiked = userService.hasUserLikedPost(userId, postId);
@@ -117,21 +127,55 @@ public class PostService {
         if (!hasLiked) {
             // Если нет, то добавляем лайк
             userService.addLikeToPost(user, post);
-            post.setLikesCount(post.getLikesCount() + 1);
             post.setLikedByCurrentUser(true);
         } else {
             // Если да, то убираем лайк
             userService.removeLikeFromPost(user, post);
-            post.setLikesCount(Math.max(0, post.getLikesCount() - 1));
             post.setLikedByCurrentUser(false);
         }
 
-        return postMapper.toDto(postRepository.save(post));
+        // Сохраняем изменения
+        Post updatedPost = postRepository.save(post);
+        // Получаем актуальное количество лайков
+        updatedPost.setLikesCount(userService.getLikesCountForPost(updatedPost.getId()));
+
+        return postMapper.toDto(updatedPost);
+    }
+
+    /**
+     * Метод для явного удаления лайка с поста
+     *
+     * @param postId ID поста
+     * @param userId ID пользователя
+     * @return Обновленный ответ с информацией о посте
+     */
+    @Transactional
+    public PostResponse unlikePost(Long postId, Long userId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
+
+        User user = userService.getUserWithCollections(userId);
+
+        // Проверяем, лайкнул ли пользователь этот пост
+        boolean hasLiked = userService.hasUserLikedPost(userId, postId);
+
+        if (hasLiked) {
+            // Если да, то убираем лайк
+            userService.removeLikeFromPost(user, post);
+            post.setLikedByCurrentUser(false);
+        }
+
+        // Сохраняем изменения
+        Post updatedPost = postRepository.save(post);
+        // Получаем актуальное количество лайков
+        updatedPost.setLikesCount(userService.getLikesCountForPost(updatedPost.getId()));
+
+        return postMapper.toDto(updatedPost);
     }
 
     @Transactional(readOnly = true)
     public List<PostResponse> getUserPosts(Long userId, UserPrincipal currentUser) {
-        User user = userService.getUserById(userId);
+        User user = userService.getUserWithCollections(userId);
         List<Post> posts = postRepository.findByUserOrderByCreatedAtDesc(user);
 
         // Если пользователь авторизован, проверяем, какие посты он лайкнул
@@ -140,6 +184,8 @@ public class PostService {
             posts.forEach(post -> {
                 // Проверка наличия лайка от текущего пользователя
                 post.setLikedByCurrentUser(userService.hasUserLikedPost(currentUserId, post.getId()));
+                // Получаем актуальное количество лайков
+                post.setLikesCount(userService.getLikesCountForPost(post.getId()));
             });
         }
 

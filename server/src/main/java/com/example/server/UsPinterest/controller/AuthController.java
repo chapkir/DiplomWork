@@ -50,7 +50,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         String token = userService.loginUser(request.getUsername(), request.getPassword());
-        User user = userService.findByUsername(request.getUsername()).orElseThrow();
+        User user = userService.getUserWithCollectionsByUsername(request.getUsername());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
         Map<String, Object> response = new HashMap<>();

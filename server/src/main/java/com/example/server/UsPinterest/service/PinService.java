@@ -55,7 +55,7 @@ public class PinService {
     @Cacheable(value = "pins", key = "#id")
     public Optional<Pin> getPinById(Long id) {
         logger.debug("Загрузка пина с ID {} из базы данных", id);
-        return pinRepository.findById(id);
+        return pinRepository.findByIdWithLikesAndComments(id);
     }
 
     @Cacheable(value = "pins", key = "'board_' + #boardId")
@@ -183,12 +183,11 @@ public class PinService {
         }
     }
 
-
+    @Transactional(readOnly = true)
     public PinResponse convertToPinResponse(Pin pin, User currentUser) {
         try {
             PinResponse response = new PinResponse();
             response.setId(pin.getId());
-
 
             try {
                 String imageUrl = pin.getImageUrl();
@@ -222,7 +221,6 @@ public class PinService {
             response.setCreatedAt(pin.getCreatedAt());
             response.setLikesCount(pin.getLikes() != null ? pin.getLikes().size() : 0);
 
-
             boolean isLiked = false;
             if (currentUser != null && pin.getLikes() != null) {
                 isLiked = pin.getLikes().stream()
@@ -248,17 +246,30 @@ public class PinService {
 
     @Cacheable(value = "pins", key = "'cursor_lt_' + #cursorId + '_' + #limit")
     public List<Pin> findPinsLessThan(Long cursorId, int limit) {
-        return pinRepository.findByIdLessThanOrderByIdDesc(cursorId, PageRequest.of(0, limit));
+        return pinRepository.findByIdLessThanWithLikesOrderByIdDesc(cursorId, PageRequest.of(0, limit));
     }
-
 
     @Cacheable(value = "pins", key = "'cursor_gt_' + #cursorId + '_' + #limit")
     public List<Pin> findPinsGreaterThan(Long cursorId, int limit) {
-        return pinRepository.findByIdGreaterThanOrderByIdAsc(cursorId, PageRequest.of(0, limit));
+        return pinRepository.findByIdGreaterThanWithLikesOrderByIdAsc(cursorId, PageRequest.of(0, limit));
     }
 
     @Cacheable(value = "pinCount")
     public long count() {
         return pinRepository.count();
+    }
+
+    @Transactional(readOnly = true)
+    public Pin getPinWithLikesAndComments(Long pinId) {
+        // Загружаем пин с лайками
+        Pin pinWithLikes = pinRepository.findByIdWithLikesAndComments(pinId)
+                .orElseThrow(() -> new ResourceNotFoundException("Пин не найден с id: " + pinId));
+
+        // Загружаем пин с комментариями
+        pinRepository.findByIdWithComments(pinId).ifPresent(pinWithComments -> {
+            pinWithLikes.setComments(pinWithComments.getComments());
+        });
+
+        return pinWithLikes;
     }
 }

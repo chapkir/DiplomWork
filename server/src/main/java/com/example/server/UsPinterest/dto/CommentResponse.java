@@ -1,16 +1,20 @@
 package com.example.server.UsPinterest.dto;
 
+import java.time.LocalDateTime;
+
 public class CommentResponse {
     private Long id;
     private String text;
     private String username;
+    private LocalDateTime createdAt;
 
     public CommentResponse() {}
 
-    public CommentResponse(Long id, String text, String username) {
+    public CommentResponse(Long id, String text, String username, LocalDateTime createdAt) {
         this.id = id;
         this.text = text;
         this.username = username;
+        this.createdAt = createdAt;
     }
 
     public Long getId() {
@@ -35,5 +39,13 @@ public class CommentResponse {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

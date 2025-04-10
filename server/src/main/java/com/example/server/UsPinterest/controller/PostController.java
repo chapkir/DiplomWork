@@ -2,9 +2,12 @@ package com.example.server.UsPinterest.controller;
 
 import com.example.server.UsPinterest.dto.PostRequest;
 import com.example.server.UsPinterest.dto.PostResponse;
+import com.example.server.UsPinterest.dto.CommentRequest;
+import com.example.server.UsPinterest.dto.CommentResponse;
 import com.example.server.UsPinterest.security.CurrentUser;
 import com.example.server.UsPinterest.security.UserPrincipal;
 import com.example.server.UsPinterest.service.PostService;
+import com.example.server.UsPinterest.service.CommentService;
 import com.example.server.UsPinterest.service.FileStorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,11 +35,13 @@ public class PostController {
 
     private final PostService postService;
     private final FileStorageService fileStorageService;
+    private final CommentService commentService;
 
     @Autowired
-    public PostController(PostService postService, FileStorageService fileStorageService) {
+    public PostController(PostService postService, FileStorageService fileStorageService, CommentService commentService) {
         this.postService = postService;
         this.fileStorageService = fileStorageService;
+        this.commentService = commentService;
     }
 
     @PostMapping
@@ -48,15 +53,6 @@ public class PostController {
         return new ResponseEntity<>(postResponse, HttpStatus.CREATED);
     }
 
-    /**
-     * Создаёт новый пост с изображением.
-     * Требует авторизации с валидным JWT токеном в заголовке Authorization: Bearer {token}
-     *
-     * @param file Файл изображения
-     * @param text Текст поста
-     * @param currentUser Текущий авторизованный пользователь (устанавливается автоматически через @CurrentUser)
-     * @return Созданный пост или сообщение об ошибке
-     */
     @PostMapping(value = "/with-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     // Используем оба способа авторизации для защиты
     @PreAuthorize("hasRole('USER')")
@@ -102,14 +98,7 @@ public class PostController {
                 return new ResponseEntity<>(response, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
             }
 
-            // Проверка, существует ли директория для загрузки файлов
-            try {
-                fileStorageService.checkAndCreateStorageDirectories();
-                logger.info("Storage directories checked/created successfully");
-            } catch (Exception e) {
-                logger.error("Error checking/creating storage directories", e);
-            }
-
+            // Удалена проверка директории, т.к. она теперь выполняется автоматически в init() метод FileStorageService
             logger.info("Storing file: {}, size: {}, type: {}", file.getOriginalFilename(), file.getSize(), file.getContentType());
             String imageUrl = fileStorageService.storeFile(file);
             logger.info("File stored successfully. URL: {}", imageUrl);
@@ -183,6 +172,16 @@ public class PostController {
         return ResponseEntity.ok(postResponse);
     }
 
+    @DeleteMapping("/{postId}/like")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<PostResponse> unlikePost(
+            @PathVariable Long postId,
+            @CurrentUser UserPrincipal currentUser) {
+        logger.info("Removing like from post with id: {}, User: {}", postId, currentUser.getUsername());
+        PostResponse postResponse = postService.unlikePost(postId, currentUser.getId());
+        return ResponseEntity.ok(postResponse);
+    }
+
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<PostResponse>> getUserPosts(
             @PathVariable Long userId,
@@ -230,14 +229,7 @@ public class PostController {
                 return new ResponseEntity<>(response, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
             }
 
-            // Проверка, существует ли директория для загрузки файлов
-            try {
-                fileStorageService.checkAndCreateStorageDirectories();
-                logger.info("Storage directories checked/created successfully");
-            } catch (Exception e) {
-                logger.error("Error checking/creating storage directories", e);
-            }
-
+            // Удалена проверка директории, т.к. она теперь выполняется автоматически в init() метод FileStorageService
             logger.info("Storing file: {}, size: {}, type: {}", file.getOriginalFilename(), file.getSize(), file.getContentType());
             String imageUrl = fileStorageService.storeFile(file);
             logger.info("File stored successfully. URL: {}", imageUrl);
@@ -262,6 +254,36 @@ public class PostController {
             response.put("error", "Ошибка при создании публикации: " + e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @PostMapping("/{postId}/comments")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<CommentResponse> addComment(
+            @PathVariable Long postId,
+            @RequestBody CommentRequest commentRequest,
+            @CurrentUser UserPrincipal currentUser) {
+        logger.info("Adding comment to post with id: {}, User: {}", postId, currentUser.getUsername());
+        CommentResponse commentResponse = commentService.addCommentToPost(postId, commentRequest, currentUser.getId());
+        return new ResponseEntity<>(commentResponse, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/{postId}/comments")
+    public ResponseEntity<List<CommentResponse>> getPostComments(@PathVariable Long postId) {
+        logger.info("Getting comments for post with id: {}", postId);
+        List<CommentResponse> comments = commentService.getCommentsByPostId(postId);
+        return ResponseEntity.ok(comments);
+    }
+
+    @DeleteMapping("/{postId}/comments/{commentId}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> deleteComment(
+            @PathVariable Long postId,
+            @PathVariable Long commentId,
+            @CurrentUser UserPrincipal currentUser) {
+        logger.info("Deleting comment with id: {} from post with id: {}, User: {}",
+                commentId, postId, currentUser.getUsername());
+        commentService.deleteComment(commentId, postId, currentUser.getId());
+        return ResponseEntity.noContent().build();
     }
 
     // Обработчик исключений
