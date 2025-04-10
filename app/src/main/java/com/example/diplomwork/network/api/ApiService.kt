@@ -49,7 +49,10 @@ interface ApiService {
     suspend fun logout(): Response<Map<String, String>>
 
     @GET("api/profile")
-    suspend fun getProfile(): ProfileResponse
+    suspend fun getOwnProfile(): ProfileResponse
+
+    @GET("api/profile/{userId}")
+    suspend fun getProfileById(@Path("userId") userId: Long?): ProfileResponse
 
     @POST("api/pins/{pictureId}/likes")
     suspend fun likePicture(@Path("pictureId") pictureId: Long): Response<Unit>

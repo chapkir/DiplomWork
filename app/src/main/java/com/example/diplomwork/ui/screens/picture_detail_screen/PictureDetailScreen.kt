@@ -38,7 +38,7 @@ import com.example.diplomwork.system_settings.systemInsetHeight
 import com.example.diplomwork.ui.components.CommentItem
 import com.example.diplomwork.ui.components.CommentsBottomSheet
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
-import com.example.diplomwork.ui.navigation.ViewPictureDetailScreenData
+import com.example.diplomwork.ui.navigation.PictureDetailScreenData
 import com.example.diplomwork.ui.theme.ColorForArrowBack
 import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.util.AppConstants
@@ -46,14 +46,16 @@ import com.example.diplomwork.viewmodel.PictureDetailScreenViewModel
 
 @Composable
 fun PictureDetailScreen(
-    viewPictureDetailScreenData: ViewPictureDetailScreenData,
+    pictureDetailScreenData: PictureDetailScreenData,
     onNavigateBack: () -> Unit,
+    onProfileClick: (Long?) -> Unit,
     viewModel: PictureDetailScreenViewModel = hiltViewModel()
 ) {
     val pictureDescription by viewModel.pictureDescription.collectAsState()
     val likesCount by viewModel.likesCount.collectAsState()
     val isLiked by viewModel.isLiked.collectAsState()
     val pictureUsername by viewModel.pictureUsername.collectAsState()
+    val pictureUserId by viewModel.pictureUserId.collectAsState()
     val profileImageUrl by viewModel.profileImageUrl.collectAsState()
     val comments by viewModel.comments.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -85,8 +87,8 @@ fun PictureDetailScreen(
             item {
                 ImageView(
                     imageRes =
-                    if (viewPictureDetailScreenData.imageUrl.startsWith("http")) viewPictureDetailScreenData.imageUrl
-                    else AppConstants.BASE_URL + viewPictureDetailScreenData.imageUrl,
+                    if (pictureDetailScreenData.imageUrl.startsWith("http")) pictureDetailScreenData.imageUrl
+                    else AppConstants.BASE_URL + pictureDetailScreenData.imageUrl,
                     aspectRatio = 1f
                 )
             }
@@ -99,9 +101,10 @@ fun PictureDetailScreen(
                     commentsCount = comments.size,
                     profileImageUrl = profileImageUrl,
                     username = pictureUsername,
+                    userId = pictureUserId,
                     onLikeClick = { viewModel.toggleLike() },
                     onCommentClick = { showCommentsSheet = true },
-                    onProfileClick = { }
+                    onProfileClick,
                 )
             }
             item {

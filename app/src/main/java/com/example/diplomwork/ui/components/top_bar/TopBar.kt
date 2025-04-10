@@ -1,5 +1,6 @@
 package com.example.diplomwork.ui.components.top_bar
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -40,7 +41,7 @@ import com.example.diplomwork.ui.navigation.Home
 import com.example.diplomwork.ui.navigation.Login
 import com.example.diplomwork.ui.navigation.Notification
 import com.example.diplomwork.ui.navigation.Posts
-import com.example.diplomwork.ui.navigation.Profile
+import com.example.diplomwork.ui.navigation.ProfileScreenData
 import com.example.diplomwork.ui.theme.ColorForBackground
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.KeyboardActions
@@ -55,11 +56,14 @@ fun GetTopBars(
     var searchQuery by remember { mutableStateOf("") }
 
     LaunchedEffect(currentRoute) {
+        Log.d("GetTopBars", "currentRoute: $currentRoute")
         if (currentRoute != Home::class.simpleName) {
             isSearching = false
             searchQuery = ""
         }
     }
+
+    val currentRouteWithoutParams = currentRoute?.substringBefore("?")
 
     if (isSearching) {
         SearchBar(
@@ -78,7 +82,7 @@ fun GetTopBars(
             }
         )
     } else {
-        when (currentRoute) {
+        when (currentRouteWithoutParams) {
             Home::class.simpleName -> CustomTopBar(
                 title = "Лента картинок",
                 icon = R.drawable.ic_search,
@@ -90,7 +94,7 @@ fun GetTopBars(
             Posts::class.simpleName -> CustomTopBar(title = "Посты")
             AddContent::class.simpleName -> CustomTopBar(title = "Добавить")
             Notification::class.simpleName -> CustomTopBar(title = "Уведомления")
-            Profile::class.simpleName -> CustomTopBar(title = "Профиль")
+            ProfileScreenData::class.simpleName -> CustomTopBar(title = "Профиль")
             Login::class.simpleName -> CustomTopBar(title = "Авторизация")
             else -> {}
         }

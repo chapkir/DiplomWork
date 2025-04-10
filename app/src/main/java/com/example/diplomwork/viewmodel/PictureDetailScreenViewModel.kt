@@ -22,6 +22,7 @@ class PictureDetailScreenViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _pictureId: Long = savedStateHandle.get<Long>("pictureId") ?: 0L
+    private val _imageUrl: Long = savedStateHandle.get<Long>("pictureId") ?: 0L
 
     private val _pictureDescription = MutableStateFlow("")
     val pictureDescription: StateFlow<String> = _pictureDescription
@@ -41,6 +42,9 @@ class PictureDetailScreenViewModel @Inject constructor(
     private val _pictureUsername = MutableStateFlow("")
     val pictureUsername: StateFlow<String> = _pictureUsername
 
+    private val _pictureUserId = MutableStateFlow(0L)
+    val pictureUserId: StateFlow<Long?> = _pictureUserId
+
     private val _deleteStatus = MutableStateFlow("")
     val deleteStatus: StateFlow<String> = _deleteStatus
 
@@ -59,6 +63,7 @@ class PictureDetailScreenViewModel @Inject constructor(
             try {
                 val picture = pictureRepository.getPicture(_pictureId)
                 _pictureUsername.value = picture.username
+                _pictureUserId.value = picture.userId
                 _profileImageUrl.value = picture.userProfileImageUrl
                 _pictureDescription.value = picture.description
                 _likesCount.value = picture.likesCount

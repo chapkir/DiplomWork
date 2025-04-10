@@ -46,7 +46,7 @@ fun AppNavigation(navController: NavHostController) {
 
     val hiddenScreens =
         listOf(
-            ViewPictureDetailScreenData::class.simpleName,
+            PictureDetailScreenData::class.simpleName,
             Login::class.simpleName,
             Register::class.simpleName,
             GalleryScreenData::class.simpleName,
@@ -129,7 +129,7 @@ fun AppNavigation(navController: NavHostController) {
             composable<Home> {
                 HomeScreen(
                     onImageClick = { pictureId, imageUrl ->
-                        navController.navigate(ViewPictureDetailScreenData(pictureId, imageUrl))
+                        navController.navigate(PictureDetailScreenData(pictureId, imageUrl))
                     },
                     shouldRefresh = shouldRefresh,
                     onRefreshComplete = { shouldRefresh = false },
@@ -139,15 +139,18 @@ fun AppNavigation(navController: NavHostController) {
             composable<Login> {
                 LoginScreen(
                     onLoginSuccess = {
-                        navController.navigate(Profile) {
+                        navController.navigate(ProfileScreenData()) {
                             popUpTo(Login) { inclusive = true }
                         }
                     },
                     onNavigateToRegister = { navController.navigate(Register) }
                 )
             }
-            composable<Profile> {
+            composable<ProfileScreenData> { backStackEntry ->
+                val profileScreenData = backStackEntry.toRoute<ProfileScreenData>()
+
                 ProfileScreen(
+                    profileScreenData,
                     onLogout = {
                         sessionManager.clearSession()
                         navController.navigate(Login) {
@@ -155,22 +158,25 @@ fun AppNavigation(navController: NavHostController) {
                         }
                     },
                     onImageClick = { pictureId, imageUrl ->
-                        navController.navigate(ViewPictureDetailScreenData(pictureId, imageUrl)) {
-                            popUpTo(Profile) { inclusive = false }
+                        navController.navigate(PictureDetailScreenData(pictureId, imageUrl)) {
+                            popUpTo(ProfileScreenData) { inclusive = false }
                         }
                     }
                 )
             }
-            composable<ViewPictureDetailScreenData> { backStackEntry ->
-                val viewPictureDetailScreenData =
-                    backStackEntry.toRoute<ViewPictureDetailScreenData>()
+            composable<PictureDetailScreenData> { backStackEntry ->
+                val pictureDetailScreenData = backStackEntry.toRoute<PictureDetailScreenData>()
+
                 PictureDetailScreen(
-                    viewPictureDetailScreenData,
-                    onNavigateBack = { navController.popBackStack() }
+                    pictureDetailScreenData,
+                    onNavigateBack = { navController.popBackStack() },
+                    onProfileClick = { userId -> navController.navigate(ProfileScreenData(userId)) }
                 )
             }
             composable<Posts> {
-                PostsScreen()
+                PostsScreen(
+                    onProfileClick = { userId -> navController.navigate(ProfileScreenData(userId)) }
+                )
             }
 
             composable<Notification> {
@@ -184,9 +190,9 @@ fun AppNavigation(navController: NavHostController) {
                 })
             }
             composable<GalleryScreenData> { backStackEntry ->
-                val galleryScreenData =
-                    backStackEntry.toRoute<GalleryScreenData>()
+                val galleryScreenData = backStackEntry.toRoute<GalleryScreenData>()
                 val whatContentCreate = galleryScreenData.whatContentCreate
+
                 GalleryScreen(
                     onImageSelected = { uri ->
                         navController.navigate(CreateContentScreenData(
@@ -199,11 +205,10 @@ fun AppNavigation(navController: NavHostController) {
             }
 
             composable<CreateContentScreenData> { backStackEntry ->
-                val createContentScreenData =
-                    backStackEntry.toRoute<CreateContentScreenData>()
+                val createContentScreenData = backStackEntry.toRoute<CreateContentScreenData>()
 
                 CreateContentScreen(
-                    createContentScreenData = createContentScreenData, // Передаём в экран
+                    createContentScreenData = createContentScreenData,
                     onContentAdded = { navController.navigate(Home) },
                     onBack = { navController.popBackStack() }
                 )

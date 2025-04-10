@@ -4,6 +4,7 @@ data class PostResponse(
     val id: Long,
     val userAvatar: String?,
     val username: String,
+    val userId: Long,
     val text: String,
     val imageUrl: String?,
     val likesCount: Int,

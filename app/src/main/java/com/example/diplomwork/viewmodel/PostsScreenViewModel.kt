@@ -92,7 +92,7 @@ class PostsScreenViewModel @Inject constructor(
                     likesCount = post.likesCount
                 )
                 _posts.value = _posts.value.toMutableList().apply { set(index, revertedPost) }
-
+                _error.value = e.message ?: "Ошибка при обновлении лайка"
                 Log.e("PostsViewModel", "Ошибка при лайке: ${e.message}")
             }
         }

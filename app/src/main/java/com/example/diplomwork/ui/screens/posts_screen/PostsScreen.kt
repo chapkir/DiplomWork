@@ -25,7 +25,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -48,6 +47,7 @@ import com.example.diplomwork.viewmodel.PostsScreenViewModel
 
 @Composable
 fun PostsScreen(
+    onProfileClick: (Long?) -> Unit,
     viewModel: PostsScreenViewModel = hiltViewModel()
 ) {
     val posts by viewModel.posts.collectAsState()
@@ -74,7 +74,8 @@ fun PostsScreen(
                     onCommentClick = {
                         viewModel.selectPost(post.id)
                         showCommentsSheet = true
-                    }
+                    },
+                    onProfileClick
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -114,7 +115,9 @@ fun PostCard(
     commentsCount: Int,
     onLikeClick: () -> Unit,
     onCommentClick: () -> Unit,
+    onProfileClick: (Long?) -> Unit
 ) {
+
     var isImageLoading by remember { mutableStateOf(true) }
 
     Card(
@@ -124,8 +127,11 @@ fun PostCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(8.dp)) {
-            // Аватарка и никнейм
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier
+                    .clickable { onProfileClick(post.userId) },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 AsyncImage(
                     model = post.userAvatar,
                     contentDescription = "Avatar",

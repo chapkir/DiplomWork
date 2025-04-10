@@ -48,19 +48,21 @@ class SessionManager @Inject constructor(@ApplicationContext context: Context) {
         get() = prefs.getString(KEY_USERNAME, null)
         set(value) {
             prefs.edit() { putString(KEY_USERNAME, value) }
+            Log.d(TAG, "Сохранен username - $username")
         }
 
     var authToken: String?
         get() = prefs.getString(KEY_TOKEN, null)
         set(value) {
             prefs.edit() { putString(KEY_TOKEN, value) }
+            Log.d(TAG, "Сохранен auth токен - $authToken")
         }
 
     var refreshToken: String?
         get() = prefs.getString(KEY_REFRESH_TOKEN, null)
         private set(value) {
             prefs.edit() { putString(KEY_REFRESH_TOKEN, value) }
-            Log.d(TAG, "Сохранен refresh токен")
+            Log.d(TAG, "Сохранен refresh токен - $refreshToken")
         }
 
     var tokenExpiration: Long?
@@ -114,6 +116,13 @@ class SessionManager @Inject constructor(@ApplicationContext context: Context) {
         prefs.edit() { clear() }
         serverUrl = savedServerUrl
         Log.d(TAG, "Сессия очищена")
+    }
+
+    fun saveTokens(accessToken: String, refreshToken: String) {
+        authToken = accessToken
+        this.refreshToken = refreshToken
+        tokenExpiration = decodeJwtPayload(accessToken)?.exp?.times(1000)
+        Log.d(TAG, "Токены обновлены через saveTokens")
     }
 }
 

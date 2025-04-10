@@ -27,13 +27,10 @@ object AddContent : Screen
 object Notification : Screen
 
 @Serializable
-object Profile : Screen
-
-@Serializable
 object ViewPost : Screen
 
 @Serializable
-data class ViewPictureDetailScreenData(
+data class PictureDetailScreenData(
     val pictureId: Long,
     val imageUrl: String
 ) : Screen
@@ -47,4 +44,9 @@ data class CreateContentScreenData(
 @Serializable
 data class GalleryScreenData(
     val whatContentCreate: String,
+) : Screen
+
+@Serializable
+data class ProfileScreenData(
+    val userId: Long? = null
 ) : Screen

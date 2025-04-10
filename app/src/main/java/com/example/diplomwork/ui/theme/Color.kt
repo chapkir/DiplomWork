@@ -18,7 +18,7 @@ val DarkWhite = Color(0xFFDAD8D8)
 //val ColorForAddPhotoDialog = Color(0x9E18181A)
 //val ColorForArrowBack = Color(0xF3FFFFFF)
 
-val ColorForBackground = Color(0xFF1F1F21)
+val ColorForBackground = Color(0xFF000000)
 val ColorForBackgroundProfile = Color(0xFF000000)
 val ColorForArrowBack = Color(0xFFE3DFD0)
 val ColorForAddPhotoDialog = Color(0xFF353D48)

@@ -55,6 +55,7 @@ import com.example.diplomwork.R
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.components.PictureCard
+import com.example.diplomwork.ui.navigation.ProfileScreenData
 import com.example.diplomwork.ui.theme.ColorForBackgroundProfile
 import com.example.diplomwork.ui.theme.ColorForFocusButton
 import com.example.diplomwork.viewmodel.ProfileViewModel
@@ -64,10 +65,14 @@ import com.google.accompanist.pager.rememberPagerState
 
 @Composable
 fun ProfileScreen(
+    profileScreenData: ProfileScreenData,
     onLogout: () -> Unit,
     onImageClick: (Long, String) -> Unit,
-    profileViewModel: ProfileViewModel = hiltViewModel()
+    profileViewModel: ProfileViewModel = hiltViewModel(),
+    isOwnProfile: Boolean = true
 ) {
+    val userId = profileScreenData.userId
+
     val context = LocalContext.current
 
     val profileData by profileViewModel.profileData.collectAsState()
@@ -135,9 +140,12 @@ fun ProfileScreen(
                     username = profileData?.username ?: "Неизвестный",
                     avatarUrl = profileImageUrl,
                     isUploading = isUploading,
-                    onAvatarClick = { pickImageLauncher.launch("image/*") },
-                    onLogout = onLogout,
-                    avatarUpdateKey = avatarUpdateCounter
+                    onAvatarClick = {
+                        if (isOwnProfile) pickImageLauncher.launch("image/*")
+                    },
+                    onLogout = { if (isOwnProfile) onLogout() },
+                    avatarUpdateKey = avatarUpdateCounter,
+                    isOwnProfile = isOwnProfile // Передаем информацию о том, свой ли профиль
                 )
 
                 SwipeableTabs(
@@ -161,7 +169,8 @@ private fun ProfileHeader(
     isUploading: Boolean = false,
     onAvatarClick: () -> Unit,
     onLogout: () -> Unit,
-    avatarUpdateKey: Int
+    avatarUpdateKey: Int,
+    isOwnProfile: Boolean // Добавлен параметр
 ) {
     Column(
         modifier = Modifier
@@ -209,15 +218,16 @@ private fun ProfileHeader(
                     )
                 }
             }
-            Box(modifier = Modifier.size(40.dp))
-            {
-                IconButton(onClick = onLogout) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_login),
-                        contentDescription = "Exit",
-                        tint = Color.White,
-                        modifier = Modifier.size(25.dp)
-                    )
+            Box(modifier = Modifier.size(40.dp)) {
+                if (isOwnProfile) { // Показывать кнопку выхода только для своего профиля
+                    IconButton(onClick = onLogout) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_login),
+                            contentDescription = "Exit",
+                            tint = Color.White,
+                            modifier = Modifier.size(25.dp)
+                        )
+                    }
                 }
             }
         }

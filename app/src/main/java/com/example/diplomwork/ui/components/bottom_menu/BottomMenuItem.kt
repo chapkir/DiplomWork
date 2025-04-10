@@ -5,7 +5,7 @@ import com.example.diplomwork.ui.navigation.AddContent
 import com.example.diplomwork.ui.navigation.Home
 import com.example.diplomwork.ui.navigation.Notification
 import com.example.diplomwork.ui.navigation.Posts
-import com.example.diplomwork.ui.navigation.Profile
+import com.example.diplomwork.ui.navigation.ProfileScreenData
 import com.example.diplomwork.ui.navigation.Screen
 
 sealed class BottomNavItem(
@@ -40,7 +40,7 @@ sealed class BottomNavItem(
     )
 
     object ProfileScreen : BottomNavItem(
-        route = Profile,
+        route = ProfileScreenData(),
         icon = R.drawable.ic_user,
         label = "Profile"
     )

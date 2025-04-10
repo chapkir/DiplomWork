@@ -3,6 +3,7 @@ package com.example.diplomwork.viewmodel
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.diplomwork.auth.SessionManager
@@ -21,11 +22,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     private val profileRepository: ProfileRepository,
     private val sessionManager: SessionManager
 ) : ViewModel() {
 
-    // Состояния UI
+    private val _userId: Long? = savedStateHandle["userId"]
+
     private val _profileData = MutableStateFlow<ProfileResponse?>(null)
     val profileData: StateFlow<ProfileResponse?> = _profileData
 
@@ -48,16 +51,20 @@ class ProfileViewModel @Inject constructor(
     val avatarUpdateCounter: StateFlow<Int> = _avatarUpdateCounter
 
     init {
-        loadProfile()
+        loadProfile(userId = _userId)
     }
 
-    // Загружаем данные профиля
-    private fun loadProfile() {
+    private fun loadProfile(userId: Long? = null) {
         _isLoading.value = true
         viewModelScope.launch {
             try {
-                _profileData.value = profileRepository.getProfile()
-                _profileImageUrl.value = _profileData.value?.profileImageUrl
+                if (userId != null) {
+                    _profileData.value = profileRepository.getProfileById(userId)
+                    _profileImageUrl.value = _profileData.value?.profileImageUrl
+                } else {
+                    _profileData.value = profileRepository.getOwnProfile()
+                    _profileImageUrl.value = _profileData.value?.profileImageUrl
+                }
                 Log.d("ProfileViewModel", "Загружен профиль: ${_profileData.value?.username}")
             } catch (e: Exception) {
                 Log.e("ProfileViewModel", "Ошибка при загрузке профиля: ${e.message}")

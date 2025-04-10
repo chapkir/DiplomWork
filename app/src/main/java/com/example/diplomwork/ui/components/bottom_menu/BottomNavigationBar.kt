@@ -54,7 +54,9 @@ fun BottomNavigationBar(
                 .padding(horizontal = 15.dp)
         ) {
             items.forEach { item ->
-                val isSelected = currentRoute == item.route::class.simpleName
+
+                val currentRouteWithoutParams = currentRoute.substringBefore("?")
+                val isSelected = currentRouteWithoutParams == item.route::class.simpleName
 
                 val size = animateDpAsState(
                     targetValue = if (isSelected) 26.dp else 24.dp,

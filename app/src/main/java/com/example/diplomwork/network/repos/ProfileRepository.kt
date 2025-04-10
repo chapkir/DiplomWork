@@ -13,9 +13,12 @@ class ProfileRepository @Inject constructor(
     private val apiService: ApiService
 ) {
 
-    // Получение профиля пользователя
-    suspend fun getProfile(): ProfileResponse {
-        return apiService.getProfile()
+    suspend fun getOwnProfile(): ProfileResponse {
+        return apiService.getOwnProfile()
+    }
+
+    suspend fun getProfileById(userId: Long?): ProfileResponse {
+        return apiService.getProfileById(userId)
     }
 
     // Загрузка изображения профиля
