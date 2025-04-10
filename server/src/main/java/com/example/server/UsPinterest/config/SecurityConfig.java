@@ -65,18 +65,15 @@ public class SecurityConfig {
                     auth.requestMatchers("/api/category/**").permitAll();
                     auth.requestMatchers("/api/piner/uploadImage/**").permitAll();
                     auth.requestMatchers("/api/pins/uploadImage/**").permitAll();
-                    auth.requestMatchers("/api/posts/with-image").permitAll();
                     auth.requestMatchers("/api/files/**").permitAll();
-                    auth.requestMatchers("/api/posts/with-image").permitAll();
                     auth.requestMatchers("/api/posts/test-upload-image").permitAll();
-                    auth.requestMatchers("/api/posts/**").permitAll();
                     auth.requestMatchers("/", "/js/**", "/css/**", "/img/**", "/favicon.ico").permitAll();
                     auth.requestMatchers("/index.html", "/pin.html", "/profile.html", "/search.html", "/acme-manager.html").permitAll();
                     auth.requestMatchers("/save-acme-token", "/acme-test").permitAll();
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
                     auth.requestMatchers("/.well-known/**").permitAll();
                     auth.requestMatchers("/uploads/**").permitAll();
-                    auth.anyRequest().permitAll(); // Временно разрешён доступ ко всем ресурсам для отладки Я потом уберу)
+                    auth.anyRequest().authenticated(); // Требуем аутентификацию для всех остальных запросов
                 })
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

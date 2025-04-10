@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -47,27 +48,42 @@ public class PostController {
         return new ResponseEntity<>(postResponse, HttpStatus.CREATED);
     }
 
+    /**
+     * Создаёт новый пост с изображением.
+     * Требует авторизации с валидным JWT токеном в заголовке Authorization: Bearer {token}
+     *
+     * @param file Файл изображения
+     * @param text Текст поста
+     * @param currentUser Текущий авторизованный пользователь (устанавливается автоматически через @CurrentUser)
+     * @return Созданный пост или сообщение об ошибке
+     */
     @PostMapping(value = "/with-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    // Используем оба способа авторизации для защиты
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> createPostWithImage(
             @RequestParam("file") MultipartFile file,
             @RequestParam("text") String text,
             @CurrentUser UserPrincipal currentUser) {
         try {
+            // Проверка на авторизацию
+            if (currentUser == null) {
+                logger.error("UserPrincipal is null despite @PreAuthorize annotation");
+                // Проверяем содержимое контекста безопасности
+                logger.error("SecurityContext authentication: {}",
+                        SecurityContextHolder.getContext().getAuthentication());
+                Map<String, String> response = new HashMap<>();
+                response.put("error", "Пользователь не авторизован");
+                return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+            }
+
             logger.info("Received request to create post with image. Username: {}, Text length: {}, File: {}, File size: {}",
-                    currentUser != null ? currentUser.getUsername() : "anonymous",
+                    currentUser.getUsername(),
                     text != null ? text.length() : 0,
                     file != null ? file.getOriginalFilename() : "null",
                     file != null ? file.getSize() : 0);
 
-            // Временно отключаем проверку авторизации для тестирования
-            // Создаем тестового пользователя если currentUser == null
-            Long userId = 1L; // ID тестового пользователя по умолчанию
-            if (currentUser != null) {
-                userId = currentUser.getId();
-                logger.info("Using authenticated user id: {}", userId);
-            } else {
-                logger.warn("No authenticated user found, using default test user with id: {}", userId);
-            }
+            Long userId = currentUser.getId();
+            logger.info("Using authenticated user id: {}", userId);
 
             if (file == null || file.isEmpty()) {
                 logger.error("File is null or empty");
@@ -175,21 +191,27 @@ public class PostController {
         return ResponseEntity.ok(posts);
     }
 
-    // Добавляем новый тестовый метод для загрузки без авторизации
+    // Тестовый метод для создания постов, может использоваться без авторизации, но использует пользователя если он авторизован
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping(value = "/test-upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> testUploadWithImage(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("text") String text) {
+            @RequestParam("text") String text,
+            @CurrentUser UserPrincipal currentUser) {
         try {
             logger.info("TEST ENDPOINT: Received request to create post with image. Text length: {}, File: {}, File size: {}",
                     text != null ? text.length() : 0,
                     file != null ? file.getOriginalFilename() : "null",
                     file != null ? file.getSize() : 0);
 
-            // Фиксированный ID пользователя для тестирования
-            Long userId = 1L;
-            logger.info("Using test user ID: {}", userId);
+            // Используем ID авторизованного пользователя, если он есть, иначе используем тестовый ID
+            Long userId = 1L; // ID тестового пользователя по умолчанию
+            if (currentUser != null) {
+                userId = currentUser.getId();
+                logger.info("Using authenticated user id: {}", userId);
+            } else {
+                logger.warn("No authenticated user found, using default test user with id: {}", userId);
+            }
 
             if (file == null || file.isEmpty()) {
                 logger.error("File is null or empty");

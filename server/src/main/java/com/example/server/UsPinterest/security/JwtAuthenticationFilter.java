@@ -54,6 +54,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             try {
                                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                                 if (userDetails != null) {
+                                    // Убедимся, что userDetails является экземпляром UserPrincipal
+                                    if (!(userDetails instanceof UserPrincipal)) {
+                                        logger.warn("UserDetails is not an instance of UserPrincipal: {}", userDetails.getClass().getName());
+                                    }
+
                                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                                             userDetails, null, userDetails.getAuthorities());
                                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -61,6 +66,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     SecurityContextHolder.getContext().setAuthentication(authentication);
                                     logger.info("Authenticated user: {}, URI: {}, token valid until: {}",
                                             username, request.getRequestURI(), new Date(jwtTokenUtil.getExpirationDateFromToken(jwt).getTime()));
+
+                                    // Для POST /api/posts/with-image специально добавляем детали
+                                    if (request.getRequestURI().equals("/api/posts/with-image") &&
+                                            request.getMethod().equals("POST")) {
+                                        logger.info("POST to /api/posts/with-image - User authenticated as: {}, Principal: {}, Authorities: {}",
+                                                username,
+                                                SecurityContextHolder.getContext().getAuthentication().getPrincipal().getClass().getName(),
+                                                SecurityContextHolder.getContext().getAuthentication().getAuthorities());
+                                    }
                                 } else {
                                     logger.warn("UserDetails is null for username: {}", username);
                                 }
@@ -94,6 +108,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         request.getRequestURI().startsWith("/api/auth") ||
                         request.getRequestURI().startsWith("/api/piner")) {
                     logger.debug("No JWT token found in request: {}", request.getRequestURI());
+
+                    // Для multipart запросов с изображениями проверяем отдельно
+                    if (request.getContentType() != null && request.getContentType().startsWith("multipart/form-data")) {
+                        logger.info("Multipart form request detected without JWT token: {}", request.getRequestURI());
+                    }
                 }
             }
         } catch (Exception e) {
@@ -105,6 +124,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private String parseJwt(HttpServletRequest request) {
         String headerAuth = request.getHeader("Authorization");
+
+        if (headerAuth == null && request.getContentType() != null &&
+                request.getContentType().startsWith("multipart/form-data")) {
+            // Debug для multipart запросов
+            logger.debug("Checking Authorization header in multipart request to: {}", request.getRequestURI());
+        }
 
         if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
             return headerAuth.substring(7);
