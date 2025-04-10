@@ -33,6 +33,31 @@ fun OwnProfileHeader(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Row(
+            modifier = Modifier.fillMaxWidth()
+        ){
+            Text(
+                text = "Profile"
+            )
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(5.dp),

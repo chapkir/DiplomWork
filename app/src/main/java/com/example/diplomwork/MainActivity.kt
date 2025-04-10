@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.navigation.compose.rememberNavController
 import com.example.diplomwork.system_settings.SetSystemBarsColor
 import com.example.diplomwork.ui.theme.ColorForBackground
+import com.example.diplomwork.ui.theme.DiplomWorkTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -26,7 +27,7 @@ class MainActivity : ComponentActivity() {
                 statusBarColor = ColorForBackground,
                 navigationBarColor = Color.Black
             )
-            MaterialTheme {
+            DiplomWorkTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     val navController = rememberNavController()
                     AppNavigation(navController = navController)

@@ -120,6 +120,7 @@ fun CommentsBottomSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(sheetHeight)
+                .padding(bottom = 60.dp)
                 .offset(y = offsetY)
                 .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
                 .background(ColorForBackground)
