@@ -55,7 +55,6 @@ import com.example.diplomwork.R
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.components.PictureCard
-import com.example.diplomwork.ui.navigation.ProfileScreenData
 import com.example.diplomwork.ui.theme.ColorForBackgroundProfile
 import com.example.diplomwork.ui.theme.ColorForFocusButton
 import com.example.diplomwork.viewmodel.ProfileViewModel
@@ -65,13 +64,11 @@ import com.google.accompanist.pager.rememberPagerState
 
 @Composable
 fun ProfileScreen(
-    profileScreenData: ProfileScreenData,
     onLogout: () -> Unit,
     onImageClick: (Long, String) -> Unit,
     profileViewModel: ProfileViewModel = hiltViewModel(),
     isOwnProfile: Boolean = true
 ) {
-    val userId = profileScreenData.userId
 
     val context = LocalContext.current
 

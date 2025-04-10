@@ -83,7 +83,10 @@ class ProfileViewModel @Inject constructor(
 
                 if (result.isSuccess) {
                     _likedPictures.value = result.getOrNull() ?: emptyList()
-                    Log.d("ProfileViewModel", "Загружено ${_likedPictures.value.size} лайкнутых пинов")
+                    Log.d(
+                        "ProfileViewModel",
+                        "Загружено ${_likedPictures.value.size} лайкнутых пинов"
+                    )
                 } else {
                     _error.value = "Ошибка при загрузке лайкнутых пинов"
                 }
@@ -105,7 +108,8 @@ class ProfileViewModel @Inject constructor(
 
                 if (imageFile != null) {
                     val requestFile = imageFile.asRequestBody("image/*".toMediaTypeOrNull())
-                    val body = MultipartBody.Part.createFormData("file", imageFile.name, requestFile)
+                    val body =
+                        MultipartBody.Part.createFormData("file", imageFile.name, requestFile)
 
                     val response = profileRepository.uploadProfileImage(body)
 

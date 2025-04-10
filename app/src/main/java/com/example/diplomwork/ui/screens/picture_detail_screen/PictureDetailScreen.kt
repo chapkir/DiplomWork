@@ -87,8 +87,8 @@ fun PictureDetailScreen(
             item {
                 ImageView(
                     imageRes =
-                    if (pictureDetailScreenData.imageUrl.startsWith("http")) pictureDetailScreenData.imageUrl
-                    else AppConstants.BASE_URL + pictureDetailScreenData.imageUrl,
+                        if (pictureDetailScreenData.imageUrl.startsWith("http")) pictureDetailScreenData.imageUrl
+                        else AppConstants.BASE_URL + pictureDetailScreenData.imageUrl,
                     aspectRatio = 1f
                 )
             }
@@ -113,7 +113,7 @@ fun PictureDetailScreen(
                         .fillMaxWidth()
                         .padding(
                             bottom =
-                            systemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value
+                                systemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value
                         )
                 ) {
                     if (comments.isNotEmpty()) {

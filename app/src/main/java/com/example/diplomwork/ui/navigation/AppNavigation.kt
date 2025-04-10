@@ -146,11 +146,8 @@ fun AppNavigation(navController: NavHostController) {
                     onNavigateToRegister = { navController.navigate(Register) }
                 )
             }
-            composable<ProfileScreenData> { backStackEntry ->
-                val profileScreenData = backStackEntry.toRoute<ProfileScreenData>()
-
+            composable<ProfileScreenData> {
                 ProfileScreen(
-                    profileScreenData,
                     onLogout = {
                         sessionManager.clearSession()
                         navController.navigate(Login) {
@@ -158,9 +155,7 @@ fun AppNavigation(navController: NavHostController) {
                         }
                     },
                     onImageClick = { pictureId, imageUrl ->
-                        navController.navigate(PictureDetailScreenData(pictureId, imageUrl)) {
-                            popUpTo(ProfileScreenData) { inclusive = false }
-                        }
+                        navController.navigate(PictureDetailScreenData(pictureId, imageUrl))
                     }
                 )
             }
@@ -195,10 +190,12 @@ fun AppNavigation(navController: NavHostController) {
 
                 GalleryScreen(
                     onImageSelected = { uri ->
-                        navController.navigate(CreateContentScreenData(
-                            uri.toString(),
-                            whatContentCreate
-                        ))
+                        navController.navigate(
+                            CreateContentScreenData(
+                                uri.toString(),
+                                whatContentCreate
+                            )
+                        )
                     },
                     onClose = { navController.popBackStack() }
                 )

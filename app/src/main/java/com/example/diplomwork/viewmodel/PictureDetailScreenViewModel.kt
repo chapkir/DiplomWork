@@ -22,7 +22,6 @@ class PictureDetailScreenViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _pictureId: Long = savedStateHandle.get<Long>("pictureId") ?: 0L
-    private val _imageUrl: Long = savedStateHandle.get<Long>("pictureId") ?: 0L
 
     private val _pictureDescription = MutableStateFlow("")
     val pictureDescription: StateFlow<String> = _pictureDescription
