@@ -54,7 +54,6 @@ public class PostController {
     }
 
     @PostMapping(value = "/with-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    // Используем оба способа авторизации для защиты
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> createPostWithImage(
             @RequestParam("file") MultipartFile file,

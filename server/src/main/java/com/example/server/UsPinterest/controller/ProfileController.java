@@ -73,8 +73,8 @@ public class ProfileController {
             response.setRegistrationDate(user.getRegistrationDate());
             response.setBoards(user.getBoards());
 
-            // Получаем пины пользователя
-            List<Pin> userPins = pinRepository.findByUser(user);
+            // Получаем пины пользователя с сортировкой по дате создания (сначала новые)
+            List<Pin> userPins = pinRepository.findByUserOrderByCreatedAtDesc(user);
             List<PinResponse> pinResponses = userPins.stream()
                     .map(pin -> pinService.convertToPinResponse(pin, user))
                     .collect(Collectors.toList());
@@ -124,7 +124,8 @@ public class ProfileController {
             String username = authentication.getName();
             User user = userService.getUserWithCollectionsByUsername(username);
 
-            List<Like> likes = likeRepository.findByUser(user);
+            // Используем метод с сортировкой (сначала новые лайки)
+            List<Like> likes = likeRepository.findByUserOrderByIdDesc(user);
             List<PinResponse> pinResponses = new ArrayList<>();
 
             for (Like like : likes) {
@@ -139,6 +140,47 @@ public class ProfileController {
             logger.error("Ошибка при получении лайкнутых пинов", e);
             return ResponseEntity.status(500)
                     .body("Ошибка при получении лайкнутых пинов: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/{userId}")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getProfileById(@PathVariable Long userId, Authentication authentication) {
+        try {
+            User targetUser = userService.getUserWithCollections(userId);
+
+            ProfileResponse response = new ProfileResponse();
+            response.setId(targetUser.getId());
+            response.setUsername(targetUser.getUsername());
+            response.setEmail(targetUser.getEmail());
+            response.setProfileImageUrl(targetUser.getProfileImageUrl() != null ? targetUser.getProfileImageUrl() : "");
+            response.setRegistrationDate(targetUser.getRegistrationDate());
+            response.setBoards(targetUser.getBoards());
+
+            // Получаем пины пользователя с сортировкой по дате создания (сначала новые)
+            List<Pin> userPins = pinRepository.findByUserOrderByCreatedAtDesc(targetUser);
+
+            // Если пользователь авторизован, получаем текущего пользователя для проверки лайков
+            final User currentUser = authentication != null
+                    ? userService.getUserWithCollectionsByUsername(authentication.getName())
+                    : null;
+
+            // Преобразуем пины с учетом контекста текущего пользователя (для отображения лайков)
+            List<PinResponse> pinResponses = userPins.stream()
+                    .map(pin -> pinService.convertToPinResponse(pin, currentUser))
+                    .collect(Collectors.toList());
+
+            response.setPins(pinResponses);
+            response.setPinsCount(pinResponses.size());
+
+            return ResponseEntity.ok(response);
+        } catch (ResourceNotFoundException e) {
+            logger.warn("Пользователь с id {} не найден", userId);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Пользователь не найден");
+        } catch (Exception e) {
+            logger.error("Ошибка при получении профиля пользователя с id {}: {}", userId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Произошла ошибка при получении профиля: " + e.getMessage());
         }
     }
 }

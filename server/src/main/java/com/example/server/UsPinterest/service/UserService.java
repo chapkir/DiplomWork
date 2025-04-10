@@ -96,10 +96,6 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден с id: " + id));
     }
 
-    /**
-     * Получает пользователя с загруженными коллекциями в отдельных запросах
-     * для избежания MultipleBagFetchException
-     */
     @Transactional(readOnly = true)
     public User getUserWithCollections(Long id) {
         User user = getUserById(id);
@@ -117,10 +113,6 @@ public class UserService {
         return user;
     }
 
-    /**
-     * Получает пользователя по имени с загруженными коллекциями в отдельных запросах
-     * для избежания MultipleBagFetchException
-     */
     @Transactional(readOnly = true)
     public User getUserWithCollectionsByUsername(String username) {
         User user = findByUsername(username)

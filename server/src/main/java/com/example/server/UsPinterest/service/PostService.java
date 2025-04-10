@@ -142,13 +142,6 @@ public class PostService {
         return postMapper.toDto(updatedPost);
     }
 
-    /**
-     * Метод для явного удаления лайка с поста
-     *
-     * @param postId ID поста
-     * @param userId ID пользователя
-     * @return Обновленный ответ с информацией о посте
-     */
     @Transactional
     public PostResponse unlikePost(Long postId, Long userId) {
         Post post = postRepository.findById(postId)
