@@ -68,7 +68,6 @@ fun LoginScreen(
     val loginError by loginViewModel.loginError.collectAsState()
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
-    // Успешный вход → перейти
     LaunchedEffect(loginSuccess) {
         if (loginSuccess == true) {
             onLoginSuccess()

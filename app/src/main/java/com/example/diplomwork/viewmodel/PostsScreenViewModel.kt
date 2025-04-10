@@ -62,12 +62,12 @@ class PostsScreenViewModel @Inject constructor(
             if (index == -1) return@launch
 
             val post = _posts.value[index]
-            val wasLiked = post.isLiked
+            val wasLiked = post.isLikedByCurrentUser
             val newLikesCount = if (!wasLiked) post.likesCount + 1 else (post.likesCount - 1).coerceAtLeast(0)
 
             // 1. Обнови локальный список (оптимистично)
             val updatedPost = post.copy(
-                isLiked = !wasLiked,
+                isLikedByCurrentUser = !wasLiked,
                 likesCount = newLikesCount
             )
             _posts.value = _posts.value.toMutableList().apply { set(index, updatedPost) }
@@ -88,7 +88,7 @@ class PostsScreenViewModel @Inject constructor(
             } catch (e: Exception) {
                 // 3. Откат в случае ошибки
                 val revertedPost = post.copy(
-                    isLiked = wasLiked,
+                    isLikedByCurrentUser = wasLiked,
                     likesCount = post.likesCount
                 )
                 _posts.value = _posts.value.toMutableList().apply { set(index, revertedPost) }

@@ -6,14 +6,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -66,12 +63,9 @@ import com.google.accompanist.pager.rememberPagerState
 fun ProfileScreen(
     onLogout: () -> Unit,
     onImageClick: (Long, String) -> Unit,
-    profileViewModel: ProfileViewModel = hiltViewModel(),
-    isOwnProfile: Boolean = true
+    profileViewModel: ProfileViewModel = hiltViewModel()
 ) {
-
     val context = LocalContext.current
-
     val profileData by profileViewModel.profileData.collectAsState()
     val profileImageUrl by profileViewModel.profileImageUrl.collectAsState()
     val likedPictures by profileViewModel.likedPictures.collectAsState()
@@ -79,6 +73,7 @@ fun ProfileScreen(
     val isUploading by profileViewModel.isUploading.collectAsState()
     val error by profileViewModel.error.collectAsState()
     val avatarUpdateCounter by profileViewModel.avatarUpdateCounter.collectAsState()
+    val isOwnProfile by profileViewModel.isOwnProfile.collectAsState()
 
     // Управление вкладками
     var selectedTabIndex by remember { mutableIntStateOf(0) }
@@ -86,19 +81,13 @@ fun ProfileScreen(
 
     // Загружаем лайкнутые пины, когда выбран второй таб
     LaunchedEffect(selectedTabIndex) {
-        if (selectedTabIndex == 1) {
-            profileViewModel.loadLikedPictures()
-        }
+        if (selectedTabIndex == 1) profileViewModel.loadLikedPictures()
     }
 
     // Лаунчер для выбора аватарки
     val pickImageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            profileViewModel.uploadAvatarToServer(it, context)
-        }
-    }
+    ) { uri: Uri? -> uri?.let { profileViewModel.uploadAvatarToServer(it, context) } }
 
     // Основной UI
     Column(
@@ -107,49 +96,33 @@ fun ProfileScreen(
             .background(ColorForBackgroundProfile)
     ) {
         when {
-            isLoading -> {
-                LoadingSpinnerForScreen()
-            }
-
-            error != null -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Text(
-                            text = "Ошибка загрузки: $error",
-                            color = Color.White,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = {
-                            profileViewModel.loadLikedPictures() // Повторная попытка загрузки
-                        }) {
-                            Text("Повторить")
-                        }
-                    }
-                }
-            }
-
+            isLoading -> LoadingSpinnerForScreen()
+            error != null -> ErrorScreen(error) { profileViewModel.loadLikedPictures() }
             profileData != null -> {
-                ProfileHeader(
-                    username = profileData?.username ?: "Неизвестный",
-                    avatarUrl = profileImageUrl,
-                    isUploading = isUploading,
-                    onAvatarClick = {
-                        if (isOwnProfile) pickImageLauncher.launch("image/*")
-                    },
-                    onLogout = { if (isOwnProfile) onLogout() },
-                    avatarUpdateKey = avatarUpdateCounter,
-                    isOwnProfile = isOwnProfile // Передаем информацию о том, свой ли профиль
-                )
+                // Здесь выбираем соответствующий ProfileHeader
+                if (isOwnProfile) {
+                    OwnProfileHeader(
+                        username = profileData?.username ?: "Неизвестный",
+                        avatarUrl = profileImageUrl,
+                        isUploading = isUploading,
+                        onAvatarClick = {
+                            pickImageLauncher.launch("image/*")
+                        },
+                        onLogout = onLogout,
+                        avatarUpdateKey = avatarUpdateCounter
+                    )
+                } else {
+                    OtherProfileHeader(
+                        username = profileData?.username ?: "Неизвестный",
+                        avatarUrl = profileImageUrl,
+                        avatarUpdateKey = avatarUpdateCounter
+                    )
+                }
 
                 SwipeableTabs(
                     tabTitles = tabTitles,
                     selectedTabIndex = selectedTabIndex,
                     onTabSelected = { selectedTabIndex = it },
-                    onSwipeTabChange = { selectedTabIndex = it },
                     profileData = profileData?.pins ?: emptyList(),
                     likedPictures = likedPictures,
                     onImageClick = onImageClick
@@ -160,82 +133,80 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun ProfileHeader(
-    username: String,
-    avatarUrl: String?,
-    isUploading: Boolean = false,
-    onAvatarClick: () -> Unit,
-    onLogout: () -> Unit,
-    avatarUpdateKey: Int,
-    isOwnProfile: Boolean // Добавлен параметр
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(5.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+private fun ErrorScreen(error: String?, onRetry: () -> Unit) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(16.dp)
         ) {
-            Spacer(Modifier.size(40.dp))
-            Box(
+            Text(
+                text = "Ошибка загрузки: $error",
+                color = Color.White,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = onRetry) { Text("Повторить") }
+        }
+    }
+}
+
+@Composable
+fun Avatar(
+    avatarUrl: String?,
+    isUploading: Boolean,
+    onAvatarClick: () -> Unit,
+    avatarUpdateKey: Int
+) {
+    Box(
+        modifier = Modifier
+            .size(140.dp)
+            .clip(RoundedCornerShape(50))
+            .clickable { onAvatarClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        if (isUploading) {
+            LoadingSpinnerForScreen()
+        } else {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data("$avatarUrl?v=$avatarUpdateKey")
+                    .crossfade(true)
+                    .placeholder(R.drawable.default_avatar)
+                    .error(R.drawable.default_avatar)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .build(),
+                contentDescription = "Avatar",
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(140.dp)
-                    .clip(RoundedCornerShape(50))
-                    .clickable { onAvatarClick() },
-                contentAlignment = Alignment.Center
-            ) {
-                if (isUploading) {
-                    LoadingSpinnerForScreen()
-                } else {
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(avatarUrl + "?v=$avatarUpdateKey")
-                            .crossfade(true)
-                            .placeholder(R.drawable.default_avatar)
-                            .error(R.drawable.default_avatar)
-                            .diskCachePolicy(CachePolicy.ENABLED)
-                            .memoryCachePolicy(CachePolicy.ENABLED)
-                            .build(),
-                        contentDescription = "Avatar",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(140.dp)
-                            .clip(CircleShape)
-                            .border(
-                                3.dp,
-                                color = ColorForFocusButton,
-                                shape = CircleShape
-                            )
-                    )
-                }
-            }
-            Box(modifier = Modifier.size(40.dp)) {
-                if (isOwnProfile) { // Показывать кнопку выхода только для своего профиля
-                    IconButton(onClick = onLogout) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_login),
-                            contentDescription = "Exit",
-                            tint = Color.White,
-                            modifier = Modifier.size(25.dp)
-                        )
-                    }
-                }
+                    .clip(CircleShape)
+                    .border(3.dp, color = ColorForFocusButton, shape = CircleShape)
+            )
+
+            if (avatarUrl.isNullOrEmpty()) {
+                Text(
+                    text = "Добавить аватар",
+                    color = Color.Gray ,
+                    style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 14.sp),
+                    modifier = Modifier.align(Alignment.Center)
+                )
             }
         }
-        Spacer(Modifier.size(10.dp))
-        Text(
-            text = username,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-            textAlign = TextAlign.Center
-        )
+    }
+}
+
+@Composable
+fun LogoutButton(onLogout: () -> Unit) {
+    Box(modifier = Modifier.size(40.dp)) {
+        IconButton(onClick = onLogout) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_login),
+                contentDescription = "Exit",
+                tint = Color.White,
+                modifier = Modifier.size(25.dp)
+            )
+        }
     }
 }
 
@@ -245,7 +216,6 @@ fun SwipeableTabs(
     tabTitles: List<String>,
     selectedTabIndex: Int,
     onTabSelected: (Int) -> Unit,
-    onSwipeTabChange: (Int) -> Unit,
     profileData: List<PictureResponse>,
     likedPictures: List<PictureResponse>,
     onImageClick: (Long, String) -> Unit
@@ -253,30 +223,25 @@ fun SwipeableTabs(
     val pagerState = rememberPagerState(initialPage = selectedTabIndex)
 
     LaunchedEffect(pagerState.currentPage) {
-        onSwipeTabChange(pagerState.currentPage)
+        onTabSelected(pagerState.currentPage)
     }
 
     TabRow(
         selectedTabIndex = pagerState.currentPage,
-        modifier = Modifier.padding(end = 30.dp, start = 30.dp, top = 13.dp, bottom = 10.dp),
+        modifier = Modifier.padding(horizontal = 30.dp),
         contentColor = Color.White,
-        containerColor = ColorForBackgroundProfile,
+        containerColor = ColorForBackgroundProfile
     ) {
         tabTitles.forEachIndexed { index, title ->
             Tab(
                 selected = pagerState.currentPage == index,
-                onClick = {
-                    onTabSelected(index)
-                }
+                onClick = { onTabSelected(index) }
             ) {
                 Text(
                     text = title,
                     modifier = Modifier.padding(bottom = 7.dp),
                     color = if (pagerState.currentPage == index) Color.White else Color.Gray,
-                    style = TextStyle(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
+                    style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 )
             }
         }
@@ -289,57 +254,26 @@ fun SwipeableTabs(
         userScrollEnabled = true
     ) { page ->
         when (page) {
-            0 -> {
-                if (profileData.isEmpty()) {
-                    EmptyStateMessage(message = "У вас пока нет пинов")
-                } else {
-                    PicturesGrid(
-                        pictures = profileData,
-                        onPictureClick = onImageClick
-                    )
-                }
-            }
-
-            1 -> {
-                if (likedPictures.isEmpty()) {
-                    EmptyStateMessage(message = "У вас пока нет лайкнутых пинов")
-                } else {
-                    PicturesGrid(pictures = likedPictures, onPictureClick = onImageClick)
-                }
-            }
+            0 -> PicturesGrid(profileData, onImageClick)
+            1 -> PicturesGrid(likedPictures, onImageClick)
         }
-    }
-}
-
-@Composable
-private fun EmptyStateMessage(message: String) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = message, color = Color.White, textAlign = TextAlign.Center)
     }
 }
 
 @Composable
 private fun PicturesGrid(pictures: List<PictureResponse>, onPictureClick: (Long, String) -> Unit) {
-
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(3),
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 2.dp, end = 2.dp),
-        content = {
-            itemsIndexed(
-                items = pictures,
-                key = { _, picture -> picture.id }
-            ) { _, picture ->
-                PictureCard(
-                    imageUrl = picture.imageUrl,
-                    id = picture.id,
-                    onClick = {
-                        onPictureClick(picture.id, picture.imageUrl)
-                    },
-                    contentPadding = 3
-                )
-            }
+        contentPadding = PaddingValues(2.dp)
+    ) {
+        itemsIndexed(items = pictures, key = { _, picture -> picture.id }) { _, picture ->
+            PictureCard(
+                imageUrl = picture.imageUrl,
+                id = picture.id,
+                onClick = { onPictureClick(picture.id, picture.imageUrl) },
+                contentPadding = 3
+            )
         }
-    )
+    }
 }
-

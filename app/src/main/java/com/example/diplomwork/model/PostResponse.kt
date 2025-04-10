@@ -10,5 +10,4 @@ data class PostResponse(
     val likesCount: Int,
     val comments: List<CommentResponse>?,
     val isLikedByCurrentUser: Boolean = false,
-    val isLiked: Boolean = false
 )

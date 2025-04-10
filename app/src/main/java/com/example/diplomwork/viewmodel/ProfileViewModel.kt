@@ -50,6 +50,9 @@ class ProfileViewModel @Inject constructor(
     private val _avatarUpdateCounter = MutableStateFlow(0)
     val avatarUpdateCounter: StateFlow<Int> = _avatarUpdateCounter
 
+    private val _isOwnProfile = MutableStateFlow(false)
+    val isOwnProfile: StateFlow<Boolean> = _isOwnProfile
+
     init {
         loadProfile(userId = _userId)
     }
@@ -64,6 +67,7 @@ class ProfileViewModel @Inject constructor(
                 } else {
                     _profileData.value = profileRepository.getOwnProfile()
                     _profileImageUrl.value = _profileData.value?.profileImageUrl
+                    _isOwnProfile.value = true
                 }
                 Log.d("ProfileViewModel", "Загружен профиль: ${_profileData.value?.username}")
             } catch (e: Exception) {

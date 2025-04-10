@@ -42,6 +42,7 @@ import com.example.diplomwork.R
 import com.example.diplomwork.model.PostResponse
 import com.example.diplomwork.ui.components.CommentsBottomSheet
 import com.example.diplomwork.ui.components.LoadingSpinnerForElement
+import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.viewmodel.PostsScreenViewModel
 
@@ -82,7 +83,7 @@ fun PostsScreen(
         }
 
         if (isLoading) {
-            LoadingSpinnerForElement()
+            LoadingSpinnerForScreen()
         }
 
         error?.let {
@@ -192,10 +193,10 @@ fun PostCard(
                 ) {
                     Icon(
                         painter = painterResource(
-                            id = if (post.isLiked) R.drawable.ic_favs_filled else R.drawable.ic_favs
+                            id = if (post.isLikedByCurrentUser) R.drawable.ic_favs_filled else R.drawable.ic_favs
                         ),
                         contentDescription = "Лайк",
-                        tint = if (post.isLiked) Color.Red else Color.White,
+                        tint = if (post.isLikedByCurrentUser) Color.Red else Color.White,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
