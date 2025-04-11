@@ -1,18 +1,16 @@
 package com.example.diplomwork.ui.screens.profile_screen
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -22,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -30,16 +27,19 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.diplomwork.R
+import com.example.diplomwork.ui.screens.profile_screen.profile_components.Avatar
+import com.example.diplomwork.ui.screens.profile_screen.profile_components.StatCard
 
 @Composable
-fun OwnProfileHeader(
+fun ProfileHeader(
     username: String,
     picturesCount: Int,
     avatarUrl: String?,
     isUploading: Boolean = false,
     onAvatarClick: () -> Unit,
     onLogout: () -> Unit,
-    avatarUpdateKey: Int
+    avatarUpdateKey: Int,
+    isOwnProfile: Boolean = false
 ) {
     Column(
         modifier = Modifier
@@ -49,7 +49,9 @@ fun OwnProfileHeader(
     ) {
         // Топ бар
         Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 3.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 3.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -60,7 +62,10 @@ fun OwnProfileHeader(
                 modifier = Modifier.padding(start = 20.dp)
             )
             IconButton(
-                onClick = { onLogout() },
+                onClick = {
+                    if (isOwnProfile) onLogout()
+                    else return@IconButton
+                },
                 modifier = Modifier
                     .size(41.dp)
                     .padding(end = 20.dp)
@@ -81,7 +86,8 @@ fun OwnProfileHeader(
                 .padding(start = 25.dp, top = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Avatar(avatarUrl, isUploading, onAvatarClick, avatarUpdateKey)
+            if (isOwnProfile) Avatar(avatarUrl, isUploading, onAvatarClick, avatarUpdateKey)
+            else Avatar(avatarUrl, isUploading = false, onAvatarClick = {}, avatarUpdateKey)
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
@@ -138,7 +144,7 @@ fun OwnProfileHeader(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 10.dp, end = 10.dp, bottom = 11.dp),
+                .padding(start = 10.dp, end = 10.dp, bottom = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -146,48 +152,35 @@ fun OwnProfileHeader(
             StatCard("15", "Подписки", Modifier.weight(1f))
             StatCard("$picturesCount", "Картинки", Modifier.weight(1f))
         }
-    }
-}
 
-@Composable
-fun StatCard(
-    statValue: String,
-    statLabel: String,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier.then(
-            Modifier
-                .height(60.dp)
-                .background(
-                    Color.DarkGray.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(12.dp)
-                )
-                .padding(10.dp)
-        )
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Text(
-                text = statValue,
-                style = TextStyle(
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            )
-            Spacer(Modifier.height(3.dp))
-            Text(
-                text = statLabel,
-                style = TextStyle(
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.White
-                )
-            )
+        //Кнопка подписаться
+        if(!isOwnProfile) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 10.dp, end = 10.dp, bottom = 11.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(
+                    modifier = Modifier.fillMaxWidth(0.5f),
+                    onClick = {
+                    },
+                    colors = ButtonColors(
+                        containerColor = Color.Red.copy(alpha = 0.8f),
+                        contentColor = Color.White,
+                        disabledContainerColor = Color.Gray,
+                        disabledContentColor = Color.White
+                    )
+                ) {
+                    Text(
+                        text = "Подписаться",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            }
         }
     }
 }

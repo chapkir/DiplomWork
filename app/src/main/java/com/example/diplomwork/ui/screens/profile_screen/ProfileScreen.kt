@@ -4,8 +4,6 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,15 +11,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -34,26 +27,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
-import coil.request.CachePolicy
-import coil.request.ImageRequest
-import com.example.diplomwork.R
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.components.PictureCard
 import com.example.diplomwork.ui.theme.ColorForBackgroundProfile
-import com.example.diplomwork.ui.theme.ColorForFocusButton
 import com.example.diplomwork.viewmodel.ProfileViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
@@ -98,26 +83,18 @@ fun ProfileScreen(
             isLoading -> LoadingSpinnerForScreen()
             error != null -> ErrorScreen(error) { profileViewModel.loadLikedPictures() }
             profileData != null -> {
-                // Здесь выбираем соответствующий ProfileHeader
-                if (isOwnProfile) {
-                    OwnProfileHeader(
-                        username = profileData?.username ?: "Неизвестный",
-                        picturesCount = profileData?.pinsCount ?: 0,
-                        avatarUrl = profileData?.profileImageUrl,
-                        isUploading = isUploading,
-                        onAvatarClick = {
-                            pickImageLauncher.launch("image/*")
-                        },
-                        onLogout = onLogout,
-                        avatarUpdateKey = avatarUpdateCounter
-                    )
-                } else {
-                    OtherProfileHeader(
-                        username = profileData?.username ?: "Неизвестный",
-                        avatarUrl = profileData?.profileImageUrl,
-                        avatarUpdateKey = avatarUpdateCounter
-                    )
-                }
+                ProfileHeader(
+                    username = profileData?.username ?: "Неизвестный",
+                    picturesCount = profileData?.pinsCount ?: 0,
+                    avatarUrl = profileData?.profileImageUrl,
+                    isUploading = isUploading,
+                    onAvatarClick = {
+                        pickImageLauncher.launch("image/*")
+                    },
+                    onLogout = onLogout,
+                    avatarUpdateKey = avatarUpdateCounter,
+                    isOwnProfile = isOwnProfile
+                )
 
                 SwipeableTabs(
                     tabTitles = tabTitles,
@@ -146,48 +123,6 @@ private fun ErrorScreen(error: String?, onRetry: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = onRetry) { Text("Повторить") }
-        }
-    }
-}
-
-@Composable
-fun Avatar(
-    avatarUrl: String?,
-    isUploading: Boolean,
-    onAvatarClick: () -> Unit,
-    avatarUpdateKey: Int
-) {
-    Box(
-        modifier = Modifier
-            .size(68.dp)
-            .clip(RoundedCornerShape(50))
-            .clickable { onAvatarClick() },
-        contentAlignment = Alignment.Center
-    ) {
-        if (isUploading) {
-            LoadingSpinnerForScreen()
-        } else {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data("$avatarUrl?v=$avatarUpdateKey")
-                    .crossfade(true)
-                    .placeholder(R.drawable.default_avatar)
-                    .error(R.drawable.default_avatar)
-                    .diskCachePolicy(CachePolicy.ENABLED)
-                    .memoryCachePolicy(CachePolicy.ENABLED)
-                    .build(),
-                contentDescription = "Avatar",
-                contentScale = ContentScale.Crop,
-            )
-
-            if (avatarUrl.isNullOrEmpty()) {
-                Text(
-                    text = "Добавить аватар",
-                    color = Color.Gray ,
-                    style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 12.sp),
-                    textAlign = TextAlign.Center
-                )
-            }
         }
     }
 }
