@@ -38,6 +38,7 @@ fun ProfileHeader(
     isUploading: Boolean = false,
     onAvatarClick: () -> Unit,
     onLogout: () -> Unit,
+    onBack: () -> Unit,
     avatarUpdateKey: Int,
     isOwnProfile: Boolean = false
 ) {
@@ -50,17 +51,31 @@ fun ProfileHeader(
         // Топ бар
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 3.dp),
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = "Профиль",
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 21.sp,
-                modifier = Modifier.padding(start = 20.dp)
-            )
+            if (isOwnProfile) {
+                Text(
+                    text = "Профиль",
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 21.sp,
+                    modifier = Modifier.padding(start = 20.dp)
+                )
+            } else {
+                IconButton(
+                    onClick = { onBack() },
+                    modifier = Modifier
+                        .size(56.dp)
+                        .padding(start = 20.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_arrow_left),
+                        contentDescription = "OnBack",
+                        tint = Color.White
+                    )
+                }
+            }
             IconButton(
                 onClick = {
                     if (isOwnProfile) onLogout()
@@ -77,13 +92,13 @@ fun ProfileHeader(
                 )
             }
         }
-
+        Spacer(modifier = Modifier.height(12.dp))
         // Аватарка, юзернейм
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(72.dp)
-                .padding(start = 25.dp, top = 8.dp),
+                .padding(start = 25.dp)
+                .height(72.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (isOwnProfile) Avatar(avatarUrl, isUploading, onAvatarClick, avatarUpdateKey)
@@ -128,17 +143,18 @@ fun ProfileHeader(
                 )
             }
         }
+        Spacer(modifier = Modifier.height(12.dp))
 
-        // Достижения
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 10.dp, end = 10.dp, top = 20.dp, bottom = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            StatCard("Достижения", "", Modifier.weight(1f))
-        }
+//        // Достижения
+//        Row(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .padding(start = 10.dp, end = 10.dp, top = 20.dp, bottom = 10.dp),
+//            horizontalArrangement = Arrangement.spacedBy(10.dp),
+//            verticalAlignment = Alignment.CenterVertically
+//        ) {
+//            StatCard("Достижения", "", Modifier.weight(1f))
+//        }
 
         // Подписчики, подписки
         Row(
@@ -152,9 +168,10 @@ fun ProfileHeader(
             StatCard("15", "Подписки", Modifier.weight(1f))
             StatCard("$picturesCount", "Картинки", Modifier.weight(1f))
         }
+        Spacer(modifier = Modifier.height(9.dp))
 
         //Кнопка подписаться
-        if(!isOwnProfile) {
+        if (!isOwnProfile) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -181,6 +198,7 @@ fun ProfileHeader(
                     )
                 }
             }
+            Spacer(modifier = Modifier.height(9.dp))
         }
     }
 }

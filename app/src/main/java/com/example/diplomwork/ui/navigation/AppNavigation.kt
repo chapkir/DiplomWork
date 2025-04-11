@@ -154,6 +154,7 @@ fun AppNavigation(navController: NavHostController) {
                             popUpTo(Login) { inclusive = true }
                         }
                     },
+                    onBack = { navController.popBackStack() },
                     onImageClick = { pictureId, imageUrl ->
                         navController.navigate(PictureDetailScreenData(pictureId, imageUrl))
                     }
