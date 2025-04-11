@@ -70,10 +70,11 @@ fun PostsScreen(
             items(posts) { post ->
                 PostCard(
                     post = post,
-                    commentsCount = comments.size,
+                    commentsCount = comments[post.id]?.size ?: 0,
                     onLikeClick = { viewModel.toggleLike(post.id) },
                     onCommentClick = {
                         viewModel.selectPost(post.id)
+                        viewModel.loadCommentsForPost(post.id)
                         showCommentsSheet = true
                     },
                     onProfileClick
@@ -99,7 +100,7 @@ fun PostsScreen(
 
         CommentsBottomSheet(
             show = showCommentsSheet,
-            comments = comments,
+            comments = comments[selectedPostId] ?: emptyList(),
             onDismiss = { showCommentsSheet = false },
             onAddComment = { commentText ->
                 selectedPostId.let { postId ->

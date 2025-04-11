@@ -104,10 +104,11 @@ private fun CreateContentButton(label: String, iconRes: Int, onClick: () -> Unit
             Icon(
                 painter = painterResource(id = iconRes),
                 contentDescription = label,
+                tint = Color.White,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.height(4.dp))
-            Text(label)
+            Text(text = label, color = Color.White)
         }
     }
 }

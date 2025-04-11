@@ -9,8 +9,11 @@ import com.example.diplomwork.model.PostResponse
 import com.example.diplomwork.network.repos.CommentRepository
 import com.example.diplomwork.network.repos.PostRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import javax.inject.Inject
@@ -24,8 +27,8 @@ class PostsScreenViewModel @Inject constructor(
     private val _posts = MutableStateFlow<List<PostResponse>>(emptyList())
     val posts: StateFlow<List<PostResponse>> = _posts
 
-    private val _comments = MutableStateFlow<List<CommentResponse>>(emptyList())
-    val comments: StateFlow<List<CommentResponse>> = _comments
+    private val _comments = MutableStateFlow<Map<Long, List<CommentResponse>>>(emptyMap())
+    val comments: StateFlow<Map<Long, List<CommentResponse>>> = _comments
 
     private val _selectedPostId = MutableStateFlow(0L)
     val selectedPostId: StateFlow<Long> = _selectedPostId
@@ -47,11 +50,29 @@ class PostsScreenViewModel @Inject constructor(
             try {
                 val result = postRepository.getPosts()
                 _posts.value = result
+                loadAllCommentsCounts(result)
             } catch (e: Exception) {
                 _error.value = e.message ?: "Unknown error"
             } finally {
                 _isLoading.value = false
             }
+        }
+    }
+
+    private fun loadAllCommentsCounts(posts: List<PostResponse>) {
+        viewModelScope.launch {
+            val deferredList = posts.map { post ->
+                async {
+                    try {
+                        val comments = commentRepository.getPostComments(post.id)
+                        post.id to comments
+                    } catch (_: Exception) {
+                        post.id to emptyList()
+                    }
+                }
+            }
+            val result = deferredList.awaitAll().toMap()
+            _comments.value = result
         }
     }
 
@@ -98,6 +119,17 @@ class PostsScreenViewModel @Inject constructor(
         }
     }
 
+    fun loadCommentsForPost(postId: Long) {
+        viewModelScope.launch {
+            try {
+                val postComments = commentRepository.getPostComments(postId)
+                _comments.update { it.toMutableMap().apply { put(postId, postComments) } }
+            } catch (e: Exception) {
+                Log.e("PostsViewModel", "Error loading comments: ${e.message}")
+            }
+        }
+    }
+
     fun addComment(postId: Long, commentText: String) {
         viewModelScope.launch {
             if (commentText.isBlank()) return@launch
@@ -105,7 +137,8 @@ class PostsScreenViewModel @Inject constructor(
             try {
                 val commentRequest = CommentRequest(text = commentText)
                 commentRepository.addPostComment(postId, commentRequest)
-                _comments.value = commentRepository.getPostComments(postId)
+                val updatedComments = commentRepository.getPostComments(postId)
+                _comments.update { it.toMutableMap().apply { put(postId, updatedComments) } }
             } catch (e: Exception) {
                 Log.e("PictureDetailViewModel", "Error adding comment: ${e.message}")
             }

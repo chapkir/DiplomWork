@@ -92,10 +92,10 @@ interface ApiService {
     @DELETE("api/posts/{postId}/like")
     suspend fun unlikePost(@Path("postId") postId: Long): Response<Unit>
 
-    @GET("api/posts")
-    suspend fun getPostComments(@Path("postId") postId: Long): ApiResponse<List<CommentResponse>>
+    @GET("api/posts/{postId}/comments")
+    suspend fun getPostComments(@Path("postId") postId: Long): List<CommentResponse>
 
-    @POST("api/posts")
+    @POST("api/posts/{postId}/comments")
     suspend fun addPostComment(
         @Path("postId") postId: Long,
         @Body comment: CommentRequest

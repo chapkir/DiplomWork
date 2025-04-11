@@ -167,7 +167,7 @@ fun ProfileHeader(
                     onClick = {
                     },
                     colors = ButtonColors(
-                        containerColor = Color.Red.copy(alpha = 0.8f),
+                        containerColor = Color.Red.copy(alpha = 0.9f),
                         contentColor = Color.White,
                         disabledContainerColor = Color.Gray,
                         disabledContentColor = Color.White

@@ -25,7 +25,7 @@ class CommentRepository @Inject constructor(private val apiService: ApiService) 
     suspend fun getPostComments(postId: Long): List<CommentResponse> {
         return try {
             val response = apiService.getPostComments(postId)
-            response.data ?: emptyList()
+            response ?: emptyList()
         } catch (e: Exception) {
             emptyList()
         }
