@@ -100,7 +100,7 @@ public class UserService {
     public User getUserWithCollections(Long id) {
         User user = getUserById(id);
 
-        // Загружаем коллекции по отдельности
+
         User withBoards = userRepository.findByIdWithBoards(id).orElse(user);
         user.setBoards(withBoards.getBoards());
 
@@ -118,7 +118,7 @@ public class UserService {
         User user = findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден с именем: " + username));
 
-        // Загружаем коллекции по отдельности
+
         User withBoards = userRepository.findByUsernameWithBoards(username).orElse(user);
         user.setBoards(withBoards.getBoards());
 

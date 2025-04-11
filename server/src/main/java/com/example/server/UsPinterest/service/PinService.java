@@ -261,11 +261,11 @@ public class PinService {
 
     @Transactional(readOnly = true)
     public Pin getPinWithLikesAndComments(Long pinId) {
-        // Загружаем пин с лайками
+
         Pin pinWithLikes = pinRepository.findByIdWithLikesAndComments(pinId)
                 .orElseThrow(() -> new ResourceNotFoundException("Пин не найден с id: " + pinId));
 
-        // Загружаем пин с комментариями
+        
         pinRepository.findByIdWithComments(pinId).ifPresent(pinWithComments -> {
             pinWithLikes.setComments(pinWithComments.getComments());
         });
