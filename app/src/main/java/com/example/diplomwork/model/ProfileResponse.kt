@@ -4,7 +4,7 @@ data class ProfileResponse(
     val id: Long,
     val username: String,
     val email: String,
-    val profileImageUrl: String? = null,
+    var profileImageUrl: String? = null,
     val pins: List<PictureResponse>,
     val pinsCount: Int = 0,
     val followersCount: Int = 0,

@@ -67,7 +67,6 @@ fun ProfileScreen(
 ) {
     val context = LocalContext.current
     val profileData by profileViewModel.profileData.collectAsState()
-    val profileImageUrl by profileViewModel.profileImageUrl.collectAsState()
     val likedPictures by profileViewModel.likedPictures.collectAsState()
     val isLoading by profileViewModel.isLoading.collectAsState()
     val isUploading by profileViewModel.isUploading.collectAsState()
@@ -103,7 +102,8 @@ fun ProfileScreen(
                 if (isOwnProfile) {
                     OwnProfileHeader(
                         username = profileData?.username ?: "Неизвестный",
-                        avatarUrl = profileImageUrl,
+                        picturesCount = profileData?.pinsCount ?: 0,
+                        avatarUrl = profileData?.profileImageUrl,
                         isUploading = isUploading,
                         onAvatarClick = {
                             pickImageLauncher.launch("image/*")
@@ -114,7 +114,7 @@ fun ProfileScreen(
                 } else {
                     OtherProfileHeader(
                         username = profileData?.username ?: "Неизвестный",
-                        avatarUrl = profileImageUrl,
+                        avatarUrl = profileData?.profileImageUrl,
                         avatarUpdateKey = avatarUpdateCounter
                     )
                 }

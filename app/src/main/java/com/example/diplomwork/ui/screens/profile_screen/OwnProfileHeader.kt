@@ -34,6 +34,7 @@ import com.example.diplomwork.R
 @Composable
 fun OwnProfileHeader(
     username: String,
+    picturesCount: Int,
     avatarUrl: String?,
     isUploading: Boolean = false,
     onAvatarClick: () -> Unit,
@@ -143,7 +144,7 @@ fun OwnProfileHeader(
         ) {
             StatCard("4", "Подписчики", Modifier.weight(1f))
             StatCard("15", "Подписки", Modifier.weight(1f))
-            StatCard("5", "Посты", Modifier.weight(1f))
+            StatCard("$picturesCount", "Картинки", Modifier.weight(1f))
         }
     }
 }
