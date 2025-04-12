@@ -48,7 +48,7 @@ import com.example.diplomwork.viewmodel.PostsScreenViewModel
 
 @Composable
 fun PostsScreen(
-    onProfileClick: (Long?) -> Unit,
+    onProfileClick: (Long?, String) -> Unit,
     viewModel: PostsScreenViewModel = hiltViewModel()
 ) {
     val posts by viewModel.posts.collectAsState()
@@ -117,7 +117,7 @@ fun PostCard(
     commentsCount: Int,
     onLikeClick: () -> Unit,
     onCommentClick: () -> Unit,
-    onProfileClick: (Long?) -> Unit
+    onProfileClick: (Long?, String) -> Unit
 ) {
 
     var isImageLoading by remember { mutableStateOf(true) }
@@ -131,7 +131,7 @@ fun PostCard(
         Column(modifier = Modifier.padding(8.dp)) {
             Row(
                 modifier = Modifier
-                    .clickable { onProfileClick(post.userId) },
+                    .clickable { onProfileClick(post.userId, post.username) },
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 AsyncImage(

@@ -41,7 +41,7 @@ fun ActionBar(
     userId: Long?,
     onLikeClick: () -> Unit,
     onCommentClick: () -> Unit,
-    onProfileClick: (Long?) -> Unit
+    onProfileClick: (Long?, String) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -123,7 +123,7 @@ fun ActionBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onProfileClick(userId) },
+                .clickable { onProfileClick(userId, username) },
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.Bottom
         ) {

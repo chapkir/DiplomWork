@@ -28,6 +28,7 @@ class ProfileViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _userId: Long? = savedStateHandle["userId"]
+    private val _username: String = savedStateHandle["username"] ?: ""
 
     private val _profileData = MutableStateFlow<ProfileResponse?>(null)
     val profileData: StateFlow<ProfileResponse?> = _profileData
@@ -52,7 +53,8 @@ class ProfileViewModel @Inject constructor(
 
 
     init {
-        loadProfile(userId = _userId)
+        if(_username == sessionManager.username) loadProfile()
+        else loadProfile(userId = _userId)
     }
 
     private fun loadProfile(userId: Long? = null) {

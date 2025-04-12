@@ -48,7 +48,7 @@ import com.example.diplomwork.viewmodel.PictureDetailScreenViewModel
 fun PictureDetailScreen(
     pictureDetailScreenData: PictureDetailScreenData,
     onNavigateBack: () -> Unit,
-    onProfileClick: (Long?) -> Unit,
+    onProfileClick: (Long?, String) -> Unit,
     viewModel: PictureDetailScreenViewModel = hiltViewModel()
 ) {
     val pictureDescription by viewModel.pictureDescription.collectAsState()

@@ -139,14 +139,14 @@ fun AppNavigation(navController: NavHostController) {
             composable<Login> {
                 LoginScreen(
                     onLoginSuccess = {
-                        navController.navigate(ProfileScreenData()) {
+                        navController.navigate(OwnProfile) {
                             popUpTo(Login) { inclusive = true }
                         }
                     },
                     onNavigateToRegister = { navController.navigate(Register) }
                 )
             }
-            composable<ProfileScreenData> {
+            composable<OtherProfileScreenData> {
                 ProfileScreen(
                     onLogout = {
                         sessionManager.clearSession()
@@ -160,7 +160,7 @@ fun AppNavigation(navController: NavHostController) {
                     }
                 )
             }
-            composable<Profile> {
+            composable<OwnProfile> {
                 ProfileScreen(
                     onLogout = {
                         sessionManager.clearSession()
@@ -180,12 +180,12 @@ fun AppNavigation(navController: NavHostController) {
                 PictureDetailScreen(
                     pictureDetailScreenData,
                     onNavigateBack = { navController.popBackStack() },
-                    onProfileClick = { userId -> navController.navigate(ProfileScreenData(userId)) }
+                    onProfileClick = { userId, username -> navController.navigate(OtherProfileScreenData(userId, username)) }
                 )
             }
             composable<Posts> {
                 PostsScreen(
-                    onProfileClick = { userId -> navController.navigate(ProfileScreenData(userId)) }
+                    onProfileClick = { userId, username -> navController.navigate(OtherProfileScreenData(userId, username)) }
                 )
             }
 

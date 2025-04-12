@@ -41,7 +41,6 @@ import com.example.diplomwork.ui.navigation.Home
 import com.example.diplomwork.ui.navigation.Login
 import com.example.diplomwork.ui.navigation.Notification
 import com.example.diplomwork.ui.navigation.Posts
-import com.example.diplomwork.ui.navigation.ProfileScreenData
 import com.example.diplomwork.ui.theme.ColorForBackground
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.KeyboardActions
