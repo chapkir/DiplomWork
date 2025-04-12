@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.components.PictureCard
@@ -100,6 +101,7 @@ fun ProfileScreen(
             profileData != null -> {
                 ProfileHeader(
                     username = profileData?.username ?: "Неизвестный",
+                    firstName = profileData?.firstName ?: "Неизвестный",
                     picturesCount = profileData?.pinsCount ?: 0,
                     avatarUrl = profileData?.profileImageUrl,
                     isUploading = isUploading,
@@ -200,6 +202,17 @@ fun CustomTabPager(
     val coroutineScope = rememberCoroutineScope()
     val tabWidths = remember { mutableStateListOf<Float>() }
 
+    // Вычисление смещения полоски с учетом свайпа
+    val offset by remember {
+        derivedStateOf {
+            val pageOffset = pagerState.currentPage + pagerState.currentPageOffset
+            val tabWidth = tabWidths.getOrNull(0) ?: 0f
+
+            // Считаем смещение полоски на основе текущей страницы и её смещения
+            (tabWidth * pageOffset).coerceIn(0f, tabWidth * (tabTitles.size - 1))
+        }
+    }
+
     Column(modifier = modifier) {
         Box {
             Row(
@@ -209,7 +222,8 @@ fun CustomTabPager(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 tabTitles.forEachIndexed { index, title ->
-                    Box(
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
                             .weight(1f)
                             .onGloballyPositioned { coordinates ->
@@ -219,44 +233,34 @@ fun CustomTabPager(
                             }
                             .clickable {
                                 coroutineScope.launch {
-                                    pagerState.animateScrollToPage(
-                                        page = index,
-                                        animationSpec = tween(
-                                            durationMillis = 400,
-                                            easing = FastOutSlowInEasing
-                                        )
-                                    )
+                                    pagerState.animateScrollToPage(index)
                                 }
                             }
-                            .padding(bottom = 8.dp),
-                        contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = title,
                             color = if (pagerState.currentPage == index) Color.White else Color.Gray,
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
-                            modifier = Modifier.padding(bottom = 6.dp)
                         )
                     }
                 }
             }
 
-            // Индикатор под вкладками
+            // Полоска индикатора, движущаяся параллельно свайпу
             if (tabWidths.size == tabTitles.size) {
-                val tabWidth = tabWidths.getOrNull(0) ?: 0f
-                val offset by remember {
-                    derivedStateOf {
-                        val pageOffset = pagerState.currentPage + pagerState.currentPageOffset
-                        (tabWidth * pageOffset).coerceIn(0f, tabWidth * (tabTitles.size - 1))
-                    }
-                }
-
+                // Считываем ширину текущей вкладки
+                val currentTabWidth = tabWidths.getOrNull(pagerState.currentPage) ?: 0f
                 Box(
-                    Modifier
-                        .offset { IntOffset(offset.roundToInt() + 20.dp.roundToPx(), 0) }
-                        .padding(top = 36.dp)
-                        .width(100.dp)
+                    modifier = Modifier
+                        .padding(top = 30.dp)
+                        .offset {
+                            // Сдвигаем полоску по горизонтали в зависимости от текущей страницы
+                            IntOffset(
+                                offset.roundToInt() + ((currentTabWidth / 2.23).toInt()), 0
+                            )
+                        }
+                        .width(60.dp) // Ширина полоски
                         .height(3.dp)
                         .background(Color.White, RoundedCornerShape(1.dp)),
                 )

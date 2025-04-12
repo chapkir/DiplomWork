@@ -33,6 +33,7 @@ import com.example.diplomwork.ui.screens.profile_screen.profile_components.StatC
 @Composable
 fun ProfileHeader(
     username: String,
+    firstName: String,
     picturesCount: Int,
     avatarUrl: String?,
     isUploading: Boolean = false,
@@ -110,7 +111,7 @@ fun ProfileHeader(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Kiryha",
+                    text = firstName,
                     fontSize = 23.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,

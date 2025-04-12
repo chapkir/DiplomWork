@@ -96,34 +96,79 @@ fun RegisterScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        when (step) {
-            0 -> StepField(
-                "Введите имя пользователя",
-                "Логин",
-                username,
-                {
-                    registerViewModel.updateUsername(
-                        it.replace(" ", "").filter { c -> c.code in 32..126 })
-                }
-            )
+        val focusRequester = remember { FocusRequester() }
 
-            1 -> StepField(
-                "Введите email",
-                "Email",
-                email,
-                { registerViewModel.updateEmail(it.replace(" ", "")) },
-                KeyboardType.Email
-            )
-
-            2 -> StepField(
-                "Придумайте пароль",
-                "Пароль",
-                password,
-                { registerViewModel.updatePassword(it.replace(" ", "")) },
-                KeyboardType.Password,
-                isPassword = true
-            )
+        LaunchedEffect(step) {
+            focusRequester.requestFocus()
         }
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            when (step) {
+                0 -> {
+                    Text(
+                        text = "Введите имя пользователя",
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(25.dp))
+
+                    CustomOutlinedTextField(
+                        username,
+                        {
+                            registerViewModel.updateUsername(
+                                it.replace(" ", "").filter { c -> c.code in 32..126 })
+                        },
+                        "Логин",
+                        KeyboardType.Text,
+                        focusRequester,
+                    )
+                }
+
+
+                1 -> {
+                    Text(
+                        text = "Введите email",
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(25.dp))
+
+                    CustomOutlinedTextField(
+                        email,
+                        { registerViewModel.updateEmail(it.replace(" ", "")) },
+                        "Email",
+                        KeyboardType.Email,
+                        focusRequester,
+                    )
+                }
+
+
+                2 -> {
+                    Text(
+                        text = "Придумайте пароль",
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(25.dp))
+
+                    CustomOutlinedTextField(
+                        password,
+                        { registerViewModel.updatePassword(it.replace(" ", "")) },
+                        "Пароль",
+                        KeyboardType.Password,
+                        focusRequester,
+                        isPassword = true
+                    )
+                }
+            }
+        }
+
 
         Spacer(modifier = Modifier.height(19.dp))
 
@@ -206,39 +251,6 @@ fun RegisterScreen(
             color = ColorForHint.copy(alpha = 0.7f),
             modifier = Modifier.padding(top = 1.dp),
             textAlign = TextAlign.Center
-        )
-    }
-}
-
-@Composable
-fun StepField(
-    title: String,
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    keyboardType: KeyboardType = KeyboardType.Text,
-    isPassword: Boolean = false
-) {
-    val focusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
-
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = title,
-            color = Color.White.copy(alpha = 0.9f),
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(25.dp))
-
-        CustomOutlinedTextField(
-            value, onValueChange, label, keyboardType, focusRequester, isPassword
         )
     }
 }

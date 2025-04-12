@@ -1,5 +1,6 @@
 package com.example.diplomwork.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.diplomwork.auth.SessionManager
