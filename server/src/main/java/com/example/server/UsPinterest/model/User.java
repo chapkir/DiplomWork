@@ -33,6 +33,14 @@ public class User {
 
     private LocalDateTime registrationDate;
 
+    private String firstName;
+
+    private String city;
+
+    private LocalDateTime birthDate;
+
+    private String gender;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private Set<Comment> comments = new HashSet<>();
 
@@ -113,6 +121,38 @@ public class User {
 
     public void setRegistrationDate(LocalDateTime registrationDate) {
         this.registrationDate = registrationDate;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public LocalDateTime getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(LocalDateTime birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 
     public Set<Comment> getComments() {

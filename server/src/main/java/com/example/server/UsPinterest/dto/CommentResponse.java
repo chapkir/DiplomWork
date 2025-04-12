@@ -7,14 +7,16 @@ public class CommentResponse {
     private String text;
     private String username;
     private LocalDateTime createdAt;
+    private String userProfileImageUrl;
 
     public CommentResponse() {}
 
-    public CommentResponse(Long id, String text, String username, LocalDateTime createdAt) {
+    public CommentResponse(Long id, String text, String username, LocalDateTime createdAt, String userProfileImageUrl) {
         this.id = id;
         this.text = text;
         this.username = username;
         this.createdAt = createdAt;
+        this.userProfileImageUrl = userProfileImageUrl;
     }
 
     public Long getId() {
@@ -47,5 +49,13 @@ public class CommentResponse {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getUserProfileImageUrl() {
+        return userProfileImageUrl;
+    }
+
+    public void setUserProfileImageUrl(String userProfileImageUrl) {
+        this.userProfileImageUrl = userProfileImageUrl;
     }
 }

@@ -43,6 +43,7 @@ public class PostMapper {
         postResponse.setLikesCount(post.getLikesCount());
         postResponse.setIsLikedByCurrentUser(post.isLikedByCurrentUser());
         postResponse.setCreatedAt(post.getCreatedAt());
+        postResponse.setGeolocation(post.getGeolocation());
 
         // Устанавливаем информацию о пользователе
         if (post.getUser() != null) {
@@ -72,6 +73,7 @@ public class PostMapper {
 
         if (comment.getUser() != null) {
             cr.setUsername(comment.getUser().getUsername());
+            cr.setUserProfileImageUrl(comment.getUser().getProfileImageUrl());
         }
 
         return cr;

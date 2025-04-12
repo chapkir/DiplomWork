@@ -92,6 +92,23 @@ public class PostService {
         return postMapper.toDto(post);
     }
 
+    @Transactional(readOnly = true)
+    public PostResponse convertToPostResponse(Post post, User currentUser) {
+        if (post == null) {
+            return null;
+        }
+
+        // Получаем актуальное количество лайков
+        post.setLikesCount(userService.getLikesCountForPost(post.getId()));
+
+        // Если пользователь авторизован, проверяем, лайкнул ли он этот пост
+        if (currentUser != null) {
+            post.setLikedByCurrentUser(userService.hasUserLikedPost(currentUser.getId(), post.getId()));
+        }
+
+        return postMapper.toDto(post);
+    }
+
     @Transactional
     public PostResponse updatePost(Long postId, PostRequest postRequest) {
         Post post = postRepository.findById(postId)
@@ -142,6 +159,13 @@ public class PostService {
         return postMapper.toDto(updatedPost);
     }
 
+    /**
+     * Метод для явного удаления лайка с поста
+     *
+     * @param postId ID поста
+     * @param userId ID пользователя
+     * @return Обновленный ответ с информацией о посте
+     */
     @Transactional
     public PostResponse unlikePost(Long postId, Long userId) {
         Post post = postRepository.findById(postId)

@@ -34,6 +34,14 @@ public class CommentService {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Добавляет комментарий к посту
+     *
+     * @param postId ID поста
+     * @param commentRequest Запрос на создание комментария
+     * @param userId ID пользователя, создающего комментарий
+     * @return Ответ с созданным комментарием
+     */
     @Transactional
     public CommentResponse addCommentToPost(Long postId, CommentRequest commentRequest, Long userId) {
         Post post = postRepository.findById(postId)
@@ -55,6 +63,12 @@ public class CommentService {
         return convertToCommentResponse(savedComment);
     }
 
+    /**
+     * Получает все комментарии для поста
+     *
+     * @param postId ID поста
+     * @return Список комментариев
+     */
     @Transactional(readOnly = true)
     public List<CommentResponse> getCommentsByPostId(Long postId) {
         Post post = postRepository.findById(postId)
@@ -67,15 +81,24 @@ public class CommentService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Удаляет комментарий
+     *
+     * @param commentId ID комментария
+     * @param postId ID поста
+     * @param userId ID пользователя, пытающегося удалить комментарий
+     */
     @Transactional
     public void deleteComment(Long commentId, Long postId, Long userId) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Комментарий не найден с ID: " + commentId));
 
+        // Проверка, что комментарий принадлежит указанному посту
         if (comment.getPost() == null || !comment.getPost().getId().equals(postId)) {
             throw new RuntimeException("Комментарий не принадлежит указанному посту");
         }
 
+        // Проверка, что пользователь является автором комментария
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден с ID: " + userId));
 
@@ -88,11 +111,22 @@ public class CommentService {
                 commentId, postId, user.getUsername());
     }
 
+    /**
+     * Конвертирует объект Comment в CommentResponse
+     *
+     * @param comment Комментарий для конвертации
+     * @return DTO комментария
+     */
     private CommentResponse convertToCommentResponse(Comment comment) {
         CommentResponse response = new CommentResponse();
         response.setId(comment.getId());
         response.setText(comment.getText());
-        response.setUsername(comment.getUser() != null ? comment.getUser().getUsername() : "Unknown");
+        if (comment.getUser() != null) {
+            response.setUsername(comment.getUser().getUsername());
+            response.setUserProfileImageUrl(comment.getUser().getProfileImageUrl());
+        } else {
+            response.setUsername("Unknown");
+        }
         response.setCreatedAt(comment.getCreatedAt());
         return response;
     }

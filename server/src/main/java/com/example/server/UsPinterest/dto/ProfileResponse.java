@@ -11,7 +11,12 @@ public class ProfileResponse {
     private String bio;
     private String profileImageUrl;
     private LocalDateTime registrationDate;
+    private String firstName;
+    private String city;
+    private LocalDateTime birthDate;
+    private String gender;
     private List<PinResponse> pins;
+    private List<PostResponse> posts;
     private List<Board> boards;
     private int pinsCount;
     private int followersCount;
@@ -65,12 +70,52 @@ public class ProfileResponse {
         this.registrationDate = registrationDate;
     }
 
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public LocalDateTime getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(LocalDateTime birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
     public List<PinResponse> getPins() {
         return pins;
     }
 
     public void setPins(List<PinResponse> pins) {
         this.pins = pins;
+    }
+
+    public List<PostResponse> getPosts() {
+        return posts;
+    }
+
+    public void setPosts(List<PostResponse> posts) {
+        this.posts = posts;
     }
 
     public List<Board> getBoards() {

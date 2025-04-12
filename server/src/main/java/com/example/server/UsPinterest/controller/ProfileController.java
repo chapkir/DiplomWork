@@ -4,15 +4,19 @@ import com.example.server.UsPinterest.dto.PinResponse;
 import com.example.server.UsPinterest.dto.ProfileResponse;
 import com.example.server.UsPinterest.dto.CommentResponse;
 import com.example.server.UsPinterest.dto.ApiResponse;
+import com.example.server.UsPinterest.dto.PostResponse;
 import com.example.server.UsPinterest.exception.ResourceNotFoundException;
 import com.example.server.UsPinterest.model.Pin;
+import com.example.server.UsPinterest.model.Post;
 import com.example.server.UsPinterest.model.User;
 import com.example.server.UsPinterest.repository.PinRepository;
 import com.example.server.UsPinterest.repository.UserRepository;
 import com.example.server.UsPinterest.repository.LikeRepository;
+import com.example.server.UsPinterest.repository.PostRepository;
 import com.example.server.UsPinterest.service.BoardService;
 import com.example.server.UsPinterest.service.PinService;
 import com.example.server.UsPinterest.service.UserService;
+import com.example.server.UsPinterest.service.PostService;
 import com.example.server.UsPinterest.entity.Like;
 import com.example.server.UsPinterest.service.FileStorageService;
 
@@ -48,8 +52,11 @@ public class ProfileController {
     private final UserRepository userRepository;
     private final PinRepository pinRepository;
     private final LikeRepository likeRepository;
+    private final PostRepository postRepository;
     @Autowired
     private FileStorageService fileStorageService;
+    @Autowired
+    private PostService postService;
 
     @GetMapping
     @Transactional(readOnly = true)
@@ -71,6 +78,10 @@ public class ProfileController {
             response.setEmail(user.getEmail());
             response.setProfileImageUrl(user.getProfileImageUrl() != null ? user.getProfileImageUrl() : "");
             response.setRegistrationDate(user.getRegistrationDate());
+            response.setFirstName(user.getFirstName());
+            response.setCity(user.getCity());
+            response.setBirthDate(user.getBirthDate());
+            response.setGender(user.getGender());
             response.setBoards(user.getBoards());
 
             // Получаем пины пользователя с сортировкой по дате создания (сначала новые)
@@ -80,6 +91,13 @@ public class ProfileController {
                     .collect(Collectors.toList());
             response.setPins(pinResponses);
             response.setPinsCount(pinResponses.size());
+
+            // Получаем посты пользователя
+            List<Post> userPosts = postRepository.findByUserOrderByCreatedAtDesc(user);
+            List<PostResponse> postResponses = userPosts.stream()
+                    .map(post -> postService.convertToPostResponse(post, user))
+                    .collect(Collectors.toList());
+            response.setPosts(postResponses);
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -155,6 +173,10 @@ public class ProfileController {
             response.setEmail(targetUser.getEmail());
             response.setProfileImageUrl(targetUser.getProfileImageUrl() != null ? targetUser.getProfileImageUrl() : "");
             response.setRegistrationDate(targetUser.getRegistrationDate());
+            response.setFirstName(targetUser.getFirstName());
+            response.setCity(targetUser.getCity());
+            response.setBirthDate(targetUser.getBirthDate());
+            response.setGender(targetUser.getGender());
             response.setBoards(targetUser.getBoards());
 
             // Получаем пины пользователя с сортировкой по дате создания (сначала новые)
@@ -172,6 +194,13 @@ public class ProfileController {
 
             response.setPins(pinResponses);
             response.setPinsCount(pinResponses.size());
+
+            // Получаем посты пользователя
+            List<Post> userPosts = postRepository.findByUserOrderByCreatedAtDesc(targetUser);
+            List<PostResponse> postResponses = userPosts.stream()
+                    .map(post -> postService.convertToPostResponse(post, currentUser))
+                    .collect(Collectors.toList());
+            response.setPosts(postResponses);
 
             return ResponseEntity.ok(response);
         } catch (ResourceNotFoundException e) {

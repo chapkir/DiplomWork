@@ -265,7 +265,7 @@ public class PinService {
         Pin pinWithLikes = pinRepository.findByIdWithLikesAndComments(pinId)
                 .orElseThrow(() -> new ResourceNotFoundException("Пин не найден с id: " + pinId));
 
-        
+
         pinRepository.findByIdWithComments(pinId).ifPresent(pinWithComments -> {
             pinWithLikes.setComments(pinWithComments.getComments());
         });

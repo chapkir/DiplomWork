@@ -16,6 +16,7 @@ public class Post {
     private String text;
     private String imageUrl;
     private int likesCount;
+    private String geolocation;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -65,6 +66,14 @@ public class Post {
 
     public void setLikesCount(int likesCount) {
         this.likesCount = likesCount;
+    }
+
+    public String getGeolocation() {
+        return geolocation;
+    }
+
+    public void setGeolocation(String geolocation) {
+        this.geolocation = geolocation;
     }
 
     public LocalDateTime getCreatedAt() {

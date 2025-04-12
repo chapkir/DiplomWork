@@ -14,6 +14,7 @@ public class PostResponse {
     private List<CommentResponse> comments;
     private boolean isLikedByCurrentUser;
     private LocalDateTime createdAt;
+    private String geolocation;
 
     public PostResponse() {
     }
@@ -96,5 +97,13 @@ public class PostResponse {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getGeolocation() {
+        return geolocation;
+    }
+
+    public void setGeolocation(String geolocation) {
+        this.geolocation = geolocation;
     }
 }
