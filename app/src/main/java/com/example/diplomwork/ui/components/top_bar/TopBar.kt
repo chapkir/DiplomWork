@@ -63,8 +63,6 @@ fun GetTopBars(
         }
     }
 
-    val currentRouteWithoutParams = currentRoute?.substringBefore("?")
-
     if (isSearching) {
         SearchBar(
             searchQuery = searchQuery,
@@ -82,7 +80,7 @@ fun GetTopBars(
             }
         )
     } else {
-        when (currentRouteWithoutParams) {
+        when (currentRoute) {
             Home::class.simpleName -> CustomTopBar(
                 title = "Лента картинок",
                 icon = R.drawable.ic_search,
@@ -94,7 +92,6 @@ fun GetTopBars(
             Posts::class.simpleName -> CustomTopBar(title = "Посты")
             AddContent::class.simpleName -> CustomTopBar(title = "Добавить")
             Notification::class.simpleName -> CustomTopBar(title = "Уведомления")
-            //ProfileScreenData::class.simpleName -> CustomTopBar(title = "Профиль")
             Login::class.simpleName -> CustomTopBar(title = "Авторизация")
             else -> {}
         }

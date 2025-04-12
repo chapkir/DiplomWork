@@ -37,14 +37,15 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
+import com.example.diplomwork.ui.components.CustomVisualTransformationForPassword
 import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.ui.theme.ColorForFocusButton
@@ -143,7 +144,8 @@ fun LoginScreen(
                 text = it,
                 color = Color.Red,
                 fontSize = 16.sp,
-                textAlign = TextAlign.Center)
+                textAlign = TextAlign.Center
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -171,14 +173,18 @@ fun LoginTextField(
         onValueChange = onValueChange,
         label = { Text(label) },
         leadingIcon = { Icon(icon, contentDescription = null) },
-        visualTransformation = if (isPassword && !passwordVisible) PasswordVisualTransformation() else VisualTransformation.None,
+        visualTransformation =
+            if (isPassword && !passwordVisible) CustomVisualTransformationForPassword()
+            else VisualTransformation.None,
         trailingIcon = if (isPassword && onTogglePassword != null) {
             {
                 val image = if (passwordVisible) R.drawable.ic_eye_crossed else R.drawable.ic_eye
                 IconButton(onClick = onTogglePassword) {
                     Icon(
                         painter = painterResource(image),
-                        modifier = Modifier.size(26.dp).padding(end = 4.dp),
+                        modifier = Modifier
+                            .size(26.dp)
+                            .padding(end = 4.dp),
                         contentDescription = "Toggle password visibility"
                     )
                 }
@@ -188,6 +194,10 @@ fun LoginTextField(
         maxLines = 1,
         shape = RoundedCornerShape(15.dp),
         modifier = modifier,
+        textStyle = TextStyle(
+            fontSize = if (isPassword && !passwordVisible) 21.sp else 18.sp,
+            color = Color.White
+        ),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Color.White,
             unfocusedBorderColor = Color.Gray,

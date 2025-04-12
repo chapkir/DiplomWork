@@ -43,15 +43,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
+import com.example.diplomwork.ui.components.CustomVisualTransformationForPassword
 import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.ui.theme.ColorForFocusButton
@@ -260,7 +261,7 @@ fun CustomOutlinedTextField(
         singleLine = true,
         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = keyboardType),
         visualTransformation =
-            if (isPassword && !passwordVisible) PasswordVisualTransformation()
+            if (isPassword && !passwordVisible) CustomVisualTransformationForPassword()
             else VisualTransformation.None,
         trailingIcon = {
             if (isPassword) {
@@ -279,6 +280,10 @@ fun CustomOutlinedTextField(
         modifier = Modifier
             .fillMaxWidth(0.85f)
             .focusRequester(focusRequester),
+        textStyle = TextStyle(
+            fontSize = if (isPassword && !passwordVisible) 21.sp else 18.sp,
+            color = Color.White
+        ),
         maxLines = 1,
         shape = RoundedCornerShape(15.dp),
         colors = OutlinedTextFieldDefaults.colors(

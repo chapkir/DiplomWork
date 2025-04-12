@@ -27,6 +27,9 @@ object AddContent : Screen
 object Notification : Screen
 
 @Serializable
+object Profile : Screen
+
+@Serializable
 object ViewPost : Screen
 
 @Serializable

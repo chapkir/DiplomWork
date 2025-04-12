@@ -160,6 +160,20 @@ fun AppNavigation(navController: NavHostController) {
                     }
                 )
             }
+            composable<Profile> {
+                ProfileScreen(
+                    onLogout = {
+                        sessionManager.clearSession()
+                        navController.navigate(Login) {
+                            popUpTo(Login) { inclusive = true }
+                        }
+                    },
+                    onBack = { navController.popBackStack() },
+                    onImageClick = { pictureId, imageUrl ->
+                        navController.navigate(PictureDetailScreenData(pictureId, imageUrl))
+                    }
+                )
+            }
             composable<PictureDetailScreenData> { backStackEntry ->
                 val pictureDetailScreenData = backStackEntry.toRoute<PictureDetailScreenData>()
 
