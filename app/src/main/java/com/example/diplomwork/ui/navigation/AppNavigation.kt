@@ -181,7 +181,14 @@ fun AppNavigation(navController: NavHostController) {
                 )
             }
             composable<EditProfile> {
-                EditProfileScreen()
+                EditProfileScreen(
+                    onBack = { navController.popBackStack() },
+                    onEditSuccess = {
+                        navController.navigate(OwnProfile) {
+                            popUpTo(EditProfile) { inclusive = true }
+                        }
+                    }
+                )
             }
             composable<PictureDetailScreenData> { backStackEntry ->
                 val pictureDetailScreenData = backStackEntry.toRoute<PictureDetailScreenData>()

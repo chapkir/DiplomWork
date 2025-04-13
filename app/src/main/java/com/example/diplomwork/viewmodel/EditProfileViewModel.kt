@@ -26,6 +26,9 @@ class EditProfileViewModel @Inject constructor(
     private val _editProfileData = MutableStateFlow(EditProfileData())
     val editProfileData: StateFlow<EditProfileData> = _editProfileData
 
+    private val _isProfileSaved = MutableStateFlow(false)
+    val isProfileSaved: StateFlow<Boolean> = _isProfileSaved
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
@@ -39,6 +42,8 @@ class EditProfileViewModel @Inject constructor(
     fun saveProfile() {
         viewModelScope.launch {
             try {
+                _isProfileSaved.value = false
+                _successMessage.value = null
                 val editProfileValue = _editProfileData.value
                 _isLoading.value = true
                 profileRepository.editProfile(
@@ -50,6 +55,7 @@ class EditProfileViewModel @Inject constructor(
                         editProfileValue.bio,
                     )
                 )
+                _isProfileSaved.value = true
                 _successMessage.value = "Профиль обновлён"
             } catch (e: Exception) {
                 _successMessage.value = "Ошибка: ${e.message}"
@@ -57,5 +63,9 @@ class EditProfileViewModel @Inject constructor(
                 _isLoading.value = false
             }
         }
+    }
+
+    fun resetSavedFlag() {
+        _isProfileSaved.value = false
     }
 }

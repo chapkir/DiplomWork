@@ -1,5 +1,6 @@
 package com.example.diplomwork.ui.screens.profile_screen
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -30,12 +32,26 @@ import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.viewmodel.EditProfileViewModel
 
 @Composable
-fun EditProfileScreen(viewModel: EditProfileViewModel = hiltViewModel()) {
+fun EditProfileScreen(
+    onBack: () -> Unit,
+    onEditSuccess: () -> Unit,
+    viewModel: EditProfileViewModel = hiltViewModel()
+) {
+    val context = LocalContext.current
+
     val profileState by viewModel.editProfileData.collectAsState()
+    val isProfileSaved by viewModel.isProfileSaved.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val successMessage by viewModel.successMessage.collectAsState()
 
     val focusManager = LocalFocusManager.current
+
+    LaunchedEffect(isProfileSaved) {
+        if (isProfileSaved) {
+            viewModel.resetSavedFlag()
+            onEditSuccess()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -112,8 +128,7 @@ fun EditProfileScreen(viewModel: EditProfileViewModel = hiltViewModel()) {
         }
 
         successMessage?.let {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(it, color = Color.Green)
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
         }
     }
 }
