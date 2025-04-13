@@ -1,6 +1,7 @@
 package com.example.server.UsPinterest.service;
 
 import com.example.server.UsPinterest.dto.RegisterRequest;
+import com.example.server.UsPinterest.dto.EditProfileRequest;
 import com.example.server.UsPinterest.entity.Like;
 import com.example.server.UsPinterest.model.Post;
 import com.example.server.UsPinterest.model.User;
@@ -63,6 +64,10 @@ public class UserService {
         newUser.setEmail(request.getEmail());
         newUser.setPassword(passwordEncoder.encode(request.getPassword()));
         newUser.setRegistrationDate(LocalDateTime.now());
+
+        // Устанавливаем дополнительные поля
+        newUser.setFirstName(request.getFirstName());
+        newUser.setBirthDate(request.getBirthDate());
 
         return userRepository.save(newUser);
     }
@@ -195,5 +200,40 @@ public class UserService {
     @Cacheable(value = "posts", key = "'likes_' + #postId")
     public int getLikesCountForPost(Long postId) {
         return likeRepository.countByPostId(postId);
+    }
+
+    @Transactional
+    @CacheEvict(value = "users", key = "#userId")
+    public User editProfile(Long userId, EditProfileRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new com.example.server.UsPinterest.exception.ResourceNotFoundException("Пользователь не найден с id: " + userId));
+
+        // Обновляем только те поля, которые предоставлены в запросе
+        if (request.getFirstName() != null) {
+            user.setFirstName(request.getFirstName());
+        }
+
+        if (request.getEmail() != null) {
+            // Проверяем, занят ли email другим пользователем
+            if (!user.getEmail().equals(request.getEmail()) &&
+                    userRepository.findByEmail(request.getEmail()).isPresent()) {
+                throw new RuntimeException("Email уже используется другим пользователем");
+            }
+            user.setEmail(request.getEmail());
+        }
+
+        if (request.getGender() != null) {
+            user.setGender(request.getGender());
+        }
+
+        if (request.getBio() != null) {
+            user.setBio(request.getBio());
+        }
+
+        if (request.getCity() != null) {
+            user.setCity(request.getCity());
+        }
+
+        return userRepository.save(user);
     }
 }

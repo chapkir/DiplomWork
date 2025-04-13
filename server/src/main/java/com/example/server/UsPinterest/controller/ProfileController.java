@@ -4,6 +4,7 @@ import com.example.server.UsPinterest.dto.PinResponse;
 import com.example.server.UsPinterest.dto.ProfileResponse;
 import com.example.server.UsPinterest.dto.CommentResponse;
 import com.example.server.UsPinterest.dto.ApiResponse;
+import com.example.server.UsPinterest.dto.EditProfileRequest;
 import com.example.server.UsPinterest.dto.PostResponse;
 import com.example.server.UsPinterest.exception.ResourceNotFoundException;
 import com.example.server.UsPinterest.model.Pin;
@@ -210,6 +211,41 @@ public class ProfileController {
             logger.error("Ошибка при получении профиля пользователя с id {}: {}", userId, e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Произошла ошибка при получении профиля: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/edit")
+    public ResponseEntity<?> editProfile(@RequestBody EditProfileRequest request) {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Пользователь не авторизован");
+            }
+
+            User currentUser = userService.getCurrentUser();
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Пользователь не найден");
+            }
+
+            User updatedUser = userService.editProfile(currentUser.getId(), request);
+
+            // Формируем ответ
+            ProfileResponse response = new ProfileResponse();
+            response.setId(updatedUser.getId());
+            response.setUsername(updatedUser.getUsername());
+            response.setEmail(updatedUser.getEmail());
+            response.setProfileImageUrl(updatedUser.getProfileImageUrl() != null ? updatedUser.getProfileImageUrl() : "");
+            response.setRegistrationDate(updatedUser.getRegistrationDate());
+            response.setFirstName(updatedUser.getFirstName());
+            response.setBio(updatedUser.getBio());
+            response.setCity(updatedUser.getCity());
+            response.setGender(updatedUser.getGender());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Ошибка при редактировании профиля", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Произошла ошибка при редактировании профиля: " + e.getMessage());
         }
     }
 }

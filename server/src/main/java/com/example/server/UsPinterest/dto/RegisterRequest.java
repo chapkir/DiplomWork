@@ -3,6 +3,7 @@ package com.example.server.UsPinterest.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import java.time.LocalDateTime;
 
 public class RegisterRequest {
 
@@ -17,6 +18,10 @@ public class RegisterRequest {
     @NotBlank(message = "Пароль не может быть пустым")
     @Size(min = 6, message = "Пароль должен содержать минимум 6 символов")
     private String password;
+
+    private String firstName;
+
+    private LocalDateTime birthDate;
 
     public RegisterRequest() {}
 
@@ -42,5 +47,21 @@ public class RegisterRequest {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public LocalDateTime getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(LocalDateTime birthDate) {
+        this.birthDate = birthDate;
     }
 } 

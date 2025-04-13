@@ -102,6 +102,15 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedHeaders("*")
                 .maxAge(3600);
 
+        // Добавляем конфигурацию для эндпоинта редактирования профиля
+        registry.addMapping("/api/profile/edit")
+                .allowedOrigins("*")
+                .allowedMethods("PUT", "OPTIONS")
+                .allowedHeaders("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "*")
+                .exposedHeaders("Content-Disposition")
+                .allowCredentials(false)
+                .maxAge(3600);
+
         logger.info("CORS mapping configured for all origins and methods");
     }
 
