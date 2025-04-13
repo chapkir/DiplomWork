@@ -193,7 +193,8 @@ fun AppNavigation(navController: NavHostController) {
                 /* FavsScreen() */
             }
             composable<Register> {
-                RegisterScreen(onCompleteRegistration = {
+                RegisterScreen(
+                    onCompleteRegistration = {
                     navController.navigate(Home) {
                         popUpTo(Register) { inclusive = true }
                     }

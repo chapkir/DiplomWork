@@ -1,5 +1,6 @@
 package com.example.diplomwork.network.repos
 
+import com.example.diplomwork.model.EditProfileRequest
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.model.ProfileResponse
 import com.example.diplomwork.network.api.ApiService
@@ -24,6 +25,10 @@ class ProfileRepository @Inject constructor(
     // Загрузка изображения профиля
     suspend fun uploadProfileImage(image: MultipartBody.Part): Response<Map<String, String>> {
         return apiService.uploadProfileImage(image)
+    }
+
+    suspend fun editProfile(editProfileRequest: EditProfileRequest) {
+        return apiService.editProfile(editProfileRequest)
     }
 
     suspend fun getLikedPictures(): Result<List<PictureResponse>> {

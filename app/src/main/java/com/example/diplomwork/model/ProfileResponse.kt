@@ -20,5 +20,5 @@ data class ProfileResponse(
     val pinsCount: Int = 0,
     val followersCount: Int = 0,
     val followingCount: Int = 0,
-    val bio: String? = null,
+    val bio: String,
 )

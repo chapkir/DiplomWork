@@ -7,6 +7,7 @@ import android.util.Log
 import com.google.gson.Gson
 import java.util.Date
 import androidx.core.content.edit
+import com.example.diplomwork.util.AppConstants
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -26,7 +27,7 @@ class SessionManager @Inject constructor(@ApplicationContext context: Context) {
         private const val KEY_USERNAME = "username"
 
         private const val TAG = "SessionManager"
-        private const val DEFAULT_SERVER_URL = "http://spotsychlen.ddns.net:8081"
+        private const val DEFAULT_SERVER_URL = AppConstants.BASE_URL
         private const val TOKEN_REFRESH_MARGIN_MS = 5 * 60 * 1000L
     }
 
@@ -43,6 +44,9 @@ class SessionManager @Inject constructor(@ApplicationContext context: Context) {
             Log.d(TAG, "Сохранение URL сервера: $value")
             prefs.edit() { putString(KEY_SERVER_URL, value) }
         }
+
+    val userId: String?
+        get() = authToken?.let { decodeJwtPayload(it)?.sub }
 
     var username: String?
         get() = prefs.getString(KEY_USERNAME, null)
@@ -77,8 +81,10 @@ class SessionManager @Inject constructor(@ApplicationContext context: Context) {
     fun saveAuthData(token: String, refreshToken: String?) {
         authToken = token
         tokenExpiration = decodeJwtPayload(token)?.exp?.times(1000)
+        val claims = decodeJwtPayload(token)
         refreshToken?.let { this.refreshToken = it }
         Log.d(TAG, "Сохранены аутентификационные данные")
+        Log.d(TAG, "userId из токена: ${claims?.iat} или ${claims?.exp}")
     }
 
     private fun decodeJwtPayload(token: String): JwtClaims? {
