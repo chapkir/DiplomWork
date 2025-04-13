@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
@@ -39,6 +40,7 @@ fun ProfileHeader(
     isUploading: Boolean = false,
     onAvatarClick: () -> Unit,
     onLogout: () -> Unit,
+    onEditProfile: () -> Unit,
     onBack: () -> Unit,
     avatarUpdateKey: Int,
     isOwnProfile: Boolean = false
@@ -77,20 +79,37 @@ fun ProfileHeader(
                     )
                 }
             }
-            IconButton(
-                onClick = {
-                    if (isOwnProfile) onLogout()
-                    else return@IconButton
-                },
-                modifier = Modifier
-                    .size(41.dp)
-                    .padding(end = 20.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_settings),
-                    contentDescription = "Settings",
-                    tint = Color.White
-                )
+            Row {
+                IconButton(
+                    onClick = {
+                        if (isOwnProfile) onEditProfile()
+                        else return@IconButton
+                    },
+                    modifier = Modifier
+                        .size(41.dp)
+                        .padding(end = 20.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_pencil),
+                        contentDescription = "Settings",
+                        tint = Color.White
+                    )
+                }
+                IconButton(
+                    onClick = {
+                        if (isOwnProfile) onLogout()
+                        else return@IconButton
+                    },
+                    modifier = Modifier
+                        .size(41.dp)
+                        .padding(end = 20.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_settings),
+                        contentDescription = "Settings",
+                        tint = Color.White
+                    )
+                }
             }
         }
         Spacer(modifier = Modifier.height(12.dp))

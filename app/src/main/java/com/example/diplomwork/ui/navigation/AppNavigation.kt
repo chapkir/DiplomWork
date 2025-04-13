@@ -30,6 +30,7 @@ import com.example.diplomwork.ui.screens.home_screen.HomeScreen
 import com.example.diplomwork.ui.screens.login_screen.LoginScreen
 import com.example.diplomwork.ui.screens.picture_detail_screen.PictureDetailScreen
 import com.example.diplomwork.ui.screens.posts_screen.PostsScreen
+import com.example.diplomwork.ui.screens.profile_screen.EditProfileScreen
 import com.example.diplomwork.ui.screens.profile_screen.ProfileScreen
 import com.example.diplomwork.ui.screens.registration_screen.RegisterScreen
 import kotlinx.coroutines.Job
@@ -168,11 +169,19 @@ fun AppNavigation(navController: NavHostController) {
                             popUpTo(Login) { inclusive = true }
                         }
                     },
+                    onEditProfile = {
+                        navController.navigate(EditProfile) {
+                            popUpTo(OwnProfile)
+                        }
+                    },
                     onBack = { navController.popBackStack() },
                     onImageClick = { pictureId, imageUrl ->
                         navController.navigate(PictureDetailScreenData(pictureId, imageUrl))
                     }
                 )
+            }
+            composable<EditProfile> {
+                EditProfileScreen()
             }
             composable<PictureDetailScreenData> { backStackEntry ->
                 val pictureDetailScreenData = backStackEntry.toRoute<PictureDetailScreenData>()
@@ -180,12 +189,20 @@ fun AppNavigation(navController: NavHostController) {
                 PictureDetailScreen(
                     pictureDetailScreenData,
                     onNavigateBack = { navController.popBackStack() },
-                    onProfileClick = { userId, username -> navController.navigate(OtherProfileScreenData(userId, username)) }
+                    onProfileClick = { userId, username ->
+                        navController.navigate(
+                            OtherProfileScreenData(userId, username)
+                        )
+                    }
                 )
             }
             composable<Posts> {
                 PostsScreen(
-                    onProfileClick = { userId, username -> navController.navigate(OtherProfileScreenData(userId, username)) }
+                    onProfileClick = { userId, username ->
+                        navController.navigate(
+                            OtherProfileScreenData(userId, username)
+                        )
+                    }
                 )
             }
 
@@ -195,10 +212,10 @@ fun AppNavigation(navController: NavHostController) {
             composable<Register> {
                 RegisterScreen(
                     onCompleteRegistration = {
-                    navController.navigate(Home) {
-                        popUpTo(Register) { inclusive = true }
-                    }
-                })
+                        navController.navigate(Home) {
+                            popUpTo(Register) { inclusive = true }
+                        }
+                    })
             }
             composable<GalleryScreenData> { backStackEntry ->
                 val galleryScreenData = backStackEntry.toRoute<GalleryScreenData>()
