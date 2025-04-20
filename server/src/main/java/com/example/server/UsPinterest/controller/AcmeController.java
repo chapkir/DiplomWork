@@ -13,8 +13,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import org.springframework.beans.factory.annotation.Value;
+import io.micrometer.core.annotation.Timed;
 
 @RestController
+@Timed(value = "acme.controller", description = "Metrics for AcmeController endpoints")
 public class AcmeController {
 
     private static final Logger logger = LoggerFactory.getLogger(AcmeController.class);

@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import io.micrometer.core.annotation.Timed;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -33,6 +34,7 @@ import com.example.server.UsPinterest.service.FileStorageService;
 
 @Service
 @Transactional
+@Timed(value = "pins.service", description = "Metrics for PinService methods")
 public class PinService {
     private static final int DEFAULT_PAGE_SIZE = 20;
     private static final Logger logger = LoggerFactory.getLogger(PinService.class);
@@ -254,7 +256,6 @@ public class PinService {
         return pinRepository.findByIdGreaterThanWithLikesOrderByIdAsc(cursorId, PageRequest.of(0, limit));
     }
 
-    @Cacheable(value = "pinCount")
     public long count() {
         return pinRepository.count();
     }

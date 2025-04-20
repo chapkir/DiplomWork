@@ -111,6 +111,12 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowCredentials(false)
                 .maxAge(3600);
 
+        registry.addMapping("/actuator/**")
+                .allowedOrigins("*")
+                .allowedMethods("GET", "POST", "OPTIONS")
+                .allowedHeaders("*")
+                .maxAge(3600);
+
         logger.info("CORS mapping configured for all origins and methods");
     }
 

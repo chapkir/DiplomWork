@@ -10,8 +10,10 @@ import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
+import io.micrometer.core.annotation.Timed;
 
 @ControllerAdvice
+@Timed(value = "advice.controller", description = "Metrics for ControllerAdvice")
 public class AdviceController implements ResponseBodyAdvice<Object> {
 
     @Override

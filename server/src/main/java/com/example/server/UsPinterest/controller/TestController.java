@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.transaction.annotation.Transactional;
+import io.micrometer.core.annotation.Timed;
 
 import com.example.server.UsPinterest.service.PinService;
 import com.example.server.UsPinterest.dto.PageResponse;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
+@Timed(value = "test.controller", description = "Metrics for TestController endpoints")
 @RequestMapping("/api")
 @CrossOrigin(origins = {"http://localhost:5500", "http://127.0.0.1:5500"})
 public class TestController {

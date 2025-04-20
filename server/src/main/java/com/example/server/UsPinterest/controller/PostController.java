@@ -21,6 +21,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
 
 import java.io.IOException;
 import java.util.List;
@@ -29,6 +32,7 @@ import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/posts")
+@Timed(value = "post.controller", description = "Metrics for PostController endpoints")
 public class PostController {
 
     private static final Logger logger = LoggerFactory.getLogger(PostController.class);
@@ -36,6 +40,13 @@ public class PostController {
     private final PostService postService;
     private final FileStorageService fileStorageService;
     private final CommentService commentService;
+
+    @Autowired
+    private Counter postCreateCounter;
+    @Autowired
+    private Counter profileImageUploadCounter;
+    @Autowired
+    private DistributionSummary fileUploadSizeSummary;
 
     @Autowired
     public PostController(PostService postService, FileStorageService fileStorageService, CommentService commentService) {
@@ -46,19 +57,20 @@ public class PostController {
 
     @PostMapping
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<PostResponse> createPost(
-            @RequestBody PostRequest postRequest,
-            @CurrentUser UserPrincipal currentUser) {
+    public ResponseEntity<PostResponse> createPost(@RequestBody PostRequest postRequest,
+                                                   @CurrentUser UserPrincipal currentUser) {
+        postCreateCounter.increment();
         PostResponse postResponse = postService.createPost(postRequest, currentUser.getId());
         return new ResponseEntity<>(postResponse, HttpStatus.CREATED);
     }
 
     @PostMapping(value = "/with-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> createPostWithImage(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("text") String text,
-            @CurrentUser UserPrincipal currentUser) {
+    public ResponseEntity<?> createPostWithImage(@RequestParam("file") MultipartFile file,
+                                                 @RequestParam("text") String text,
+                                                 @CurrentUser UserPrincipal currentUser) {
+        postCreateCounter.increment();
+        fileUploadSizeSummary.record(file.getSize());
         try {
             // Проверка на авторизацию
             if (currentUser == null) {
@@ -192,10 +204,11 @@ public class PostController {
     // Тестовый метод для создания постов, может использоваться без авторизации, но использует пользователя если он авторизован
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     @PostMapping(value = "/test-upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> testUploadWithImage(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("text") String text,
-            @CurrentUser UserPrincipal currentUser) {
+    public ResponseEntity<?> testUploadWithImage(@RequestParam("file") MultipartFile file,
+                                                 @RequestParam("text") String text,
+                                                 @CurrentUser UserPrincipal currentUser) {
+        profileImageUploadCounter.increment();
+        fileUploadSizeSummary.record(file.getSize());
         try {
             logger.info("TEST ENDPOINT: Received request to create post with image. Text length: {}, File: {}, File size: {}",
                     text != null ? text.length() : 0,

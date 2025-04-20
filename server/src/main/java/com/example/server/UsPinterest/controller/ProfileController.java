@@ -20,6 +20,9 @@ import com.example.server.UsPinterest.service.UserService;
 import com.example.server.UsPinterest.service.PostService;
 import com.example.server.UsPinterest.entity.Like;
 import com.example.server.UsPinterest.service.FileStorageService;
+import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +47,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequestMapping("/api/profile")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
+@Timed(value = "profile.controller", description = "Metrics for ProfileController endpoints")
 public class ProfileController {
     private static final Logger logger = LoggerFactory.getLogger(ProfileController.class);
 
@@ -58,6 +62,10 @@ public class ProfileController {
     private FileStorageService fileStorageService;
     @Autowired
     private PostService postService;
+    @Autowired
+    private Counter profileImageUploadCounter;
+    @Autowired
+    private DistributionSummary fileUploadSizeSummary;
 
     @GetMapping
     @Transactional(readOnly = true)
@@ -110,6 +118,9 @@ public class ProfileController {
 
     @PostMapping(value = {"/image", "/avatar"})
     public ResponseEntity<?> updateProfileImage(@RequestParam("file") MultipartFile file) {
+        profileImageUploadCounter.increment();
+        fileUploadSizeSummary.record(file.getSize());
+
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.singletonMap("message", "Необходима авторизация"));

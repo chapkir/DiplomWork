@@ -21,9 +21,12 @@ import java.util.Map;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
+import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.Counter;
 
 @CrossOrigin(origins = "*")
 @RestController
+@Timed(value = "auth.controller", description = "Metrics for AuthController endpoints")
 @RequestMapping("/api/auth")
 public class AuthController {
 
@@ -36,8 +39,15 @@ public class AuthController {
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
 
+    @Autowired
+    private Counter authLoginCounter;
+
+    @Autowired
+    private Counter authRegisterCounter;
+
     @PostMapping("/register")
     public ResponseEntity<RegisterRequest> register(@RequestBody RegisterRequest registerRequest) {
+        authRegisterCounter.increment();
         User savedUser = userService.registerUser(registerRequest);
 
         RegisterRequest responseDto = new RegisterRequest();
@@ -49,6 +59,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+        authLoginCounter.increment();
         String token = userService.loginUser(request.getUsername(), request.getPassword());
         User user = userService.getUserWithCollectionsByUsername(request.getUsername());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());

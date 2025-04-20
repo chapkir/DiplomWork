@@ -59,6 +59,7 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authEntryPoint)
                 )
                 .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers("/actuator/**").permitAll();
                     auth.requestMatchers("/api/auth/**").permitAll();
                     auth.requestMatchers("/api/piner/**").permitAll();
                     auth.requestMatchers("/api/pins/**").permitAll();
