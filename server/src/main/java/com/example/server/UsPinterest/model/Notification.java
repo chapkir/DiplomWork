@@ -5,9 +5,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
+import jakarta.persistence.Index;
 
 @Entity
-@Table(name = "notifications")
+@Table(name = "notifications", indexes = {
+        @Index(name = "idx_notifications_recipient", columnList = "recipient_id"),
+        @Index(name = "idx_notifications_sender", columnList = "sender_id"),
+        @Index(name = "idx_notifications_pin", columnList = "pin_id"),
+        @Index(name = "idx_notifications_created_at", columnList = "created_at")
+})
 public class Notification {
 
     public enum NotificationType {

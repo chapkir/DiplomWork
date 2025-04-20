@@ -1,12 +1,11 @@
 package com.example.server.UsPinterest.exception;
 
-import com.example.server.UsPinterest.dto.ApiResponse;
-import com.example.server.UsPinterest.dto.ErrorDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -27,191 +26,135 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-
 @ControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    protected ResponseEntity<Object> handleMethodArgumentNotValid(
-            MethodArgumentNotValidException ex,
-            HttpHeaders headers,
-            HttpStatus status,
-            WebRequest request) {
-
-        Map<String, String> errors = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .collect(Collectors.toMap(
-                        FieldError::getField,
-                        fieldError -> fieldError.getDefaultMessage() != null ? fieldError.getDefaultMessage() : "Invalid value",
-                        (first, second) -> first
-                ));
-
-        ErrorDetails errorDetails = new ErrorDetails();
-        errorDetails.setTimestamp(LocalDateTime.now());
-        errorDetails.setStatus(status.value());
-        errorDetails.setError("Validation Failed");
-        errorDetails.setMessage("Input validation failed");
-        errorDetails.setPath(extractPath(request));
-        errorDetails.setFieldErrors(errors);
-
-        logger.warn("Validation error: {}", errors);
-
-        return new ResponseEntity<>(errorDetails, headers, status);
-    }
-
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleResourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
-        String path = extractPath(request);
-        logger.warn("Resource not found at {}: {}", path, ex.getMessage());
-
-        ApiResponse<Void> apiResponse = new ApiResponse<>(
-                false,
-                ex.getMessage(),
+    public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
+        ErrorResponse error = new ErrorResponse(LocalDateTime.now(),
                 HttpStatus.NOT_FOUND.value(),
-                path,
-                null
-        );
-
-        return new ResponseEntity<>(apiResponse, HttpStatus.NOT_FOUND);
-    }
-
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBadCredentialsException(BadCredentialsException ex, WebRequest request) {
-        String path = extractPath(request);
-        logger.warn("Authentication failed at {}", path);
-
-        ApiResponse<Void> apiResponse = new ApiResponse<>(
-                false,
-                "Неверный логин или пароль",
-                HttpStatus.UNAUTHORIZED.value(),
-                path,
-                null
-        );
-
-        return new ResponseEntity<>(apiResponse, HttpStatus.UNAUTHORIZED);
-    }
-
-    @ExceptionHandler(TokenRefreshException.class)
-    public ResponseEntity<ApiResponse<Void>> handleTokenRefreshException(TokenRefreshException ex, WebRequest request) {
-        String path = extractPath(request);
-        logger.warn("Token refresh error at {}: {}", path, ex.getMessage());
-
-        ApiResponse<Void> apiResponse = new ApiResponse<>(
-                false,
+                HttpStatus.NOT_FOUND.getReasonPhrase(),
                 ex.getMessage(),
-                HttpStatus.FORBIDDEN.value(),
-                path,
-                null
-        );
-
-        return new ResponseEntity<>(apiResponse, HttpStatus.FORBIDDEN);
+                request.getRequestURI());
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<ApiResponse<Void>> handleAuthenticationException(AuthenticationException ex, WebRequest request) {
-        String path = extractPath(request);
-        logger.warn("Authentication error at {}", path);
-
-        ApiResponse<Void> apiResponse = new ApiResponse<>(
-                false,
-                "Ошибка аутентификации",
-                HttpStatus.UNAUTHORIZED.value(),
-                path,
-                null
-        );
-
-        return new ResponseEntity<>(apiResponse, HttpStatus.UNAUTHORIZED);
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
+                                                                  HttpHeaders headers,
+                                                                  HttpStatusCode status,
+                                                                  WebRequest request) {
+        String msg = ex.getBindingResult().getFieldErrors().stream()
+                .map(e -> e.getField() + ": " + e.getDefaultMessage())
+                .collect(Collectors.joining(", "));
+        HttpServletRequest httpRequest = request instanceof ServletWebRequest
+                ? ((ServletWebRequest) request).getRequest()
+                : null;
+        String path = httpRequest != null ? httpRequest.getRequestURI() : "unknown";
+        HttpStatus httpStatusEnum = HttpStatus.resolve(status.value());
+        String reason = httpStatusEnum != null ? httpStatusEnum.getReasonPhrase() : "";
+        ErrorResponse error = new ErrorResponse(LocalDateTime.now(),
+                status.value(),
+                reason,
+                msg,
+                path);
+        return new ResponseEntity<>(error, status);
     }
 
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(AccessDeniedException ex, WebRequest request) {
-        String path = extractPath(request);
-        logger.warn("Access denied at {}", path);
-
-        ApiResponse<Void> apiResponse = new ApiResponse<>(
-                false,
-                "Нет доступа к данному ресурсу",
-                HttpStatus.FORBIDDEN.value(),
-                path,
-                null
-        );
-
-        return new ResponseEntity<>(apiResponse, HttpStatus.FORBIDDEN);
-    }
-
-    @ExceptionHandler(FollowException.class)
-    public ResponseEntity<ApiResponse<Void>> handleFollowException(FollowException ex, WebRequest request) {
-        String path = extractPath(request);
-        logger.warn("Follow error at {}: {}", path, ex.getMessage());
-
-        ApiResponse<Void> apiResponse = new ApiResponse<>(
-                false,
-                ex.getMessage(),
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+        String msg = ex.getName() + " should be of type " + ex.getRequiredType().getSimpleName();
+        ErrorResponse error = new ErrorResponse(LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
-                path,
-                null
-        );
-
-        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
-    }
-
-
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolationException(
-            DataIntegrityViolationException ex, WebRequest request) {
-        String path = extractPath(request);
-        logger.warn("Data integrity violation at {}: {}", path, ex.getMessage());
-
-        String message;
-        if (ex.getMostSpecificCause().getMessage().contains("duplicate key")) {
-            message = "Запись с такими данными уже существует";
-        } else {
-            message = "Нарушение целостности данных";
-        }
-
-        ApiResponse<Void> apiResponse = new ApiResponse<>(
-                false,
-                message,
-                HttpStatus.CONFLICT.value(),
-                path,
-                null
-        );
-
-        return new ResponseEntity<>(apiResponse, HttpStatus.CONFLICT);
-    }
-
-    @ExceptionHandler(MultipartException.class)
-    public ResponseEntity<ApiResponse<Void>> handleMultipartException(MultipartException ex, WebRequest request) {
-        String path = extractPath(request);
-        logger.warn("File upload error at {}: {}", path, ex.getMessage());
-
-        ApiResponse<Void> apiResponse = new ApiResponse<>(
-                false,
-                "Ошибка при загрузке файла",
-                HttpStatus.BAD_REQUEST.value(),
-                path,
-                null
-        );
-
-        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                msg,
+                request.getRequestURI());
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleGlobalException(Exception ex, WebRequest request) {
-        String path = extractPath(request);
-
-
-        ApiResponse<Void> apiResponse = new ApiResponse<>(
-                false,
-                "Произошла неожиданная ошибка",
+    public ResponseEntity<ErrorResponse> handleAll(Exception ex, HttpServletRequest request) {
+        ErrorResponse error = new ErrorResponse(LocalDateTime.now(),
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                path,
-                null
-        );
+                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI());
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
-        return new ResponseEntity<>(apiResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentialsException(BadCredentialsException ex, HttpServletRequest request) {
+        ErrorResponse error = new ErrorResponse(LocalDateTime.now(),
+                HttpStatus.UNAUTHORIZED.value(),
+                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                "Неверный логин или пароль",
+                request.getRequestURI());
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(TokenRefreshException.class)
+    public ResponseEntity<ErrorResponse> handleTokenRefreshException(TokenRefreshException ex, HttpServletRequest request) {
+        ErrorResponse error = new ErrorResponse(LocalDateTime.now(),
+                HttpStatus.FORBIDDEN.value(),
+                HttpStatus.FORBIDDEN.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI());
+        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException ex, HttpServletRequest request) {
+        ErrorResponse error = new ErrorResponse(LocalDateTime.now(),
+                HttpStatus.UNAUTHORIZED.value(),
+                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                "Ошибка аутентификации",
+                request.getRequestURI());
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ex, HttpServletRequest request) {
+        ErrorResponse error = new ErrorResponse(LocalDateTime.now(),
+                HttpStatus.FORBIDDEN.value(),
+                HttpStatus.FORBIDDEN.getReasonPhrase(),
+                "Нет доступа к данному ресурсу",
+                request.getRequestURI());
+        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(FollowException.class)
+    public ResponseEntity<ErrorResponse> handleFollowException(FollowException ex, HttpServletRequest request) {
+        ErrorResponse error = new ErrorResponse(LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI());
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(
+            DataIntegrityViolationException ex, HttpServletRequest request) {
+        String message = ex.getMostSpecificCause().getMessage().contains("duplicate key")
+                ? "Запись с такими данными уже существует"
+                : "Нарушение целостности данных";
+        ErrorResponse error = new ErrorResponse(LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                message,
+                request.getRequestURI());
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<ErrorResponse> handleMultipartException(MultipartException ex, HttpServletRequest request) {
+        ErrorResponse error = new ErrorResponse(LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                "Ошибка при загрузке файла",
+                request.getRequestURI());
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     private String extractPath(WebRequest request) {

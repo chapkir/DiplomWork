@@ -2,7 +2,7 @@ package com.example.server.UsPinterest.service;
 
 import com.example.server.UsPinterest.dto.PostRequest;
 import com.example.server.UsPinterest.dto.PostResponse;
-import com.example.server.UsPinterest.dto.mapper.PostMapper;
+import com.example.server.UsPinterest.dto.mapper.PostStructMapper;
 import com.example.server.UsPinterest.model.Post;
 import com.example.server.UsPinterest.model.User;
 import com.example.server.UsPinterest.repository.PostRepository;
@@ -21,22 +21,23 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserService userService;
-    private final PostMapper postMapper;
+    private final PostStructMapper postStructMapper;
 
     @Autowired
-    public PostService(PostRepository postRepository, UserService userService, PostMapper postMapper) {
+    public PostService(PostRepository postRepository, UserService userService, PostStructMapper postStructMapper) {
         this.postRepository = postRepository;
         this.userService = userService;
-        this.postMapper = postMapper;
+        this.postStructMapper = postStructMapper;
     }
 
     @Transactional
     public PostResponse createPost(PostRequest postRequest, Long userId) {
         User user = userService.getUserWithCollections(userId);
-        Post post = postMapper.toEntity(postRequest, user);
+        Post post = postStructMapper.toEntity(postRequest);
+        post.setUser(user);
 
         Post savedPost = postRepository.save(post);
-        return postMapper.toDto(savedPost);
+        return postStructMapper.toDto(savedPost);
     }
 
     @Transactional(readOnly = true)
@@ -54,7 +55,9 @@ public class PostService {
             });
         }
 
-        return postMapper.toDtoList(posts);
+        return posts.stream()
+                .map(postStructMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -72,7 +75,7 @@ public class PostService {
             });
         }
 
-        return posts.map(postMapper::toDto);
+        return posts.map(postStructMapper::toDto);
     }
 
     @Transactional(readOnly = true)
@@ -89,7 +92,7 @@ public class PostService {
             post.setLikedByCurrentUser(userService.hasUserLikedPost(user.getId(), post.getId()));
         }
 
-        return postMapper.toDto(post);
+        return postStructMapper.toDto(post);
     }
 
     @Transactional(readOnly = true)
@@ -106,7 +109,7 @@ public class PostService {
             post.setLikedByCurrentUser(userService.hasUserLikedPost(currentUser.getId(), post.getId()));
         }
 
-        return postMapper.toDto(post);
+        return postStructMapper.toDto(post);
     }
 
     @Transactional
@@ -123,7 +126,7 @@ public class PostService {
         // Получаем актуальное количество лайков
         updatedPost.setLikesCount(userService.getLikesCountForPost(updatedPost.getId()));
 
-        return postMapper.toDto(updatedPost);
+        return postStructMapper.toDto(updatedPost);
     }
 
     @Transactional
@@ -156,7 +159,7 @@ public class PostService {
         // Получаем актуальное количество лайков
         updatedPost.setLikesCount(userService.getLikesCountForPost(updatedPost.getId()));
 
-        return postMapper.toDto(updatedPost);
+        return postStructMapper.toDto(updatedPost);
     }
 
     /**
@@ -187,7 +190,7 @@ public class PostService {
         // Получаем актуальное количество лайков
         updatedPost.setLikesCount(userService.getLikesCountForPost(updatedPost.getId()));
 
-        return postMapper.toDto(updatedPost);
+        return postStructMapper.toDto(updatedPost);
     }
 
     @Transactional(readOnly = true)
@@ -206,6 +209,8 @@ public class PostService {
             });
         }
 
-        return postMapper.toDtoList(posts);
+        return posts.stream()
+                .map(postStructMapper::toDto)
+                .collect(Collectors.toList());
     }
 }

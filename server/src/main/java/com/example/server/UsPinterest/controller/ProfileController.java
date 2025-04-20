@@ -91,7 +91,7 @@ public class ProfileController {
             response.setCity(user.getCity());
             response.setBirthDate(user.getBirthDate());
             response.setGender(user.getGender());
-            response.setBoards(user.getBoards());
+            response.setBoards(boardService.getBoardsByUserId(user.getId(), false));
 
             // Получаем пины пользователя с сортировкой по дате создания (сначала новые)
             List<Pin> userPins = pinRepository.findByUserOrderByCreatedAtDesc(user);
@@ -189,7 +189,7 @@ public class ProfileController {
             response.setCity(targetUser.getCity());
             response.setBirthDate(targetUser.getBirthDate());
             response.setGender(targetUser.getGender());
-            response.setBoards(targetUser.getBoards());
+            response.setBoards(boardService.getBoardsByUserId(targetUser.getId(), false));
 
             // Получаем пины пользователя с сортировкой по дате создания (сначала новые)
             List<Pin> userPins = pinRepository.findByUserOrderByCreatedAtDesc(targetUser);

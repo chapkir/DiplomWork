@@ -8,7 +8,6 @@ import com.example.server.UsPinterest.dto.CommentResponse;
 import com.example.server.UsPinterest.dto.MessageResponse;
 import com.example.server.UsPinterest.dto.PinRequest;
 import com.example.server.UsPinterest.dto.PinResponse;
-import com.example.server.UsPinterest.dto.mapper.PinMapper;
 import com.example.server.UsPinterest.entity.Comment;
 import com.example.server.UsPinterest.entity.Like;
 import com.example.server.UsPinterest.exception.ResourceNotFoundException;
@@ -55,9 +54,6 @@ public class PinController {
 
     @Autowired
     private PinService pinService;
-
-    @Autowired
-    private PinMapper pinMapper;
 
     @Autowired
     private PaginationService paginationService;

@@ -7,7 +7,10 @@ import jakarta.persistence.*;
 import com.example.server.UsPinterest.entity.Comment;
 
 @Entity
-@Table(name = "posts")
+@Table(name = "posts", indexes = {
+        @Index(name = "idx_posts_user_id", columnList = "user_id"),
+        @Index(name = "idx_posts_created_at", columnList = "created_at")
+})
 public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -2,7 +2,8 @@ package com.example.server.UsPinterest.service;
 
 import com.example.server.UsPinterest.dto.BoardRequest;
 import com.example.server.UsPinterest.dto.BoardResponse;
-import com.example.server.UsPinterest.dto.mapper.BoardMapper;
+import com.example.server.UsPinterest.dto.mapper.BoardStructMapper;
+import com.example.server.UsPinterest.dto.mapper.PinStructMapper;
 import com.example.server.UsPinterest.exception.ResourceNotFoundException;
 import com.example.server.UsPinterest.model.Board;
 import com.example.server.UsPinterest.model.User;
@@ -16,6 +17,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -32,7 +34,10 @@ public class BoardService {
     private UserService userService;
 
     @Autowired
-    private BoardMapper boardMapper;
+    private BoardStructMapper boardStructMapper;
+
+    @Autowired
+    private PinStructMapper pinStructMapper;
 
 
     @Transactional
@@ -43,12 +48,16 @@ public class BoardService {
             throw new IllegalStateException("Пользователь должен быть авторизован");
         }
 
-        Board board = boardMapper.toEntity(boardRequest, currentUser);
+        Board board = boardStructMapper.toEntity(boardRequest);
+        board.setUser(currentUser);
+        board.setPins(new ArrayList<>());
         board = boardRepository.save(board);
 
         logger.info("Создана новая доска: {}, пользователь: {}", board.getTitle(), currentUser.getUsername());
 
-        return boardMapper.toDto(board, currentUser, false);
+        BoardResponse dto = boardStructMapper.toDto(board);
+        dto.setPins(new ArrayList<>());
+        return dto;
     }
 
 
@@ -58,7 +67,15 @@ public class BoardService {
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Доска не найдена"));
 
-        return boardMapper.toDto(board, null, includePins);
+        BoardResponse dto = boardStructMapper.toDto(board);
+        if (includePins) {
+            dto.setPins(board.getPins().stream()
+                    .map(pin -> pinStructMapper.toDto(pin))
+                    .collect(Collectors.toList()));
+        } else {
+            dto.setPins(new ArrayList<>());
+        }
+        return dto;
     }
 
 
@@ -72,10 +89,17 @@ public class BoardService {
     @Cacheable(value = "boards", key = "'user_' + #userId + '_' + #includePins")
     public List<BoardResponse> getBoardsByUserId(Long userId, boolean includePins) {
         List<Board> boards = boardRepository.findByUserId(userId);
-
-        return boards.stream()
-                .map(board -> boardMapper.toDto(board, null, includePins))
-                .collect(Collectors.toList());
+        return boards.stream().map(board -> {
+            BoardResponse dto = boardStructMapper.toDto(board);
+            if (includePins) {
+                dto.setPins(board.getPins().stream()
+                        .map(pin -> pinStructMapper.toDto(pin))
+                        .collect(Collectors.toList()));
+            } else {
+                dto.setPins(new ArrayList<>());
+            }
+            return dto;
+        }).collect(Collectors.toList());
     }
 
 
@@ -114,11 +138,13 @@ public class BoardService {
             throw new IllegalStateException("Вы не можете обновить чужую доску");
         }
 
-        board = boardMapper.updateEntity(board, boardRequest);
+        boardStructMapper.updateEntityFromRequest(boardRequest, board);
         board = boardRepository.save(board);
 
         logger.info("Обновлена доска: {}, пользователь: {}", board.getTitle(), currentUser.getUsername());
 
-        return boardMapper.toDto(board, currentUser, false);
+        BoardResponse dto = boardStructMapper.toDto(board);
+        dto.setPins(new ArrayList<>());
+        return dto;
     }
 } 

@@ -3,8 +3,8 @@ package com.example.server.UsPinterest.service;
 import com.example.server.UsPinterest.dto.PageResponse;
 import com.example.server.UsPinterest.dto.PinResponse;
 import com.example.server.UsPinterest.dto.ProfileResponse;
-import com.example.server.UsPinterest.dto.mapper.PinMapper;
-import com.example.server.UsPinterest.dto.mapper.UserMapper;
+import com.example.server.UsPinterest.dto.mapper.PinStructMapper;
+import com.example.server.UsPinterest.dto.mapper.UserStructMapper;
 import com.example.server.UsPinterest.model.Pin;
 import com.example.server.UsPinterest.model.User;
 import com.example.server.UsPinterest.repository.PinRepository;
@@ -30,10 +30,10 @@ public class SearchService {
     private PaginationService paginationService;
 
     @Autowired
-    private PinMapper pinMapper;
+    private PinStructMapper pinStructMapper;
 
     @Autowired
-    private UserMapper userMapper;
+    private UserStructMapper userStructMapper;
 
     @Autowired
     private UserService userService;
@@ -47,8 +47,7 @@ public class SearchService {
         Pageable pageable = paginationService.createPageable(page, size, sortBy, sortDirection);
         Page<Pin> pinsPage = pinRepository.findByDescriptionContainingIgnoreCase(searchKeyword, pageable);
 
-        User currentUser = userService.getCurrentUser();
-        return paginationService.createPageResponse(pinsPage, pin -> pinMapper.toDto(pin, currentUser));
+        return paginationService.createPageResponse(pinsPage, pin -> pinStructMapper.toDto(pin));
     }
 
     @Transactional(readOnly = true)
@@ -59,6 +58,6 @@ public class SearchService {
         Pageable pageable = paginationService.createPageable(page, size);
         Page<User> usersPage = userRepository.findByUsernameContainingIgnoreCase(searchUsername, pageable);
 
-        return paginationService.createPageResponse(usersPage, userMapper::toProfileDto);
+        return paginationService.createPageResponse(usersPage, user -> userStructMapper.toProfileDto(user));
     }
 }

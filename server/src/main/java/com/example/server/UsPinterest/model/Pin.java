@@ -16,7 +16,11 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 
 @Entity
-@Table(name = "pins")
+@Table(name = "pins", indexes = {
+        @Index(name = "idx_pins_description", columnList = "description"),
+        @Index(name = "idx_pins_board", columnList = "board_id"),
+        @Index(name = "idx_pins_user", columnList = "user_id"),
+})
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Pin {
 

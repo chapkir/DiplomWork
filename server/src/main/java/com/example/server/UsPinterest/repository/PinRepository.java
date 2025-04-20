@@ -9,13 +9,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.EntityGraph;
 
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface PinRepository extends JpaRepository<Pin, Long> {
+    @EntityGraph(attributePaths = {"likes", "comments"})
     List<Pin> findByBoardId(Long boardId);
+    @EntityGraph(attributePaths = {"likes", "comments"})
     List<Pin> findByDescriptionContainingIgnoreCase(String keyword);
     Page<Pin> findByDescriptionContainingIgnoreCase(String keyword, Pageable pageable);
     List<Pin> findByUserUsername(String username);
