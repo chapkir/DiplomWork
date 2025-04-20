@@ -11,6 +11,7 @@ import com.example.diplomwork.model.RegisterResponse
 import com.example.diplomwork.model.TokenRefreshRequest
 import com.example.diplomwork.model.TokenRefreshResponse
 import com.example.diplomwork.model.ApiResponse
+import com.example.diplomwork.model.EditProfileRequest
 import com.example.diplomwork.model.PageResponse
 import com.example.diplomwork.model.PostResponse
 import okhttp3.MultipartBody
@@ -53,6 +54,12 @@ interface ApiService {
 
     @GET("api/profile/{userId}")
     suspend fun getProfileById(@Path("userId") userId: Long?): ProfileResponse
+
+    @PUT("api/profile/edit")
+    suspend fun editProfile(@Body editProfileRequest: EditProfileRequest)
+
+    @POST("api/auth/register")
+    suspend fun register(@Body registerRequest: RegisterRequest): RegisterResponse
 
     @POST("api/pins/{pictureId}/likes")
     suspend fun likePicture(@Path("pictureId") pictureId: Long): Response<Unit>
@@ -103,9 +110,6 @@ interface ApiService {
 
     @GET("api/auth/check-user")
     suspend fun checkUserExists(@Query("login") login: String): Response<Boolean>
-
-    @POST("api/auth/register")
-    suspend fun register(@Body registerRequest: RegisterRequest): RegisterResponse
 
     @Multipart
     @POST("api/profile/image")

@@ -30,6 +30,9 @@ object Notification : Screen
 object OwnProfile : Screen
 
 @Serializable
+object EditProfile : Screen
+
+@Serializable
 object ViewPost : Screen
 
 @Serializable

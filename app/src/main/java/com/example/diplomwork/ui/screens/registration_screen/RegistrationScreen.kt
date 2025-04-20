@@ -57,6 +57,7 @@ import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.ui.theme.ColorForFocusButton
 import com.example.diplomwork.ui.theme.ColorForHint
+import com.example.diplomwork.viewmodel.EditProfileViewModel
 import com.example.diplomwork.viewmodel.RegisterViewModel
 
 fun hideKeyboard(context: Context) {
@@ -72,15 +73,15 @@ fun hideKeyboard(context: Context) {
 @Composable
 fun RegisterScreen(
     onCompleteRegistration: () -> Unit,
-    registerViewModel: RegisterViewModel = hiltViewModel()
+    registerViewModel: RegisterViewModel = hiltViewModel(),
+    editProfileViewModel: EditProfileViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
 
+    val registerData by registerViewModel.registerData.collectAsState()
+    val editProfileData by editProfileViewModel.editProfileData.collectAsState()
     val step by registerViewModel.step.collectAsState()
-    val username by registerViewModel.username.collectAsState()
-    val email by registerViewModel.email.collectAsState()
-    val password by registerViewModel.password.collectAsState()
     val isLoading by registerViewModel.isLoading.collectAsState()
     val errorMessage by registerViewModel.errorMessage.collectAsState()
 
@@ -109,7 +110,7 @@ fun RegisterScreen(
             when (step) {
                 0 -> {
                     Text(
-                        text = "Введите имя пользователя",
+                        text = "Как вас зовут?",
                         color = Color.White.copy(alpha = 0.9f),
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
@@ -117,38 +118,34 @@ fun RegisterScreen(
                     Spacer(modifier = Modifier.height(25.dp))
 
                     CustomOutlinedTextField(
-                        username,
+                        registerData.username,
                         {
-                            registerViewModel.updateUsername(
-                                it.replace(" ", "").filter { c -> c.code in 32..126 })
+                            registerViewModel.updateRegisterData {
+                                copy(
+                                    username = it.replace(" ", "")
+                                        .filter { c -> c.code in 32..126 })
+                            }
                         },
                         "Логин",
                         KeyboardType.Text,
                         focusRequester,
                     )
+                    Spacer(modifier = Modifier.height(15.dp))
+                    CustomOutlinedTextField(
+                        registerData.firstName,
+                        {
+                            registerViewModel.updateRegisterData {
+                                copy(
+                                    firstName = it.replace(" ", "")
+                                        .filter { c -> c.code in 32..126 })
+                            }
+                        },
+                        "Имя",
+                        KeyboardType.Text,
+                    )
                 }
-
 
                 1 -> {
-                    Text(
-                        text = "Введите email",
-                        color = Color.White.copy(alpha = 0.9f),
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(25.dp))
-
-                    CustomOutlinedTextField(
-                        email,
-                        { registerViewModel.updateEmail(it.replace(" ", "")) },
-                        "Email",
-                        KeyboardType.Email,
-                        focusRequester,
-                    )
-                }
-
-
-                2 -> {
                     Text(
                         text = "Придумайте пароль",
                         color = Color.White.copy(alpha = 0.9f),
@@ -158,12 +155,73 @@ fun RegisterScreen(
                     Spacer(modifier = Modifier.height(25.dp))
 
                     CustomOutlinedTextField(
-                        password,
-                        { registerViewModel.updatePassword(it.replace(" ", "")) },
+                        registerData.password,
+                        {
+                            registerViewModel.updateRegisterData {
+                                copy(password = it.replace(" ", ""))
+                            }
+                        },
                         "Пароль",
                         KeyboardType.Password,
                         focusRequester,
                         isPassword = true
+                    )
+                    Spacer(modifier = Modifier.height(15.dp))
+                    CustomOutlinedTextField(
+                        registerData.password,
+                        {
+                            registerViewModel.updateRegisterData {
+                                copy(password = it.replace(" ", ""))
+                            }
+                        },
+                        "Пароль",
+                        KeyboardType.Password,
+                        focusRequester,
+                        isPassword = true
+                    )
+                }
+
+                2 -> {
+                    Text(
+                        text = "Введите email",
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(25.dp))
+
+                    CustomOutlinedTextField(
+                        registerData.email,
+                        {
+                            registerViewModel.updateRegisterData {
+                                copy(email = it.replace(" ", ""))
+                            }
+                        },
+                        "Email",
+                        KeyboardType.Email,
+                        focusRequester,
+                    )
+                }
+
+                3 -> {
+                    Text(
+                        text = "Расскажите о себе",
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(25.dp))
+
+                    CustomOutlinedTextField(
+                        editProfileData.bio,
+                        {
+                            editProfileViewModel.updateProfileData {
+                                copy(bio = it)
+                            }
+                        },
+                        "bio",
+                        KeyboardType.Text,
+                        focusRequester,
                     )
                 }
             }
@@ -188,23 +246,24 @@ fun RegisterScreen(
                 }
             }
 
-            val isNextEnabled = when (step) {
-                0 -> username.isNotBlank() && !username.contains(" ")
-                1 -> email.isNotBlank() && email.contains("@") && !email.contains(" ")
-                2 -> password.isNotBlank() && password.length >= 8 && !password.contains(" ")
-                else -> false
-            }
+            val isNextEnabled = registerViewModel.isCurrentStepValid()
 
             Button(
                 onClick = {
-                    if (step < 2) {
-                        registerViewModel.nextStep()
-                    } else {
-                        registerViewModel.register {
-                            focusManager.clearFocus()
+                    when (step) {
+                        0 -> registerViewModel.nextStep()
+                        1 -> registerViewModel.nextStep()
+                        2 -> {
+                            registerViewModel.register {
+                                focusManager.clearFocus()
+                                Toast.makeText(context, "Регистрация успешна!", Toast.LENGTH_SHORT)
+                                    .show()
+                                registerViewModel.nextStep()
+                            }
+                        }
+                        3 -> {
                             hideKeyboard(context)
-                            Toast.makeText(context, "Регистрация успешна!", Toast.LENGTH_SHORT)
-                                .show()
+                            editProfileViewModel.saveProfile()
                             onCompleteRegistration()
                         }
                     }
@@ -217,10 +276,10 @@ fun RegisterScreen(
                     disabledContentColor = Color.White
                 )
             ) {
-                if (isLoading && step == 2) {
+                if (isLoading && step == 3) {
                     LoadingSpinnerForElement()
                 } else {
-                    Text(text = if (step < 2) "Далее" else "Завершить")
+                    Text(text = if (step < 3) "Далее" else "Завершить")
                 }
             }
         }
@@ -257,17 +316,17 @@ fun RegisterScreen(
 
 @Composable
 fun CustomOutlinedTextField(
-    value: String,
+    value: String?,
     onValueChange: (String) -> Unit,
     label: String,
     keyboardType: KeyboardType,
-    focusRequester: FocusRequester,
+    focusRequester: FocusRequester = remember { FocusRequester() },
     isPassword: Boolean = false
 ) {
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
     OutlinedTextField(
-        value = value,
+        value = value ?: "",
         onValueChange = onValueChange,
         label = { Text(label) },
         singleLine = true,
@@ -318,7 +377,7 @@ fun StepIndicator(currentStep: Int) {
         horizontalArrangement = Arrangement.Center,
         modifier = Modifier.fillMaxWidth()
     ) {
-        for (i in 0..2) {
+        for (i in 0..3) {
             Box(
                 modifier = Modifier
                     .size(12.dp)
@@ -326,7 +385,7 @@ fun StepIndicator(currentStep: Int) {
                     .background(if (i == currentStep) Color.White else Color.Gray)
                     .padding(4.dp)
             )
-            if (i < 2) Spacer(modifier = Modifier.width(8.dp))
+            if (i < 3) Spacer(modifier = Modifier.width(8.dp))
         }
     }
 }
