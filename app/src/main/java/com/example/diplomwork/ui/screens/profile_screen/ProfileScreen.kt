@@ -61,7 +61,7 @@ import kotlin.math.roundToInt
 
 @Composable
 fun ProfileScreen(
-    onLogout: () -> Unit,
+    onSettingsClick: () -> Unit,
     onEditProfile: () -> Unit = { },
     onBack: () -> Unit,
     onImageClick: (Long, String) -> Unit,
@@ -104,13 +104,15 @@ fun ProfileScreen(
                     username = profileData?.username ?: "Неизвестный",
                     firstName = profileData?.firstName ?: "Неизвестный",
                     picturesCount = profileData?.pinsCount ?: 0,
+                    followingCount = profileData?.followingCount ?: 0,
+                    followersCount = profileData?.followersCount ?: 0,
                     avatarUrl = profileData?.profileImageUrl,
                     isUploading = isUploading,
-                    onAvatarClick = {
-                        pickImageLauncher.launch("image/*")
-                    },
-                    onLogout = onLogout,
+                    onAvatarClick = { pickImageLauncher.launch("image/*") },
+                    onSettingsClick = onSettingsClick,
                     onEditProfile = onEditProfile,
+                    onSubscribe = {},
+                    onUnsubscribe = {},
                     onBack = onBack,
                     avatarUpdateKey = avatarUpdateCounter,
                     isOwnProfile = isOwnProfile

@@ -23,6 +23,7 @@ import androidx.navigation.toRoute
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.ui.components.bottom_menu.BottomNavigationBar
 import com.example.diplomwork.ui.components.top_bar.GetTopBars
+import com.example.diplomwork.ui.screens.SettingsScreen
 import com.example.diplomwork.ui.screens.create_content_screens.CreateContentScreen
 import com.example.diplomwork.ui.screens.create_content_screens.WhatCreateBottomSheet
 import com.example.diplomwork.ui.screens.gallery_screen.GalleryScreen
@@ -149,10 +150,9 @@ fun AppNavigation(navController: NavHostController) {
             }
             composable<OtherProfileScreenData> {
                 ProfileScreen(
-                    onLogout = {
-                        sessionManager.clearSession()
-                        navController.navigate(Login) {
-                            popUpTo(Login) { inclusive = true }
+                    onSettingsClick = {
+                        navController.navigate(Settings) {
+                            popUpTo(Settings) { inclusive = false }
                         }
                     },
                     onBack = { navController.popBackStack() },
@@ -161,12 +161,12 @@ fun AppNavigation(navController: NavHostController) {
                     }
                 )
             }
+
             composable<OwnProfile> {
                 ProfileScreen(
-                    onLogout = {
-                        sessionManager.clearSession()
-                        navController.navigate(Login) {
-                            popUpTo(Login) { inclusive = true }
+                    onSettingsClick = {
+                        navController.navigate(Settings) {
+                            popUpTo(Settings) { inclusive = false }
                         }
                     },
                     onEditProfile = {
@@ -191,7 +191,8 @@ fun AppNavigation(navController: NavHostController) {
                 )
             }
             composable<PictureDetailScreenData> { backStackEntry ->
-                val pictureDetailScreenData = backStackEntry.toRoute<PictureDetailScreenData>()
+                val pictureDetailScreenData =
+                    backStackEntry.toRoute<PictureDetailScreenData>()
 
                 PictureDetailScreen(
                     pictureDetailScreenData,
@@ -216,6 +217,24 @@ fun AppNavigation(navController: NavHostController) {
             composable<Notification> {
                 /* FavsScreen() */
             }
+
+            composable<Settings> {
+                SettingsScreen(
+                    onBack = { navController.popBackStack() },
+                    onEditProfileClick = {},
+                    onAccountManagementClick = {},
+                    onPrivacyClick = {},
+                    onLogoutClick = {
+                        sessionManager.clearSession()
+                        navController.navigate(Login) {
+                            popUpTo(Login) { inclusive = true }
+                        }
+                    },
+                    onHelpCenterClick = {},
+                    onPrivacyPolicyClick = {}
+                )
+            }
+
             composable<Register> {
                 RegisterScreen(
                     onCompleteRegistration = {
@@ -242,7 +261,8 @@ fun AppNavigation(navController: NavHostController) {
             }
 
             composable<CreateContentScreenData> { backStackEntry ->
-                val createContentScreenData = backStackEntry.toRoute<CreateContentScreenData>()
+                val createContentScreenData =
+                    backStackEntry.toRoute<CreateContentScreenData>()
 
                 CreateContentScreen(
                     createContentScreenData = createContentScreenData,

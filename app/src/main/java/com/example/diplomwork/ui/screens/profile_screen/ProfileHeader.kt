@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
@@ -36,11 +35,15 @@ fun ProfileHeader(
     username: String,
     firstName: String,
     picturesCount: Int,
+    followingCount: Int,
+    followersCount: Int,
     avatarUrl: String?,
     isUploading: Boolean = false,
     onAvatarClick: () -> Unit,
-    onLogout: () -> Unit,
+    onSettingsClick: () -> Unit,
     onEditProfile: () -> Unit,
+    onSubscribe: () -> Unit,
+    onUnsubscribe: () -> Unit,
     onBack: () -> Unit,
     avatarUpdateKey: Int,
     isOwnProfile: Boolean = false
@@ -97,7 +100,7 @@ fun ProfileHeader(
                 }
                 IconButton(
                     onClick = {
-                        if (isOwnProfile) onLogout()
+                        if (isOwnProfile) onSettingsClick()
                         else return@IconButton
                     },
                     modifier = Modifier
@@ -184,8 +187,8 @@ fun ProfileHeader(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            StatCard("4", "Подписчики", Modifier.weight(1f))
-            StatCard("15", "Подписки", Modifier.weight(1f))
+            StatCard("$followersCount", "Подписчики", Modifier.weight(1f))
+            StatCard("$followingCount", "Подписки", Modifier.weight(1f))
             StatCard("$picturesCount", "Картинки", Modifier.weight(1f))
         }
         Spacer(modifier = Modifier.height(9.dp))
@@ -202,6 +205,7 @@ fun ProfileHeader(
                 Button(
                     modifier = Modifier.fillMaxWidth(0.5f),
                     onClick = {
+                        onSubscribe()
                     },
                     colors = ButtonColors(
                         containerColor = Color.Red.copy(alpha = 0.9f),

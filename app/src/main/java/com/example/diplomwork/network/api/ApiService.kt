@@ -1,23 +1,31 @@
 package com.example.diplomwork.network.api
 
-import com.example.diplomwork.model.LoginRequest
-import com.example.diplomwork.model.LoginResponse
-import com.example.diplomwork.model.ProfileResponse
+import com.example.diplomwork.model.ApiResponse
 import com.example.diplomwork.model.CommentRequest
 import com.example.diplomwork.model.CommentResponse
+import com.example.diplomwork.model.EditProfileRequest
+import com.example.diplomwork.model.LoginRequest
+import com.example.diplomwork.model.LoginResponse
+import com.example.diplomwork.model.PageResponse
 import com.example.diplomwork.model.PictureResponse
+import com.example.diplomwork.model.PostResponse
+import com.example.diplomwork.model.ProfileResponse
 import com.example.diplomwork.model.RegisterRequest
 import com.example.diplomwork.model.RegisterResponse
 import com.example.diplomwork.model.TokenRefreshRequest
 import com.example.diplomwork.model.TokenRefreshResponse
-import com.example.diplomwork.model.ApiResponse
-import com.example.diplomwork.model.EditProfileRequest
-import com.example.diplomwork.model.PageResponse
-import com.example.diplomwork.model.PostResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
-import retrofit2.http.*
+import retrofit2.http.Body
+import retrofit2.http.DELETE
+import retrofit2.http.GET
+import retrofit2.http.Multipart
+import retrofit2.http.POST
+import retrofit2.http.PUT
+import retrofit2.http.Part
+import retrofit2.http.Path
+import retrofit2.http.Query
 
 
 interface ApiService {
@@ -116,5 +124,17 @@ interface ApiService {
     suspend fun uploadProfileImage(
         @Part file: MultipartBody.Part
     ): Response<Map<String, String>>
+
+    @POST("api/follows/{followerId}/following/{followingId}")
+    suspend fun subscribe(
+        @Path("followerId") followerId: Long,
+        @Path("followingId") followingId: Long
+    ): Response<Unit>
+
+    @DELETE("api/follows/{followerId}/following/{followingId}")
+    suspend fun unsubscribe(
+        @Path("followerId") followerId: Long,
+        @Path("followingId") followingId: Long
+    ): Response<Unit>
 
 }
