@@ -1,6 +1,7 @@
 package com.example.diplomwork.ui.screens.picture_detail_screen
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -74,7 +76,10 @@ fun ActionBar(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable { onLikeClick() }
+                    modifier = Modifier.clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) { onLikeClick() }
                 ) {
                     Icon(
                         painter = painterResource(
@@ -98,7 +103,10 @@ fun ActionBar(
                 Spacer(modifier = Modifier.width(10.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable { onCommentClick() }
+                    modifier = Modifier.clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) { onCommentClick() }
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_comments),
@@ -122,8 +130,10 @@ fun ActionBar(
 
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onProfileClick(userId, username) },
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                ) { onProfileClick(userId, username) },
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.Bottom
         ) {

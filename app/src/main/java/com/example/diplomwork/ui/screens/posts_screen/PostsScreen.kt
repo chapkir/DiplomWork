@@ -2,6 +2,7 @@ package com.example.diplomwork.ui.screens.posts_screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -131,7 +132,10 @@ fun PostCard(
         Column(modifier = Modifier.padding(8.dp)) {
             Row(
                 modifier = Modifier
-                    .clickable { onProfileClick(post.userId, post.username) },
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) { onProfileClick(post.userId, post.username) },
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 AsyncImage(
@@ -190,7 +194,10 @@ fun PostCard(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable { onLikeClick() }
+                    modifier = Modifier.clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) { onLikeClick() }
                 ) {
                     Icon(
                         painter = painterResource(
@@ -212,7 +219,10 @@ fun PostCard(
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable { onCommentClick() }
+                    modifier = Modifier.clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() },
+                    ) { onCommentClick() }
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_comments),
