@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.screens
+package com.example.diplomwork.ui.screens.settings_screens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource

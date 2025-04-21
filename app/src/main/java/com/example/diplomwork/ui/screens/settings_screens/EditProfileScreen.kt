@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.screens.profile_screen
+package com.example.diplomwork.ui.screens.settings_screens
 
 import android.widget.Toast
 import androidx.compose.foundation.background

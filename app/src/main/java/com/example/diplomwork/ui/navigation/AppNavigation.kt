@@ -23,7 +23,6 @@ import androidx.navigation.toRoute
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.ui.components.bottom_menu.BottomNavigationBar
 import com.example.diplomwork.ui.components.top_bar.GetTopBars
-import com.example.diplomwork.ui.screens.SettingsScreen
 import com.example.diplomwork.ui.screens.create_content_screens.CreateContentScreen
 import com.example.diplomwork.ui.screens.create_content_screens.WhatCreateBottomSheet
 import com.example.diplomwork.ui.screens.gallery_screen.GalleryScreen
@@ -31,9 +30,10 @@ import com.example.diplomwork.ui.screens.home_screen.HomeScreen
 import com.example.diplomwork.ui.screens.login_screen.LoginScreen
 import com.example.diplomwork.ui.screens.picture_detail_screen.PictureDetailScreen
 import com.example.diplomwork.ui.screens.posts_screen.PostsScreen
-import com.example.diplomwork.ui.screens.profile_screen.EditProfileScreen
 import com.example.diplomwork.ui.screens.profile_screen.ProfileScreen
 import com.example.diplomwork.ui.screens.registration_screen.RegisterScreen
+import com.example.diplomwork.ui.screens.settings_screens.EditProfileScreen
+import com.example.diplomwork.ui.screens.settings_screens.SettingsScreen
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -169,11 +169,6 @@ fun AppNavigation(navController: NavHostController) {
                             popUpTo(Settings) { inclusive = false }
                         }
                     },
-                    onEditProfile = {
-                        navController.navigate(EditProfile) {
-                            popUpTo(OwnProfile)
-                        }
-                    },
                     onBack = { navController.popBackStack() },
                     onImageClick = { pictureId, imageUrl ->
                         navController.navigate(PictureDetailScreenData(pictureId, imageUrl))
@@ -221,7 +216,11 @@ fun AppNavigation(navController: NavHostController) {
             composable<Settings> {
                 SettingsScreen(
                     onBack = { navController.popBackStack() },
-                    onEditProfileClick = {},
+                    onEditProfileClick = {
+                        navController.navigate(EditProfile) {
+                            popUpTo(OwnProfile)
+                        }
+                    },
                     onAccountManagementClick = {},
                     onPrivacyClick = {},
                     onLogoutClick = {

@@ -50,69 +50,55 @@ class PostsScreenViewModel @Inject constructor(
             try {
                 val result = postRepository.getPosts()
                 _posts.value = result
-                loadAllCommentsCounts(result)
+                loadAllComments(result)
             } catch (e: Exception) {
-                _error.value = e.message ?: "Unknown error"
+                _error.value = e.message ?: "Ошибка загрузки постов"
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
-    private fun loadAllCommentsCounts(posts: List<PostResponse>) {
+    private fun loadAllComments(posts: List<PostResponse>) {
         viewModelScope.launch {
-            val deferredList = posts.map { post ->
+            val result = posts.map { post ->
                 async {
-                    try {
-                        val comments = commentRepository.getPostComments(post.id)
-                        post.id to comments
-                    } catch (_: Exception) {
-                        post.id to emptyList()
-                    }
+                    val comments = runCatching {
+                        commentRepository.getPostComments(post.id)
+                    }.getOrDefault(emptyList())
+                    post.id to comments
                 }
-            }
-            val result = deferredList.awaitAll().toMap()
+            }.awaitAll().toMap()
+
             _comments.value = result
         }
     }
 
     fun toggleLike(postId: Long) {
         viewModelScope.launch {
-            // Найди индекс поста
-            val index = _posts.value.indexOfFirst { it.id == postId }
-            if (index == -1) return@launch
-
-            val post = _posts.value[index]
+            val post = _posts.value.find { it.id == postId } ?: return@launch
             val wasLiked = post.isLikedByCurrentUser
             val newLikesCount = if (!wasLiked) post.likesCount + 1 else (post.likesCount - 1).coerceAtLeast(0)
 
-            // 1. Обнови локальный список (оптимистично)
-            val updatedPost = post.copy(
-                isLikedByCurrentUser = !wasLiked,
-                likesCount = newLikesCount
-            )
-            _posts.value = _posts.value.toMutableList().apply { set(index, updatedPost) }
+            updatePost(postId) {
+                copy(
+                    isLikedByCurrentUser = !wasLiked,
+                    likesCount = newLikesCount
+                )
+            }
 
             try {
-                // 2. Отправь на сервер
-                if (wasLiked) {
-                    val response = postRepository.unlikePost(postId)
-                    if (!response.isSuccessful) {
-                        throw HttpException(response)
-                    }
+                val response = if (wasLiked) {
+                    postRepository.unlikePost(postId)
                 } else {
-                    val response = postRepository.likePost(postId)
-                    if (!response.isSuccessful) {
-                        throw HttpException(response)
-                    }
+                    postRepository.likePost(postId)
                 }
+
+                if (!response.isSuccessful) throw HttpException(response)
+
             } catch (e: Exception) {
-                // 3. Откат в случае ошибки
-                val revertedPost = post.copy(
-                    isLikedByCurrentUser = wasLiked,
-                    likesCount = post.likesCount
-                )
-                _posts.value = _posts.value.toMutableList().apply { set(index, revertedPost) }
+                // Откат
+                updatePost(postId) { post }
                 _error.value = e.message ?: "Ошибка при обновлении лайка"
                 Log.e("PostsViewModel", "Ошибка при лайке: ${e.message}")
             }
@@ -125,22 +111,20 @@ class PostsScreenViewModel @Inject constructor(
                 val postComments = commentRepository.getPostComments(postId)
                 _comments.update { it.toMutableMap().apply { put(postId, postComments) } }
             } catch (e: Exception) {
-                Log.e("PostsViewModel", "Error loading comments: ${e.message}")
+                Log.e("PostsViewModel", "Ошибка загрузки комментариев: ${e.message}")
             }
         }
     }
 
     fun addComment(postId: Long, commentText: String) {
+        if (commentText.isBlank()) return
         viewModelScope.launch {
-            if (commentText.isBlank()) return@launch
-
             try {
-                val commentRequest = CommentRequest(text = commentText)
-                commentRepository.addPostComment(postId, commentRequest)
+                commentRepository.addPostComment(postId, CommentRequest(text = commentText))
                 val updatedComments = commentRepository.getPostComments(postId)
                 _comments.update { it.toMutableMap().apply { put(postId, updatedComments) } }
             } catch (e: Exception) {
-                Log.e("PictureDetailViewModel", "Error adding comment: ${e.message}")
+                Log.e("PostsViewModel", "Ошибка при добавлении комментария: ${e.message}")
             }
         }
     }
@@ -149,4 +133,9 @@ class PostsScreenViewModel @Inject constructor(
         _selectedPostId.value = id
     }
 
+    private fun updatePost(postId: Long, update: PostResponse.() -> PostResponse) {
+        _posts.value = _posts.value.map { post ->
+            if (post.id == postId) post.update() else post
+        }
+    }
 }

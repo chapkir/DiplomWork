@@ -41,7 +41,6 @@ fun ProfileHeader(
     isUploading: Boolean = false,
     onAvatarClick: () -> Unit,
     onSettingsClick: () -> Unit,
-    onEditProfile: () -> Unit,
     onSubscribe: () -> Unit,
     onUnsubscribe: () -> Unit,
     onBack: () -> Unit,
@@ -82,37 +81,20 @@ fun ProfileHeader(
                     )
                 }
             }
-            Row {
-                IconButton(
-                    onClick = {
-                        if (isOwnProfile) onEditProfile()
-                        else return@IconButton
-                    },
-                    modifier = Modifier
-                        .size(41.dp)
-                        .padding(end = 20.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_pencil),
-                        contentDescription = "Settings",
-                        tint = Color.White
-                    )
-                }
-                IconButton(
-                    onClick = {
-                        if (isOwnProfile) onSettingsClick()
-                        else return@IconButton
-                    },
-                    modifier = Modifier
-                        .size(41.dp)
-                        .padding(end = 20.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_settings),
-                        contentDescription = "Settings",
-                        tint = Color.White
-                    )
-                }
+            IconButton(
+                onClick = {
+                    if (isOwnProfile) onSettingsClick()
+                    else return@IconButton
+                },
+                modifier = Modifier
+                    .size(41.dp)
+                    .padding(end = 20.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_settings),
+                    contentDescription = "Settings",
+                    tint = Color.White
+                )
             }
         }
         Spacer(modifier = Modifier.height(12.dp))

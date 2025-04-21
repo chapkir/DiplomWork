@@ -3,10 +3,9 @@ package com.example.diplomwork.ui.screens.profile_screen
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,7 +45,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.components.PictureCard
@@ -62,7 +60,6 @@ import kotlin.math.roundToInt
 @Composable
 fun ProfileScreen(
     onSettingsClick: () -> Unit,
-    onEditProfile: () -> Unit = { },
     onBack: () -> Unit,
     onImageClick: (Long, String) -> Unit,
     profileViewModel: ProfileViewModel = hiltViewModel()
@@ -110,7 +107,6 @@ fun ProfileScreen(
                     isUploading = isUploading,
                     onAvatarClick = { pickImageLauncher.launch("image/*") },
                     onSettingsClick = onSettingsClick,
-                    onEditProfile = onEditProfile,
                     onSubscribe = {},
                     onUnsubscribe = {},
                     onBack = onBack,
@@ -235,7 +231,10 @@ fun CustomTabPager(
                                     tabWidths.add(coordinates.size.width.toFloat())
                                 }
                             }
-                            .clickable {
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) {
                                 coroutineScope.launch {
                                     pagerState.animateScrollToPage(index)
                                 }
