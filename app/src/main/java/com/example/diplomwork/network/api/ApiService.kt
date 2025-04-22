@@ -6,6 +6,7 @@ import com.example.diplomwork.model.CommentResponse
 import com.example.diplomwork.model.EditProfileRequest
 import com.example.diplomwork.model.LoginRequest
 import com.example.diplomwork.model.LoginResponse
+import com.example.diplomwork.model.NotificationResponse
 import com.example.diplomwork.model.PageResponse
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.model.PostResponse
@@ -136,5 +137,8 @@ interface ApiService {
         @Path("followerId") followerId: Long,
         @Path("followingId") followingId: Long
     ): Response<Unit>
+
+    @GET("api/notifications")
+    suspend fun getNotifications(): List<NotificationResponse>
 
 }

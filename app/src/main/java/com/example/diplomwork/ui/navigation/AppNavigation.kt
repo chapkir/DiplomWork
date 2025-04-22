@@ -71,12 +71,7 @@ fun AppNavigation(navController: NavHostController) {
         coroutineScope.launch { sheetState.show() }
     }
 
-    val triggerRefresh = {
-        shouldRefresh = true
-        lastRefreshTimestamp = System.currentTimeMillis()
-        Log.d("AppNavigation", "Запрошено обновление главного экрана в $lastRefreshTimestamp")
-        Unit
-    }
+
 
     // Функция для задержки поиска
     fun performSearch(query: String) {
@@ -104,7 +99,7 @@ fun AppNavigation(navController: NavHostController) {
                 onSearch = { query ->
                     performSearch(query)
                 },
-                onRefresh = triggerRefresh
+                //onRefresh = triggerRefresh
             )
         },
         bottomBar = {
@@ -218,7 +213,7 @@ fun AppNavigation(navController: NavHostController) {
                     onBack = { navController.popBackStack() },
                     onEditProfileClick = {
                         navController.navigate(EditProfile) {
-                            popUpTo(OwnProfile)
+                            popUpTo(EditProfile)
                         }
                     },
                     onAccountManagementClick = {},

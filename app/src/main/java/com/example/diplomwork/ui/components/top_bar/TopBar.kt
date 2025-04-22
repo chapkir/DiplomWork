@@ -49,7 +49,7 @@ import androidx.compose.foundation.text.KeyboardActions
 fun GetTopBars(
     currentRoute: String?,
     onSearch: (String) -> Unit = {},
-    onRefresh: () -> Unit = {}
+    //onRefresh: () -> Unit = {}
 ) {
     var isSearching by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
@@ -85,7 +85,7 @@ fun GetTopBars(
                 icon = R.drawable.ic_search,
                 contentDescription = "Search",
                 onIconClick = { isSearching = true },
-                onRefreshClick = onRefresh // Обработка нажатия на кнопку обновления
+                //onRefreshClick = onRefresh // Обработка нажатия на кнопку обновления
             )
 
             Posts::class.simpleName -> CustomTopBar(title = "Посты")
