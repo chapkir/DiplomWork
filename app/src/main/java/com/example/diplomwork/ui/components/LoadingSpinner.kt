@@ -23,7 +23,7 @@ fun LoadingSpinnerForScreen(
     ) {
         CircularProgressIndicator(
             color = indicatorColor,
-            strokeWidth = 5.dp,
+            strokeWidth = 7.dp,
             modifier = Modifier.size(indicatorSize.dp)
         )
     }
@@ -40,7 +40,7 @@ fun LoadingSpinnerForElement(
     ) {
         CircularProgressIndicator(
             color = indicatorColor,
-            strokeWidth = 4.dp,
+            strokeWidth = 6.dp,
             modifier = Modifier.size(indicatorSize.dp)
         )
     }

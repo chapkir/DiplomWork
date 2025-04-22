@@ -19,13 +19,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
+import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 
 @Composable
@@ -45,8 +48,24 @@ fun ImageView(imageRes: String, aspectRatio: Float) {
         modifier = Modifier.padding(start = 7.dp, end = 7.dp)
     ) {
         Box(
-            modifier = Modifier.clip(RoundedCornerShape(30.dp))
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(30.dp))
         ) {
+            // 1. Градиентный фон с блюром
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFFB3E5FC),
+                                Color(0xFF0A526B),
+                            )
+                        )
+                    )
+                    .blur(50.dp)
+            )
             AsyncImage(
                 model = ImageRequest.Builder(context).data(displayUrl).crossfade(true).build(),
                 contentDescription = null,
@@ -87,7 +106,12 @@ fun ImageView(imageRes: String, aspectRatio: Float) {
 
             when {
                 isLoading -> {
-                    LoadingSpinnerForScreen()
+                    Box(
+                        modifier = Modifier.matchParentSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        LoadingSpinnerForElement(indicatorSize = 30)
+                    }
                 }
 
                 isError -> {

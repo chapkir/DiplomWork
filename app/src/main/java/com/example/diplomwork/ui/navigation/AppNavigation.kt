@@ -26,10 +26,10 @@ import com.example.diplomwork.ui.components.top_bar.GetTopBars
 import com.example.diplomwork.ui.screens.create_content_screens.CreateContentScreen
 import com.example.diplomwork.ui.screens.create_content_screens.WhatCreateBottomSheet
 import com.example.diplomwork.ui.screens.gallery_screen.GalleryScreen
-import com.example.diplomwork.ui.screens.pictures_screen.PicturesScreen
 import com.example.diplomwork.ui.screens.login_screen.LoginScreen
 import com.example.diplomwork.ui.screens.notification_screen.NotificationScreen
 import com.example.diplomwork.ui.screens.picture_detail_screen.PictureDetailScreen
+import com.example.diplomwork.ui.screens.pictures_screen.PicturesScreen
 import com.example.diplomwork.ui.screens.posts_screen.PostsScreen
 import com.example.diplomwork.ui.screens.profile_screen.ProfileScreen
 import com.example.diplomwork.ui.screens.registration_screen.RegisterScreen
@@ -71,7 +71,6 @@ fun AppNavigation(navController: NavHostController) {
     val openSheet = {
         coroutineScope.launch { sheetState.show() }
     }
-
 
 
     // Функция для задержки поиска
@@ -268,7 +267,10 @@ fun AppNavigation(navController: NavHostController) {
 
                 CreateContentScreen(
                     createContentScreenData = createContentScreenData,
-                    onContentAdded = { navController.navigate(Pictures) },
+                    onContentAdded = {
+                        navController.popBackStack()
+                        navController.popBackStack()
+                    },
                     onBack = { navController.popBackStack() }
                 )
             }
