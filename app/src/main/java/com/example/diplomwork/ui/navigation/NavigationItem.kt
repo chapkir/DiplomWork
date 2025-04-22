@@ -15,7 +15,7 @@ object Login : Screen
 object Register : Screen
 
 @Serializable
-object Home : Screen
+object Pictures : Screen
 
 @Serializable
 object Posts : Screen

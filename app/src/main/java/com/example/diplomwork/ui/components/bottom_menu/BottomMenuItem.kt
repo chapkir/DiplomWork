@@ -2,7 +2,7 @@ package com.example.diplomwork.ui.components.bottom_menu
 
 import com.example.diplomwork.R
 import com.example.diplomwork.ui.navigation.AddContent
-import com.example.diplomwork.ui.navigation.Home
+import com.example.diplomwork.ui.navigation.Pictures
 import com.example.diplomwork.ui.navigation.Notification
 import com.example.diplomwork.ui.navigation.Posts
 import com.example.diplomwork.ui.navigation.OwnProfile
@@ -14,15 +14,15 @@ sealed class BottomNavItem(
     val label: String,
     val isAddButton: Boolean = false
 ) {
-    object HomeScreen : BottomNavItem(
-        route = Home,
-        icon = R.drawable.ic_home,
-        label = "Home"
+    object PicturesScreen : BottomNavItem(
+        route = Pictures,
+        icon = R.drawable.ic_picture,
+        label = "Pictures"
     )
 
     object PostsScreen : BottomNavItem(
         route = Posts,
-        icon = R.drawable.ic_picture,
+        icon = R.drawable.ic_home,
         label = "Posts"
     )
 

@@ -1,7 +1,6 @@
-package com.example.diplomwork.ui.screens.home_screen
+package com.example.diplomwork.ui.screens.pictures_screen
 
 import android.annotation.SuppressLint
-import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -18,32 +17,27 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.diplomwork.model.PictureResponse
-import com.example.diplomwork.viewmodel.HomeViewModel
-import kotlinx.coroutines.delay
+import com.example.diplomwork.viewmodel.PicturesViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun HomeScreen(
-    homeViewModel: HomeViewModel = hiltViewModel(),
+fun PicturesScreen(
+    picturesViewModel: PicturesViewModel = hiltViewModel(),
     onImageClick: (Long, String) -> Unit = { _, _ -> },
     shouldRefresh: Boolean = false,
     onRefreshComplete: () -> Unit = {},
     searchQuery: String = ""
 ) {
 
-    val pictures by homeViewModel.pictures.collectAsState()
-    val isLoading by homeViewModel.isLoading.collectAsState()
-    val error by homeViewModel.error.collectAsState()
+    val pictures by picturesViewModel.pictures.collectAsState()
+    val isLoading by picturesViewModel.isLoading.collectAsState()
+    val error by picturesViewModel.error.collectAsState()
 
     val refreshing by remember { mutableStateOf(false) }
     val refreshTrigger by remember { mutableIntStateOf(0) }
@@ -51,7 +45,7 @@ fun HomeScreen(
     // Отслеживаем изменения флага shouldRefresh
     LaunchedEffect(shouldRefresh) {
         if (shouldRefresh) {
-            homeViewModel.refreshPictures(searchQuery)
+            picturesViewModel.refreshPictures(searchQuery)
             onRefreshComplete()
         }
     }
@@ -60,7 +54,7 @@ fun HomeScreen(
     val refreshScope = rememberCoroutineScope()
 
     fun refresh() = refreshScope.launch {
-        homeViewModel.refreshPictures(searchQuery)
+        picturesViewModel.refreshPictures(searchQuery)
     }
 
     val pullRefreshState = rememberPullRefreshState(refreshing, ::refresh)
@@ -71,7 +65,7 @@ fun HomeScreen(
             .pullRefresh(pullRefreshState)
     ) {
         ContentGrid(
-            homeViewModel,
+            picturesViewModel,
             modifier = Modifier.fillMaxSize(),
             onImageClick = { pictureResponse ->
                 onImageClick(pictureResponse.id, pictureResponse.imageUrl)

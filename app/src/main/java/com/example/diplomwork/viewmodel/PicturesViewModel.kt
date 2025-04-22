@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(
+class PicturesViewModel @Inject constructor(
     private val pictureRepository: PictureRepository
 ) : ViewModel() {
 

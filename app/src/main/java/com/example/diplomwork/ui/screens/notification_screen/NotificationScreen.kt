@@ -17,9 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.ClickableText
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -35,7 +32,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
@@ -47,28 +43,31 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.diplomwork.R
 import com.example.diplomwork.model.NotificationResponse
+import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.components.formatDate
 import com.example.diplomwork.viewmodel.NotificationViewModel
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
 @Composable
 fun NotificationScreen(
-    onProfile: (Long) -> Unit = {},
-    onNotificationContent: (Long) -> Unit = {},
+    onProfile: (Long, String) -> Unit,
+    onNotificationContent: (Long, String) -> Unit,
     viewModel: NotificationViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     Box(
-        modifier = Modifier.fillMaxSize().background(Color.Black)
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
     ) {
         when {
             uiState.isLoading -> {
-                CircularProgressIndicator(Modifier.align(Alignment.Center))
+                LoadingSpinnerForScreen()
             }
+
             uiState.error != null -> {
                 Text(
                     text = uiState.error!!,
@@ -76,12 +75,14 @@ fun NotificationScreen(
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
+
             uiState.notifications.isEmpty() -> {
                 Text(
                     text = "Нет уведомлений",
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
+
             else -> {
                 val grouped = groupNotificationsByDate(uiState.notifications)
 
@@ -90,7 +91,8 @@ fun NotificationScreen(
                         item {
                             Text(
                                 text = label,
-                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 20.sp,
                                 modifier = Modifier
                                     .padding(start = 16.dp, top = 16.dp, bottom = 5.dp)
                             )
@@ -101,8 +103,13 @@ fun NotificationScreen(
                         ) { notification ->
                             NotificationItem(
                                 notification,
-                                onUserClick = { userId -> onProfile(userId) },
-                                onNotificationClick = { contentId -> onNotificationContent(contentId) }
+                                onUserClick = { userId, username -> onProfile(userId, username) },
+                                onNotificationClick = { contentId, pictureUrl ->
+                                    onNotificationContent(
+                                        contentId,
+                                        pictureUrl
+                                    )
+                                }
                             )
                         }
                     }
@@ -115,12 +122,12 @@ fun NotificationScreen(
 @Composable
 fun NotificationItem(
     notification: NotificationResponse,
-    onUserClick: (Long) -> Unit,
-    onNotificationClick: (Long) -> Unit
+    onUserClick: (Long, String) -> Unit,
+    onNotificationClick: (Long, String) -> Unit
 ) {
     val annotatedText = buildAnnotatedString {
-        pushStringAnnotation(tag = "USERNAME", annotation = notification.senderId.toString())
-        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+        pushStringAnnotation(tag = "USERNAME", annotation = "${notification.senderId},${notification.senderUsername}")
+        withStyle(style = SpanStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold)) {
             append(notification.senderUsername)
         }
         pop()
@@ -132,7 +139,6 @@ fun NotificationItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onNotificationClick(notification.pinId) }
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -142,7 +148,7 @@ fun NotificationItem(
             modifier = Modifier
                 .size(45.dp)
                 .clip(CircleShape)
-                .clickable { onUserClick(notification.senderId) },
+                .clickable { onUserClick(notification.senderId, notification.senderUsername) },
             contentScale = ContentScale.Crop
         )
 
@@ -157,10 +163,14 @@ fun NotificationItem(
                     detectTapGestures { offset ->
                         textLayoutResult?.let { layoutResult ->
                             val position = layoutResult.getOffsetForPosition(offset)
-                            annotatedText.getStringAnnotations("USERNAME", position, position)
-                                .firstOrNull()?.let {
-                                    onUserClick(it.item.toLong())
-                                }
+                            val annotation = annotatedText.getStringAnnotations("USERNAME", position, position).firstOrNull()
+
+                            if (annotation != null) {
+                                val (id, username) = annotation.item.split(",")
+                                onUserClick(id.toLong(), username)
+                            } else {
+                                onNotificationClick(notification.pinId, notification.pinImageUrl)
+                            }
                         }
                     }
                 }
@@ -182,8 +192,8 @@ fun NotificationItem(
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier
-                .size(52.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .size(51.dp)
+                .clip(RoundedCornerShape(9.dp))
         )
     }
 }
@@ -195,9 +205,9 @@ fun groupNotificationsByDate(notifications: List<NotificationResponse>): Map<Str
     return notifications.groupBy { notif ->
         val dateTime = LocalDateTime.parse(notif.createdAt, formatter)
         val date = dateTime.toLocalDate()
-        when {
-            date == now -> "Сегодня"
-            date == now.minusDays(1) -> "Вчера"
+        when (date) {
+            now -> "Сегодня"
+            now.minusDays(1) -> "Вчера"
             else -> "Ранее"
         }
     }

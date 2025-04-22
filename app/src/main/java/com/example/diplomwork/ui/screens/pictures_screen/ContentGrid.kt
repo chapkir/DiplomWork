@@ -1,4 +1,4 @@
-package com.example.diplomwork.ui.screens.home_screen
+package com.example.diplomwork.ui.screens.pictures_screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -29,11 +29,11 @@ import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.components.PictureCard
 import com.example.diplomwork.ui.theme.ColorForBackground
-import com.example.diplomwork.viewmodel.HomeViewModel
+import com.example.diplomwork.viewmodel.PicturesViewModel
 
 @Composable
 fun ContentGrid(
-    homeViewModel: HomeViewModel,
+    picturesViewModel: PicturesViewModel,
     modifier: Modifier = Modifier,
     onImageClick: (PictureResponse) -> Unit,
     pictures: List<PictureResponse>,
@@ -81,7 +81,7 @@ fun ContentGrid(
                     Button(
                         onClick = {
                             // Повторить запрос
-                            homeViewModel.refreshPictures(searchQuery)
+                            picturesViewModel.refreshPictures(searchQuery)
                         }
                     ) {
                         Text("Повторить", color = Color.White)

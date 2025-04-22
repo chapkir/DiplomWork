@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.diplomwork.R
 import com.example.diplomwork.ui.navigation.AddContent
-import com.example.diplomwork.ui.navigation.Home
+import com.example.diplomwork.ui.navigation.Pictures
 import com.example.diplomwork.ui.navigation.Login
 import com.example.diplomwork.ui.navigation.Notification
 import com.example.diplomwork.ui.navigation.Posts
@@ -56,7 +56,7 @@ fun GetTopBars(
 
     LaunchedEffect(currentRoute) {
         Log.d("GetTopBars", "currentRoute: $currentRoute")
-        if (currentRoute != Home::class.simpleName) {
+        if (currentRoute != Pictures::class.simpleName) {
             isSearching = false
             searchQuery = ""
         }
@@ -80,7 +80,7 @@ fun GetTopBars(
         )
     } else {
         when (currentRoute) {
-            Home::class.simpleName -> CustomTopBar(
+            Pictures::class.simpleName -> CustomTopBar(
                 title = "Лента картинок",
                 icon = R.drawable.ic_search,
                 contentDescription = "Search",

@@ -26,7 +26,7 @@ import com.example.diplomwork.ui.components.top_bar.GetTopBars
 import com.example.diplomwork.ui.screens.create_content_screens.CreateContentScreen
 import com.example.diplomwork.ui.screens.create_content_screens.WhatCreateBottomSheet
 import com.example.diplomwork.ui.screens.gallery_screen.GalleryScreen
-import com.example.diplomwork.ui.screens.home_screen.HomeScreen
+import com.example.diplomwork.ui.screens.pictures_screen.PicturesScreen
 import com.example.diplomwork.ui.screens.login_screen.LoginScreen
 import com.example.diplomwork.ui.screens.notification_screen.NotificationScreen
 import com.example.diplomwork.ui.screens.picture_detail_screen.PictureDetailScreen
@@ -82,8 +82,8 @@ fun AppNavigation(navController: NavHostController) {
             searchQuery = query
             isSearchActive = query.isNotEmpty()
             Log.d("AppNavigation", "Выполняется поиск по запросу: $query")
-            if (currentRoute != Home::class.simpleName) {
-                navController.navigate(Home)
+            if (currentRoute != Pictures::class.simpleName) {
+                navController.navigate(Pictures)
             }
         }
     }
@@ -107,7 +107,7 @@ fun AppNavigation(navController: NavHostController) {
             if (showBottomBar) BottomNavigationBar(
                 currentRoute = currentRoute,
                 onNavigate = { route ->
-                    if (route == Home && searchQuery.isNotEmpty()) {
+                    if (route == Pictures && searchQuery.isNotEmpty()) {
                         searchQuery = ""
                         isSearchActive = false
                     }
@@ -121,11 +121,11 @@ fun AppNavigation(navController: NavHostController) {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = if (sessionManager.isLoggedIn()) Home else Login,
+            startDestination = if (sessionManager.isLoggedIn()) Posts else Login,
             modifier = Modifier.padding(paddingValues)
         ) {
-            composable<Home> {
-                HomeScreen(
+            composable<Pictures> {
+                PicturesScreen(
                     onImageClick = { pictureId, imageUrl ->
                         navController.navigate(PictureDetailScreenData(pictureId, imageUrl))
                     },
@@ -206,7 +206,14 @@ fun AppNavigation(navController: NavHostController) {
             }
 
             composable<Notification> {
-                NotificationScreen()
+                NotificationScreen(
+                    onProfile = { userId, username ->
+                        navController.navigate(OtherProfileScreenData(userId, username))
+                    },
+                    onNotificationContent = { pictureId, imageUrl ->
+                        navController.navigate(PictureDetailScreenData(pictureId, imageUrl))
+                    }
+                )
             }
 
             composable<Settings> {
@@ -233,7 +240,7 @@ fun AppNavigation(navController: NavHostController) {
             composable<Register> {
                 RegisterScreen(
                     onCompleteRegistration = {
-                        navController.navigate(Home) {
+                        navController.navigate(Pictures) {
                             popUpTo(Register) { inclusive = true }
                         }
                     })
@@ -261,7 +268,7 @@ fun AppNavigation(navController: NavHostController) {
 
                 CreateContentScreen(
                     createContentScreenData = createContentScreenData,
-                    onContentAdded = { navController.navigate(Home) },
+                    onContentAdded = { navController.navigate(Pictures) },
                     onBack = { navController.popBackStack() }
                 )
             }
