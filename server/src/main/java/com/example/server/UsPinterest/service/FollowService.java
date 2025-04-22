@@ -45,9 +45,8 @@ public class FollowService {
             throw new FollowException("Подписка уже существует");
         }
 
-        Follow follow = new Follow();
-        follow.setFollower(follower);
-        follow.setFollowing(following);
+        // Initialize follow entity with timestamp
+        Follow follow = new Follow(follower, following);
 
         return followMapper.toDto(followRepository.save(follow));
     }

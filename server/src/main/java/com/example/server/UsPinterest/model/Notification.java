@@ -17,7 +17,7 @@ import jakarta.persistence.Index;
 public class Notification {
 
     public enum NotificationType {
-        LIKE, COMMENT, FOLLOW
+        LIKE, COMMENT, FOLLOW, POST
     }
 
     @Id
@@ -44,6 +44,11 @@ public class Notification {
     @ManyToOne
     @JoinColumn(name = "pin_id", nullable = true)
     private Pin pin;
+
+    @ManyToOne
+    @JoinColumn(name = "post_id", nullable = true)
+    @JsonIgnoreProperties({"password", "email", "boards", "comments", "likes"})
+    private Post post;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -100,6 +105,14 @@ public class Notification {
 
     public void setPin(Pin pin) {
         this.pin = pin;
+    }
+
+    public Post getPost() {
+        return post;
+    }
+
+    public void setPost(Post post) {
+        this.post = post;
     }
 
     public LocalDateTime getCreatedAt() {

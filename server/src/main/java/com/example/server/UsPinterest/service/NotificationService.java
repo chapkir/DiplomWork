@@ -8,6 +8,9 @@ import com.example.server.UsPinterest.repository.NotificationRepository;
 import com.example.server.UsPinterest.repository.PinRepository;
 import com.example.server.UsPinterest.repository.UserRepository;
 import com.example.server.UsPinterest.service.FileStorageService;
+import com.example.server.UsPinterest.repository.FollowRepository;
+import com.example.server.UsPinterest.model.Follow;
+import com.example.server.UsPinterest.model.Post;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -35,10 +38,46 @@ public class NotificationService {
     private PinRepository pinRepository;
 
     @Autowired
+    private FollowRepository followRepository;
+
+    @Autowired
     private UserService userService;
 
     @Autowired
     private FileStorageService fileStorageService;
+
+    // Создать уведомление о подписке
+    public void createFollowNotification(User sender, User recipient) {
+        if (sender.getId().equals(recipient.getId())) {
+            return;
+        }
+        Notification notification = new Notification();
+        notification.setType(Notification.NotificationType.FOLLOW);
+        notification.setMessage("подписался(-ась) на вас.");
+        notification.setRecipient(recipient);
+        notification.setSender(sender);
+        notification.setCreatedAt(LocalDateTime.now());
+        notificationRepository.save(notification);
+    }
+
+    // Создать уведомления о новом посте для подписчиков
+    public void createPostNotification(User sender, Post post) {
+        List<Follow> follows = followRepository.findByFollowing(sender);
+        for (Follow follow : follows) {
+            User follower = follow.getFollower();
+            if (sender.getId().equals(follower.getId())) {
+                continue;
+            }
+            Notification notification = new Notification();
+            notification.setType(Notification.NotificationType.POST);
+            notification.setMessage("опубликовал(-а) пост.");
+            notification.setRecipient(follower);
+            notification.setSender(sender);
+            notification.setPost(post);
+            notification.setCreatedAt(LocalDateTime.now());
+            notificationRepository.save(notification);
+        }
+    }
 
     // Создать уведомление о лайке
     public void createLikeNotification(User sender, Pin pin) {
@@ -48,7 +87,7 @@ public class NotificationService {
 
         Notification notification = new Notification();
         notification.setType(Notification.NotificationType.LIKE);
-        notification.setMessage(sender.getUsername() + " поставил(а) лайк вашему пину");
+        notification.setMessage("нравится ваша картинка.");
         notification.setRecipient(pin.getUser());
         notification.setSender(sender);
         notification.setPin(pin);
@@ -65,13 +104,44 @@ public class NotificationService {
 
         Notification notification = new Notification();
         notification.setType(Notification.NotificationType.COMMENT);
-        notification.setMessage(sender.getUsername() + " оставил(а) комментарий к вашему пину: " +
+        notification.setMessage("оставил(а) комментарий к вашему пину: " +
                 (commentText.length() > 50 ? commentText.substring(0, 50) + "..." : commentText));
         notification.setRecipient(pin.getUser());
         notification.setSender(sender);
         notification.setPin(pin);
         notification.setCreatedAt(LocalDateTime.now());
 
+        notificationRepository.save(notification);
+    }
+
+    // Создать уведомление о лайке поста
+    public void createPostLikeNotification(User sender, Post post) {
+        if (post.getUser().getId().equals(sender.getId())) {
+            return;
+        }
+        Notification notification = new Notification();
+        notification.setType(Notification.NotificationType.LIKE);
+        notification.setMessage("нравится ваш пост.");
+        notification.setRecipient(post.getUser());
+        notification.setSender(sender);
+        notification.setPost(post);
+        notification.setCreatedAt(LocalDateTime.now());
+        notificationRepository.save(notification);
+    }
+
+    // Создать уведомление о комментарии к посту
+    public void createPostCommentNotification(User sender, Post post, String commentText) {
+        if (post.getUser().getId().equals(sender.getId())) {
+            return;
+        }
+        Notification notification = new Notification();
+        notification.setType(Notification.NotificationType.COMMENT);
+        String snippet = commentText.length() > 50 ? commentText.substring(0, 50) + "..." : commentText;
+        notification.setMessage("прокомментировал(а) ваш пост: " + snippet);
+        notification.setRecipient(post.getUser());
+        notification.setSender(sender);
+        notification.setPost(post);
+        notification.setCreatedAt(LocalDateTime.now());
         notificationRepository.save(notification);
     }
 
@@ -159,6 +229,10 @@ public class NotificationService {
         if (notification.getSender() != null) {
             response.setSenderId(notification.getSender().getId());
             response.setSenderUsername(notification.getSender().getUsername());
+            String avatarUrl = notification.getSender().getProfileImageUrl();
+            if (avatarUrl != null && !avatarUrl.isEmpty()) {
+                response.setSenderProfileImageUrl(fileStorageService.updateImageUrl(avatarUrl));
+            }
         }
 
         if (notification.getPin() != null) {
@@ -167,6 +241,14 @@ public class NotificationService {
             String imageUrl = notification.getPin().getImageUrl();
             if (imageUrl != null && !imageUrl.isEmpty()) {
                 response.setPinImageUrl(fileStorageService.updateImageUrl(imageUrl));
+            }
+        }
+
+        if (notification.getPost() != null) {
+            response.setPostId(notification.getPost().getId());
+            String postImage = notification.getPost().getImageUrl();
+            if (postImage != null && !postImage.isEmpty()) {
+                response.setPostImageUrl(fileStorageService.updateImageUrl(postImage));
             }
         }
 

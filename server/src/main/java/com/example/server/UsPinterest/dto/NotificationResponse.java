@@ -14,6 +14,9 @@ public class NotificationResponse {
     private String pinImageUrl;
     private LocalDateTime createdAt;
     private boolean isRead;
+    private String senderProfileImageUrl;
+    private Long postId;
+    private String postImageUrl;
 
     public NotificationResponse() {}
 
@@ -87,5 +90,29 @@ public class NotificationResponse {
 
     public void setRead(boolean read) {
         isRead = read;
+    }
+
+    public String getSenderProfileImageUrl() {
+        return senderProfileImageUrl;
+    }
+
+    public void setSenderProfileImageUrl(String senderProfileImageUrl) {
+        this.senderProfileImageUrl = senderProfileImageUrl;
+    }
+
+    public Long getPostId() {
+        return postId;
+    }
+
+    public void setPostId(Long postId) {
+        this.postId = postId;
+    }
+
+    public String getPostImageUrl() {
+        return postImageUrl;
+    }
+
+    public void setPostImageUrl(String postImageUrl) {
+        this.postImageUrl = postImageUrl;
     }
 }
