@@ -64,7 +64,7 @@ fun PictureCard(
                     .background(
                         Brush.linearGradient(
                             colors = listOf(
-                                Color(0xFF789AAB),
+                                Color(0xFFB3E3FA),
                                 Color(0xFF09485E),
                             )
                         )

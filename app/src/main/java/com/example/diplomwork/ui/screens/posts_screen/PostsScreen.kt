@@ -195,7 +195,6 @@ fun PostCard(
                             lineHeight = 22.sp,
                             fontWeight = FontWeight.Normal,
                         ),
-                        maxLines = 4,
                         overflow = TextOverflow.Ellipsis
                     )
 
