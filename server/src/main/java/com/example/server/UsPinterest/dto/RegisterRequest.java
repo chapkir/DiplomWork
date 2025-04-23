@@ -3,7 +3,8 @@ package com.example.server.UsPinterest.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 public class RegisterRequest {
 
@@ -21,7 +22,8 @@ public class RegisterRequest {
 
     private String firstName;
 
-    private LocalDateTime birthDate;
+    @JsonFormat(pattern = "dd.MM.yyyy")
+    private LocalDate birthDate;
 
     public RegisterRequest() {}
 
@@ -57,11 +59,11 @@ public class RegisterRequest {
         this.firstName = firstName;
     }
 
-    public LocalDateTime getBirthDate() {
+    public LocalDate getBirthDate() {
         return birthDate;
     }
 
-    public void setBirthDate(LocalDateTime birthDate) {
+    public void setBirthDate(LocalDate birthDate) {
         this.birthDate = birthDate;
     }
 } 

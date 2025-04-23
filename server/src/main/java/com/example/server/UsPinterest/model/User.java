@@ -4,6 +4,7 @@ import com.example.server.UsPinterest.entity.Comment;
 import com.example.server.UsPinterest.entity.Like;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -37,7 +38,7 @@ public class User {
 
     private String city;
 
-    private LocalDateTime birthDate;
+    private LocalDate birthDate;
 
     private String gender;
 
@@ -139,11 +140,11 @@ public class User {
         this.city = city;
     }
 
-    public LocalDateTime getBirthDate() {
+    public LocalDate getBirthDate() {
         return birthDate;
     }
 
-    public void setBirthDate(LocalDateTime birthDate) {
+    public void setBirthDate(LocalDate birthDate) {
         this.birthDate = birthDate;
     }
 

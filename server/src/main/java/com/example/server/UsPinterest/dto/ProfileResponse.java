@@ -1,8 +1,10 @@
 package com.example.server.UsPinterest.dto;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import com.example.server.UsPinterest.dto.BoardResponse;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 public class ProfileResponse {
     private Long id;
@@ -13,7 +15,8 @@ public class ProfileResponse {
     private LocalDateTime registrationDate;
     private String firstName;
     private String city;
-    private LocalDateTime birthDate;
+    @JsonFormat(pattern = "dd.MM.yyyy")
+    private LocalDate birthDate;
     private String gender;
     private List<PinResponse> pins;
     private List<PostResponse> posts;
@@ -86,11 +89,11 @@ public class ProfileResponse {
         this.city = city;
     }
 
-    public LocalDateTime getBirthDate() {
+    public LocalDate getBirthDate() {
         return birthDate;
     }
 
-    public void setBirthDate(LocalDateTime birthDate) {
+    public void setBirthDate(LocalDate birthDate) {
         this.birthDate = birthDate;
     }
 
