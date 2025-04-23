@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.diplomwork.R
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.model.PostResponse
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
@@ -185,16 +186,16 @@ private fun PicturesGrid(pictures: List<PictureResponse>, onPictureClick: (Long,
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(2.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         items(pictures, key = { it.id }) { picture ->
             PictureCard(
                 imageUrl = picture.imageUrl,
+                username = picture.username,
+                userProfileImageUrl = picture.userProfileImageUrl,
                 id = picture.id,
                 onClick = { onPictureClick(picture.id, picture.imageUrl) },
-                contentPadding = 3
+                contentPadding = 3,
+                screenName = "Profile"
             )
         }
     }
@@ -205,14 +206,16 @@ private fun PostsGrid(posts: List<PostResponse>) {
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(3),
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(2.dp)
     ) {
         itemsIndexed(items = posts, key = { _, post -> post.id }) { _, post ->
             PictureCard(
                 imageUrl = post.imageUrl!!,
+                username = post.username,
+                userProfileImageUrl = post.userAvatar,
                 id = post.id,
                 onClick = { },
-                contentPadding = 3
+                contentPadding = 3,
+                screenName = "Profile"
             )
         }
     }

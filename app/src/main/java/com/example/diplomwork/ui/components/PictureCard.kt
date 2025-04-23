@@ -2,15 +2,22 @@ package com.example.diplomwork.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,53 +34,42 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.CachePolicy
 import coil.request.ImageRequest
+import com.example.diplomwork.R
 
 @Composable
 fun PictureCard(
     imageUrl: String,
+    username: String,
+    userProfileImageUrl: String?,
     id: Long,
     onClick: () -> Unit,
-    contentPadding: Int = 3
+    contentPadding: Int = 3,
+    screenName: String
 ) {
     var aspectRatio by remember { mutableFloatStateOf(1f) }
     var isLoading by remember { mutableStateOf(true) }
     var isError by remember { mutableStateOf(false) }
 
-    Card(
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(5.dp),
-        modifier = Modifier
-            .padding(contentPadding.dp)
-            .fillMaxWidth()
-            .clickable(enabled = !isLoading && !isError) { onClick() }
+    Column(
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Box(
+        Card(
+            shape = RoundedCornerShape(12.dp),
+            elevation = CardDefaults.cardElevation(5.dp),
             modifier = Modifier
+                .padding(contentPadding.dp)
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
+                .clickable(enabled = !isLoading && !isError) { onClick() }
         ) {
-            // Градиентный фон с блюром
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(
-                                Color(0xFFB3E3FA),
-                                Color(0xFF09485E),
-                            )
-                        )
-                    )
-                    .blur(50.dp)
-            )
-
-            // Обёртка с aspectRatio
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -82,6 +78,20 @@ fun PictureCard(
                         clip = true
                     }
             ) {
+                // Градиентный фон с блюром
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.linearGradient(
+                                colors = listOf(
+                                    Color(0xFFB3E3FA),
+                                    Color(0xFF09485E),
+                                )
+                            )
+                        )
+                        .blur(50.dp)
+                )
                 // Само изображение
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
@@ -112,12 +122,11 @@ fun PictureCard(
                         .clip(RoundedCornerShape(12.dp))
                 )
 
-                // Лоадер и ошибки теперь по центру
                 when {
                     isLoading -> {
                         Box(
                             modifier = Modifier
-                                .matchParentSize(),
+                                .fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
                             LoadingSpinnerForElement(Color.White, indicatorSize = 32)
@@ -132,11 +141,55 @@ fun PictureCard(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(8.dp)
-                                .align(Alignment.Center)
                         )
                     }
                 }
             }
+        }
+        if (screenName == "Picture") {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp, horizontal = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(RoundedCornerShape(50))
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) { },
+                    contentAlignment = Alignment.Center
+                ) {
+                    AsyncImage(
+                        model = userProfileImageUrl ?: R.drawable.default_avatar,
+                        contentDescription = "Avatar",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.matchParentSize()
+                    )
+                }
+                Text(
+                    text = username,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White,
+                    textAlign = TextAlign.Center
+                )
+                Box(
+                    modifier = Modifier
+                        .size(15.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_menu_dots_vertical),
+                        contentDescription = "Menu",
+                        tint = Color.White
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }

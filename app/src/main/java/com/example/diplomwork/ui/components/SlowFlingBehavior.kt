@@ -13,7 +13,7 @@ fun rememberSlowFlingBehavior(): FlingBehavior {
     return remember {
         object : FlingBehavior {
             override suspend fun ScrollScope.performFling(initialVelocity: Float): Float {
-                val slowedVelocity = initialVelocity / 1.9f
+                val slowedVelocity = initialVelocity / 1.3f
                 return with(defaultFling) {
                     performFling(slowedVelocity)
                 }

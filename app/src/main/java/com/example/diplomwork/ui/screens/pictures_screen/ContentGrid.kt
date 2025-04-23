@@ -127,10 +127,13 @@ fun ContentGrid(
                         ) { _, picture ->
                             PictureCard(
                                 imageUrl = picture.imageUrl,
+                                username = picture.username,
+                                userProfileImageUrl = picture.userProfileImageUrl,
                                 id = picture.id,
                                 onClick = {
                                     onImageClick(picture)
-                                }
+                                },
+                                screenName = "Picture"
                             )
                         }
                     }
