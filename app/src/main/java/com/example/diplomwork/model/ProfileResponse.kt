@@ -21,4 +21,5 @@ data class ProfileResponse(
     val followersCount: Int = 0,
     val followingCount: Int = 0,
     val bio: String,
+    val birthDate: String
 )

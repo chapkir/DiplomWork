@@ -1,10 +1,14 @@
 package com.example.diplomwork.ui.screens.registration_screen
 
 import android.app.Activity
+import android.app.DatePickerDialog
 import android.content.Context
+import android.icu.util.Calendar
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,16 +17,23 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -46,19 +57,20 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
-import com.example.diplomwork.ui.components.CustomVisualTransformationForPassword
 import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.ui.theme.ColorForFocusButton
 import com.example.diplomwork.ui.theme.ColorForHint
 import com.example.diplomwork.viewmodel.EditProfileViewModel
 import com.example.diplomwork.viewmodel.RegisterViewModel
+import java.util.Locale
 
 fun hideKeyboard(context: Context) {
     val inputMethodManager =
@@ -85,6 +97,18 @@ fun RegisterScreen(
     val isLoading by registerViewModel.isLoading.collectAsState()
     val errorMessage by registerViewModel.errorMessage.collectAsState()
 
+    var confirmPassword by rememberSaveable { mutableStateOf("") }
+
+    val cities =
+        listOf("Санкт-Петербург", "Москва", "Москва", "Москва", "Москва", "Москва", "Москва")
+    val genders = listOf("Мужской", "Женский", "Другой")
+
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(step) {
+        focusRequester.requestFocus()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -92,16 +116,8 @@ fun RegisterScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(32.dp))
-
         StepIndicator(step)
-
         Spacer(modifier = Modifier.height(32.dp))
-
-        val focusRequester = remember { FocusRequester() }
-
-        LaunchedEffect(step) {
-            focusRequester.requestFocus()
-        }
 
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -109,216 +125,122 @@ fun RegisterScreen(
         ) {
             when (step) {
                 0 -> {
-                    Text(
-                        text = "Как вас зовут?",
-                        color = Color.White.copy(alpha = 0.9f),
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(25.dp))
-
-                    CustomOutlinedTextField(
-                        registerData.username,
-                        {
-                            registerViewModel.updateRegisterData {
-                                copy(
-                                    username = it.replace(" ", "")
-                                        .filter { c -> c.code in 32..126 })
-                            }
-                        },
-                        "Логин",
-                        KeyboardType.Text,
-                        focusRequester,
-                    )
-                    Spacer(modifier = Modifier.height(15.dp))
-                    CustomOutlinedTextField(
-                        registerData.firstName,
-                        {
-                            registerViewModel.updateRegisterData {
-                                copy(
-                                    firstName = it.replace(" ", "")
-                                        .filter { c -> c.code in 32..126 })
-                            }
-                        },
-                        "Имя",
-                        KeyboardType.Text,
-                    )
+                    StepTitle("Как тебя зовут?")
+                    InputField("Введите имя пользователя", registerData.username, {
+                        registerViewModel.updateRegisterData {
+                            copy(username = it.replace(" ", "").filter { c -> c.code in 32..126 })
+                        }
+                    }, KeyboardType.Text, focusRequester)
+                    Spacer(Modifier.height(15.dp))
+                    InputField("Введите свое имя", registerData.firstName, {
+                        registerViewModel.updateRegisterData {
+                            copy(
+                                firstName = it.replace(" ", "")
+                            )
+                        }
+                    }, KeyboardType.Text)
                 }
 
                 1 -> {
-                    Text(
-                        text = "Придумайте пароль",
-                        color = Color.White.copy(alpha = 0.9f),
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(25.dp))
-
-                    CustomOutlinedTextField(
-                        registerData.password,
-                        {
-                            registerViewModel.updateRegisterData {
-                                copy(password = it.replace(" ", ""))
-                            }
-                        },
-                        "Пароль",
-                        KeyboardType.Password,
-                        focusRequester,
-                        isPassword = true
-                    )
-                    Spacer(modifier = Modifier.height(15.dp))
-                    CustomOutlinedTextField(
-                        registerData.password,
-                        {
-                            registerViewModel.updateRegisterData {
-                                copy(password = it.replace(" ", ""))
-                            }
-                        },
-                        "Пароль",
-                        KeyboardType.Password,
-                        focusRequester,
-                        isPassword = true
-                    )
+                    StepTitle("Придумайте пароль")
+                    InputField("Введите пароль", registerData.password, {
+                        registerViewModel.updateRegisterData {
+                            copy(
+                                password = it.replace(" ", "")
+                            )
+                        }
+                    }, KeyboardType.Password, focusRequester, isPassword = true)
+                    Spacer(Modifier.height(15.dp))
+                    InputField("Повторите пароль", confirmPassword, {
+                        confirmPassword = it
+                    }, KeyboardType.Password, isPassword = true)
                 }
 
                 2 -> {
-                    Text(
-                        text = "Введите email",
-                        color = Color.White.copy(alpha = 0.9f),
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(25.dp))
-
-                    CustomOutlinedTextField(
-                        registerData.email,
-                        {
-                            registerViewModel.updateRegisterData {
-                                copy(email = it.replace(" ", ""))
-                            }
-                        },
-                        "Email",
-                        KeyboardType.Email,
-                        focusRequester,
+                    StepTitle("Введите email и дату рождения")
+                    InputField("Введите email", registerData.email, {
+                        registerViewModel.updateRegisterData { copy(email = it.replace(" ", "")) }
+                    }, KeyboardType.Email, focusRequester)
+                    Spacer(Modifier.height(15.dp))
+                    DatePickerButton(
+                        date = registerData.birthDate,
+                        onDateSelected = { selectedDate ->
+                            registerViewModel.updateRegisterData { copy(birthDate = selectedDate) }
+                        }
                     )
                 }
 
                 3 -> {
-                    Text(
-                        text = "Расскажите о себе",
-                        color = Color.White.copy(alpha = 0.9f),
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(25.dp))
+                    StepTitle("Расскажите о себе")
+                    InputField("О себе", editProfileData.bio ?: "", {
+                        editProfileViewModel.updateProfileData { copy(bio = it) }
+                    }, KeyboardType.Text, focusRequester)
 
-                    CustomOutlinedTextField(
-                        editProfileData.bio,
-                        {
-                            editProfileViewModel.updateProfileData {
-                                copy(bio = it)
-                            }
-                        },
-                        "bio",
-                        KeyboardType.Text,
-                        focusRequester,
-                    )
-                }
-            }
-        }
+                    Spacer(Modifier.height(15.dp))
 
+                    InputField("Город", editProfileData.city ?: "", {
+                        editProfileViewModel.updateProfileData { copy(city = it) }
+                    }, KeyboardType.Text)
 
-        Spacer(modifier = Modifier.height(19.dp))
+                    Spacer(Modifier.height(15.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(0.85f),
-            horizontalArrangement = if (step > 0) Arrangement.SpaceBetween else Arrangement.End
-        ) {
-            if (step > 0) {
-                Button(
-                    onClick = { registerViewModel.previousStep() },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = ColorForFocusButton,
-                        contentColor = Color.White,
-                    )
-                ) {
-                    Text("Назад")
-                }
-            }
-
-            val isNextEnabled = registerViewModel.isCurrentStepValid()
-
-            Button(
-                onClick = {
-                    when (step) {
-                        0 -> registerViewModel.nextStep()
-                        1 -> registerViewModel.nextStep()
-                        2 -> {
-                            registerViewModel.register {
-                                focusManager.clearFocus()
-                                Toast.makeText(context, "Регистрация успешна!", Toast.LENGTH_SHORT)
-                                    .show()
-                                registerViewModel.nextStep()
-                            }
-                        }
-                        3 -> {
-                            hideKeyboard(context)
-                            editProfileViewModel.saveProfile()
-                            onCompleteRegistration()
-                        }
+                    DropdownSelector("Пол", genders, editProfileData.gender ?: "") {
+                        editProfileViewModel.updateProfileData { copy(gender = it) }
                     }
-                },
-                enabled = isNextEnabled && !isLoading,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = ColorForFocusButton,
-                    contentColor = Color.White,
-                    disabledContainerColor = Color.Gray,
-                    disabledContentColor = Color.White
-                )
-            ) {
-                if (isLoading && step == 3) {
-                    LoadingSpinnerForElement()
-                } else {
-                    Text(text = if (step < 3) "Далее" else "Завершить")
                 }
             }
         }
+
+        Spacer(Modifier.height(20.dp))
+
+        NavigationButtons(
+            step = step,
+            isNextEnabled = registerViewModel.isCurrentStepValid(),
+            isLoading = isLoading,
+            onNext = {
+                when (step) {
+                    0, 1 -> registerViewModel.nextStep()
+                    2 -> registerViewModel.register {
+                        focusManager.clearFocus()
+                        Toast.makeText(context, "Регистрация успешна!", Toast.LENGTH_SHORT).show()
+                        registerViewModel.nextStep()
+                    }
+
+                    3 -> {
+                        hideKeyboard(context)
+                        editProfileViewModel.saveProfile()
+                        onCompleteRegistration()
+                    }
+                }
+            },
+            onBack = { registerViewModel.previousStep() }
+        )
 
         errorMessage?.let {
             Spacer(modifier = Modifier.height(10.dp))
-            Text(
-                text = it,
-                color = Color.Red,
-                fontSize = 16.sp,
-                textAlign = TextAlign.Center
-            )
+            Text(text = it, color = Color.Red, fontSize = 16.sp, textAlign = TextAlign.Center)
         }
 
-        Text(
-            text = "Подсказка:",
-            color = ColorForHint.copy(alpha = 0.9f),
-            modifier = Modifier.padding(top = 25.dp),
-            textAlign = TextAlign.Center,
-            fontWeight = FontWeight.Bold
-        )
-
-        Text(
-            text = "• Вводите логин на латинице •" +
-                    "\n• Вводите данные без пробелов •" +
-                    "\n• В поле email обязательна @ •" +
-                    "\n• Длина пароля минимум 8 символов •",
-            color = ColorForHint.copy(alpha = 0.7f),
-            modifier = Modifier.padding(top = 1.dp),
-            textAlign = TextAlign.Center
-        )
+        RegistrationTips()
     }
 }
 
 @Composable
-fun CustomOutlinedTextField(
-    value: String?,
-    onValueChange: (String) -> Unit,
+fun StepTitle(text: String) {
+    Text(
+        text = text,
+        color = Color.White.copy(alpha = 0.9f),
+        fontSize = 24.sp,
+        fontWeight = FontWeight.Bold
+    )
+    Spacer(modifier = Modifier.height(25.dp))
+}
+
+@Composable
+fun InputField(
     label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
     keyboardType: KeyboardType,
     focusRequester: FocusRequester = remember { FocusRequester() },
     isPassword: Boolean = false
@@ -326,36 +248,41 @@ fun CustomOutlinedTextField(
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
     OutlinedTextField(
-        value = value ?: "",
+        value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
-        singleLine = true,
         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = keyboardType),
-        visualTransformation =
-            if (isPassword && !passwordVisible) CustomVisualTransformationForPassword()
-            else VisualTransformation.None,
-        trailingIcon = {
-            if (isPassword) {
-                val image = if (passwordVisible) R.drawable.ic_eye_crossed else R.drawable.ic_eye
+        visualTransformation = if (isPassword && !passwordVisible)
+            PasswordVisualTransformation()
+        else VisualTransformation.None,
+        trailingIcon = if (isPassword) {
+            {
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
                     Icon(
-                        painter = painterResource(image),
-                        modifier = Modifier
-                            .size(26.dp)
-                            .padding(end = 4.dp),
-                        contentDescription = "Toggle password visibility"
+                        painter = painterResource(
+                            if (passwordVisible) R.drawable.ic_eye_crossed else R.drawable.ic_eye
+                        ),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp).padding(end = 4.dp)
                     )
                 }
             }
+        } else null,
+        modifier = if (label != "О себе") {
+            Modifier
+                .fillMaxWidth(0.85f)
+                .focusRequester(focusRequester)
+        } else {
+            Modifier
+                .fillMaxWidth(0.85f)
+                .height(155.dp)
+                .focusRequester(focusRequester)
         },
-        modifier = Modifier
-            .fillMaxWidth(0.85f)
-            .focusRequester(focusRequester),
+        singleLine = label != "О себе",
         textStyle = TextStyle(
             fontSize = if (isPassword && !passwordVisible) 21.sp else 18.sp,
             color = Color.White
         ),
-        maxLines = 1,
         shape = RoundedCornerShape(15.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Color.White,
@@ -368,6 +295,137 @@ fun CustomOutlinedTextField(
             focusedTrailingIconColor = Color.Gray,
             unfocusedTrailingIconColor = Color.Gray,
         )
+    )
+}
+
+@Composable
+fun DropdownSelector(
+    label: String,
+    options: List<String>,
+    selected: String,
+    onSelect: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val displayText =
+        selected.ifEmpty { "Выберите $label".lowercase().replaceFirstChar { it.uppercase() } }
+
+    Box(Modifier.fillMaxWidth(0.85f)) {
+        OutlinedTextField(
+            value = displayText,
+            onValueChange = {},
+            label = { Text(label) },
+            readOnly = true,
+            trailingIcon = {
+                Icon(
+                    imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                    contentDescription = null,
+                    modifier = Modifier.clickable { expanded = !expanded }
+                )
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = true },
+            textStyle = TextStyle(color = if (selected.isEmpty()) Color.Gray else Color.White),
+            shape = RoundedCornerShape(15.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color.White,
+                unfocusedBorderColor = Color.Gray,
+                focusedLabelColor = Color.White,
+                unfocusedLabelColor = Color.Gray,
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.Gray,
+                cursorColor = Color.White,
+                focusedTrailingIconColor = Color.Gray,
+                unfocusedTrailingIconColor = Color.Gray,
+            )
+        )
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .heightIn(max = 150.dp)
+                .background(Color.Black.copy(alpha = 0.6f), shape = RoundedCornerShape(10.dp))
+                .border(1.dp, Color.White, RoundedCornerShape(10.dp))
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = option,
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    },
+                    onClick = {
+                        onSelect(option)
+                        expanded = false
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 5.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun NavigationButtons(
+    step: Int,
+    isNextEnabled: Boolean,
+    isLoading: Boolean,
+    onNext: () -> Unit,
+    onBack: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(0.85f),
+        horizontalArrangement = if (step in 1..2) Arrangement.SpaceBetween else Arrangement.End
+    ) {
+        if (step in 1..2) {
+            Button(
+                onClick = onBack,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ColorForFocusButton,
+                    contentColor = Color.White,
+                    disabledContainerColor = Color.Gray,
+                    disabledContentColor = Color.White
+                )
+            ) {
+                Text("Назад")
+            }
+        }
+        Button(
+            onClick = onNext,
+            enabled = isNextEnabled && !isLoading,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = ColorForFocusButton,
+                contentColor = Color.White,
+                disabledContainerColor = Color.Gray,
+                disabledContentColor = Color.White
+            )
+        ) {
+            if (isLoading && step == 3) LoadingSpinnerForElement()
+            else Text(if (step < 3) "Далее" else "Завершить")
+        }
+    }
+}
+
+@Composable
+fun RegistrationTips() {
+    Text(
+        text = "Подсказка:",
+        color = ColorForHint.copy(alpha = 0.9f),
+        modifier = Modifier.padding(top = 25.dp),
+        textAlign = TextAlign.Center,
+        fontWeight = FontWeight.Bold
+    )
+    Text(
+        text = "• Вводите логин на латинице •\n• Без пробелов •\n• Email с @ •\n• Пароль: минимум 8 символов •",
+        color = ColorForHint.copy(alpha = 0.7f),
+        modifier = Modifier.padding(top = 1.dp),
+        textAlign = TextAlign.Center
     )
 }
 
@@ -389,3 +447,46 @@ fun StepIndicator(currentStep: Int) {
         }
     }
 }
+
+@Composable
+fun DatePickerButton(
+    date: String,
+    onDateSelected: (String) -> Unit
+) {
+    val context = LocalContext.current
+    val calendar = Calendar.getInstance()
+
+    val year = calendar.get(Calendar.YEAR)
+    val month = calendar.get(Calendar.MONTH)
+    val day = calendar.get(Calendar.DAY_OF_MONTH)
+
+    val locale = Locale.getDefault()
+
+    OutlinedButton(
+        onClick = {
+            DatePickerDialog(
+                context,
+                { _, selectedYear, selectedMonth, selectedDay ->
+                    val formatted = String.format(
+                        locale, "%02d.%02d.%04d", selectedDay,
+                        selectedMonth + 1, selectedYear
+                    )
+                    onDateSelected(formatted)
+                }, year, month, day
+            ).show()
+        },
+        shape = RoundedCornerShape(15.dp),
+        modifier = Modifier
+            .fillMaxWidth(0.85f)
+            .height(57.dp),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+    ) {
+        Text(
+            text = if (date.isEmpty()) "Выберите дату рождения" else "Вы родились $date",
+            color = if (date.isEmpty()) Color.Gray else Color.White,
+            fontWeight = if (date.isEmpty()) FontWeight.Normal else FontWeight.Medium,
+            fontSize = 17.sp
+        )
+    }
+}
+
