@@ -17,6 +17,7 @@ data class ProfileResponse(
     val email: String,
     var profileImageUrl: String? = null,
     val pins: List<PictureResponse>,
+    val posts: List<PostResponse>,
     val pinsCount: Int = 0,
     val followersCount: Int = 0,
     val followingCount: Int = 0,

@@ -46,12 +46,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.diplomwork.R
 import com.example.diplomwork.model.PostResponse
 import com.example.diplomwork.ui.components.CommentsBottomSheet
 import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
+import com.example.diplomwork.ui.components.rememberSlowFlingBehavior
 import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.viewmodel.PostsScreenViewModel
 
@@ -73,7 +75,9 @@ fun PostsScreen(
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        LazyColumn {
+        LazyColumn(
+            flingBehavior = rememberSlowFlingBehavior(),
+        ) {
             items(posts) { post ->
                 PostCard(
                     post = post,
@@ -242,8 +246,12 @@ fun PostCard(
                             .blur(50.dp)
                     )
                     AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current).data(imageUrl)
-                            .crossfade(true).build(),
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(imageUrl)
+                            .crossfade(300)
+                            .diskCachePolicy(CachePolicy.ENABLED)
+                            .memoryCachePolicy(CachePolicy.ENABLED)
+                            .build(),
                         contentDescription = "Post Image",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier

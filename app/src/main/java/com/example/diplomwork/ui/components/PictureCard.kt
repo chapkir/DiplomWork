@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
@@ -77,6 +78,9 @@ fun PictureCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(aspectRatio)
+                    .graphicsLayer {
+                        clip = true
+                    }
             ) {
                 // Само изображение
                 AsyncImage(

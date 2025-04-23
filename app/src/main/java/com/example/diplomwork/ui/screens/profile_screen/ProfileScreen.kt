@@ -18,6 +18,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
@@ -46,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.model.PictureResponse
+import com.example.diplomwork.model.PostResponse
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.components.PictureCard
 import com.example.diplomwork.ui.theme.ColorForBackgroundProfile
@@ -75,7 +79,7 @@ fun ProfileScreen(
 
     // Управление вкладками
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabTitles = listOf("Публикации", "Избранное")
+    val tabTitles = listOf("Посты", "Картинки", "Избранное")
 
     // Загружаем лайкнутые пины, когда выбран второй таб
     LaunchedEffect(selectedTabIndex) {
@@ -118,7 +122,8 @@ fun ProfileScreen(
                     tabTitles = tabTitles,
                     selectedTabIndex = selectedTabIndex,
                     onTabSelected = { selectedTabIndex = it },
-                    profileData = profileData?.pins ?: emptyList(),
+                    ownPictures = profileData?.pins ?: emptyList(),
+                    ownPosts = profileData?.posts ?: emptyList(),
                     likedPictures = likedPictures,
                     onImageClick = onImageClick
                 )
@@ -151,7 +156,8 @@ fun SwipeableTabs(
     tabTitles: List<String>,
     selectedTabIndex: Int,
     onTabSelected: (Int) -> Unit,
-    profileData: List<PictureResponse>,
+    ownPictures: List<PictureResponse>,
+    ownPosts: List<PostResponse>,
     likedPictures: List<PictureResponse>,
     onImageClick: (Long, String) -> Unit
 ) {
@@ -167,24 +173,45 @@ fun SwipeableTabs(
         modifier = Modifier.fillMaxSize()
     ) { page ->
         when (page) {
-            0 -> PicturesGrid(profileData, onImageClick)
-            1 -> PicturesGrid(likedPictures, onImageClick)
+            0 -> PostsGrid(ownPosts)
+            1 -> PicturesGrid(ownPictures, onImageClick)
+            2 -> PicturesGrid(likedPictures, onImageClick)
         }
     }
 }
 
 @Composable
 private fun PicturesGrid(pictures: List<PictureResponse>, onPictureClick: (Long, String) -> Unit) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(3),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(2.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        items(pictures, key = { it.id }) { picture ->
+            PictureCard(
+                imageUrl = picture.imageUrl,
+                id = picture.id,
+                onClick = { onPictureClick(picture.id, picture.imageUrl) },
+                contentPadding = 3
+            )
+        }
+    }
+}
+
+@Composable
+private fun PostsGrid(posts: List<PostResponse>) {
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(3),
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(2.dp)
     ) {
-        itemsIndexed(items = pictures, key = { _, picture -> picture.id }) { _, picture ->
+        itemsIndexed(items = posts, key = { _, post -> post.id }) { _, post ->
             PictureCard(
-                imageUrl = picture.imageUrl,
-                id = picture.id,
-                onClick = { onPictureClick(picture.id, picture.imageUrl) },
+                imageUrl = post.imageUrl!!,
+                id = post.id,
+                onClick = { },
                 contentPadding = 3
             )
         }
@@ -260,7 +287,7 @@ fun CustomTabPager(
                         .offset {
                             // Сдвигаем полоску по горизонтали в зависимости от текущей страницы
                             IntOffset(
-                                offset.roundToInt() + ((currentTabWidth / 2.23).toInt()), 0
+                                offset.roundToInt() + ((currentTabWidth / 2.37).toInt()), 0
                             )
                         }
                         .width(60.dp) // Ширина полоски

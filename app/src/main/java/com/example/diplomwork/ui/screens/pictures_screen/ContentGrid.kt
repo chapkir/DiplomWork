@@ -1,6 +1,9 @@
 package com.example.diplomwork.ui.screens.pictures_screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.FlingBehavior
+import androidx.compose.foundation.gestures.ScrollScope
+import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -28,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.components.PictureCard
+import com.example.diplomwork.ui.components.rememberSlowFlingBehavior
 import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.viewmodel.PicturesViewModel
 
@@ -101,6 +105,7 @@ fun ContentGrid(
             else -> {
                 LazyVerticalStaggeredGrid(
                     columns = StaggeredGridCells.Fixed(2),
+                    flingBehavior = rememberSlowFlingBehavior(),
                     modifier = Modifier.fillMaxSize(),
                     content = {
                         if (searchInfoText != null) {
