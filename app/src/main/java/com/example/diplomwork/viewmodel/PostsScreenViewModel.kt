@@ -3,6 +3,7 @@ package com.example.diplomwork.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.model.CommentRequest
 import com.example.diplomwork.model.CommentResponse
 import com.example.diplomwork.model.PostResponse
@@ -21,7 +22,8 @@ import javax.inject.Inject
 @HiltViewModel
 class PostsScreenViewModel @Inject constructor(
     private val postRepository: PostRepository,
-    private val commentRepository: CommentRepository
+    private val commentRepository: CommentRepository,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _posts = MutableStateFlow<List<PostResponse>>(emptyList())
@@ -39,6 +41,9 @@ class PostsScreenViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
+    private val _deleteStatus = MutableStateFlow("")
+    val deleteStatus: StateFlow<String> = _deleteStatus
+
     init {
         loadPosts()
     }
@@ -48,7 +53,10 @@ class PostsScreenViewModel @Inject constructor(
             _isLoading.value = true
             _error.value = null
             try {
-                val result = postRepository.getPosts()
+                val currentUsername = sessionManager.username
+                val result = postRepository.getPosts().map { post ->
+                    post.copy(isOwnPost = post.username == currentUsername)
+                }
                 _posts.value = result
                 loadAllComments(result)
             } catch (e: Exception) {
@@ -136,6 +144,34 @@ class PostsScreenViewModel @Inject constructor(
     private fun updatePost(postId: Long, update: PostResponse.() -> PostResponse) {
         _posts.value = _posts.value.map { post ->
             if (post.id == postId) post.update() else post
+        }
+    }
+
+    fun checkOwnPost(postId: Long): Boolean {
+        val currentUsername = sessionManager.username ?: return false
+        val post = _posts.value.find { it.id == postId } ?: return false
+        return post.username == currentUsername
+    }
+
+    fun deletePost(postId: Long) {
+        viewModelScope.launch {
+            try {
+                Log.e("piska", "pictureId до delete: $postId")
+
+                _deleteStatus.value = "Ниче не произошло"
+
+                val isDeleted = postRepository.deletePost(postId)
+                if (isDeleted) {
+                    _deleteStatus.value = "Ну тут вроде удаляется, но нужно обновлять страницу"
+                } else {
+                    _deleteStatus.value = "Ошибка удаления"
+                }
+
+                Log.e("piska", "pictureId после delete: $postId")
+            } catch (e: Exception) {
+                Log.e("PictureDetailViewModel", "Ошибка удаления: ${e.message}", e)
+                _deleteStatus.value = "Ошибка удаления: ${e.message}"
+            }
         }
     }
 }

@@ -37,7 +37,7 @@ class AuthRepository @Inject constructor(
     }
 
     // Проверка существования пользователя
-    suspend fun checkUserExists(login: String): Response<Boolean> {
-        return apiService.checkUserExists(login)
+    suspend fun checkUsernameExists(username: String): Response<Boolean> {
+        return apiService.checkUsernameExists(username)
     }
 }

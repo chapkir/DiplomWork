@@ -14,6 +14,15 @@ class PostRepository @Inject constructor(
         return apiService.getPosts()
     }
 
+    suspend fun deletePost(id: Long): Boolean {
+        return try {
+            val response = apiService.deletePost(id)
+            response.isSuccessful
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     suspend fun likePost(postId: Long): Response<Unit> {
         return apiService.likePost(postId)
     }

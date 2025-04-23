@@ -57,7 +57,8 @@ import com.example.diplomwork.viewmodel.PostsScreenViewModel
 
 @Composable
 fun PostsScreen(
-    onProfileClick: (Long?, String) -> Unit, viewModel: PostsScreenViewModel = hiltViewModel()
+    onProfileClick: (Long?, String) -> Unit,
+    viewModel: PostsScreenViewModel = hiltViewModel()
 ) {
     val posts by viewModel.posts.collectAsState()
     val comments by viewModel.comments.collectAsState()
@@ -83,7 +84,8 @@ fun PostsScreen(
                         viewModel.loadCommentsForPost(post.id)
                         showCommentsSheet = true
                     },
-                    onProfileClick
+                    onProfileClick,
+                    onDeletePost = { postId -> viewModel.deletePost(postId) }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -122,7 +124,8 @@ fun PostCard(
     commentsCount: Int,
     onLikeClick: () -> Unit,
     onCommentClick: () -> Unit,
-    onProfileClick: (Long?, String) -> Unit
+    onProfileClick: (Long?, String) -> Unit,
+    onDeletePost: (Long) -> Unit,
 ) {
 
     var isImageLoading by remember { mutableStateOf(true) }
@@ -144,13 +147,13 @@ fun PostCard(
             ) {
                 Row(
                     modifier = Modifier.clickable(
-                            indication = null,
-                            interactionSource = remember { MutableInteractionSource() }) {
-                            onProfileClick(
-                                post.userId,
-                                post.username
-                            )
-                        },
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }) {
+                        onProfileClick(
+                            post.userId,
+                            post.username
+                        )
+                    },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     AsyncImage(
@@ -167,7 +170,10 @@ fun PostCard(
                     )
                 }
                 IconButton(
-                    onClick = { }, modifier = Modifier.size(25.dp)
+                    onClick = {
+                        if (post.isOwnPost) onDeletePost(post.id)
+                        else return@IconButton
+                    }, modifier = Modifier.size(25.dp)
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_info),

@@ -102,6 +102,9 @@ interface ApiService {
         @Part("text") text: RequestBody
     ): Response<PostResponse>
 
+    @DELETE("api/posts/{postId}")
+    suspend fun deletePost(@Path("postId") postId: Long): Response<Unit>
+
     @POST("api/posts/{postId}/like")
     suspend fun likePost(@Path("postId") postId: Long): Response<Unit>
 
@@ -117,8 +120,8 @@ interface ApiService {
         @Body comment: CommentRequest
     ): CommentResponse
 
-    @GET("api/auth/check-user")
-    suspend fun checkUserExists(@Query("login") login: String): Response<Boolean>
+    @GET("api/auth/check-username/{username}")
+    suspend fun checkUsernameExists(@Path("username") username: String): Response<Boolean>
 
     @Multipart
     @POST("api/profile/image")

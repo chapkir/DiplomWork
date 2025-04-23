@@ -97,17 +97,30 @@ class RegisterViewModel @Inject constructor(
 
     fun isCurrentStepValid(): Boolean {
         return when (_step.value) {
-            0 -> registerData.value.username.isNotBlank()
-                    && !registerData.value.username.contains(" ")
-                    && registerData.value.firstName.isNotBlank()
+            0 -> {
+                val username = registerData.value.username
+                val firstName = registerData.value.firstName
+                val usernameRegex = "^[a-zA-Z0-9_]{3,15}$".toRegex()
 
-            1 -> registerData.value.password.isNotBlank()
-                    && registerData.value.password.length >= 8
-                    && !registerData.value.password.contains(" ")
+                username.matches(usernameRegex)
+                        && firstName.isNotBlank()
+            }
 
-            2 -> registerData.value.email.isNotBlank()
-                    && registerData.value.email.contains("@")
-                    && !registerData.value.email.contains(" ")
+            1 -> {
+                val password = registerData.value.password
+                val passwordRegex = "^\\S{8,}$".toRegex()
+
+                password.matches(passwordRegex)
+            }
+
+            2 -> {
+                val email = registerData.value.email
+                val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$".toRegex()
+
+                email.isNotBlank()
+                        && email.matches(emailRegex)
+                        && !email.contains(" ")
+            }
 
             3 -> true
 
