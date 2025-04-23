@@ -51,23 +51,14 @@ fun PictureDetailScreen(
     onProfileClick: (Long?, String) -> Unit,
     viewModel: PictureDetailScreenViewModel = hiltViewModel()
 ) {
-    val pictureDescription by viewModel.pictureDescription.collectAsState()
-    val likesCount by viewModel.likesCount.collectAsState()
-    val isLiked by viewModel.isLiked.collectAsState()
-    val pictureUsername by viewModel.pictureUsername.collectAsState()
-    val pictureUserId by viewModel.pictureUserId.collectAsState()
-    val profileImageUrl by viewModel.profileImageUrl.collectAsState()
-    val comments by viewModel.comments.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
-    val deleteStatus by viewModel.deleteStatus.collectAsState()
-    val isCurrentUserOwner by viewModel.isCurrentUserOwner.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
 
     var showCommentsSheet by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
-    if (deleteStatus.isNotEmpty()) {
-        Toast.makeText(context, deleteStatus, Toast.LENGTH_SHORT).show()
-        if (deleteStatus == "Ну тут вроде удаляется, но нужно обновлять страницу") {
+    if (uiState.deleteStatus.isNotEmpty()) {
+        Toast.makeText(context, uiState.deleteStatus, Toast.LENGTH_SHORT).show()
+        if (uiState.deleteStatus == "Ну тут вроде удаляется, но нужно обновлять страницу") {
             onNavigateBack()
         }
     }
@@ -79,7 +70,7 @@ fun PictureDetailScreen(
             .padding(top = systemInsetHeight(WindowInsetsCompat.Type.statusBars()).value)
             .imePadding()
     ) {
-        if (isLoading) {
+        if (uiState.isLoading) {
             item {
                 LoadingSpinnerForScreen()
             }
@@ -95,13 +86,13 @@ fun PictureDetailScreen(
 
             item {
                 ActionBar(
-                    description = pictureDescription,
-                    likesCount = likesCount,
-                    isLiked = isLiked,
-                    commentsCount = comments.size,
-                    profileImageUrl = profileImageUrl,
-                    username = pictureUsername,
-                    userId = pictureUserId,
+                    description = uiState.pictureDescription,
+                    likesCount = uiState.likesCount,
+                    isLiked = uiState.isLiked,
+                    commentsCount = uiState.comments.size,
+                    profileImageUrl = uiState.profileImageUrl,
+                    username = uiState.pictureUsername,
+                    userId = uiState.pictureUserId,
                     onLikeClick = { viewModel.toggleLike() },
                     onCommentClick = { showCommentsSheet = true },
                     onProfileClick,
@@ -116,7 +107,7 @@ fun PictureDetailScreen(
                                 systemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value
                         )
                 ) {
-                    if (comments.isNotEmpty()) {
+                    if (uiState.comments.isNotEmpty()) {
                         Text(
                             text = "Комментарии",
                             style = MaterialTheme.typography.titleMedium,
@@ -126,18 +117,18 @@ fun PictureDetailScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        comments.take(2).forEach { comment ->
+                        uiState.comments.take(2).forEach { comment ->
                             CommentItem(comment = comment)
                             Spacer(modifier = Modifier.height(8.dp))
                         }
 
-                        if (comments.size > 2) {
+                        if (uiState.comments.size > 2) {
                             TextButton(
                                 onClick = { showCommentsSheet = true },
                                 modifier = Modifier.align(Alignment.End)
                             ) {
                                 Text(
-                                    text = "Показать все комментарии (${comments.size})",
+                                    text = "Показать все комментарии (${uiState.comments.size})",
                                     color = Color.White
                                 )
                             }
@@ -165,25 +156,27 @@ fun PictureDetailScreen(
         )
     }
 
-    IconButton(
-        onClick = { viewModel.deletePicture() },
-        modifier = Modifier
-            .padding(
-                top = systemInsetHeight(WindowInsetsCompat.Type.statusBars()).value + 18.dp,
-                start = 70.dp
+    if(uiState.isCurrentUserOwner) {
+        IconButton(
+            onClick = { viewModel.deletePicture() },
+            modifier = Modifier
+                .padding(
+                    top = systemInsetHeight(WindowInsetsCompat.Type.statusBars()).value + 18.dp,
+                    start = 70.dp
+                )
+                .size(43.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_trash),
+                contentDescription = "trash",
+                tint = ColorForArrowBack
             )
-            .size(43.dp)
-    ) {
-        Icon(
-            painter = painterResource(id = R.drawable.ic_trash),
-            contentDescription = "trash",
-            tint = Color.Gray
-        )
+        }
     }
 
     CommentsBottomSheet(
         show = showCommentsSheet,
-        comments = comments,
+        comments = uiState.comments,
         onDismiss = { showCommentsSheet = false },
         onAddComment = { commentText -> viewModel.addComment(commentText) }
     )

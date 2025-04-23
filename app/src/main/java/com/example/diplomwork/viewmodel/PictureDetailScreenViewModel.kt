@@ -4,8 +4,10 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.model.CommentRequest
 import com.example.diplomwork.model.CommentResponse
+import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.network.repos.CommentRepository
 import com.example.diplomwork.network.repos.PictureRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,40 +20,14 @@ import javax.inject.Inject
 class PictureDetailScreenViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val pictureRepository: PictureRepository,
-    private val commentRepository: CommentRepository
+    private val commentRepository: CommentRepository,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _pictureId: Long = savedStateHandle.get<Long>("pictureId") ?: 0L
 
-    private val _pictureDescription = MutableStateFlow("")
-    val pictureDescription: StateFlow<String> = _pictureDescription
-
-    private val _likesCount = MutableStateFlow(0)
-    val likesCount: StateFlow<Int> = _likesCount
-
-    private val _isLiked = MutableStateFlow(false)
-    val isLiked: StateFlow<Boolean> = _isLiked
-
-    private val _comments = MutableStateFlow<List<CommentResponse>>(emptyList())
-    val comments: StateFlow<List<CommentResponse>> = _comments
-
-    private val _profileImageUrl = MutableStateFlow("")
-    val profileImageUrl: StateFlow<String> = _profileImageUrl
-
-    private val _pictureUsername = MutableStateFlow("")
-    val pictureUsername: StateFlow<String> = _pictureUsername
-
-    private val _pictureUserId = MutableStateFlow(0L)
-    val pictureUserId: StateFlow<Long?> = _pictureUserId
-
-    private val _deleteStatus = MutableStateFlow("")
-    val deleteStatus: StateFlow<String> = _deleteStatus
-
-    private val _isLoading = MutableStateFlow(true)
-    val isLoading: StateFlow<Boolean> = _isLoading
-
-    private val _isCurrentUserOwner = MutableStateFlow(false)
-    val isCurrentUserOwner: StateFlow<Boolean> = _isCurrentUserOwner
+    private val _uiState = MutableStateFlow(PictureDetailUiState())
+    val uiState: StateFlow<PictureDetailUiState> = _uiState
 
     init {
         loadPictureData()
@@ -59,77 +35,65 @@ class PictureDetailScreenViewModel @Inject constructor(
 
     private fun loadPictureData() {
         viewModelScope.launch {
-            try {
-                val picture = pictureRepository.getPicture(_pictureId)
-                _pictureUsername.value = picture.username
-                _pictureUserId.value = picture.userId
-                _profileImageUrl.value = picture.userProfileImageUrl
-                _pictureDescription.value = picture.description
-                _likesCount.value = picture.likesCount
-                _isLiked.value = picture.isLikedByCurrentUser
+            _uiState.value = _uiState.value.copy(isLoading = true)
 
-                try {
-                    _comments.value = commentRepository.getPictureComments(_pictureId)
-                } catch (e: Exception) {
-                    Log.e(
-                        "PictureDetailViewModel",
-                        "Ошибка при загрузке комментариев: ${e.message}",
-                        e
-                    )
-                    _comments.value = emptyList()
-                }
+            val pictureResult = safeApiCall { pictureRepository.getPicture(_pictureId) }
+            val commentsResult = safeApiCall { commentRepository.getPictureComments(_pictureId) }
 
-            } catch (e: Exception) {
-                Log.e("PictureDetailViewModel", "Error: ${e.message}", e)
-            } finally {
-                _isLoading.value = false
+            pictureResult.getOrNull()?.let { picture ->
+                val currentUserUsername = sessionManager.username
+                val isOwner = currentUserUsername == picture.username
+
+                _uiState.value = _uiState.value.copy(
+                    picture = picture,
+                    pictureUsername = picture.username,
+                    pictureUserId = picture.userId,
+                    profileImageUrl = picture.userProfileImageUrl,
+                    pictureDescription = picture.description,
+                    likesCount = picture.likesCount,
+                    isLiked = picture.isLikedByCurrentUser,
+                    isCurrentUserOwner = isOwner
+                )
             }
+
+            _uiState.value = _uiState.value.copy(
+                comments = commentsResult.getOrNull() ?: emptyList(),
+                isLoading = false
+            )
         }
     }
 
     fun deletePicture() {
-        val id = _pictureId
         viewModelScope.launch {
-            try {
-                Log.e("piska", "pictureId до delete: $id")
+            val result = safeApiCall { pictureRepository.deletePicture(_pictureId) }
 
-                _deleteStatus.value = "Ниче не произошло"
-
-                val isDeleted = pictureRepository.deletePicture(id)
-                if (isDeleted) {
-                    _deleteStatus.value = "Ну тут вроде удаляется, но нужно обновлять страницу"
-                } else {
-                    _deleteStatus.value = "Ошибка удаления"
-                }
-
-                Log.e("piska", "pictureId после delete: $id")
-            } catch (e: Exception) {
-                Log.e("PictureDetailViewModel", "Ошибка удаления: ${e.message}", e)
-                _deleteStatus.value = "Ошибка удаления: ${e.message}"
+            if (result.isSuccess) {
+                _uiState.value = _uiState.value.copy(deleteStatus = "Удаление успешно")
+            } else {
+                _uiState.value = _uiState.value.copy(deleteStatus = "Ошибка удаления")
             }
         }
     }
 
     fun toggleLike() {
         viewModelScope.launch {
-            val wasLiked = _isLiked.value
-            _isLiked.value = !wasLiked
-            _likesCount.value =
-                if (!wasLiked) _likesCount.value + 1
-                else (_likesCount.value - 1).coerceAtLeast(0)
+            val wasLiked = _uiState.value.isLiked
+            _uiState.value = _uiState.value.copy(
+                isLiked = !wasLiked,
+                likesCount = (_uiState.value.likesCount + if (!wasLiked) 1 else -1).coerceAtLeast(0)
+            )
 
-            try {
-                if (wasLiked) {
-                    pictureRepository.unlikePicture(_pictureId)
-                } else {
-                    pictureRepository.likePicture(_pictureId)
-                }
-            } catch (e: Exception) {
-                Log.e("PictureDetailViewModel", "Error updating like: ${e.message}")
-                _isLiked.value = wasLiked
-                _likesCount.value =
-                    if (wasLiked) _likesCount.value + 1
-                    else (_likesCount.value - 1).coerceAtLeast(0)
+            val result = if (wasLiked) {
+                safeApiCall { pictureRepository.unlikePicture(_pictureId) }
+            } else {
+                safeApiCall { pictureRepository.likePicture(_pictureId) }
+            }
+
+            if (result.isFailure) {
+                _uiState.value = _uiState.value.copy(
+                    isLiked = wasLiked,
+                    likesCount = (_uiState.value.likesCount + if (wasLiked) 1 else -1).coerceAtLeast(0)
+                )
             }
         }
     }
@@ -138,13 +102,40 @@ class PictureDetailScreenViewModel @Inject constructor(
         viewModelScope.launch {
             if (commentText.isBlank()) return@launch
 
-            try {
+            val result = safeApiCall {
                 val commentRequest = CommentRequest(text = commentText)
                 commentRepository.addPictureComment(_pictureId, commentRequest)
-                _comments.value = commentRepository.getPictureComments(_pictureId)
-            } catch (e: Exception) {
-                Log.e("PictureDetailViewModel", "Error adding comment: ${e.message}")
+            }
+
+            if (result.isSuccess) {
+                val updatedComments = commentRepository.getPictureComments(_pictureId)
+                _uiState.value = _uiState.value.copy(comments = updatedComments)
+            } else {
+                Log.e("PictureDetailViewModel", "Error adding comment: ${result.exceptionOrNull()?.message}")
             }
         }
     }
+
+    private inline fun <T> safeApiCall(call: () -> T): Result<T> {
+        return try {
+            Result.success(call())
+        } catch (e: Exception) {
+            Log.e("PictureDetailViewModel", "API Call failed: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
 }
+
+data class PictureDetailUiState(
+    val isLoading: Boolean = false,
+    val picture: PictureResponse? = null,
+    val pictureUsername: String = "",
+    val pictureUserId: Long = 0L,
+    val profileImageUrl: String? = null,
+    val pictureDescription: String = "",
+    val likesCount: Int = 0,
+    val isLiked: Boolean = false,
+    val comments: List<CommentResponse> = emptyList(),
+    val deleteStatus: String = "",
+    val isCurrentUserOwner: Boolean = false
+)

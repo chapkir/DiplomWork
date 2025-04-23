@@ -161,7 +161,7 @@ fun PostCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     AsyncImage(
-                        model = post.userAvatar,
+                        model = post.userAvatar ?: R.drawable.default_avatar,
                         contentDescription = "Avatar",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
@@ -173,17 +173,24 @@ fun PostCard(
                         text = post.username, fontWeight = FontWeight.Bold, color = Color.White
                     )
                 }
-                IconButton(
-                    onClick = {
-                        if (post.isOwnPost) onDeletePost(post.id)
-                        else return@IconButton
-                    }, modifier = Modifier.size(25.dp)
+                Box(
+                    modifier = Modifier
+                        .size(25.dp)
+                        .padding(end = 10.dp, top = 2.dp, bottom = 2.dp)
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) {
+                            if (post.isOwnPost) onDeletePost(post.id)
+                            else return@clickable
+                        }
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_info),
-                        contentDescription = "OnBack",
+                        painter = painterResource(id = R.drawable.ic_menu_dots_vertical),
+                        contentDescription = "Menu",
                         tint = Color.White
                     )
+
                 }
             }
 
@@ -320,4 +327,3 @@ fun PostCard(
         }
     }
 }
-
