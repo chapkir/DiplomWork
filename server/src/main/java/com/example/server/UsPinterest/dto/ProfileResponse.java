@@ -5,7 +5,9 @@ import java.time.LocalDate;
 import java.util.List;
 import com.example.server.UsPinterest.dto.BoardResponse;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+@JsonInclude(JsonInclude.Include.ALWAYS)
 public class ProfileResponse {
     private Long id;
     private String username;
@@ -22,6 +24,7 @@ public class ProfileResponse {
     private List<PostResponse> posts;
     private List<BoardResponse> boards;
     private int pinsCount;
+    private int postsCount;
     private int followersCount;
     private int followingCount;
 
@@ -135,6 +138,14 @@ public class ProfileResponse {
 
     public void setPinsCount(int pinsCount) {
         this.pinsCount = pinsCount;
+    }
+
+    public int getPostsCount() {
+        return postsCount;
+    }
+
+    public void setPostsCount(int postsCount) {
+        this.postsCount = postsCount;
     }
 
     public int getFollowersCount() {

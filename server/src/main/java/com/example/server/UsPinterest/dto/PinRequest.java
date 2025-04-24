@@ -5,6 +5,9 @@ import jakarta.validation.constraints.Size;
 
 public class PinRequest {
 
+    @NotBlank(message = "Title cannot be blank")
+    private String title;
+
     @NotBlank(message = "URL изображения не может быть пустым")
     private String imageUrl;
 
@@ -14,6 +17,14 @@ public class PinRequest {
     private Long boardId;
 
     public PinRequest() {}
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
     public String getImageUrl() {
         return imageUrl;

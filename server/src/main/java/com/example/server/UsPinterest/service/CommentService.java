@@ -34,14 +34,6 @@ public class CommentService {
         this.userRepository = userRepository;
     }
 
-    /**
-     * Добавляет комментарий к посту
-     *
-     * @param postId ID поста
-     * @param commentRequest Запрос на создание комментария
-     * @param userId ID пользователя, создающего комментарий
-     * @return Ответ с созданным комментарием
-     */
     @Transactional
     public CommentResponse addCommentToPost(Long postId, CommentRequest commentRequest, Long userId) {
         Post post = postRepository.findById(postId)
@@ -63,12 +55,7 @@ public class CommentService {
         return convertToCommentResponse(savedComment);
     }
 
-    /**
-     * Получает все комментарии для поста
-     *
-     * @param postId ID поста
-     * @return Список комментариев
-     */
+
     @Transactional(readOnly = true)
     public List<CommentResponse> getCommentsByPostId(Long postId) {
         Post post = postRepository.findById(postId)
@@ -81,13 +68,7 @@ public class CommentService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Удаляет комментарий
-     *
-     * @param commentId ID комментария
-     * @param postId ID поста
-     * @param userId ID пользователя, пытающегося удалить комментарий
-     */
+
     @Transactional
     public void deleteComment(Long commentId, Long postId, Long userId) {
         Comment comment = commentRepository.findById(commentId)
@@ -111,12 +92,7 @@ public class CommentService {
                 commentId, postId, user.getUsername());
     }
 
-    /**
-     * Конвертирует объект Comment в CommentResponse
-     *
-     * @param comment Комментарий для конвертации
-     * @return DTO комментария
-     */
+
     private CommentResponse convertToCommentResponse(Comment comment) {
         CommentResponse response = new CommentResponse();
         response.setId(comment.getId());
@@ -124,6 +100,7 @@ public class CommentService {
         if (comment.getUser() != null) {
             response.setUsername(comment.getUser().getUsername());
             response.setUserProfileImageUrl(comment.getUser().getProfileImageUrl());
+            response.setUserId(comment.getUser().getId());
         } else {
             response.setUsername("Unknown");
         }

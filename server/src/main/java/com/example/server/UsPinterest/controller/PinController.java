@@ -409,7 +409,18 @@ public class PinController {
                     CommentResponse cr = new CommentResponse();
                     cr.setId(comment.getId());
                     cr.setText(comment.getText());
-                    cr.setUsername(comment.getUser() != null ? comment.getUser().getUsername() : "Unknown");
+                    cr.setCreatedAt(comment.getCreatedAt());
+                    if (comment.getUser() != null) {
+                        cr.setUsername(comment.getUser().getUsername());
+                        String userImg = comment.getUser().getProfileImageUrl();
+                        if (userImg != null && !userImg.isEmpty()) {
+                            userImg = fileStorageService.updateImageUrl(userImg);
+                        }
+                        cr.setUserProfileImageUrl(userImg);
+                        cr.setUserId(comment.getUser().getId());
+                    } else {
+                        cr.setUsername("Unknown");
+                    }
                     return cr;
                 }).collect(Collectors.toList());
 
@@ -426,9 +437,9 @@ public class PinController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> uploadImage(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("description") String description,
+            @RequestParam("title") String title,
+            @RequestParam(value = "description", required = false) String description,
             Authentication authentication) {
-
 
         if (!bucket.tryConsume(1)) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
@@ -452,6 +463,7 @@ public class PinController {
             String imageUrl = fileStorageService.storeFile(file);
 
             Pin pin = new Pin();
+            pin.setTitle(title);
             pin.setImageUrl(imageUrl);
             pin.setDescription(description);
             pin.setUser(user);

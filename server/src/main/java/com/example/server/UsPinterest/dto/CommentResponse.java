@@ -8,6 +8,7 @@ public class CommentResponse {
     private String username;
     private LocalDateTime createdAt;
     private String userProfileImageUrl;
+    private Long userId;
 
     public CommentResponse() {}
 
@@ -57,5 +58,13 @@ public class CommentResponse {
 
     public void setUserProfileImageUrl(String userProfileImageUrl) {
         this.userProfileImageUrl = userProfileImageUrl;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 }

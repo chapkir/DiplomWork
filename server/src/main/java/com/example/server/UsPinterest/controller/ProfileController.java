@@ -14,6 +14,7 @@ import com.example.server.UsPinterest.repository.PinRepository;
 import com.example.server.UsPinterest.repository.UserRepository;
 import com.example.server.UsPinterest.repository.LikeRepository;
 import com.example.server.UsPinterest.repository.PostRepository;
+import com.example.server.UsPinterest.repository.FollowRepository;
 import com.example.server.UsPinterest.service.BoardService;
 import com.example.server.UsPinterest.service.PinService;
 import com.example.server.UsPinterest.service.UserService;
@@ -58,6 +59,7 @@ public class ProfileController {
     private final PinRepository pinRepository;
     private final LikeRepository likeRepository;
     private final PostRepository postRepository;
+    private final FollowRepository followRepository;
     @Autowired
     private FileStorageService fileStorageService;
     @Autowired
@@ -85,6 +87,7 @@ public class ProfileController {
             response.setId(user.getId());
             response.setUsername(user.getUsername());
             response.setEmail(user.getEmail());
+            response.setBio(user.getBio());
             response.setProfileImageUrl(user.getProfileImageUrl() != null ? user.getProfileImageUrl() : "");
             response.setRegistrationDate(user.getRegistrationDate());
             response.setFirstName(user.getFirstName());
@@ -107,6 +110,9 @@ public class ProfileController {
                     .map(post -> postService.convertToPostResponse(post, user))
                     .collect(Collectors.toList());
             response.setPosts(postResponses);
+            response.setPostsCount(postResponses.size());
+            response.setFollowersCount(followRepository.countByFollowing(user));
+            response.setFollowingCount(followRepository.countByFollower(user));
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -183,6 +189,7 @@ public class ProfileController {
             response.setId(targetUser.getId());
             response.setUsername(targetUser.getUsername());
             response.setEmail(targetUser.getEmail());
+            response.setBio(targetUser.getBio());
             response.setProfileImageUrl(targetUser.getProfileImageUrl() != null ? targetUser.getProfileImageUrl() : "");
             response.setRegistrationDate(targetUser.getRegistrationDate());
             response.setFirstName(targetUser.getFirstName());
@@ -213,6 +220,9 @@ public class ProfileController {
                     .map(post -> postService.convertToPostResponse(post, currentUser))
                     .collect(Collectors.toList());
             response.setPosts(postResponses);
+            response.setPostsCount(postResponses.size());
+            response.setFollowersCount(followRepository.countByFollowing(targetUser));
+            response.setFollowingCount(followRepository.countByFollower(targetUser));
 
             return ResponseEntity.ok(response);
         } catch (ResourceNotFoundException e) {
@@ -222,6 +232,24 @@ public class ProfileController {
             logger.error("Ошибка при получении профиля пользователя с id {}: {}", userId, e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Произошла ошибка при получении профиля: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/{userId}/liked-pins")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getLikedPinsByUser(@PathVariable Long userId) {
+        try {
+            User targetUser = userService.getUserWithCollections(userId);
+            List<Like> likes = likeRepository.findByUserOrderByIdDesc(targetUser);
+            List<PinResponse> pinResponses = likes.stream()
+                    .map(like -> pinService.convertToPinResponse(like.getPin(), targetUser))
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(pinResponses);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Пользователь не найден");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Ошибка при получении лайкнутых пинов: " + e.getMessage());
         }
     }
 

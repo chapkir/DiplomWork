@@ -34,6 +34,9 @@ public class Pin {
     @Column(length = 1024)
     private String description;
 
+    @Column(nullable = false)
+    private String title;
+
     private LocalDateTime createdAt;
 
     @ManyToOne
@@ -123,5 +126,13 @@ public class Pin {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 } 

@@ -9,6 +9,7 @@ public class PinResponse {
     private String description;
     private Long boardId;
     private String boardTitle;
+    private String title;
     private Long userId;
     private String username;
     private String userProfileImageUrl;
@@ -55,6 +56,14 @@ public class PinResponse {
 
     public void setBoardTitle(String boardTitle) {
         this.boardTitle = boardTitle;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public Long getUserId() {

@@ -27,10 +27,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.example.server.UsPinterest.service.FileStorageService;
+import com.example.server.UsPinterest.dto.CommentResponse;
 
 @Service
 @Transactional
@@ -98,6 +100,7 @@ public class PinService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
         Pin pin = new Pin();
+        pin.setTitle(pinRequest.getTitle());
         pin.setImageUrl(pinRequest.getImageUrl());
         pin.setDescription(pinRequest.getDescription());
         pin.setUser(user);
@@ -203,6 +206,7 @@ public class PinService {
             }
 
             response.setDescription(pin.getDescription());
+            response.setTitle(pin.getTitle());
 
             if (pin.getBoard() != null) {
                 response.setBoardId(pin.getBoard().getId());
@@ -230,6 +234,27 @@ public class PinService {
                         .anyMatch(like -> currentUser.getId().equals(like.getUser().getId()));
             }
             response.setIsLikedByCurrentUser(isLiked);
+
+            List<CommentResponse> commentResponses = pin.getComments().stream()
+                    .map(comment -> {
+                        CommentResponse cr = new CommentResponse();
+                        cr.setId(comment.getId());
+                        cr.setText(comment.getText());
+                        if (comment.getUser() != null) {
+                            cr.setUsername(comment.getUser().getUsername());
+                            String userImg = comment.getUser().getProfileImageUrl();
+                            if (userImg != null && !userImg.isEmpty()) {
+                                userImg = fileStorageService.updateImageUrl(userImg);
+                            }
+                            cr.setUserProfileImageUrl(userImg);
+                            cr.setUserId(comment.getUser().getId());
+                        } else {
+                            cr.setUsername("Unknown");
+                        }
+                        cr.setCreatedAt(comment.getCreatedAt());
+                        return cr;
+                    }).collect(Collectors.toList());
+            response.setComments(commentResponses);
 
             return response;
         } catch (Exception e) {
