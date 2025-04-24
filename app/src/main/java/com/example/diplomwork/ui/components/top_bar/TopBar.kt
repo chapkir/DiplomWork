@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -37,19 +39,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.diplomwork.R
 import com.example.diplomwork.ui.navigation.AddContent
-import com.example.diplomwork.ui.navigation.Pictures
-import com.example.diplomwork.ui.navigation.Login
 import com.example.diplomwork.ui.navigation.Notification
+import com.example.diplomwork.ui.navigation.Pictures
 import com.example.diplomwork.ui.navigation.Posts
 import com.example.diplomwork.ui.theme.ColorForBackground
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.KeyboardActions
 
 @Composable
 fun GetTopBars(
     currentRoute: String?,
     onSearch: (String) -> Unit = {},
-    //onRefresh: () -> Unit = {}
 ) {
     var isSearching by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
@@ -85,13 +83,11 @@ fun GetTopBars(
                 icon = R.drawable.ic_search,
                 contentDescription = "Search",
                 onIconClick = { isSearching = true },
-                //onRefreshClick = onRefresh // Обработка нажатия на кнопку обновления
             )
 
             Posts::class.simpleName -> CustomTopBar(title = "Посты")
             AddContent::class.simpleName -> CustomTopBar(title = "Добавить")
             Notification::class.simpleName -> CustomTopBar(title = "Уведомления")
-            Login::class.simpleName -> CustomTopBar(title = "Авторизация")
             else -> {}
         }
     }
@@ -183,7 +179,9 @@ fun SearchBar(
         TextField(
             value = searchQuery,
             onValueChange = onSearchQueryChange,
-            modifier = Modifier.height(51.dp).width(251.dp),
+            modifier = Modifier
+                .height(51.dp)
+                .width(251.dp),
             placeholder = { Text("Поиск", color = Color.Gray, fontSize = 15.sp) },
             singleLine = true,
             shape = RoundedCornerShape(10.dp),

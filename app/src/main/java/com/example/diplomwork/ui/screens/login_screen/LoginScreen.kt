@@ -2,15 +2,16 @@ package com.example.diplomwork.ui.screens.login_screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
@@ -27,20 +28,22 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -57,10 +60,6 @@ fun LoginScreen(
     onNavigateToRegister: () -> Unit,
     loginViewModel: LoginViewModel = hiltViewModel()
 ) {
-    val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
 
     val username by loginViewModel.username.collectAsState()
     val password by loginViewModel.password.collectAsState()
@@ -75,84 +74,91 @@ fun LoginScreen(
         }
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(ColorForBackground)
-            .imePadding(),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(Modifier.size(15.dp))
-        Text(
-            text = "Введите данные для входа",
-            color = Color.White.copy(alpha = 0.9f),
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(modifier = Modifier.height(25.dp))
-
-        LoginTextField(
-            value = username,
-            onValueChange = loginViewModel::onUsernameChange,
-            label = "Логин",
-            icon = Icons.Default.Person,
-            enabled = !isLoading,
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .focusRequester(focusRequester)
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        LoginTextField(
-            value = password,
-            onValueChange = loginViewModel::onPasswordChange,
-            label = "Пароль",
-            icon = Icons.Default.Lock,
-            enabled = !isLoading,
-            modifier = Modifier.fillMaxWidth(0.85f),
-            isPassword = true,
-            passwordVisible = passwordVisible,
-            onTogglePassword = { passwordVisible = !passwordVisible }
-        )
-
-        Spacer(modifier = Modifier.height(18.dp))
-
-        Button(
-            onClick = { loginViewModel.login() },
-            modifier = Modifier.fillMaxWidth(0.85f),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = ColorForFocusButton,
-                contentColor = Color.White,
-                disabledContainerColor = Color.Gray,
-                disabledContentColor = Color.White
-            ),
-            enabled = !isLoading && username.isNotBlank() && password.isNotBlank()
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (isLoading) {
-                LoadingSpinnerForElement()
-            } else {
-                Text("Войти", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+            Spacer(modifier = Modifier.height(115.dp))
+            Text(
+                text = "Spotsy",
+                color = Color.White,
+                fontSize = 60.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Spacer(modifier = Modifier.height(50.dp))
+
+            LoginTextField(
+                value = username,
+                onValueChange = loginViewModel::onUsernameChange,
+                label = "Имя пользователя",
+                icon = Icons.Default.Person,
+                enabled = !isLoading,
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            LoginTextField(
+                value = password,
+                onValueChange = loginViewModel::onPasswordChange,
+                label = "Пароль",
+                icon = Icons.Default.Lock,
+                enabled = !isLoading,
+                modifier = Modifier.fillMaxWidth(0.8f),
+                isPassword = true,
+                passwordVisible = passwordVisible,
+                onTogglePassword = { passwordVisible = !passwordVisible }
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Button(
+                onClick = { loginViewModel.login() },
+                modifier = Modifier.fillMaxWidth(0.75f),
+                shape = RoundedCornerShape(15.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ColorForFocusButton,
+                    contentColor = Color.White,
+                    disabledContainerColor = Color.Gray,
+                    disabledContentColor = Color.White
+                )
+            ) {
+                if (isLoading) {
+                    LoadingSpinnerForElement()
+                } else {
+                    Text("Войти", fontWeight = FontWeight.Medium, fontSize = 16.sp)
+                }
+            }
+
+            TextButton(onClick = onNavigateToRegister) {
+                Text("Перейти к регистрации", color = Color.LightGray, fontSize = 15.sp)
+            }
+
+            Spacer(modifier = Modifier.height(15.dp))
+
+            loginError?.let {
+                Text(
+                    text = it,
+                    color = Color.Red,
+                    fontSize = 16.sp,
+                    textAlign = TextAlign.Center
+                )
             }
         }
 
-        loginError?.let {
-            Spacer(modifier = Modifier.height(10.dp))
-            Text(
-                text = it,
-                color = Color.Red,
-                fontSize = 16.sp,
-                textAlign = TextAlign.Center
-            )
-        }
+        PrivacyPolicyText(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+        )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        TextButton(onClick = onNavigateToRegister) {
-            Text("Нет аккаунта? Зарегистрируйтесь!", color = Color.White)
-        }
     }
 }
 
@@ -183,8 +189,8 @@ fun LoginTextField(
                     Icon(
                         painter = painterResource(image),
                         modifier = Modifier
-                            .size(26.dp)
-                            .padding(end = 4.dp),
+                            .size(23.dp)
+                            .padding(end = 3.dp),
                         contentDescription = "Toggle password visibility"
                     )
                 }
@@ -195,7 +201,7 @@ fun LoginTextField(
         shape = RoundedCornerShape(15.dp),
         modifier = modifier,
         textStyle = TextStyle(
-            fontSize = if (isPassword && !passwordVisible) 21.sp else 18.sp,
+            fontSize = if (isPassword && !passwordVisible) 20.sp else 17.sp,
             color = Color.White
         ),
         colors = OutlinedTextFieldDefaults.colors(
@@ -217,5 +223,49 @@ fun LoginTextField(
             disabledLeadingIconColor = Color.Gray,
             disabledTrailingIconColor = Color.Gray
         )
+    )
+}
+
+@Composable
+fun PrivacyPolicyText(modifier: Modifier = Modifier) {
+    val uriHandler = LocalUriHandler.current
+
+    val annotatedText = buildAnnotatedString {
+        append("Продолжая, вы соглашаетесь с ")
+
+        pushStringAnnotation(
+            tag = "URL",
+            annotation = "https://spotsy.ru/privacy"
+        )
+        withStyle(
+            style = SpanStyle(
+                color = Color(0xFF1E88E5),
+                textDecoration = TextDecoration.Underline,
+                fontWeight = FontWeight.Medium
+            )
+        ) {
+            append("Политикой конфиденциальности")
+        }
+        pop()
+
+        append(" и подтверждаете, что прочли её.")
+    }
+
+    ClickableText(
+        text = annotatedText,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 22.dp, vertical = 20.dp),
+        style = TextStyle(
+            fontSize = 12.sp,
+            color = Color.Gray,
+            textAlign = TextAlign.Center
+        ),
+        onClick = { offset ->
+            annotatedText.getStringAnnotations(tag = "URL", start = offset, end = offset)
+                .firstOrNull()?.let { annotation ->
+                    uriHandler.openUri(annotation.item)
+                }
+        }
     )
 }
