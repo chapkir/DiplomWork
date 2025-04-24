@@ -5,7 +5,6 @@ import android.app.DatePickerDialog
 import android.content.Context
 import android.icu.util.Calendar
 import android.view.inputmethod.InputMethodManager
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -67,7 +67,6 @@ import com.example.diplomwork.R
 import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.ui.theme.ColorForFocusButton
-import com.example.diplomwork.ui.theme.ColorForHint
 import com.example.diplomwork.viewmodel.EditProfileViewModel
 import com.example.diplomwork.viewmodel.RegisterViewModel
 import java.util.Locale
@@ -85,6 +84,7 @@ fun hideKeyboard(context: Context) {
 @Composable
 fun RegisterScreen(
     onCompleteRegistration: () -> Unit,
+    onBack: () -> Unit,
     registerViewModel: RegisterViewModel = hiltViewModel(),
     editProfileViewModel: EditProfileViewModel = hiltViewModel()
 ) {
@@ -96,13 +96,9 @@ fun RegisterScreen(
     val step by registerViewModel.step.collectAsState()
     val isLoading by registerViewModel.isLoading.collectAsState()
     val errorMessage by registerViewModel.errorMessage.collectAsState()
-
     var confirmPassword by rememberSaveable { mutableStateOf("") }
 
-    val cities =
-        listOf("Санкт-Петербург", "Москва", "Москва", "Москва", "Москва", "Москва", "Москва")
     val genders = listOf("Мужской", "Женский", "Другой")
-
     val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(step) {
@@ -115,85 +111,98 @@ fun RegisterScreen(
             .background(ColorForBackground),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(32.dp))
-        StepIndicator(step)
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            when (step) {
-                0 -> {
-                    StepTitle("Как тебя зовут?")
-                    InputField("Введите имя пользователя", registerData.username, {
-                        registerViewModel.updateRegisterData {
-                            copy(username = it.replace(" ", "").filter { c -> c.code in 32..126 })
-                        }
-                    }, KeyboardType.Text, focusRequester)
-                    Spacer(Modifier.height(15.dp))
-                    InputField("Введите свое имя", registerData.firstName, {
-                        registerViewModel.updateRegisterData {
-                            copy(
-                                firstName = it.replace(" ", "")
-                            )
-                        }
-                    }, KeyboardType.Text)
-                }
+        StepIndicator(
+            step,
+            onBackOut = onBack,
+            onBackStep = { registerViewModel.previousStep() },
+            onEditSkip = {
+                hideKeyboard(context)
+                onCompleteRegistration()
+            }
+        )
 
-                1 -> {
-                    StepTitle("Придумайте пароль")
-                    InputField("Введите пароль", registerData.password, {
-                        registerViewModel.updateRegisterData {
-                            copy(
-                                password = it.replace(" ", "")
-                            )
-                        }
-                    }, KeyboardType.Password, focusRequester, isPassword = true)
-                    Spacer(Modifier.height(15.dp))
-                    InputField("Повторите пароль", confirmPassword, {
-                        confirmPassword = it
-                    }, KeyboardType.Password, isPassword = true)
-                }
+        Spacer(modifier = Modifier.height(12.dp))
 
-                2 -> {
-                    StepTitle("Введите email и дату рождения")
-                    InputField("Введите email", registerData.email, {
-                        registerViewModel.updateRegisterData { copy(email = it.replace(" ", "")) }
-                    }, KeyboardType.Email, focusRequester)
-                    Spacer(Modifier.height(15.dp))
-                    DatePickerButton(
-                        date = registerData.birthDate,
-                        onDateSelected = { selectedDate ->
-                            registerViewModel.updateRegisterData { copy(birthDate = selectedDate) }
-                        }
-                    )
-                }
-
-                3 -> {
-                    StepTitle("Расскажите о себе")
-                    InputField("О себе", editProfileData.bio ?: "", {
-                        editProfileViewModel.updateProfileData { copy(bio = it) }
-                    }, KeyboardType.Text, focusRequester)
-
-                    Spacer(Modifier.height(15.dp))
-
-                    InputField("Город", editProfileData.city ?: "", {
-                        editProfileViewModel.updateProfileData { copy(city = it) }
-                    }, KeyboardType.Text)
-
-                    Spacer(Modifier.height(15.dp))
-
-                    DropdownSelector("Пол", genders, editProfileData.gender ?: "") {
-                        editProfileViewModel.updateProfileData { copy(gender = it) }
+        when (step) {
+            0 -> {
+                StepTitle("Как тебя зовут?")
+                InputField("Введите имя пользователя", registerData.username, {
+                    registerViewModel.updateRegisterData {
+                        copy(username = it.replace(" ", "").filter { c -> c.code in 32..126 })
                     }
+                }, KeyboardType.Text, focusRequester)
+                Spacer(Modifier.height(15.dp))
+                InputField("Введите свое имя", registerData.firstName, {
+                    registerViewModel.updateRegisterData {
+                        copy(firstName = it.replace(" ", ""))
+                    }
+                }, KeyboardType.Text)
+            }
+
+            1 -> {
+                StepTitle("Придумайте пароль")
+                InputField("Введите пароль", registerData.password, {
+                    registerViewModel.updateRegisterData {
+                        copy(password = it.replace(" ", ""))
+                    }
+                }, KeyboardType.Password, focusRequester, isPassword = true)
+                Spacer(Modifier.height(15.dp))
+                InputField("Повторите пароль", confirmPassword, {
+                    confirmPassword = it
+                }, KeyboardType.Password, isPassword = true)
+            }
+
+            2 -> {
+                StepTitle("Введите email и дату рождения")
+                InputField("Введите email", registerData.email, {
+                    registerViewModel.updateRegisterData {
+                        copy(email = it.replace(" ", ""))
+                    }
+                }, KeyboardType.Email, focusRequester)
+                Spacer(Modifier.height(15.dp))
+                DatePickerButton(
+                    date = registerData.birthDate,
+                    onDateSelected = {
+                        registerViewModel.updateRegisterData { copy(birthDate = it) }
+                    }
+                )
+            }
+
+            3 -> {
+                StepTitle("Расскажите о себе")
+                InputField("О себе", editProfileData.bio ?: "", {
+                    editProfileViewModel.updateProfileData { copy(bio = it) }
+                }, KeyboardType.Text, focusRequester)
+
+                Spacer(Modifier.height(15.dp))
+
+                InputField("Город", editProfileData.city ?: "", {
+                    editProfileViewModel.updateProfileData { copy(city = it) }
+                }, KeyboardType.Text)
+
+                Spacer(Modifier.height(15.dp))
+
+                DropdownSelector("Пол", genders, editProfileData.gender ?: "") {
+                    editProfileViewModel.updateProfileData { copy(gender = it) }
                 }
             }
         }
+        errorMessage?.let {
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = it,
+                color = Color.Red,
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(25.dp))
 
-        NavigationButtons(
+        NavigationButton(
             step = step,
             isNextEnabled = registerViewModel.isCurrentStepValid(),
             isLoading = isLoading,
@@ -202,7 +211,6 @@ fun RegisterScreen(
                     0, 1 -> registerViewModel.nextStep()
                     2 -> registerViewModel.register {
                         focusManager.clearFocus()
-                        Toast.makeText(context, "Регистрация успешна!", Toast.LENGTH_SHORT).show()
                         registerViewModel.nextStep()
                     }
 
@@ -212,18 +220,12 @@ fun RegisterScreen(
                         onCompleteRegistration()
                     }
                 }
-            },
-            onBack = { registerViewModel.previousStep() }
+            }
         )
-
-        errorMessage?.let {
-            Spacer(modifier = Modifier.height(10.dp))
-            Text(text = it, color = Color.Red, fontSize = 16.sp, textAlign = TextAlign.Center)
-        }
-
-        RegistrationTips()
     }
+
 }
+
 
 @Composable
 fun StepTitle(text: String) {
@@ -233,7 +235,7 @@ fun StepTitle(text: String) {
         fontSize = 24.sp,
         fontWeight = FontWeight.Bold
     )
-    Spacer(modifier = Modifier.height(25.dp))
+    Spacer(modifier = Modifier.height(20.dp))
 }
 
 @Composable
@@ -263,7 +265,9 @@ fun InputField(
                             if (passwordVisible) R.drawable.ic_eye_crossed else R.drawable.ic_eye
                         ),
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp).padding(end = 4.dp)
+                        modifier = Modifier
+                            .size(24.dp)
+                            .padding(end = 4.dp)
                     )
                 }
             }
@@ -372,33 +376,23 @@ fun DropdownSelector(
 }
 
 @Composable
-fun NavigationButtons(
+fun NavigationButton(
     step: Int,
     isNextEnabled: Boolean,
     isLoading: Boolean,
     onNext: () -> Unit,
-    onBack: () -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(0.85f),
-        horizontalArrangement = if (step in 1..2) Arrangement.SpaceBetween else Arrangement.End
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center
     ) {
-        if (step in 1..2) {
-            Button(
-                onClick = onBack,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = ColorForFocusButton,
-                    contentColor = Color.White,
-                    disabledContainerColor = Color.Gray,
-                    disabledContentColor = Color.White
-                )
-            ) {
-                Text("Назад")
-            }
-        }
         Button(
             onClick = onNext,
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .height(50.dp),
             enabled = isNextEnabled && !isLoading,
+            shape = RoundedCornerShape(15.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = ColorForFocusButton,
                 contentColor = Color.White,
@@ -407,43 +401,76 @@ fun NavigationButtons(
             )
         ) {
             if (isLoading && step == 3) LoadingSpinnerForElement()
-            else Text(if (step < 3) "Далее" else "Завершить")
+            else Text(
+                if (step < 3) "Далее" else "Завершить",
+                fontWeight = FontWeight.Medium, fontSize = 18.sp
+            )
         }
     }
 }
 
 @Composable
-fun RegistrationTips() {
-    Text(
-        text = "Подсказка:",
-        color = ColorForHint.copy(alpha = 0.9f),
-        modifier = Modifier.padding(top = 25.dp),
-        textAlign = TextAlign.Center,
-        fontWeight = FontWeight.Bold
-    )
-    Text(
-        text = "• Вводите логин на латинице •\n• Без пробелов •\n• Email с @ •\n• Пароль: минимум 8 символов •",
-        color = ColorForHint.copy(alpha = 0.7f),
-        modifier = Modifier.padding(top = 1.dp),
-        textAlign = TextAlign.Center
-    )
-}
-
-@Composable
-fun StepIndicator(currentStep: Int) {
-    Row(
-        horizontalArrangement = Arrangement.Center,
-        modifier = Modifier.fillMaxWidth()
+fun StepIndicator(
+    currentStep: Int,
+    onBackOut: () -> Unit,
+    onBackStep: () -> Unit,
+    onEditSkip: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
     ) {
-        for (i in 0..3) {
-            Box(
+        if (currentStep != 3) {
+            IconButton(
+                onClick = {
+                    if (currentStep == 0) onBackOut()
+                    else onBackStep()
+                },
                 modifier = Modifier
-                    .size(12.dp)
-                    .clip(CircleShape)
-                    .background(if (i == currentStep) Color.White else Color.Gray)
-                    .padding(4.dp)
-            )
-            if (i < 3) Spacer(modifier = Modifier.width(8.dp))
+                    .align(Alignment.CenterStart)
+                    .padding(start = 15.dp)
+                    .size(30.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_arrow_left),
+                    contentDescription = "OnBack",
+                    tint = Color.White
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier.align(Alignment.Center),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            for (i in 0..3) {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(CircleShape)
+                        .background(if (i == currentStep) Color.White else Color.Gray)
+                )
+                if (i < 3) Spacer(modifier = Modifier.width(8.dp))
+            }
+        }
+
+        if (currentStep == 3) {
+            IconButton(
+                onClick = {
+                    onEditSkip()
+                },
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 15.dp)
+                    .size(30.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_arrow_right),
+                    contentDescription = "Skip",
+                    tint = Color.White
+                )
+            }
         }
     }
 }

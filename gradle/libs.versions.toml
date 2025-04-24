@@ -1,6 +1,6 @@
 [versions]
 accompanistPermissions = "0.31.1-alpha"
-agp = "8.8.1"
+agp = "8.9.1"
 bucket4jCore = "7.6.0"
 caffeine = "3.1.8"
 converterGson = "2.11.0"
@@ -17,7 +17,7 @@ kotlin = "2.1.0"
 coreKtx = "1.15.0"
 
 junit = "4.13.2"
-junitVersion = "1.2.1"
+junitVersion = "1.1.5"
 kotlinxMetadataJvm = "0.6.2"
 lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.10.1"
@@ -43,6 +43,7 @@ serializationVersion = "2.0.0"
 serializationKotlin = "1.7.1"
 
 accompanistPager = "0.28.0"
+composeTesting = "1.0.0-alpha03"
 
 
 [libraries]
@@ -104,6 +105,7 @@ squareup-converter = { group = "com.squareup.retrofit2", name = "converter-gson"
 androidx-ui-test-android = { group = "androidx.compose.ui", name = "ui-test-android", version.ref = "uiTestAndroid" }
 androidx-lifecycle-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "viewModel" }
 logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "loggingInterceptor" }
+androidx-compose-testing = { group = "androidx.xr.compose", name = "compose-testing", version.ref = "composeTesting" }
 
 
 

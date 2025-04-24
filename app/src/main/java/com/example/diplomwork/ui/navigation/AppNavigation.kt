@@ -242,7 +242,9 @@ fun AppNavigation(navController: NavHostController) {
                         navController.navigate(Pictures) {
                             popUpTo(Register) { inclusive = true }
                         }
-                    })
+                    },
+                    onBack = { navController.popBackStack() }
+                    )
             }
             composable<GalleryScreenData> { backStackEntry ->
                 val galleryScreenData = backStackEntry.toRoute<GalleryScreenData>()
