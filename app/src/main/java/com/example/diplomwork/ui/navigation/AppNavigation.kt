@@ -128,7 +128,7 @@ fun AppNavigation(navController: NavHostController) {
                             OtherProfileScreenData(userId, username)
                         )
                     },
-                    searchQuery = searchQuery
+                    //searchQuery = searchQuery
                 )
             }
             composable<Login> {

@@ -1,5 +1,8 @@
 package com.example.diplomwork.network.repos
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.model.CommentRequest
 import com.example.diplomwork.model.CommentResponse
@@ -8,6 +11,8 @@ import retrofit2.Response
 import javax.inject.Inject
 import javax.inject.Singleton
 import com.example.diplomwork.auth.SessionManager
+import com.example.diplomwork.paging.PictureFactoryPaging
+import kotlinx.coroutines.flow.Flow
 
 @Singleton
 class PictureRepository @Inject constructor(
@@ -52,5 +57,16 @@ class PictureRepository @Inject constructor(
     // Получение имени текущего пользователя
     fun getCurrentUsername(): String {
         return sessionManager.username ?: ""
+    }
+
+    fun getPagingPictures(): Flow<PagingData<PictureResponse>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = 5,
+                prefetchDistance = 5,
+                initialLoadSize = 5
+            ),
+            pagingSourceFactory = { PictureFactoryPaging(apiService) }
+        ).flow
     }
 }
