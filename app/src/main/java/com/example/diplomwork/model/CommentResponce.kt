@@ -8,5 +8,7 @@ data class CommentResponse(
     val id: Long,
     val text: String,
     val username: String,
-    val createdAt: String
+    val createdAt: String,
+    val userProfileImageUrl: String?,
+    val userId: Long
 )

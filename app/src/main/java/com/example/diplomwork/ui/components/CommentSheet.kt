@@ -1,37 +1,35 @@
 package com.example.diplomwork.ui.components
 
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,96 +37,58 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.diplomwork.R
 import com.example.diplomwork.model.CommentResponse
 import com.example.diplomwork.ui.theme.ColorForBackground
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CommentItem(comment: CommentResponse) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp, horizontal = 12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.1f)
-        )
+fun CommentsBottomSheet(
+    comments: List<CommentResponse>,
+    onDismiss: () -> Unit,
+    onAddComment: (String) -> Unit,
+    sheetState: SheetState
+) {
+
+    val sheetNestedScrollConnection = remember(sheetState) {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                return if (available.y > 0 && sheetState.currentValue != SheetValue.Hidden) {
+                    Offset.Zero // перехватываем вверхний свайп
+                } else {
+                    Offset.Zero
+                }
+            }
+        }
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
+        containerColor = ColorForBackground,
+        scrimColor = Color.Black.copy(alpha = 0.5f),
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp)
-        ) {
-            Text(
-                text = comment.username,
-                style = MaterialTheme.typography.titleSmall,
-                color = Color.White
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = comment.text,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.8f)
-            )
-        }
-    }
-}
-
-@Composable
-fun CommentsBottomSheet(
-    show: Boolean,
-    comments: List<CommentResponse>,
-    onDismiss: () -> Unit,
-    onAddComment: (String) -> Unit
-) {
-    if (show) {
-        val configuration = LocalConfiguration.current
-        val screenHeight = configuration.screenHeightDp.dp
-        val sheetHeight = screenHeight * 0.8f
-
-        var animationStarted by remember { mutableStateOf(false) }
-
-        val offsetY by animateDpAsState(
-            targetValue = if (animationStarted) screenHeight * 0.2f else screenHeight,
-            animationSpec = tween(
-                durationMillis = 300,
-                easing = androidx.compose.animation.core.FastOutSlowInEasing
-            )
-        )
-
-        val overlayAlpha by animateFloatAsState(
-            targetValue = if (animationStarted) 0.5f else 0f,
-            animationSpec = tween(durationMillis = 300)
-        )
-
-        LaunchedEffect(key1 = true) {
-            animationStarted = true
-        }
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = overlayAlpha))
-                .clickable { onDismiss() }
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(sheetHeight)
-                .padding(bottom = 90.dp)
-                .offset(y = offsetY)
-                .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                .background(ColorForBackground)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             CommentsContent(
                 comments = comments,
-                onDismiss = onDismiss,
-                onAddComment = onAddComment
+                onAddComment = onAddComment,
+                sheetNestedScrollConnection = sheetNestedScrollConnection
             )
         }
     }
@@ -137,52 +97,31 @@ fun CommentsBottomSheet(
 @Composable
 fun CommentsContent(
     comments: List<CommentResponse>,
-    onDismiss: () -> Unit,
-    onAddComment: (String) -> Unit
+    onAddComment: (String) -> Unit,
+    sheetNestedScrollConnection: NestedScrollConnection
 ) {
     var commentText by remember { mutableStateOf("") }
 
+    val listState = rememberLazyListState()
+
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+            .fillMaxWidth()
+            .fillMaxHeight(0.92f)
     ) {
-
-        Box(
-            modifier = Modifier
-                .width(40.dp)
-                .height(4.dp)
-                .background(Color.Gray.copy(alpha = 0.5f), RoundedCornerShape(2.dp))
-                .align(Alignment.CenterHorizontally)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 15.dp),
+            horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = "Комментарии",
-                style = MaterialTheme.typography.titleLarge,
                 color = Color.White,
-                fontSize = 20.sp
+                fontSize = 15.sp
             )
-
-            IconButton(onClick = onDismiss) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_arrow_back),
-                    contentDescription = "Закрыть",
-                    tint = Color.White
-                )
-            }
         }
-
-        HorizontalDivider(
-            modifier = Modifier.padding(vertical = 8.dp),
-            color = Color.White.copy(alpha = 0.2f)
-        )
 
         if (comments.isEmpty()) {
             Box(
@@ -198,9 +137,11 @@ fun CommentsContent(
             }
         } else {
             LazyColumn(
+                state = listState,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
+                    .nestedScroll(sheetNestedScrollConnection)
             ) {
                 items(comments) { comment ->
                     CommentItem(comment = comment)
@@ -212,14 +153,24 @@ fun CommentsContent(
         Spacer(modifier = Modifier.height(8.dp))
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 15.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             OutlinedTextField(
                 value = commentText,
                 onValueChange = { commentText = it },
-                modifier = Modifier.weight(1f),
-                placeholder = { Text("Добавить комментарий", color = Color.Gray) },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(52.dp),
+                placeholder = {
+                    Text(
+                        text = "Поделитесь своим мнением",
+                        color = Color.Gray,
+                        fontSize = 16.sp
+                    )
+                },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
@@ -229,10 +180,12 @@ fun CommentsContent(
                     focusedPlaceholderColor = Color.Gray,
                     unfocusedPlaceholderColor = Color.Gray
                 ),
-                maxLines = 3
+                singleLine = true,
+                maxLines = 1,
+                shape = RoundedCornerShape(30.dp)
             )
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(16.dp))
 
             IconButton(
                 onClick = {
@@ -242,14 +195,65 @@ fun CommentsContent(
                     }
                 },
                 modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(Color.White)
+                    .size(52.dp)
+                    .clip(CircleShape),
+                enabled = commentText.isNotBlank(),
+                colors = IconButtonColors(
+                    containerColor = Color.White,
+                    disabledContainerColor = Color.Gray,
+                    contentColor = Color.Gray,
+                    disabledContentColor = Color.White
+                )
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_arrow_up),
                     contentDescription = "Отправить",
                     tint = ColorForBackground
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CommentItem(comment: CommentResponse) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp, horizontal = 12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.1f)
+        )
+    ) {
+        Row() {
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(RoundedCornerShape(50)),
+                contentAlignment = Alignment.Center
+            ) {
+                AsyncImage(
+                    model = comment.userProfileImageUrl ?: R.drawable.default_avatar,
+                    contentDescription = "Avatar",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.matchParentSize()
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = comment.username,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = comment.text,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.8f)
                 )
             }
         }

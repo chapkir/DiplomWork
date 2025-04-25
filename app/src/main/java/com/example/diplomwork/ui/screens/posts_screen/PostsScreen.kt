@@ -31,12 +31,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -63,6 +65,7 @@ import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.components.rememberSlowFlingBehavior
 import com.example.diplomwork.viewmodel.PostsScreenViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,13 +73,16 @@ fun PostsScreen(
     onProfileClick: (Long?, String) -> Unit,
     viewModel: PostsScreenViewModel = hiltViewModel()
 ) {
+
+    val coroutineScope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val openSheet = { coroutineScope.launch { sheetState.show() } }
+
     val posts by viewModel.posts.collectAsState()
     val comments by viewModel.comments.collectAsState()
     val selectedPostId by viewModel.selectedPostId.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
-
-    var showCommentsSheet by remember { mutableStateOf(false) }
 
     val stateRefresh = rememberPullToRefreshState()
     var isRefreshing by remember { mutableStateOf(false) }
@@ -149,7 +155,7 @@ fun PostsScreen(
                             onCommentClick = {
                                 viewModel.selectPost(post.id)
                                 viewModel.loadCommentsForPost(post.id)
-                                showCommentsSheet = true
+                                openSheet()
                             },
                             onProfileClick,
                             onDeletePost = { postId -> viewModel.deletePost(postId) }
@@ -174,15 +180,18 @@ fun PostsScreen(
                 )
             }
 
-            CommentsBottomSheet(
-                show = showCommentsSheet,
-                comments = comments[selectedPostId] ?: emptyList(),
-                onDismiss = { showCommentsSheet = false },
-                onAddComment = { commentText ->
-                    selectedPostId.let { postId ->
-                        viewModel.addComment(postId, commentText)
-                    }
-                })
+            if (sheetState.isVisible) {
+                CommentsBottomSheet(
+                    comments = comments[selectedPostId] ?: emptyList(),
+                    onDismiss = {},
+                    onAddComment = { commentText ->
+                        selectedPostId.let { postId ->
+                            viewModel.addComment(postId, commentText)
+                        }
+                    },
+                    sheetState = sheetState
+                )
+            }
         }
     }
 }

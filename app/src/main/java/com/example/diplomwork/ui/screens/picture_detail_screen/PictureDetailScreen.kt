@@ -12,17 +12,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,7 +43,9 @@ import com.example.diplomwork.ui.theme.ColorForArrowBack
 import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.util.AppConstants
 import com.example.diplomwork.viewmodel.PictureDetailScreenViewModel
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PictureDetailScreen(
     pictureDetailScreenData: PictureDetailScreenData,
@@ -51,9 +53,12 @@ fun PictureDetailScreen(
     onProfileClick: (Long?, String) -> Unit,
     viewModel: PictureDetailScreenViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
 
-    var showCommentsSheet by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val openSheet = { coroutineScope.launch { sheetState.show() } }
+
+    val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
     if (uiState.deleteStatus.isNotEmpty()) {
@@ -94,7 +99,7 @@ fun PictureDetailScreen(
                     username = uiState.pictureUsername,
                     userId = uiState.pictureUserId,
                     onLikeClick = { viewModel.toggleLike() },
-                    onCommentClick = { showCommentsSheet = true },
+                    onCommentClick = { openSheet() },
                     onProfileClick,
                 )
             }
@@ -124,7 +129,7 @@ fun PictureDetailScreen(
 
                         if (uiState.comments.size > 2) {
                             TextButton(
-                                onClick = { showCommentsSheet = true },
+                                onClick = { openSheet() },
                                 modifier = Modifier.align(Alignment.End)
                             ) {
                                 Text(
@@ -156,7 +161,7 @@ fun PictureDetailScreen(
         )
     }
 
-    if(uiState.isCurrentUserOwner) {
+    if (uiState.isCurrentUserOwner) {
         IconButton(
             onClick = { viewModel.deletePicture() },
             modifier = Modifier
@@ -174,10 +179,12 @@ fun PictureDetailScreen(
         }
     }
 
-    CommentsBottomSheet(
-        show = showCommentsSheet,
-        comments = uiState.comments,
-        onDismiss = { showCommentsSheet = false },
-        onAddComment = { commentText -> viewModel.addComment(commentText) }
-    )
+    if (sheetState.isVisible) {
+        CommentsBottomSheet(
+            comments = uiState.comments,
+            onDismiss = { },
+            onAddComment = { commentText -> viewModel.addComment(commentText) },
+            sheetState = sheetState
+        )
+    }
 }
