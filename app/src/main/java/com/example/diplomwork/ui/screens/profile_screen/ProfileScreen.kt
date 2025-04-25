@@ -51,6 +51,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.model.PostResponse
+import com.example.diplomwork.ui.components.CustomTabPager
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.components.PictureCard
 import com.example.diplomwork.ui.theme.ColorForBackgroundProfile
@@ -62,6 +63,7 @@ import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun ProfileScreen(
     onSettingsClick: () -> Unit,
@@ -78,8 +80,18 @@ fun ProfileScreen(
     val avatarUpdateCounter by profileViewModel.avatarUpdateCounter.collectAsState()
     val isOwnProfile by profileViewModel.isOwnProfile.collectAsState()
 
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    val selectedTabIndex by remember { mutableIntStateOf(0) }
+    var onTabSelected by remember { mutableIntStateOf(0) }
     val tabTitles = listOf("Посты", "Картинки", "Избранное")
+
+    val ownPictures = profileData?.pins ?: emptyList()
+    val ownPosts = profileData?.posts ?: emptyList()
+
+    val pagerState = rememberPagerState(initialPage = selectedTabIndex)
+
+    LaunchedEffect(pagerState.currentPage) {
+        onTabSelected = pagerState.currentPage
+    }
 
     LaunchedEffect(selectedTabIndex) {
         if (selectedTabIndex == 1) profileViewModel.loadLikedPictures()
@@ -115,15 +127,18 @@ fun ProfileScreen(
                     isOwnProfile = isOwnProfile
                 )
 
-                SwipeableTabs(
+                CustomTabPager(
                     tabTitles = tabTitles,
-                    selectedTabIndex = selectedTabIndex,
-                    onTabSelected = { selectedTabIndex = it },
-                    ownPictures = profileData?.pins ?: emptyList(),
-                    ownPosts = profileData?.posts ?: emptyList(),
-                    likedPictures = likedPictures,
-                    onImageClick = onImageClick
-                )
+                    pagerState = pagerState,
+                    modifier = Modifier.fillMaxSize(),
+                    lineOffset = 2.37
+                ) { page ->
+                    when (page) {
+                        0 -> PostsGrid(ownPosts)
+                        1 -> PicturesGrid(ownPictures, onImageClick)
+                        2 -> PicturesGrid(likedPictures, onImageClick)
+                    }
+                }
             }
         }
     }
@@ -143,36 +158,6 @@ private fun ErrorScreen(error: String?, onRetry: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = onRetry) { Text("Повторить") }
-        }
-    }
-}
-
-@OptIn(ExperimentalPagerApi::class)
-@Composable
-fun SwipeableTabs(
-    tabTitles: List<String>,
-    selectedTabIndex: Int,
-    onTabSelected: (Int) -> Unit,
-    ownPictures: List<PictureResponse>,
-    ownPosts: List<PostResponse>,
-    likedPictures: List<PictureResponse>,
-    onImageClick: (Long, String) -> Unit
-) {
-    val pagerState = rememberPagerState(initialPage = selectedTabIndex)
-
-    LaunchedEffect(pagerState.currentPage) {
-        onTabSelected(pagerState.currentPage)
-    }
-
-    CustomTabPager(
-        tabTitles = tabTitles,
-        pagerState = pagerState,
-        modifier = Modifier.fillMaxSize()
-    ) { page ->
-        when (page) {
-            0 -> PostsGrid(ownPosts)
-            1 -> PicturesGrid(ownPictures, onImageClick)
-            2 -> PicturesGrid(likedPictures, onImageClick)
         }
     }
 }
@@ -213,95 +198,6 @@ private fun PostsGrid(posts: List<PostResponse>) {
                 contentPadding = 3,
                 screenName = "Profile"
             )
-        }
-    }
-}
-
-@OptIn(ExperimentalPagerApi::class)
-@Composable
-fun CustomTabPager(
-    tabTitles: List<String>,
-    pagerState: PagerState,
-    modifier: Modifier = Modifier,
-    tabContent: @Composable (page: Int) -> Unit
-) {
-    val coroutineScope = rememberCoroutineScope()
-    val tabWidths = remember { mutableStateListOf<Float>() }
-
-    // Вычисление смещения полоски с учетом свайпа
-    val offset by remember {
-        derivedStateOf {
-            val pageOffset = pagerState.currentPage + pagerState.currentPageOffset
-            val tabWidth = tabWidths.getOrNull(0) ?: 0f
-
-            // Считаем смещение полоски на основе текущей страницы и её смещения
-            (tabWidth * pageOffset).coerceIn(0f, tabWidth * (tabTitles.size - 1))
-        }
-    }
-
-    Column(modifier = modifier) {
-        Box {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                tabTitles.forEachIndexed { index, title ->
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .weight(1f)
-                            .onGloballyPositioned { coordinates ->
-                                if (tabWidths.size < tabTitles.size) {
-                                    tabWidths.add(coordinates.size.width.toFloat())
-                                }
-                            }
-                            .clickable(
-                                indication = null,
-                                interactionSource = remember { MutableInteractionSource() }
-                            ) {
-                                coroutineScope.launch {
-                                    pagerState.animateScrollToPage(index)
-                                }
-                            }
-                    ) {
-                        Text(
-                            text = title,
-                            color = if (pagerState.currentPage == index) Color.White else Color.Gray,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                        )
-                    }
-                }
-            }
-
-            // Полоска индикатора, движущаяся параллельно свайпу
-            if (tabWidths.size == tabTitles.size) {
-                // Считываем ширину текущей вкладки
-                val currentTabWidth = tabWidths.getOrNull(pagerState.currentPage) ?: 0f
-                Box(
-                    modifier = Modifier
-                        .padding(top = 30.dp)
-                        .offset {
-                            // Сдвигаем полоску по горизонтали в зависимости от текущей страницы
-                            IntOffset(
-                                offset.roundToInt() + ((currentTabWidth / 2.37).toInt()), 0
-                            )
-                        }
-                        .width(60.dp) // Ширина полоски
-                        .height(3.dp)
-                        .background(Color.White, RoundedCornerShape(1.dp)),
-                )
-            }
-        }
-
-        HorizontalPager(
-            count = tabTitles.size,
-            state = pagerState,
-            modifier = Modifier.fillMaxSize()
-        ) { page ->
-            tabContent(page)
         }
     }
 }
