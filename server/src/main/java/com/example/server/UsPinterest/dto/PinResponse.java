@@ -17,6 +17,7 @@ public class PinResponse {
     private Integer imageWidth;
     private Integer imageHeight;
     private int likesCount;
+    private int commentsCount;
     private List<CommentResponse> comments;
     private boolean isLikedByCurrentUser;
 
@@ -122,6 +123,14 @@ public class PinResponse {
 
     public void setLikesCount(int likesCount) {
         this.likesCount = likesCount;
+    }
+
+    public int getCommentsCount() {
+        return commentsCount;
+    }
+
+    public void setCommentsCount(int commentsCount) {
+        this.commentsCount = commentsCount;
     }
 
     public List<CommentResponse> getComments() {

@@ -36,6 +36,7 @@ import com.example.server.UsPinterest.dto.CommentResponse;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.nio.file.Path;
+import com.example.server.UsPinterest.repository.CommentRepository;
 
 @Service
 @Transactional
@@ -58,6 +59,9 @@ public class PinService {
 
     @Autowired
     private FileStorageService fileStorageService;
+
+    @Autowired
+    private CommentRepository commentRepository;
 
     @Cacheable(value = "pins", key = "#id")
     public Optional<Pin> getPinById(Long id) {
@@ -114,6 +118,20 @@ public class PinService {
             pin.setBoard(board);
         }
 
+        if (pin.getImageUrl() != null && !pin.getImageUrl().isEmpty()) {
+            try {
+                String filename = fileStorageService.getFilenameFromUrl(pin.getImageUrl());
+                Path filePath = fileStorageService.getFileStoragePath().resolve(filename).normalize();
+                BufferedImage bimg = ImageIO.read(filePath.toFile());
+                pin.setImageWidth(bimg.getWidth());
+                pin.setImageHeight(bimg.getHeight());
+            } catch (Exception e) {
+                logger.error("Ошибка при вычислении размеров изображения для пина: {}", e.getMessage());
+            }
+        }
+
+        // Инициализируем счётчик комментариев
+        pin.setCommentsCount(0);
         return pinRepository.save(pin);
     }
 
@@ -135,6 +153,7 @@ public class PinService {
         if (likeOptional.isPresent()) {
             responseMap.put("message", "Лайк уже существует");
             responseMap.put("liked", true);
+            responseMap.put("likesCount", pin.getLikesCount());
             return responseMap;
         }
 
@@ -143,8 +162,12 @@ public class PinService {
         like.setPin(pin);
         like.setCreatedAt(LocalDateTime.now());
         likeRepository.save(like);
+        int totalLikes = likeRepository.countByPinId(pinId);
+        pin.setLikesCount(totalLikes);
+        pinRepository.save(pin);
         responseMap.put("message", "Лайк поставлен");
         responseMap.put("liked", true);
+        responseMap.put("likesCount", totalLikes);
         return responseMap;
     }
 
@@ -160,13 +183,18 @@ public class PinService {
 
         if (likeOptional.isPresent()) {
             likeRepository.delete(likeOptional.get());
+            int totalLikes = likeRepository.countByPinId(pinId);
+            pin.setLikesCount(totalLikes);
+            pinRepository.save(pin);
             responseMap.put("message", "Лайк удалён");
             responseMap.put("liked", false);
+            responseMap.put("likesCount", totalLikes);
             return responseMap;
         }
 
         responseMap.put("message", "Лайк не найден");
         responseMap.put("liked", false);
+        responseMap.put("likesCount", pin.getLikesCount());
         return responseMap;
     }
 
@@ -208,18 +236,9 @@ public class PinService {
                 response.setImageUrl(pin.getImageUrl());
             }
 
-            // Compute and set image dimensions
-            try {
-                String filename = fileStorageService.getFilenameFromUrl(response.getImageUrl());
-                if (filename != null) {
-                    Path filePath = fileStorageService.getFileStoragePath().resolve(filename).normalize();
-                    BufferedImage bimg = ImageIO.read(filePath.toFile());
-                    response.setImageWidth(bimg.getWidth());
-                    response.setImageHeight(bimg.getHeight());
-                }
-            } catch (Exception ex) {
-                logger.error("Error reading image dimensions for pin {}: {}", pin.getId(), ex.getMessage());
-            }
+            // Устанавливаем сохранённые размеры изображения из сущности
+            response.setImageWidth(pin.getImageWidth());
+            response.setImageHeight(pin.getImageHeight());
 
             response.setDescription(pin.getDescription());
             response.setTitle(pin.getTitle());
@@ -240,8 +259,12 @@ public class PinService {
                 response.setUserProfileImageUrl(profileImageUrl);
             }
 
-            response.setCreatedAt(pin.getCreatedAt());
-            response.setLikesCount(pin.getLikes() != null ? pin.getLikes().size() : 0);
+            // Устанавливаем сохранённое количество лайков
+            response.setLikesCount(pin.getLikesCount() != null ? pin.getLikesCount() : 0);
+            // Подсчитываем количество комментариев непосредственно из репозитория
+            long commentCountLong = commentRepository.countByPinId(pin.getId());
+            int commentCount = Math.toIntExact(commentCountLong);
+            response.setCommentsCount(commentCount);
 
             boolean isLiked = false;
             if (currentUser != null && pin.getLikes() != null) {

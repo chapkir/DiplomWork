@@ -30,6 +30,9 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
 
     Optional<Like> findByPinAndUser(Pin pin, User user);
 
+    // Подсчёт лайков для пина
+    int countByPinId(Long pinId);
+
     // Для совместимости с Photo
     Optional<Like> findByPhotoAndUser(Photo photo, User user);
 } 

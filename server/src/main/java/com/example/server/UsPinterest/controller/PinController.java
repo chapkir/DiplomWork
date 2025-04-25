@@ -45,6 +45,9 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
+import java.nio.file.Path;
 
 @RestController
 @RequestMapping("/api/pins")
@@ -375,20 +378,25 @@ public class PinController {
             comment.setPin(pin);
             comment.setUser(user);
             comment.setCreatedAt(LocalDateTime.now());
-            commentRepository.save(comment);
 
-            // Добавляем комментарий в коллекцию пина
+            // Сохраняем комментарий в БД
+            commentRepository.save(comment);
+            // Добавляем комментарий в коллекцию пина и обновляем счётчик комментариев
             pin.getComments().add(comment);
+            long totalCommentsLong = commentRepository.countByPinId(id);
+            int totalComments = Math.toIntExact(totalCommentsLong);
+            pin.setCommentsCount(totalComments);
             pinRepository.save(pin);
 
             notificationService.createCommentNotification(user, pin, commentRequest.getText());
 
-            HateoasResponse<Void> response = new HateoasResponse<>(null);
+            // Возвращаем обновлённый PinResponse с актуальными счётчиками
+            PinResponse pinResponse = pinService.convertToPinResponse(pin, user);
+            HateoasResponse<PinResponse> response = new HateoasResponse<>(pinResponse);
             response.addSelfLink("/api/pins/" + id + "/comments");
             response.addLink("pin", "/api/pins/detail/" + id, "GET");
             response.addLink("all-comments", "/api/pins/" + id + "/comments", "GET");
             response.getMeta().setMessage("Комментарий успешно добавлен");
-
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("Ошибка при добавлении комментария к пину {}: {}", id, e.getMessage());
@@ -437,9 +445,12 @@ public class PinController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> uploadImage(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("title") String title,
-            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "text", defaultValue = "") String text,
+            @RequestParam(value = "title", defaultValue = "") String title,
+            @RequestParam(value = "description", defaultValue = "") String description,
             Authentication authentication) {
+
+        logger.info("uploadImage called: file={}, text={}, title={}, description={}", file.getOriginalFilename(), text, title, description);
 
         if (!bucket.tryConsume(1)) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
@@ -463,20 +474,33 @@ public class PinController {
             String imageUrl = fileStorageService.storeFile(file);
 
             Pin pin = new Pin();
-            pin.setTitle(title);
+            // Выбираем title: приоритет у параметра title, иначе text, иначе пустая строка
+            String pinTitle = (title != null && !title.isEmpty()) ? title : (text != null ? text : "");
+            pin.setTitle(pinTitle);
             pin.setImageUrl(imageUrl);
             pin.setDescription(description);
             pin.setUser(user);
             pin.setCreatedAt(LocalDateTime.now());
+            // Автоматически вычисляем размеры изображения для пина
+            if (pin.getImageUrl() != null && !pin.getImageUrl().isEmpty()) {
+                try {
+                    String filename = fileStorageService.getFilenameFromUrl(pin.getImageUrl());
+                    Path filePath = fileStorageService.getFileStoragePath().resolve(filename).normalize();
+                    BufferedImage bimg = ImageIO.read(filePath.toFile());
+                    pin.setImageWidth(bimg.getWidth());
+                    pin.setImageHeight(bimg.getHeight());
+                } catch (Exception e) {
+                    logger.error("Ошибка при вычислении размеров изображения для пина: {}", e.getMessage());
+                }
+            }
 
-            pinRepository.save(pin);
-
-            PinResponse pinResponse = pinService.convertToPinResponse(pin, user);
+            Pin savedPin = pinRepository.save(pin);
+            PinResponse pinResponse = pinService.convertToPinResponse(savedPin, user);
             HateoasResponse<PinResponse> response = new HateoasResponse<>(pinResponse);
 
             // Добавляем HATEOAS ссылки
-            response.addSelfLink("/api/pins/detail/" + pin.getId());
-            response.addLink("image", pin.getImageUrl(), "GET");
+            response.addSelfLink("/api/pins/detail/" + savedPin.getId());
+            response.addLink("image", savedPin.getImageUrl(), "GET");
             response.addLink("all-pins", "/api/pins", "GET");
 
             return ResponseEntity.ok(response);
