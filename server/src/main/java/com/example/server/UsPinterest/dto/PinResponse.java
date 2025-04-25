@@ -14,6 +14,8 @@ public class PinResponse {
     private String username;
     private String userProfileImageUrl;
     private LocalDateTime createdAt;
+    private Integer imageWidth;
+    private Integer imageHeight;
     private int likesCount;
     private List<CommentResponse> comments;
     private boolean isLikedByCurrentUser;
@@ -96,6 +98,22 @@ public class PinResponse {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Integer getImageWidth() {
+        return imageWidth;
+    }
+
+    public void setImageWidth(Integer imageWidth) {
+        this.imageWidth = imageWidth;
+    }
+
+    public Integer getImageHeight() {
+        return imageHeight;
+    }
+
+    public void setImageHeight(Integer imageHeight) {
+        this.imageHeight = imageHeight;
     }
 
     public int getLikesCount() {

@@ -33,6 +33,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.example.server.UsPinterest.service.FileStorageService;
 import com.example.server.UsPinterest.dto.CommentResponse;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.nio.file.Path;
 
 @Service
 @Transactional
@@ -203,6 +206,19 @@ public class PinService {
             } catch (Exception e) {
                 logger.error("Error updating image URL for pin {}: {}", pin.getId(), e.getMessage());
                 response.setImageUrl(pin.getImageUrl());
+            }
+
+            // Compute and set image dimensions
+            try {
+                String filename = fileStorageService.getFilenameFromUrl(response.getImageUrl());
+                if (filename != null) {
+                    Path filePath = fileStorageService.getFileStoragePath().resolve(filename).normalize();
+                    BufferedImage bimg = ImageIO.read(filePath.toFile());
+                    response.setImageWidth(bimg.getWidth());
+                    response.setImageHeight(bimg.getHeight());
+                }
+            } catch (Exception ex) {
+                logger.error("Error reading image dimensions for pin {}: {}", pin.getId(), ex.getMessage());
             }
 
             response.setDescription(pin.getDescription());
