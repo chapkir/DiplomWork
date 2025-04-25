@@ -80,7 +80,7 @@ fun PictureDetailScreen(
                     imageRes =
                         if (pictureDetailScreenData.imageUrl.startsWith("http")) pictureDetailScreenData.imageUrl
                         else AppConstants.BASE_URL + pictureDetailScreenData.imageUrl,
-                    aspectRatio = 1f
+                    aspectRatio = uiState.aspectRatio
                 )
             }
 

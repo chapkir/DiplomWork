@@ -85,7 +85,6 @@ fun GetTopBars(
                 onIconClick = { isSearching = true },
             )
 
-            Posts::class.simpleName -> CustomTopBar(title = "Посты")
             AddContent::class.simpleName -> CustomTopBar(title = "Добавить")
             Notification::class.simpleName -> CustomTopBar(title = "Уведомления")
             else -> {}

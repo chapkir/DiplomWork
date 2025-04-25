@@ -82,7 +82,7 @@ fun GalleryScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(ColorForBackground)
+                .background(Color.Black)
                 .padding(top = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {

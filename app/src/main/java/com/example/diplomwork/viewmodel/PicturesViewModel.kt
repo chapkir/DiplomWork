@@ -28,9 +28,7 @@ class PicturesViewModel @Inject constructor(
     private val pageSize = 20
     private var isLastPage = false
 
-    init {
-        loadPictures()
-    }
+    init { loadPictures() }
 
     private fun loadPictures(searchQuery: String = "", isRefreshing: Boolean = false) {
         if (_isLoading.value || isLastPage) return
@@ -41,18 +39,20 @@ class PicturesViewModel @Inject constructor(
 
             try {
                 val result = if (searchQuery.isNotEmpty()) {
-                    // Для поиска картинок
                     pictureRepository.searchPictures(searchQuery, page = if (isRefreshing) 0 else currentPage, size = pageSize)
                 } else {
-                    // Для получения всех картинок
                     pictureRepository.getPictures()
                 }
 
+                val picturesWithRatio = result.map { pic ->
+                        pic.copy(aspectRatio = (pic.imageWidth ?: 1f) / (pic.imageHeight ?: 1f))
+                }
+
                 if (isRefreshing) {
-                    _pictures.value = result
+                    _pictures.value = picturesWithRatio
                     currentPage = 1
                 } else {
-                    _pictures.value += result
+                    _pictures.value += picturesWithRatio
                     currentPage++
                 }
 

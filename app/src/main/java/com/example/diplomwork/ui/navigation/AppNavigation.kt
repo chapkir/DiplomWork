@@ -60,8 +60,6 @@ fun AppNavigation(navController: NavHostController) {
         hiddenScreens.none { it != null && route.startsWith(it) }
     }
 
-    var shouldRefresh by remember { mutableStateOf(false) }
-    var lastRefreshTimestamp by remember { mutableLongStateOf(0L) }
     var searchQuery by remember { mutableStateOf("") }
     var lastSearchJob by remember { mutableStateOf<Job?>(null) }
     var isSearchActive by remember { mutableStateOf(false) }
@@ -87,7 +85,6 @@ fun AppNavigation(navController: NavHostController) {
         }
     }
 
-    // Обработка системной кнопки назад для закрытия поиска
     BackHandler(enabled = isSearchActive) {
         performSearch("")
     }
@@ -99,7 +96,6 @@ fun AppNavigation(navController: NavHostController) {
                 onSearch = { query ->
                     performSearch(query)
                 },
-                //onRefresh = triggerRefresh
             )
         },
         bottomBar = {
@@ -128,8 +124,6 @@ fun AppNavigation(navController: NavHostController) {
                     onImageClick = { pictureId, imageUrl ->
                         navController.navigate(PictureDetailScreenData(pictureId, imageUrl))
                     },
-                    shouldRefresh = shouldRefresh,
-                    onRefreshComplete = { shouldRefresh = false },
                     searchQuery = searchQuery
                 )
             }

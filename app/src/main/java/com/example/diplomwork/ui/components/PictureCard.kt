@@ -49,13 +49,13 @@ import com.example.diplomwork.R
 fun PictureCard(
     imageUrl: String,
     username: String,
+    aspectRatio: Float = 1f,
     userProfileImageUrl: String?,
     id: Long,
     onClick: () -> Unit,
     contentPadding: Int = 3,
     screenName: String
 ) {
-    var aspectRatio by remember { mutableFloatStateOf(1f) }
     var isLoading by remember { mutableStateOf(true) }
     var isError by remember { mutableStateOf(false) }
 
@@ -78,7 +78,7 @@ fun PictureCard(
                         clip = true
                     }
             ) {
-                // Градиентный фон с блюром
+
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -104,17 +104,8 @@ fun PictureCard(
                     contentScale = ContentScale.Crop,
                     onState = { state ->
                         isLoading = state is AsyncImagePainter.State.Loading
-
                         if (state is AsyncImagePainter.State.Error) {
                             isError = true
-                        }
-
-                        if (state is AsyncImagePainter.State.Success) {
-                            isError = false
-                            val size = state.painter.intrinsicSize
-                            if (size.width > 0 && size.height > 0) {
-                                aspectRatio = size.width / size.height
-                            }
                         }
                     },
                     modifier = Modifier

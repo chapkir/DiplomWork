@@ -78,21 +78,17 @@ fun ProfileScreen(
     val avatarUpdateCounter by profileViewModel.avatarUpdateCounter.collectAsState()
     val isOwnProfile by profileViewModel.isOwnProfile.collectAsState()
 
-    // Управление вкладками
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val tabTitles = listOf("Посты", "Картинки", "Избранное")
 
-    // Загружаем лайкнутые пины, когда выбран второй таб
     LaunchedEffect(selectedTabIndex) {
         if (selectedTabIndex == 1) profileViewModel.loadLikedPictures()
     }
 
-    // Лаунчер для выбора аватарки
     val pickImageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? -> uri?.let { profileViewModel.uploadAvatarToServer(it, context) } }
 
-    // Основной UI
     Column(
         modifier = Modifier
             .fillMaxSize()

@@ -174,4 +174,8 @@ class PostsScreenViewModel @Inject constructor(
             }
         }
     }
+
+    fun refreshPosts() {
+        loadPosts()
+    }
 }

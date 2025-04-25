@@ -1,5 +1,7 @@
 package com.example.diplomwork.ui.screens.posts_screen
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -17,20 +19,26 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -54,9 +62,9 @@ import com.example.diplomwork.ui.components.CommentsBottomSheet
 import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.components.rememberSlowFlingBehavior
-import com.example.diplomwork.ui.theme.ColorForBackground
 import com.example.diplomwork.viewmodel.PostsScreenViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostsScreen(
     onProfileClick: (Long?, String) -> Unit,
@@ -70,55 +78,112 @@ fun PostsScreen(
 
     var showCommentsSheet by remember { mutableStateOf(false) }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-    ) {
-        LazyColumn(
-            flingBehavior = rememberSlowFlingBehavior(),
+    val stateRefresh = rememberPullToRefreshState()
+    var isRefreshing by remember { mutableStateOf(false) }
+
+    val listState = rememberLazyListState()
+    var isHeaderVisible by remember { mutableStateOf(true) }
+
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
+            .collect { (index, offset) ->
+                isHeaderVisible = (index == 0 && offset == 0)
+            }
+    }
+
+    val headerHeight by animateDpAsState(
+        targetValue = if (isHeaderVisible) 60.dp else 0.dp,
+        animationSpec = tween(durationMillis = 600)
+    )
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(headerHeight)
+                .background(Color.Black),
+            contentAlignment = Alignment.CenterStart
         ) {
-            items(posts) { post ->
-                PostCard(
-                    post = post,
-                    commentsCount = comments[post.id]?.size ?: 0,
-                    onLikeClick = { viewModel.toggleLike(post.id) },
-                    onCommentClick = {
-                        viewModel.selectPost(post.id)
-                        viewModel.loadCommentsForPost(post.id)
-                        showCommentsSheet = true
-                    },
-                    onProfileClick,
-                    onDeletePost = { postId -> viewModel.deletePost(postId) }
+            if (isHeaderVisible) {
+                Text(
+                    text = "Spotsy",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 35.sp,
+                    color = Color.White
                 )
-                Spacer(modifier = Modifier.height(8.dp))
             }
         }
 
-        if (isLoading) {
-            LoadingSpinnerForScreen()
-        }
-
-        error?.let {
-            Text(
-                text = it,
-                color = Color.Red,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .background(Color.Black.copy(alpha = 0.7f))
-                    .padding(16.dp)
-            )
-        }
-
-        CommentsBottomSheet(
-            show = showCommentsSheet,
-            comments = comments[selectedPostId] ?: emptyList(),
-            onDismiss = { showCommentsSheet = false },
-            onAddComment = { commentText ->
-                selectedPostId.let { postId ->
-                    viewModel.addComment(postId, commentText)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+        ) {
+            PullToRefreshBox(
+                isRefreshing = isLoading,
+                onRefresh = {
+                    isRefreshing = true
+                    viewModel.refreshPosts()
+                },
+                state = stateRefresh,
+                indicator = {
+                    Indicator(
+                        modifier = Modifier.align(Alignment.TopCenter),
+                        isRefreshing = isLoading,
+                        containerColor = Color.Gray,
+                        color = Color.White,
+                        state = stateRefresh
+                    )
                 }
-            })
+            ) {
+                LazyColumn(
+                    state = listState,
+                    flingBehavior = rememberSlowFlingBehavior(),
+                ) {
+                    items(posts) { post ->
+                        PostCard(
+                            post = post,
+                            commentsCount = comments[post.id]?.size ?: 0,
+                            onLikeClick = { viewModel.toggleLike(post.id) },
+                            onCommentClick = {
+                                viewModel.selectPost(post.id)
+                                viewModel.loadCommentsForPost(post.id)
+                                showCommentsSheet = true
+                            },
+                            onProfileClick,
+                            onDeletePost = { postId -> viewModel.deletePost(postId) }
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            }
+
+            if (isLoading) {
+                LoadingSpinnerForScreen()
+            }
+
+            error?.let {
+                Text(
+                    text = it,
+                    color = Color.Red,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .background(Color.Black.copy(alpha = 0.7f))
+                        .padding(16.dp)
+                )
+            }
+
+            CommentsBottomSheet(
+                show = showCommentsSheet,
+                comments = comments[selectedPostId] ?: emptyList(),
+                onDismiss = { showCommentsSheet = false },
+                onAddComment = { commentText ->
+                    selectedPostId.let { postId ->
+                        viewModel.addComment(postId, commentText)
+                    }
+                })
+        }
     }
 }
 
@@ -137,7 +202,7 @@ fun PostCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = ColorForBackground),
+        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.8f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(vertical = 8.dp)) {
@@ -153,10 +218,7 @@ fun PostCard(
                     modifier = Modifier.clickable(
                         indication = null,
                         interactionSource = remember { MutableInteractionSource() }) {
-                        onProfileClick(
-                            post.userId,
-                            post.username
-                        )
+                        onProfileClick(post.userId, post.username)
                     },
                     verticalAlignment = Alignment.CenterVertically
                 ) {

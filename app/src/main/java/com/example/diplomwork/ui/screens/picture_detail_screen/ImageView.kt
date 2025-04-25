@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -32,8 +33,10 @@ import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 
 @Composable
-fun ImageView(imageRes: String, aspectRatio: Float) {
-    var currentAspectRatio by remember { mutableStateOf(aspectRatio) }
+fun ImageView(
+    imageRes: String,
+    aspectRatio: Float
+) {
     var isLoading by remember { mutableStateOf(true) }
     var isError by remember { mutableStateOf(false) }
     var retryCount by remember { mutableIntStateOf(0) }
@@ -50,9 +53,13 @@ fun ImageView(imageRes: String, aspectRatio: Float) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .aspectRatio(aspectRatio)
+                .graphicsLayer {
+                    clip = true
+                }
                 .clip(RoundedCornerShape(30.dp))
         ) {
-            // 1. Градиентный фон с блюром
+
             Box(
                 modifier = Modifier
                     .matchParentSize()
@@ -89,18 +96,10 @@ fun ImageView(imageRes: String, aspectRatio: Float) {
                             displayUrl = "${displayUrl}?cache_bust=${System.currentTimeMillis()}"
                         }
                     }
-
-                    if (state is AsyncImagePainter.State.Success) {
-                        isError = false
-                        val size = state.painter.intrinsicSize
-                        if (size.width > 0 && size.height > 0) {
-                            currentAspectRatio = size.width / size.height
-                        }
-                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(currentAspectRatio)
+                    .aspectRatio(aspectRatio)
                     .clip(RoundedCornerShape(12.dp))
             )
 

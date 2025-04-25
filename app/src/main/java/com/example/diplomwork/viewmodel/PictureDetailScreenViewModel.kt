@@ -43,6 +43,7 @@ class PictureDetailScreenViewModel @Inject constructor(
             pictureResult.getOrNull()?.let { picture ->
                 val currentUserUsername = sessionManager.username
                 val isOwner = currentUserUsername == picture.username
+                val aspectRatio = (picture.imageWidth ?: 1f) / (picture.imageHeight ?: 1f)
 
                 _uiState.value = _uiState.value.copy(
                     picture = picture,
@@ -52,7 +53,8 @@ class PictureDetailScreenViewModel @Inject constructor(
                     pictureDescription = picture.description,
                     likesCount = picture.likesCount,
                     isLiked = picture.isLikedByCurrentUser,
-                    isCurrentUserOwner = isOwner
+                    isCurrentUserOwner = isOwner,
+                    aspectRatio = aspectRatio
                 )
             }
 
@@ -137,5 +139,6 @@ data class PictureDetailUiState(
     val isLiked: Boolean = false,
     val comments: List<CommentResponse> = emptyList(),
     val deleteStatus: String = "",
-    val isCurrentUserOwner: Boolean = false
+    val isCurrentUserOwner: Boolean = false,
+    val aspectRatio: Float = 1f,
 )

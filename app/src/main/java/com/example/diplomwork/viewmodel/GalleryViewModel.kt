@@ -27,24 +27,26 @@ class GalleryViewModel @Inject constructor(
     private val _albums = MutableStateFlow<List<GalleryAlbum>>(emptyList())
     val albums: StateFlow<List<GalleryAlbum>> = _albums
 
-    /**
-     * Загружает фото из галереи
-     */
+
     fun loadGalleryData() {
         viewModelScope.launch(Dispatchers.IO) {
             val fetchedAlbums = fetchGalleryAlbums()
             _albums.value = fetchedAlbums
 
-            // По умолчанию загружаем фото из первого альбома
             if (fetchedAlbums.isNotEmpty()) {
-                loadImagesFromAlbum(fetchedAlbums.first().id)
+                // Ищем альбом "Camera" или "Камера"
+                val cameraAlbum = fetchedAlbums.firstOrNull {
+                    it.name.equals("Camera", ignoreCase = true) ||
+                            it.name.equals("Камера", ignoreCase = true)
+                }
+
+                // Если найден — загружаем из него, иначе — из первого
+                val defaultAlbumId = cameraAlbum?.id ?: fetchedAlbums.first().id
+                loadImagesFromAlbum(defaultAlbumId)
             }
         }
     }
 
-    /**
-     * Загружает фото из указанного альбома
-     */
     fun loadImagesFromAlbum(albumId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val fetchedImages = fetchGalleryImages(albumId)
@@ -52,9 +54,6 @@ class GalleryViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Получает список альбомов из галереи
-     */
     private fun fetchGalleryAlbums(): List<GalleryAlbum> {
         val albumList = mutableListOf<GalleryAlbum>()
         val uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
@@ -89,9 +88,6 @@ class GalleryViewModel @Inject constructor(
         return albumList
     }
 
-    /**
-     * Получает список фото из указанного альбома
-     */
     private fun fetchGalleryImages(albumId: String): List<Uri> {
         val imageList = mutableListOf<Uri>()
         val uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
