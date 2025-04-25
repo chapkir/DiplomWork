@@ -43,6 +43,7 @@ import com.example.diplomwork.viewmodel.PicturesViewModel
 fun PicturesScreen(
     picturesViewModel: PicturesViewModel = hiltViewModel(),
     onImageClick: (Long, String) -> Unit,
+    onProfileClick: (Long, String) -> Unit,
     searchQuery: String = ""
 ) {
 
@@ -59,6 +60,7 @@ fun PicturesScreen(
             onImageClick = { pictureResponse ->
                 onImageClick(pictureResponse.id, pictureResponse.imageUrl)
             },
+            onProfileClick = onProfileClick,
             pictures = pictures,
             isLoading = isLoading,
             onRefresh = { picturesViewModel.refreshPictures() },
@@ -73,12 +75,14 @@ fun PicturesScreen(
 fun ContentGrid(
     modifier: Modifier = Modifier,
     onImageClick: (PictureResponse) -> Unit,
+    onProfileClick: (Long, String) -> Unit,
     pictures: List<PictureResponse>,
     isLoading: Boolean,
     onRefresh: () -> Unit,
     error: String?,
     searchQuery: String = ""
 ) {
+
     var searchInfoText by remember { mutableStateOf<String?>(null) }
     val stateRefresh = rememberPullToRefreshState()
     var isRefreshing by remember { mutableStateOf(false) }
@@ -175,10 +179,12 @@ fun ContentGrid(
                                 PictureCard(
                                     imageUrl = picture.imageUrl,
                                     username = picture.username,
+                                    userId = picture.userId,
                                     aspectRatio = picture.aspectRatio ?: 1f,
                                     userProfileImageUrl = picture.userProfileImageUrl,
                                     id = picture.id,
-                                    onClick = { onImageClick(picture) },
+                                    onPictureClick = { onImageClick(picture) },
+                                    onProfileClick = onProfileClick,
                                     screenName = "Picture"
                                 )
                             }

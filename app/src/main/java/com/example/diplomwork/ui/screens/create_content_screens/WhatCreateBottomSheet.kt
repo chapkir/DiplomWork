@@ -51,7 +51,6 @@ fun WhatCreateBottomSheet(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Верхняя строка с крестиком и текстом
             Row(
                 modifier = Modifier
                     .fillMaxWidth(),
@@ -67,7 +66,6 @@ fun WhatCreateBottomSheet(
                 )
             }
 
-            // Кнопки для добавления контента
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -75,12 +73,12 @@ fun WhatCreateBottomSheet(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                CreateContentButton("Фото", R.drawable.ic_picture) {
+                CreateContentButton("Картинка", R.drawable.ic_picture) {
                     onDismiss()
                     onAddContent("Picture")
                 }
 
-                CreateContentButton("Пост", R.drawable.ic_home) {
+                CreateContentButton("Пост", R.drawable.ic_picture) {
                     onDismiss()
                     onAddContent("Post")
                 }

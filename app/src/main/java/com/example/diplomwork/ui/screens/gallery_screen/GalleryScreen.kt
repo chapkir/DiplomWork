@@ -177,7 +177,6 @@ fun GalleryScreen(
                         }
                     }
                 } else {
-                    // Если нет разрешения
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center

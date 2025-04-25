@@ -17,13 +17,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,18 +46,28 @@ import coil.compose.AsyncImagePainter
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.diplomwork.R
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PictureCard(
     imageUrl: String,
     username: String,
+    userId: Long = 0L,
     aspectRatio: Float = 1f,
     userProfileImageUrl: String?,
     id: Long,
-    onClick: () -> Unit,
+    onPictureClick: () -> Unit,
+    onProfileClick: (Long, String) -> Unit = {_,_->},
     contentPadding: Int = 3,
     screenName: String
 ) {
+    val coroutineScope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val openSheet = {
+        coroutineScope.launch { sheetState.show() }
+    }
+
     var isLoading by remember { mutableStateOf(true) }
     var isError by remember { mutableStateOf(false) }
 
@@ -68,7 +80,7 @@ fun PictureCard(
             modifier = Modifier
                 .padding(contentPadding.dp)
                 .fillMaxWidth()
-                .clickable(enabled = !isLoading && !isError) { onClick() }
+                .clickable(enabled = !isLoading && !isError) { onPictureClick() }
         ) {
             Box(
                 modifier = Modifier
@@ -152,7 +164,7 @@ fun PictureCard(
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() }
-                        ) { },
+                        ) { onProfileClick(userId, username) },
                     contentAlignment = Alignment.Center
                 ) {
                     AsyncImage(
@@ -162,16 +174,25 @@ fun PictureCard(
                         modifier = Modifier.matchParentSize()
                     )
                 }
-                Text(
-                    text = username,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.White,
-                    textAlign = TextAlign.Center
-                )
+                Box(
+                    modifier = Modifier
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) { onProfileClick(userId, username) },
+                ) {
+                    Text(
+                        text = username,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.White,
+                        textAlign = TextAlign.Center
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .size(15.dp)
+                        .clickable { openSheet() }
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_menu_dots_vertical),
@@ -182,6 +203,14 @@ fun PictureCard(
             }
             Spacer(modifier = Modifier.height(8.dp))
         }
+    }
+
+    if (sheetState.isVisible) {
+        MenuBottomSheet(
+            onDismiss = {},
+            onDelete = {},
+            sheetState = sheetState
+        )
     }
 }
 

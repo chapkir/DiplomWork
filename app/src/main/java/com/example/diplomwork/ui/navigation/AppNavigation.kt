@@ -8,7 +8,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -65,9 +64,9 @@ fun AppNavigation(navController: NavHostController) {
     var isSearchActive by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val whatCreateSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val openSheet = {
-        coroutineScope.launch { sheetState.show() }
+        coroutineScope.launch { whatCreateSheetState.show() }
     }
 
 
@@ -123,6 +122,11 @@ fun AppNavigation(navController: NavHostController) {
                 PicturesScreen(
                     onImageClick = { pictureId, imageUrl ->
                         navController.navigate(PictureDetailScreenData(pictureId, imageUrl))
+                    },
+                    onProfileClick = { userId, username ->
+                        navController.navigate(
+                            OtherProfileScreenData(userId, username)
+                        )
                     },
                     searchQuery = searchQuery
                 )
@@ -238,7 +242,7 @@ fun AppNavigation(navController: NavHostController) {
                         }
                     },
                     onBack = { navController.popBackStack() }
-                    )
+                )
             }
             composable<GalleryScreenData> { backStackEntry ->
                 val galleryScreenData = backStackEntry.toRoute<GalleryScreenData>()
@@ -274,16 +278,16 @@ fun AppNavigation(navController: NavHostController) {
 
         }
 
-        if (sheetState.isVisible) {
+        if (whatCreateSheetState.isVisible) {
             WhatCreateBottomSheet(
                 onAddContent = { whatContentCreate ->
-                    coroutineScope.launch { sheetState.hide() }
+                    coroutineScope.launch { whatCreateSheetState.hide() }
                     navController.navigate(GalleryScreenData(whatContentCreate = whatContentCreate))
                 },
                 onDismiss = {
-                    coroutineScope.launch { sheetState.hide() }
+                    coroutineScope.launch { whatCreateSheetState.hide() }
                 },
-                sheetState = sheetState
+                sheetState = whatCreateSheetState
             )
         }
     }
