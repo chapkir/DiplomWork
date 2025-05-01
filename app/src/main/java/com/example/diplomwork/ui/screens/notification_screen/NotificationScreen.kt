@@ -143,7 +143,7 @@ fun NotificationItem(
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
-            model = R.drawable.default_avatar,
+            model = notification.senderProfileImageUrl ?: R.drawable.default_avatar,
             contentDescription = null,
             modifier = Modifier
                 .size(45.dp)
