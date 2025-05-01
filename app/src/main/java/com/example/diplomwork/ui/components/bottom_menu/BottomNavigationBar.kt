@@ -3,6 +3,7 @@ package com.example.diplomwork.ui.components.bottom_menu
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import com.example.diplomwork.system_settings.systemInsetHeight
 import com.example.diplomwork.ui.navigation.Screen
+import com.example.diplomwork.ui.theme.BgDefault
 import com.example.diplomwork.ui.theme.Dimens.BottomMenuHeight
 
 @Composable
@@ -37,13 +39,13 @@ fun BottomNavigationBar(
         BottomNavItem.ProfileScreen
     )
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.Black)
+            .background(BgDefault),
     ) {
         NavigationBar(
-            containerColor = Color.Black,
+            containerColor = BgDefault,
             contentColor = Color.White,
             modifier = Modifier
                 .height(

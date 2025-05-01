@@ -13,14 +13,31 @@ val Pink40 = Color(0xFF7D5260)
 val DarkBlue = Color(0xFF212855)
 val DarkWhite = Color(0xFFDAD8D8)
 
+// Фоновые цвета
+val BgDefault = Color(0xFF1B1B1B)  // Основной фон
+val BgProfile = Color(0xFF282828)  // Фон профиля
+val BgElevated = Color(0xFF2E2E2E)  // Поднятые элементы
+val BgOverlay = Color(0xAA000000)  // Полупрозрачный фон для оверлеев
 
-//val ColorForBottomMenu = Color(0xFF18181A)
-//val ColorForAddPhotoDialog = Color(0x9E18181A)
-//val ColorForArrowBack = Color(0xF3FFFFFF)
+// Текстовые цвета
+val TextPrimary = Color(0xFFEAEAEA)  // Основной цвет текста
+val TextSecondary = Color(0xFFB0B0B0)  // Второстепенный текст
+val TextDisabled = Color(0xFF888888)  // Текст для неактивных элементов
 
-val ColorForBackground = Color(0xFF282828)
-val ColorForBackgroundProfile = Color(0xFF282828)
-val ColorForArrowBack = Color(0xFFE3DFD0)
-val ColorForAddPhotoDialog = Color(0xFF353D48)
-val ColorForFocusButton = Color(0xFF3D89F8)
-val ColorForHint = Color(0xFFE3DFD0)
+// Кнопки и акценты
+val ButtonPrimary = Color(0xFF2B7EFE)  // Основная кнопка
+val ButtonSecondary = Color(0xFF4D4D4D)  // Второстепенная кнопка
+val ButtonDestructive = Color(0xFFE74C3C)  // Красная кнопка (удаление, предупреждения)
+
+// Иконки
+val IconPrimary = Color(0xFFE3DFD0)  // Основные иконки
+val IconSecondary = Color(0xFFAAAAAA)  // Второстепенные иконки
+
+// Бордеры и разделители
+val BorderLight = Color(0x33FFFFFF)  // Светлый бордер для светлого фона
+val DividerDark = Color(0x22FFFFFF)  // Разделители на тёмном фоне
+
+// Цвета для статусов
+val Success = Color(0xFF2ECC71)  // Зеленый цвет для успеха
+val Warning = Color(0xFFF39C12)  // Оранжевый для предупреждений
+val Error = Color(0xFFE74C3C)  // Красный для ошибок

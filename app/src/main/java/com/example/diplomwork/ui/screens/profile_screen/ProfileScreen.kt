@@ -37,7 +37,7 @@ import com.example.diplomwork.model.PostResponse
 import com.example.diplomwork.ui.components.CustomTabPager
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.components.PictureCard
-import com.example.diplomwork.ui.theme.ColorForBackgroundProfile
+import com.example.diplomwork.ui.theme.BgProfile
 import com.example.diplomwork.viewmodel.ProfileViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.rememberPagerState
@@ -83,7 +83,6 @@ fun ProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(ColorForBackgroundProfile)
     ) {
         when {
             isLoading -> LoadingSpinnerForScreen()

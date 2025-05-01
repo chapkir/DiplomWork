@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -51,8 +50,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
 import com.example.diplomwork.ui.components.CustomVisualTransformationForPassword
 import com.example.diplomwork.ui.components.LoadingSpinnerForElement
-import com.example.diplomwork.ui.theme.ColorForBackground
-import com.example.diplomwork.ui.theme.ColorForFocusButton
+import com.example.diplomwork.ui.theme.BgDefault
+import com.example.diplomwork.ui.theme.ButtonPrimary
 import com.example.diplomwork.viewmodel.LoginViewModel
 
 @Composable
@@ -78,7 +77,7 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(ColorForBackground)
+            .background(BgDefault)
     ) {
         Column(
             modifier = Modifier
@@ -126,7 +125,7 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth(0.75f),
                 shape = RoundedCornerShape(15.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = ColorForFocusButton,
+                    containerColor = ButtonPrimary,
                     contentColor = Color.White,
                     disabledContainerColor = Color.Gray,
                     disabledContentColor = Color.White

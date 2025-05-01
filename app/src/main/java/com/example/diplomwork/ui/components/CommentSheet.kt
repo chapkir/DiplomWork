@@ -49,7 +49,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.diplomwork.R
 import com.example.diplomwork.model.CommentResponse
-import com.example.diplomwork.ui.theme.ColorForBackground
+import com.example.diplomwork.ui.theme.BgDefault
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,7 +76,7 @@ fun CommentsBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
-        containerColor = ColorForBackground,
+        containerColor = BgDefault,
         scrimColor = Color.Black.copy(alpha = 0.5f),
     ) {
         Column(
@@ -208,7 +208,7 @@ fun CommentsContent(
                 Icon(
                     painter = painterResource(id = R.drawable.ic_arrow_up),
                     contentDescription = "Отправить",
-                    tint = ColorForBackground
+                    tint = BgDefault
                 )
             }
         }

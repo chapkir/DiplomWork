@@ -42,11 +42,10 @@ import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
-import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.navigation.CreateContentScreenData
-import com.example.diplomwork.ui.theme.ColorForFocusButton
+import com.example.diplomwork.ui.theme.ButtonPrimary
 import com.example.diplomwork.viewmodel.AddContentViewModel
 
 @Composable
@@ -195,7 +194,7 @@ fun CreateContentScreen(
                         )
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = ColorForFocusButton,
+                        containerColor = ButtonPrimary,
                         contentColor = Color.White,
                         disabledContainerColor = Color.Gray,
                         disabledContentColor = Color.White

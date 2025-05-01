@@ -64,6 +64,7 @@ import com.example.diplomwork.ui.components.CommentsBottomSheet
 import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.components.rememberSlowFlingBehavior
+import com.example.diplomwork.ui.theme.BgDefault
 import com.example.diplomwork.viewmodel.PostsScreenViewModel
 import kotlinx.coroutines.launch
 
@@ -107,8 +108,7 @@ fun PostsScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(headerHeight)
-                .background(Color.Black),
+                .height(headerHeight),
             contentAlignment = Alignment.CenterStart
         ) {
             if (isHeaderVisible) {
@@ -121,27 +121,26 @@ fun PostsScreen(
             }
         }
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black)
+        PullToRefreshBox(
+            isRefreshing = isLoading,
+            onRefresh = {
+                isRefreshing = true
+                viewModel.refreshPosts()
+            },
+            state = stateRefresh,
+            indicator = {
+                Indicator(
+                    modifier = Modifier.align(Alignment.TopCenter),
+                    isRefreshing = isLoading,
+                    containerColor = Color.Gray,
+                    color = Color.White,
+                    state = stateRefresh
+                )
+            }
         ) {
-            PullToRefreshBox(
-                isRefreshing = isLoading,
-                onRefresh = {
-                    isRefreshing = true
-                    viewModel.refreshPosts()
-                },
-                state = stateRefresh,
-                indicator = {
-                    Indicator(
-                        modifier = Modifier.align(Alignment.TopCenter),
-                        isRefreshing = isLoading,
-                        containerColor = Color.Gray,
-                        color = Color.White,
-                        state = stateRefresh
-                    )
-                }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
             ) {
                 LazyColumn(
                     state = listState,
@@ -211,7 +210,7 @@ fun PostCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.8f)),
+        colors = CardDefaults.cardColors(containerColor = BgDefault),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(vertical = 8.dp)) {

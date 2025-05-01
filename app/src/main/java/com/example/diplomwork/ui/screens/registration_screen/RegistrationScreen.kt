@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -65,8 +64,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
 import com.example.diplomwork.ui.components.LoadingSpinnerForElement
-import com.example.diplomwork.ui.theme.ColorForBackground
-import com.example.diplomwork.ui.theme.ColorForFocusButton
+import com.example.diplomwork.ui.theme.BgDefault
+import com.example.diplomwork.ui.theme.ButtonPrimary
 import com.example.diplomwork.viewmodel.EditProfileViewModel
 import com.example.diplomwork.viewmodel.RegisterViewModel
 import java.util.Locale
@@ -108,7 +107,7 @@ fun RegisterScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(ColorForBackground),
+            .background(BgDefault),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(20.dp))
@@ -394,7 +393,7 @@ fun NavigationButton(
             enabled = isNextEnabled && !isLoading,
             shape = RoundedCornerShape(15.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = ColorForFocusButton,
+                containerColor = ButtonPrimary,
                 contentColor = Color.White,
                 disabledContainerColor = Color.Gray,
                 disabledContentColor = Color.White

@@ -12,18 +12,18 @@ sealed class BottomNavItem(
     val route: Screen,
     val icon: Int,
     val label: String,
-    val isAddButton: Boolean = false
+    val isAddButton: Boolean = false,
 ) {
+    object PostsScreen : BottomNavItem(
+        route = Posts,
+        icon = R.drawable.ic_home,
+        label = "Posts",
+    )
+
     object PicturesScreen : BottomNavItem(
         route = Pictures,
         icon = R.drawable.ic_picture,
         label = "Pictures"
-    )
-
-    object PostsScreen : BottomNavItem(
-        route = Posts,
-        icon = R.drawable.ic_home,
-        label = "Posts"
     )
 
     object AddContentScreen : BottomNavItem(
@@ -42,7 +42,7 @@ sealed class BottomNavItem(
     object ProfileScreen : BottomNavItem(
         route = OwnProfile,
         icon = R.drawable.ic_user,
-        label = "Profile"
+        label = "Profile",
     )
 }
 

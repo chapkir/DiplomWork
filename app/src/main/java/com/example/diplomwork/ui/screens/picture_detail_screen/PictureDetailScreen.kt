@@ -1,7 +1,6 @@
 package com.example.diplomwork.ui.screens.picture_detail_screen
 
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -39,8 +38,7 @@ import com.example.diplomwork.ui.components.CommentItem
 import com.example.diplomwork.ui.components.CommentsBottomSheet
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.navigation.PictureDetailScreenData
-import com.example.diplomwork.ui.theme.ColorForArrowBack
-import com.example.diplomwork.ui.theme.ColorForBackground
+import com.example.diplomwork.ui.theme.IconPrimary
 import com.example.diplomwork.util.AppConstants
 import com.example.diplomwork.viewmodel.PictureDetailScreenViewModel
 import kotlinx.coroutines.launch
@@ -71,8 +69,6 @@ fun PictureDetailScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(ColorForBackground)
-            .padding(top = systemInsetHeight(WindowInsetsCompat.Type.statusBars()).value)
             .imePadding()
     ) {
         if (uiState.isLoading) {
@@ -148,7 +144,7 @@ fun PictureDetailScreen(
         onClick = { onNavigateBack() },
         modifier = Modifier
             .padding(
-                top = systemInsetHeight(WindowInsetsCompat.Type.statusBars()).value + 18.dp,
+                top = 10.dp,
                 start = 16.dp
             )
             .size(43.dp)
@@ -157,7 +153,7 @@ fun PictureDetailScreen(
         Icon(
             painter = painterResource(id = R.drawable.ic_arrow_back),
             contentDescription = "back",
-            tint = ColorForArrowBack
+            tint = IconPrimary
         )
     }
 
@@ -174,7 +170,7 @@ fun PictureDetailScreen(
             Icon(
                 painter = painterResource(id = R.drawable.ic_trash),
                 contentDescription = "trash",
-                tint = ColorForArrowBack
+                tint = IconPrimary
             )
         }
     }

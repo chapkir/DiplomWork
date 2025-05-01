@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.diplomwork.ui.theme.ColorForBackground
+import com.example.diplomwork.ui.theme.BgDefault
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,7 +36,7 @@ fun MenuBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
-        containerColor = ColorForBackground,
+        containerColor = BgDefault,
         scrimColor = Color.Black.copy(alpha = 0.5f),
     ) {
         Column(

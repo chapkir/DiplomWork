@@ -41,8 +41,7 @@ import com.example.diplomwork.R
 import com.example.diplomwork.ui.navigation.AddContent
 import com.example.diplomwork.ui.navigation.Notification
 import com.example.diplomwork.ui.navigation.Pictures
-import com.example.diplomwork.ui.navigation.Posts
-import com.example.diplomwork.ui.theme.ColorForBackground
+import com.example.diplomwork.ui.theme.BgDefault
 
 @Composable
 fun GetTopBars(
@@ -105,7 +104,6 @@ fun CustomTopBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(ColorForBackground)
             .padding(top = statusBarHeight),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -162,7 +160,7 @@ fun SearchBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(ColorForBackground)
+            .background(BgDefault)
             .padding(top = statusBarHeight + 8.dp, bottom = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween

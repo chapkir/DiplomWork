@@ -1,5 +1,6 @@
 package com.example.diplomwork
 
+import com.example.diplomwork.ui.navigation.AppNavigation
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,7 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
-import com.example.diplomwork.ui.navigation.AppNavigation
+import com.example.diplomwork.system_settings.SetSystemBarsColor
+import com.example.diplomwork.ui.theme.BgDefault
 import com.example.diplomwork.ui.theme.DiplomWorkTheme
 import dagger.hilt.android.AndroidEntryPoint
 

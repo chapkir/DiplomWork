@@ -45,6 +45,7 @@ import com.example.diplomwork.R
 import com.example.diplomwork.model.NotificationResponse
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.components.formatDate
+import com.example.diplomwork.ui.theme.BgDefault
 import com.example.diplomwork.viewmodel.NotificationViewModel
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -61,7 +62,7 @@ fun NotificationScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(BgDefault)
     ) {
         when {
             uiState.isLoading -> {
