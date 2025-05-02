@@ -316,7 +316,7 @@ fun PostCard(
                                 Brush.linearGradient(
                                     colors = listOf(
                                         Color(0xFF789AAB),
-                                        Color(0xFF09485E),
+                                        Color(0xFF2B7EFE),
                                     )
                                 )
                             )

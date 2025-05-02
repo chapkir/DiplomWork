@@ -98,7 +98,7 @@ fun PictureCard(
                             Brush.linearGradient(
                                 colors = listOf(
                                     Color(0xFFB3E3FA),
-                                    Color(0xFF09485E),
+                                    Color(0xFF2B7EFE),
                                 )
                             )
                         )

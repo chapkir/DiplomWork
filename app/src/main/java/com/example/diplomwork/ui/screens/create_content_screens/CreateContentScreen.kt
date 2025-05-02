@@ -213,7 +213,8 @@ fun CreateContentScreen(
                         Text(
                             "Опубликовать",
                             modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }

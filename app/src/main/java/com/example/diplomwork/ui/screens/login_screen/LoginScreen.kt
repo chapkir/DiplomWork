@@ -8,10 +8,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
@@ -48,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
+import com.example.diplomwork.system_settings.SetSystemBarsColor
 import com.example.diplomwork.ui.components.CustomVisualTransformationForPassword
 import com.example.diplomwork.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.ui.theme.BgDefault
@@ -74,6 +78,11 @@ fun LoginScreen(
         }
     }
 
+    SetSystemBarsColor(
+        statusBarColor = BgDefault,
+        navigationBarColor = BgDefault,
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -81,7 +90,9 @@ fun LoginScreen(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .imePadding()
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -134,7 +145,7 @@ fun LoginScreen(
                 if (isLoading) {
                     LoadingSpinnerForElement()
                 } else {
-                    Text("Войти", fontWeight = FontWeight.Medium, fontSize = 16.sp)
+                    Text("Войти", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
 
@@ -158,7 +169,6 @@ fun LoginScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
         )
-
     }
 }
 
@@ -226,6 +236,7 @@ fun LoginTextField(
     )
 }
 
+@Suppress("DEPRECATION")
 @Composable
 fun PrivacyPolicyText(modifier: Modifier = Modifier) {
     val uriHandler = LocalUriHandler.current
@@ -255,7 +266,7 @@ fun PrivacyPolicyText(modifier: Modifier = Modifier) {
         text = annotatedText,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 22.dp, vertical = 20.dp),
+            .padding(horizontal = 22.dp, vertical = 13.dp),
         style = TextStyle(
             fontSize = 12.sp,
             color = Color.Gray,
