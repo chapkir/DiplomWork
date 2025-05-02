@@ -1,0 +1,43 @@
+package com.example.diplomwork.data.repos
+
+import com.example.diplomwork.data.model.LoginRequest
+import com.example.diplomwork.data.model.LoginResponse
+import com.example.diplomwork.data.model.TokenRefreshRequest
+import com.example.diplomwork.data.model.TokenRefreshResponse
+import com.example.diplomwork.data.model.RegisterRequest
+import com.example.diplomwork.data.model.RegisterResponse
+import com.example.diplomwork.data.api.ApiService
+import dagger.hilt.android.scopes.ActivityScoped
+import retrofit2.Response
+import javax.inject.Inject
+
+@ActivityScoped
+class AuthRepository @Inject constructor(
+    private val apiService: ApiService
+) {
+
+    // Логин
+    suspend fun login(loginRequest: LoginRequest): LoginResponse {
+        return apiService.login(loginRequest)
+    }
+
+    // Обновление токена
+    suspend fun refreshToken(request: TokenRefreshRequest): TokenRefreshResponse {
+        return apiService.refreshToken(request)
+    }
+
+    // Логаут
+    suspend fun logout(): Response<Map<String, String>> {
+        return apiService.logout()
+    }
+
+    // Регистрация пользователя
+    suspend fun register(registerRequest: RegisterRequest): RegisterResponse {
+        return apiService.register(registerRequest)
+    }
+
+    // Проверка существования пользователя
+    suspend fun checkUsernameExists(username: String): Response<Boolean> {
+        return apiService.checkUsernameExists(username)
+    }
+}

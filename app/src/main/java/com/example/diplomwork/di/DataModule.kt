@@ -1,14 +1,14 @@
 package com.example.diplomwork.di
 
-import com.example.diplomwork.network.api.ApiService
-import com.example.diplomwork.network.repos.AuthRepository
-import com.example.diplomwork.network.repos.CommentRepository
-import com.example.diplomwork.network.repos.PictureRepository
-import com.example.diplomwork.network.repos.ProfileRepository
-import com.example.diplomwork.network.repos.SearchRepository
+import com.example.diplomwork.data.api.ApiService
+import com.example.diplomwork.data.repos.AuthRepository
+import com.example.diplomwork.data.repos.CommentRepository
+import com.example.diplomwork.data.repos.PictureRepository
+import com.example.diplomwork.data.repos.ProfileRepository
+import com.example.diplomwork.data.repos.SearchRepository
 import com.example.diplomwork.auth.SessionManager
-import com.example.diplomwork.network.repos.FollowRepository
-import com.example.diplomwork.network.repos.UploadRepository
+import com.example.diplomwork.data.repos.FollowRepository
+import com.example.diplomwork.data.repos.UploadRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
