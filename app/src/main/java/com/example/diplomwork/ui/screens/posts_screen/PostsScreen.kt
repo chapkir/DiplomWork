@@ -315,7 +315,7 @@ fun PostCard(
                             .background(
                                 Brush.linearGradient(
                                     colors = listOf(
-                                        Color(0xFF789AAB),
+                                        Color(0xFFB8D1FF),
                                         Color(0xFF2B7EFE),
                                     )
                                 )

@@ -23,6 +23,7 @@ lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.10.1"
 composeBom = "2025.03.00"
 lombokVersion = "1.18.36"
+mapsMobile = "4.0.0"
 materialVersion = "1.7.8"
 navigationCompose = "2.8.9"
 coil-compose = "2.7.0"
@@ -90,6 +91,7 @@ androidx-compose-foundation = { group = "androidx.compose.foundation", name = "f
 android-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 kotlinx-metadata-jvm = { module = "org.jetbrains.kotlinx:kotlinx-metadata-jvm", version.ref = "kotlinxMetadataJvm" }
+maps-mobile = { module = "com.yandex.android:maps.mobile", version.ref = "mapsMobile" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 
 postgresql = { module = "org.postgresql:postgresql" }

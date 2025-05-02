@@ -81,12 +81,5 @@ class PicturesViewModel @Inject constructor(
 ) : ViewModel() {
 
     val picturesPagingFlow = pictureRepository.getPagingPictures()
-        .map { pagingData ->
-            pagingData.map { picture ->
-                picture.copy(
-                    aspectRatio = (picture.imageWidth ?: 1f) / (picture.imageHeight ?: 1f)
-                )
-            }
-        }
         .cachedIn(viewModelScope)
 }

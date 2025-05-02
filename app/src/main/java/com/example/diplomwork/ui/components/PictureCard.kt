@@ -54,7 +54,7 @@ fun PictureCard(
     imageUrl: String,
     username: String,
     userId: Long = 0L,
-    aspectRatio: Float = 1f,
+    aspectRatio: Float,
     userProfileImageUrl: String?,
     id: Long,
     onPictureClick: () -> Unit,
@@ -97,7 +97,7 @@ fun PictureCard(
                         .background(
                             Brush.linearGradient(
                                 colors = listOf(
-                                    Color(0xFFB3E3FA),
+                                    Color(0xFFB8D1FF),
                                     Color(0xFF2B7EFE),
                                 )
                             )

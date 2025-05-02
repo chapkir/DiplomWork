@@ -64,10 +64,10 @@ fun ImageView(
                 modifier = Modifier
                     .matchParentSize()
                     .background(
-                        Brush.verticalGradient(
+                        Brush.linearGradient(
                             colors = listOf(
-                                Color(0xFFB3E5FC),
-                                Color(0xFF0A526B),
+                                Color(0xFFB8D1FF),
+                                Color(0xFF2B7EFE),
                             )
                         )
                     )

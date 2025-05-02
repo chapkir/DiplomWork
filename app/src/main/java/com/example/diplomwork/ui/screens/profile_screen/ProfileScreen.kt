@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -79,8 +80,8 @@ fun ProfileScreen(
         onTabSelected = pagerState.currentPage
     }
 
-    LaunchedEffect(selectedTabIndex) {
-        if (selectedTabIndex == 1) profileViewModel.loadLikedPictures()
+    LaunchedEffect(Unit) {
+        profileViewModel.loadLikedPictures()
     }
 
     val pickImageLauncher = rememberLauncherForActivityResult(
@@ -167,8 +168,8 @@ private fun ErrorScreen(error: String?, onRetry: () -> Unit) {
 
 @Composable
 private fun PicturesGrid(pictures: List<PictureResponse>, onPictureClick: (Long, String) -> Unit) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(3),
+    LazyVerticalStaggeredGrid(
+        columns = StaggeredGridCells.Fixed(3),
         modifier = Modifier.fillMaxSize(),
     ) {
         items(pictures, key = { it.id }) { picture ->
@@ -177,6 +178,7 @@ private fun PicturesGrid(pictures: List<PictureResponse>, onPictureClick: (Long,
                 username = picture.username,
                 userProfileImageUrl = picture.userProfileImageUrl,
                 id = picture.id,
+                aspectRatio = picture.aspectRatio ?: 1f,
                 onPictureClick = { onPictureClick(picture.id, picture.imageUrl) },
                 contentPadding = 3,
                 screenName = "Profile"
@@ -197,6 +199,7 @@ private fun PostsGrid(posts: List<PostResponse>) {
                 username = post.username,
                 userProfileImageUrl = post.userAvatar,
                 id = post.id,
+                aspectRatio = 1f,
                 onPictureClick = { },
                 contentPadding = 3,
                 screenName = "Profile"

@@ -90,7 +90,7 @@ fun PictureDetailScreen(
                     description = uiState.pictureDescription,
                     likesCount = uiState.likesCount,
                     isLiked = uiState.isLiked,
-                    commentsCount = uiState.comments.size,
+                    commentsCount = uiState.commentsCount,
                     profileImageUrl = uiState.profileImageUrl,
                     username = uiState.pictureUsername,
                     userId = uiState.pictureUserId,
@@ -162,7 +162,7 @@ fun PictureDetailScreen(
             onClick = { viewModel.deletePicture() },
             modifier = Modifier
                 .padding(
-                    top = systemInsetHeight(WindowInsetsCompat.Type.statusBars()).value + 18.dp,
+                    top = 16.dp,
                     start = 70.dp
                 )
                 .size(43.dp)

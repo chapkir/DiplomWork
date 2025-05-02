@@ -91,6 +91,8 @@ dependencies {
     implementation (libs.accompanist.pager.indicators)
     implementation(libs.accompanist.permissions)
 
+    implementation (libs.maps.mobile)
+
     implementation(libs.kotlinx.metadata.jvm)
 
     implementation(libs.accompanist.systemuicontroller)
