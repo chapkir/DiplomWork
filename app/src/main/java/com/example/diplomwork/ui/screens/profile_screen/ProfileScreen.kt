@@ -53,6 +53,7 @@ fun ProfileScreen(
     onSettingsClick: () -> Unit,
     onBack: () -> Unit,
     onImageClick: (Long, String) -> Unit,
+    onMapOpen: () -> Unit = {},
     profileViewModel: ProfileViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -127,7 +128,8 @@ fun ProfileScreen(
                         onUnsubscribe = {},
                         onBack = onBack,
                         avatarUpdateKey = avatarUpdateCounter,
-                        isOwnProfile = isOwnProfile
+                        isOwnProfile = isOwnProfile,
+                        onMapOpen = onMapOpen
                     )
 
                     CustomTabPager(

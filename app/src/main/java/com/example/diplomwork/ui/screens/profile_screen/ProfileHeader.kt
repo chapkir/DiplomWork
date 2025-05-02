@@ -45,7 +45,8 @@ fun ProfileHeader(
     onUnsubscribe: () -> Unit,
     onBack: () -> Unit,
     avatarUpdateKey: Int,
-    isOwnProfile: Boolean = false
+    isOwnProfile: Boolean = false,
+    onMapOpen: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -63,7 +64,7 @@ fun ProfileHeader(
         ) {
             if (isOwnProfile) {
                 IconButton(
-                    onClick = { },
+                    onClick = { onMapOpen() },
                     modifier = Modifier
                         .padding(start = 15.dp)
                         .size(23.dp)

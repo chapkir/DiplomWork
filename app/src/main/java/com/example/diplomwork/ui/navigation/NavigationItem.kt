@@ -36,6 +36,9 @@ object EditProfile : Screen
 object Settings : Screen
 
 @Serializable
+object Map : Screen
+
+@Serializable
 object ViewPost : Screen
 
 @Serializable

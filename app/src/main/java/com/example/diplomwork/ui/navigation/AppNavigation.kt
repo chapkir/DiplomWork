@@ -26,6 +26,7 @@ import com.example.diplomwork.ui.screens.create_content_screens.CreateContentScr
 import com.example.diplomwork.ui.screens.create_content_screens.WhatCreateBottomSheet
 import com.example.diplomwork.ui.screens.gallery_screen.GalleryScreen
 import com.example.diplomwork.ui.screens.login_screen.LoginScreen
+import com.example.diplomwork.ui.screens.map_screen.MapScreen
 import com.example.diplomwork.ui.screens.notification_screen.NotificationScreen
 import com.example.diplomwork.ui.screens.picture_detail_screen.PictureDetailScreen
 import com.example.diplomwork.ui.screens.pictures_screen.PicturesScreen
@@ -166,6 +167,9 @@ fun AppNavigation(navController: NavHostController) {
                     onBack = { navController.popBackStack() },
                     onImageClick = { pictureId, imageUrl ->
                         navController.navigate(PictureDetailScreenData(pictureId, imageUrl))
+                    },
+                    onMapOpen = {
+                        navController.navigate(Map)
                     }
                 )
             }
@@ -201,6 +205,10 @@ fun AppNavigation(navController: NavHostController) {
                         )
                     }
                 )
+            }
+
+            composable<Map> {
+                MapScreen()
             }
 
             composable<Notification> {
