@@ -2,7 +2,6 @@ package com.example.diplomwork.ui.screens.gallery_screen
 
 import android.net.Uri
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,9 +20,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -42,11 +40,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
+import com.example.diplomwork.R
 import com.example.diplomwork.ui.components.CustomTabPager
 import com.example.diplomwork.ui.components.checkGalleryPermission
 import com.example.diplomwork.ui.components.requestGalleryPermission
@@ -96,27 +97,38 @@ fun GalleryScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.Black)
-                .padding(top = 10.dp),
+                .padding(top = 20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { onClose() }) {
-                Icon(Icons.Default.Close, contentDescription = "Закрыть", tint = Color.White)
+            IconButton(
+                onClick = { onClose() },
+                modifier = Modifier
+                    .padding(start = 23.dp)
+                    .size(20.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_close),
+                    contentDescription = "Закрыть",
+                    tint = Color.White,
+                )
             }
-            Spacer(modifier = Modifier.width(16.dp))
-            Text("Галерея", color = Color.White, fontSize = 20.sp)
+            Spacer(modifier = Modifier.width(23.dp))
+            Text("Галерея", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.Bold)
         }
+
+        Spacer(modifier = Modifier.height(20.dp))
+        HorizontalDivider()
+        Spacer(modifier = Modifier.height(15.dp))
 
         CustomTabPager(
             tabTitles = tabTitles,
             pagerState = pagerState,
-            modifier = Modifier.fillMaxSize().background(Color.Black),
+            modifier = Modifier.fillMaxSize(),
             lineOffset = 2.27
         ) { page ->
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black)
             ) {
                 if (hasPermission) {
                     when (page) {

@@ -3,7 +3,6 @@ package com.example.diplomwork.ui.screens.profile_screen
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -17,12 +16,17 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -32,17 +36,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.paging.LoadState
 import com.example.diplomwork.model.PictureResponse
 import com.example.diplomwork.model.PostResponse
 import com.example.diplomwork.ui.components.CustomTabPager
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.components.PictureCard
-import com.example.diplomwork.ui.theme.BgProfile
 import com.example.diplomwork.viewmodel.ProfileViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.rememberPagerState
 
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalPagerApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     onSettingsClick: () -> Unit,
@@ -68,6 +72,9 @@ fun ProfileScreen(
 
     val pagerState = rememberPagerState(initialPage = selectedTabIndex)
 
+    val stateRefresh = rememberPullToRefreshState()
+    var isRefreshing by remember { mutableStateOf(false) }
+
     LaunchedEffect(pagerState.currentPage) {
         onTabSelected = pagerState.currentPage
     }
@@ -80,41 +87,59 @@ fun ProfileScreen(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? -> uri?.let { profileViewModel.uploadAvatarToServer(it, context) } }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
+    PullToRefreshBox(
+        isRefreshing = isLoading,
+        onRefresh = {
+            isRefreshing = true
+            profileViewModel.refreshProfile()
+        },
+        state = stateRefresh,
+        indicator = {
+            Indicator(
+                modifier = Modifier.align(Alignment.TopCenter),
+                isRefreshing = isLoading,
+                containerColor = Color.Gray,
+                color = Color.White,
+                state = stateRefresh
+            )
+        }
     ) {
-        when {
-            isLoading -> LoadingSpinnerForScreen()
-            error != null -> ErrorScreen(error) { profileViewModel.loadLikedPictures() }
-            profileData != null -> {
-                ProfileHeader(
-                    username = profileData?.username ?: "Неизвестный",
-                    firstName = profileData?.firstName ?: "Неизвестный",
-                    picturesCount = profileData?.pinsCount ?: 0,
-                    followingCount = profileData?.followingCount ?: 0,
-                    followersCount = profileData?.followersCount ?: 0,
-                    avatarUrl = profileData?.profileImageUrl,
-                    isUploading = isUploading,
-                    onAvatarClick = { pickImageLauncher.launch("image/*") },
-                    onSettingsClick = onSettingsClick,
-                    onSubscribe = {},
-                    onUnsubscribe = {},
-                    onBack = onBack,
-                    avatarUpdateKey = avatarUpdateCounter,
-                    isOwnProfile = isOwnProfile
-                )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            when {
+                isLoading -> LoadingSpinnerForScreen()
+                error != null -> ErrorScreen(error) { profileViewModel.loadLikedPictures() }
+                profileData != null -> {
+                    ProfileHeader(
+                        username = profileData?.username ?: "Неизвестный",
+                        firstName = profileData?.firstName ?: "Неизвестный",
+                        picturesCount = profileData?.pinsCount ?: 0,
+                        followingCount = profileData?.followingCount ?: 0,
+                        followersCount = profileData?.followersCount ?: 0,
+                        avatarUrl = profileData?.profileImageUrl,
+                        isUploading = isUploading,
+                        onAvatarClick = { pickImageLauncher.launch("image/*") },
+                        onSettingsClick = onSettingsClick,
+                        onSubscribe = {},
+                        onUnsubscribe = {},
+                        onBack = onBack,
+                        avatarUpdateKey = avatarUpdateCounter,
+                        isOwnProfile = isOwnProfile
+                    )
 
-                CustomTabPager(
-                    tabTitles = tabTitles,
-                    pagerState = pagerState,
-                    modifier = Modifier.fillMaxSize(),
-                    lineOffset = 2.37
-                ) { page ->
-                    when (page) {
-                        0 -> PostsGrid(ownPosts)
-                        1 -> PicturesGrid(ownPictures, onImageClick)
-                        2 -> PicturesGrid(likedPictures, onImageClick)
+                    CustomTabPager(
+                        tabTitles = tabTitles,
+                        pagerState = pagerState,
+                        modifier = Modifier.fillMaxSize(),
+                        lineOffset = 2.37
+                    ) { page ->
+                        when (page) {
+                            0 -> PostsGrid(ownPosts)
+                            1 -> PicturesGrid(ownPictures, onImageClick)
+                            2 -> PicturesGrid(likedPictures, onImageClick)
+                        }
                     }
                 }
             }

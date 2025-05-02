@@ -47,8 +47,8 @@ fun SettingsScreen(
             IconButton(
                 onClick = onBack,
                 modifier = Modifier
-                    .size(45.dp)
-                    .padding(start = 15.dp)
+                    .padding(start = 22.dp)
+                    .size(32.dp)
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_arrow_left),

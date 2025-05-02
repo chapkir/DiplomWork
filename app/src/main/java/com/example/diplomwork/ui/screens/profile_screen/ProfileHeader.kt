@@ -56,23 +56,30 @@ fun ProfileHeader(
         // Топ бар
         Row(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .padding(top = 7.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             if (isOwnProfile) {
-                Text(
-                    text = "Профиль",
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 21.sp,
-                    modifier = Modifier.padding(start = 20.dp)
-                )
+                IconButton(
+                    onClick = { },
+                    modifier = Modifier
+                        .padding(start = 15.dp)
+                        .size(23.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_stats),
+                        contentDescription = "Stats",
+                        tint = Color.White
+                    )
+                }
             } else {
                 IconButton(
                     onClick = { onBack() },
                     modifier = Modifier
-                        .size(56.dp)
-                        .padding(start = 20.dp)
+                        .padding(start = 10.dp)
+                        .size(35.dp)
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_arrow_left),
@@ -87,8 +94,8 @@ fun ProfileHeader(
                     else return@IconButton
                 },
                 modifier = Modifier
-                    .size(41.dp)
-                    .padding(end = 20.dp)
+                    .padding(end = 15.dp)
+                    .size(23.dp)
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_settings),
@@ -97,7 +104,7 @@ fun ProfileHeader(
                 )
             }
         }
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(21.dp))
         // Аватарка, юзернейм
         Row(
             modifier = Modifier

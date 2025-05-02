@@ -148,4 +148,8 @@ class ProfileViewModel @Inject constructor(
             }
         }
     }
+
+    fun refreshProfile() {
+        loadProfile()
+    }
 }
