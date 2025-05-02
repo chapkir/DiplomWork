@@ -1,6 +1,5 @@
 package com.example.diplomwork.ui.screens.notification_screen
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -17,7 +16,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,7 +43,6 @@ import com.example.diplomwork.R
 import com.example.diplomwork.model.NotificationResponse
 import com.example.diplomwork.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.ui.components.formatDate
-import com.example.diplomwork.ui.theme.BgDefault
 import com.example.diplomwork.viewmodel.NotificationViewModel
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -62,7 +59,6 @@ fun NotificationScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BgDefault)
     ) {
         when {
             uiState.isLoading -> {
@@ -127,7 +123,10 @@ fun NotificationItem(
     onNotificationClick: (Long, String) -> Unit
 ) {
     val annotatedText = buildAnnotatedString {
-        pushStringAnnotation(tag = "USERNAME", annotation = "${notification.senderId},${notification.senderUsername}")
+        pushStringAnnotation(
+            tag = "USERNAME",
+            annotation = "${notification.senderId},${notification.senderUsername}"
+        )
         withStyle(style = SpanStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold)) {
             append(notification.senderUsername)
         }
@@ -164,7 +163,9 @@ fun NotificationItem(
                     detectTapGestures { offset ->
                         textLayoutResult?.let { layoutResult ->
                             val position = layoutResult.getOffsetForPosition(offset)
-                            val annotation = annotatedText.getStringAnnotations("USERNAME", position, position).firstOrNull()
+                            val annotation =
+                                annotatedText.getStringAnnotations("USERNAME", position, position)
+                                    .firstOrNull()
 
                             if (annotation != null) {
                                 val (id, username) = annotation.item.split(",")

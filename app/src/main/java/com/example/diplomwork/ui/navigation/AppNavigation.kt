@@ -53,6 +53,7 @@ fun AppNavigation(navController: NavHostController) {
             Register::class.simpleName,
             GalleryScreenData::class.simpleName,
             CreateContentScreenData::class.simpleName,
+            EditProfile::class.simpleName,
         )
 
     val showBottomBar = currentRoute.let { route ->
