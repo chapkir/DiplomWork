@@ -363,6 +363,12 @@ public class PinController {
         try {
             String imageUrl = fileStorageService.storeFile(file);
 
+            // Генерация FullHD и миниатюрных изображений
+            String filename = fileStorageService.getFilenameFromUrl(imageUrl);
+            String baseName = filename != null && filename.contains(".") ? filename.substring(0, filename.lastIndexOf(".")) : filename;
+            FileStorageService.ImageInfo fullhdInfo = fileStorageService.storeFullhdFile(file, baseName);
+            FileStorageService.ImageInfo thumbnailInfo = fileStorageService.storeThumbnailFile(file, baseName);
+
             Pin pin = new Pin();
             // Выбираем title: приоритет у параметра title, иначе text, иначе пустая строка
             String pinTitle = (title != null && !title.isEmpty()) ? title : (text != null ? text : "");
@@ -373,6 +379,13 @@ public class PinController {
             pin.setCreatedAt(LocalDateTime.now());
             // Вычисляем размеры изображения через сервис
             pinService.calculateImageDimensions(pin);
+            // Сохраняем новые WebP-версии в полях сущности
+            pin.setFullhdImageUrl(fullhdInfo.getUrl());
+            pin.setFullhdWidth(fullhdInfo.getWidth());
+            pin.setFullhdHeight(fullhdInfo.getHeight());
+            pin.setThumbnailImageUrl(thumbnailInfo.getUrl());
+            pin.setThumbnailWidth(thumbnailInfo.getWidth());
+            pin.setThumbnailHeight(thumbnailInfo.getHeight());
 
             Pin savedPin = pinRepository.save(pin);
             PinResponse pinResponse = pinService.convertToPinResponse(savedPin, user);
@@ -430,5 +443,13 @@ public class PinController {
     public ResponseEntity<?> recalcImageDimensions() {
         pinService.recalcImageDimensionsForAllPins();
         return ResponseEntity.ok(new MessageResponse("Dimensions recalculated for all pins"));
+    }
+
+    @PostMapping("/generate-variants")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<?> generateImageVariants(Authentication authentication) {
+        // Генерация WebP-версий для всех существующих пинов
+        pinService.generateImageVariantsForAllPins();
+        return ResponseEntity.ok(new MessageResponse("Image variants (FullHD и thumbnails) сгенерированы для всех пинов"));
     }
 }

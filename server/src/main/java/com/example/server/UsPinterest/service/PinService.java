@@ -48,6 +48,9 @@ import java.io.File;
 import java.io.InputStream;
 import com.drew.metadata.jpeg.JpegDirectory;
 import java.io.FileInputStream;
+import java.nio.file.Files;
+import net.coobird.thumbnailator.Thumbnails;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @Service
 @Transactional
@@ -371,7 +374,7 @@ public class PinService {
                         cr.setCreatedAt(comment.getCreatedAt());
                         return cr;
                     }).collect(Collectors.toList());
-            response.setComments(commentResponses);
+            response.setComments(commentResponses);            // Добавляем ссылки на FullHD и thumbnail изображения            String fullhdUrl = pin.getFullhdImageUrl();            if (fullhdUrl != null && !fullhdUrl.isEmpty()) {                fullhdUrl = fileStorageService.updateImageUrl(fullhdUrl);            }            response.setFullhdImageUrl(fullhdUrl);            response.setFullhdWidth(pin.getFullhdWidth());            response.setFullhdHeight(pin.getFullhdHeight());            String thumbUrl = pin.getThumbnailImageUrl();            if (thumbUrl != null && !thumbUrl.isEmpty()) {                thumbUrl = fileStorageService.updateImageUrl(thumbUrl);            }            response.setThumbnailImageUrl(thumbUrl);            response.setThumbnailWidth(pin.getThumbnailWidth());            response.setThumbnailHeight(pin.getThumbnailHeight());
 
             return response;
         } catch (Exception e) {
@@ -486,6 +489,70 @@ public class PinService {
                 // используем единый метод вычисления размеров
                 calculateImageDimensions(pin);
                 pinRepository.save(pin);
+            }
+        }
+    }
+
+    /**
+     * Генерация WebP-версий (FullHD и миниатюры) для всех существующих пинов.
+     */
+    @Transactional
+    public void generateImageVariantsForAllPins() {
+        List<Pin> pins = pinRepository.findAll();
+        for (Pin pin : pins) {
+            try {
+                String originalUrl = pin.getImageUrl();
+                if (originalUrl == null || originalUrl.isEmpty()) {
+                    continue;
+                }
+                String filename = fileStorageService.getFilenameFromUrl(originalUrl);
+                Path sourcePath = fileStorageService.getFileStoragePath().resolve(filename).normalize();
+                if (!Files.exists(sourcePath)) {
+                    logger.warn("Source file not found for pin {}: {}", pin.getId(), sourcePath);
+                    continue;
+                }
+                BufferedImage originalImg = ImageIO.read(sourcePath.toFile());
+                if (originalImg == null) {
+                    logger.warn("Failed to read image for pin {}: {}", pin.getId(), sourcePath);
+                    continue;
+                }
+                String baseName = filename.contains(".") ? filename.substring(0, filename.lastIndexOf('.')) : filename;
+
+                // FullHD
+                Path fullhdDir = fileStorageService.getFullhdImagesLocation();
+                BufferedImage fullhdImg = Thumbnails.of(originalImg)
+                        .size(fileStorageService.getFullhdMaxWidth(), fileStorageService.getFullhdMaxHeight())
+                        .outputFormat("webp")
+                        .asBufferedImage();
+                String fullhdFilename = baseName + ".webp";
+                Path fullhdPath = fullhdDir.resolve(fullhdFilename);
+                ImageIO.write(fullhdImg, "webp", fullhdPath.toFile());
+                String fullhdUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+                        .path("/uploads/").path(fileStorageService.getFullhdImagesDir()).path("/").path(fullhdFilename).toUriString();
+
+                // Thumbnail
+                Path thumbDir = fileStorageService.getThumbnailImagesLocation();
+                BufferedImage thumbImg = Thumbnails.of(originalImg)
+                        .size(fileStorageService.getThumbnailMaxWidth(), fileStorageService.getThumbnailMaxHeight())
+                        .outputFormat("webp")
+                        .asBufferedImage();
+                String thumbFilename = baseName + ".webp";
+                Path thumbPath = thumbDir.resolve(thumbFilename);
+                ImageIO.write(thumbImg, "webp", thumbPath.toFile());
+                String thumbUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+                        .path("/uploads/").path(fileStorageService.getThumbnailImagesDir()).path("/").path(thumbFilename).toUriString();
+
+                // Сохраняем в сущность
+                pin.setFullhdImageUrl(fullhdUrl);
+                pin.setFullhdWidth(fullhdImg.getWidth());
+                pin.setFullhdHeight(fullhdImg.getHeight());
+                pin.setThumbnailImageUrl(thumbUrl);
+                pin.setThumbnailWidth(thumbImg.getWidth());
+                pin.setThumbnailHeight(thumbImg.getHeight());
+
+                pinRepository.save(pin);
+            } catch (Exception e) {
+                logger.error("Error generating image variants for pin {}: {}", pin.getId(), e.getMessage(), e);
             }
         }
     }

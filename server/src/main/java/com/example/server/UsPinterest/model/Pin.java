@@ -67,6 +67,25 @@ public class Pin {
     @Column(name = "comments_count")
     private Integer commentsCount = 0;
 
+    // Поля для Full HD и миниатюрных изображений
+    @Column(length = 1000, name = "fullhd_image_url")
+    private String fullhdImageUrl;
+
+    @Column(name = "fullhd_width")
+    private Integer fullhdWidth;
+
+    @Column(name = "fullhd_height")
+    private Integer fullhdHeight;
+
+    @Column(length = 1000, name = "thumbnail_image_url")
+    private String thumbnailImageUrl;
+
+    @Column(name = "thumbnail_width")
+    private Integer thumbnailWidth;
+
+    @Column(name = "thumbnail_height")
+    private Integer thumbnailHeight;
+
     public Pin() {}
 
     public Pin(String imageUrl, String description) {
@@ -179,4 +198,22 @@ public class Pin {
     public void setCommentsCount(Integer commentsCount) {
         this.commentsCount = commentsCount;
     }
+
+    public String getFullhdImageUrl() { return fullhdImageUrl; }
+    public void setFullhdImageUrl(String fullhdImageUrl) { this.fullhdImageUrl = fullhdImageUrl; }
+
+    public Integer getFullhdWidth() { return fullhdWidth; }
+    public void setFullhdWidth(Integer fullhdWidth) { this.fullhdWidth = fullhdWidth; }
+
+    public Integer getFullhdHeight() { return fullhdHeight; }
+    public void setFullhdHeight(Integer fullhdHeight) { this.fullhdHeight = fullhdHeight; }
+
+    public String getThumbnailImageUrl() { return thumbnailImageUrl; }
+    public void setThumbnailImageUrl(String thumbnailImageUrl) { this.thumbnailImageUrl = thumbnailImageUrl; }
+
+    public Integer getThumbnailWidth() { return thumbnailWidth; }
+    public void setThumbnailWidth(Integer thumbnailWidth) { this.thumbnailWidth = thumbnailWidth; }
+
+    public Integer getThumbnailHeight() { return thumbnailHeight; }
+    public void setThumbnailHeight(Integer thumbnailHeight) { this.thumbnailHeight = thumbnailHeight; }
 } 

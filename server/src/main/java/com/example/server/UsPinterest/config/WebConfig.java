@@ -37,6 +37,12 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${file.profile-images-dir:profile-images}")
     private String profileImagesDir;
 
+    @Value("${file.fullhd-images-dir}")
+    private String fullhdImagesDir;
+
+    @Value("${file.thumbnail-images-dir}")
+    private String thumbnailImagesDir;
+
     @Value("${api.current-version:v1}")
     private String currentApiVersion;
 
@@ -70,6 +76,17 @@ public class WebConfig implements WebMvcConfigurer {
                 .addResourceLocations("file:" + profileImagesPath + "/")
                 .setCachePeriod(3600);
 
+        String fullhdPath = Paths.get(uploadDir, fullhdImagesDir).toAbsolutePath().normalize().toString();
+        logger.info("Configuring resource handler for fullhd images. Path: {}", fullhdPath);
+        registry.addResourceHandler("/uploads/" + fullhdImagesDir + "/**")
+                .addResourceLocations("file:" + fullhdPath + "/")
+                .setCachePeriod(3600);
+
+        String thumbnailPath = Paths.get(uploadDir, thumbnailImagesDir).toAbsolutePath().normalize().toString();
+        logger.info("Configuring resource handler for thumbnails. Path: {}", thumbnailPath);
+        registry.addResourceHandler("/uploads/" + thumbnailImagesDir + "/**")
+                .addResourceLocations("file:" + thumbnailPath + "/")
+                .setCachePeriod(3600);
 
         registry.addResourceHandler("/swagger-ui/**")
                 .addResourceLocations("classpath:/META-INF/resources/webjars/swagger-ui/")

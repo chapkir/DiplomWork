@@ -21,6 +21,12 @@ public class PinResponse {
     private int commentsCount;
     private List<CommentResponse> comments;
     private boolean isLikedByCurrentUser;
+    private String fullhdImageUrl;
+    private Integer fullhdWidth;
+    private Integer fullhdHeight;
+    private String thumbnailImageUrl;
+    private Integer thumbnailWidth;
+    private Integer thumbnailHeight;
 
     public Long getId() {
         return id;
@@ -156,5 +162,53 @@ public class PinResponse {
 
     public void setIsLikedByCurrentUser(boolean isLikedByCurrentUser) {
         this.isLikedByCurrentUser = isLikedByCurrentUser;
+    }
+
+    public String getFullhdImageUrl() {
+        return fullhdImageUrl;
+    }
+
+    public void setFullhdImageUrl(String fullhdImageUrl) {
+        this.fullhdImageUrl = fullhdImageUrl;
+    }
+
+    public Integer getFullhdWidth() {
+        return fullhdWidth;
+    }
+
+    public void setFullhdWidth(Integer fullhdWidth) {
+        this.fullhdWidth = fullhdWidth;
+    }
+
+    public Integer getFullhdHeight() {
+        return fullhdHeight;
+    }
+
+    public void setFullhdHeight(Integer fullhdHeight) {
+        this.fullhdHeight = fullhdHeight;
+    }
+
+    public String getThumbnailImageUrl() {
+        return thumbnailImageUrl;
+    }
+
+    public void setThumbnailImageUrl(String thumbnailImageUrl) {
+        this.thumbnailImageUrl = thumbnailImageUrl;
+    }
+
+    public Integer getThumbnailWidth() {
+        return thumbnailWidth;
+    }
+
+    public void setThumbnailWidth(Integer thumbnailWidth) {
+        this.thumbnailWidth = thumbnailWidth;
+    }
+
+    public Integer getThumbnailHeight() {
+        return thumbnailHeight;
+    }
+
+    public void setThumbnailHeight(Integer thumbnailHeight) {
+        this.thumbnailHeight = thumbnailHeight;
     }
 }

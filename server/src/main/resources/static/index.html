@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Spotsy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="header">
+    <div class="container">
+        <a href="#" class="logo" id="logo-link">Spotsy</a>
+        <nav class="nav">
+            <a href="#" data-view="feed" class="nav-link active">Пины</a>
+            <a href="#" data-view="posts" class="nav-link">Посты</a>
+            <a href="#" data-view="profile" class="nav-link">Профиль</a>
+            <button id="logout-btn" class="nav-link" style="margin-left:auto; border:none; background:none;">Выйти</button>
+        </nav>
+    </div>
+</header>
+<main>
+    <!-- Login View -->
+    <section id="login-view" class="view">
+        <div class="auth-container">
+            <form id="login-form" class="auth-form">
+                <h2>Войти в Spotsy</h2>
+                <input id="login-username" type="text" placeholder="Имя пользователя" required>
+                <input id="login-password" type="password" placeholder="Пароль" required>
+                <button type="submit">Войти</button>
+                <p>Нет аккаунта? <a href="#" id="show-signup">Регистрация</a></p>
+            </form>
+        </div>
+    </section>
+    <!-- Signup View -->
+    <section id="signup-view" class="view">
+        <div class="auth-container">
+            <form id="signup-form" class="auth-form">
+                <h2>Регистрация</h2>
+                <input id="signup-username" type="text" placeholder="Имя пользователя" required>
+                <input id="signup-email" type="email" placeholder="Email" required>
+                <input id="signup-password" type="password" placeholder="Пароль" required>
+                <button type="submit">Зарегистрироваться</button>
+                <p>Уже есть аккаунт? <a href="#" id="show-login">Войти</a></p>
+            </form>
+        </div>
+    </section>
+    <!-- Pinned, Posts, Profile views below -->
+    <section id="feed-view" class="view active">
+        <div id="feed" class="masonry-grid"></div>
+        <button id="load-more-pins" class="load-more-btn">Загрузить ещё</button>
+    </section>
+    <section id="posts-view" class="view">
+        <div id="posts-feed" class="masonry-grid"></div>
+        <button id="load-more-posts" class="load-more-btn">Загрузить ещё</button>
+    </section>
+    <section id="profile-view" class="view">
+        <div id="profile-content"></div>
+    </section>
+    <section id="pin-detail-view" class="view">
+        <div id="pin-detail-container"></div>
+    </section>
+    <section id="post-detail-view" class="view">
+        <div id="post-detail-container"></div>
+    </section>
+</main>
+<script src="js/app.js"></script>
+</body>
+</html>
