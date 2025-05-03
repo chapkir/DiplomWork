@@ -16,6 +16,7 @@ public class PinResponse {
     private LocalDateTime createdAt;
     private Integer imageWidth;
     private Integer imageHeight;
+    private Double aspectRatio;
     private int likesCount;
     private int commentsCount;
     private List<CommentResponse> comments;
@@ -115,6 +116,14 @@ public class PinResponse {
 
     public void setImageHeight(Integer imageHeight) {
         this.imageHeight = imageHeight;
+    }
+
+    public Double getAspectRatio() {
+        return aspectRatio;
+    }
+
+    public void setAspectRatio(Double aspectRatio) {
+        this.aspectRatio = aspectRatio;
     }
 
     public int getLikesCount() {

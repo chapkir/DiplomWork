@@ -62,7 +62,7 @@ public class SecurityConfig {
                     auth.requestMatchers("/actuator/**").permitAll();
                     auth.requestMatchers("/api/auth/**").permitAll();
                     auth.requestMatchers("/api/piner/**").permitAll();
-                    auth.requestMatchers("/api/pins/**").permitAll();
+                    auth.requestMatchers("/api/pins/all").permitAll();
                     auth.requestMatchers("/api/category/**").permitAll();
                     auth.requestMatchers("/api/piner/uploadImage/**").permitAll();
                     auth.requestMatchers("/api/pins/uploadImage/**").permitAll();

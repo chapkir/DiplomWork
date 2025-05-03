@@ -6,6 +6,9 @@ import com.example.server.UsPinterest.dto.mapper.PostStructMapper;
 import com.example.server.UsPinterest.model.Post;
 import com.example.server.UsPinterest.model.User;
 import com.example.server.UsPinterest.repository.PostRepository;
+import com.example.server.UsPinterest.repository.NotificationRepository;
+import com.example.server.UsPinterest.repository.LikeRepository;
+import com.example.server.UsPinterest.service.NotificationService;
 import com.example.server.UsPinterest.security.UserPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,12 +25,23 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserService userService;
     private final PostStructMapper postStructMapper;
+    private final NotificationService notificationService;
+    private final NotificationRepository notificationRepository;
+    private final LikeRepository likeRepository;
 
     @Autowired
-    public PostService(PostRepository postRepository, UserService userService, PostStructMapper postStructMapper) {
+    public PostService(PostRepository postRepository,
+                       UserService userService,
+                       PostStructMapper postStructMapper,
+                       NotificationService notificationService,
+                       NotificationRepository notificationRepository,
+                       LikeRepository likeRepository) {
         this.postRepository = postRepository;
         this.userService = userService;
         this.postStructMapper = postStructMapper;
+        this.notificationService = notificationService;
+        this.notificationRepository = notificationRepository;
+        this.likeRepository = likeRepository;
     }
 
     @Transactional
@@ -131,6 +145,11 @@ public class PostService {
 
     @Transactional
     public void deletePost(Long postId) {
+        // Удаляем уведомления, связанные с постом
+        notificationRepository.deleteByPostId(postId);
+        // Удаляем лайки, связанные с постом
+        likeRepository.deleteByPostId(postId);
+        // Удаляем сам пост
         postRepository.deleteById(postId);
     }
 
@@ -145,9 +164,10 @@ public class PostService {
         boolean hasLiked = userService.hasUserLikedPost(userId, postId);
 
         if (!hasLiked) {
-            // Если нет, то добавляем лайк
+            // Если нет, то добавляем лайк и создаем уведомление
             userService.addLikeToPost(user, post);
             post.setLikedByCurrentUser(true);
+            notificationService.createPostLikeNotification(user, post);
         } else {
             // Если да, то убираем лайк
             userService.removeLikeFromPost(user, post);

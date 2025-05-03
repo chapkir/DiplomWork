@@ -82,6 +82,8 @@ dependencies {
 
     // RabbitMQ for async notification processing
     implementation("org.springframework.boot:spring-boot-starter-amqp")
+
+    implementation("com.drewnoakes:metadata-extractor:2.16.0")
 }
 
 tasks.test {

@@ -3,6 +3,7 @@ package com.example.server.UsPinterest.repository;
 import com.example.server.UsPinterest.model.Notification;
 import com.example.server.UsPinterest.model.Pin;
 import com.example.server.UsPinterest.model.User;
+import com.example.server.UsPinterest.model.Post;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -10,6 +11,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -30,4 +32,13 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Modifying
     @Query("DELETE FROM Notification n WHERE n.pin = ?1")
     void deleteByPin(Pin pin);
+
+    @Modifying
+    @Query("DELETE FROM Notification n WHERE n.post = ?1")
+    void deleteByPost(Post post);
+
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM Notification n WHERE n.post.id = ?1")
+    void deleteByPostId(Long postId);
 }

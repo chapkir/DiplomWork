@@ -37,6 +37,17 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.nio.file.Path;
 import com.example.server.UsPinterest.repository.CommentRepository;
+import com.example.server.UsPinterest.dto.CursorPageResponse;
+import com.example.server.UsPinterest.service.PaginationService;
+import java.net.URL;
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.metadata.Metadata;
+import com.drew.metadata.exif.ExifIFD0Directory;
+import com.drew.metadata.exif.ExifSubIFDDirectory;
+import java.io.File;
+import java.io.InputStream;
+import com.drew.metadata.jpeg.JpegDirectory;
+import java.io.FileInputStream;
 
 @Service
 @Transactional
@@ -62,6 +73,9 @@ public class PinService {
 
     @Autowired
     private CommentRepository commentRepository;
+
+    @Autowired
+    private PaginationService paginationService;
 
     @Cacheable(value = "pins", key = "#id")
     public Optional<Pin> getPinById(Long id) {
@@ -102,6 +116,73 @@ public class PinService {
         );
     }
 
+    /**
+     * Вспомогательный метод: считает реальные размеры картинки и учитывает EXIF-ориентацию.
+     */
+    public void calculateImageDimensions(Pin pin) {
+        if (pin.getImageUrl() == null || pin.getImageUrl().isEmpty()) return;
+        try {
+            // пытаемся прочитать локальный файл
+            String filename = fileStorageService.getFilenameFromUrl(pin.getImageUrl());
+            java.nio.file.Path p = fileStorageService.getFileStoragePath().resolve(filename).normalize();
+            BufferedImage img;
+            if (p.toFile().exists()) {
+                img = ImageIO.read(p.toFile());
+            } else {
+                // fallback: читаем по URL
+                URL url = new URL(pin.getImageUrl());
+                img = ImageIO.read(url);
+            }
+            if (img == null) {
+                logger.warn("Не удалось загрузить картинку для пина {}: {}", pin.getId(), pin.getImageUrl());
+                // fallback: пытаемся получить размеры через metadata
+                try (InputStream metaIn = p.toFile().exists()
+                        ? new FileInputStream(p.toFile())
+                        : new URL(pin.getImageUrl()).openStream()) {
+                    Metadata metadata = ImageMetadataReader.readMetadata(metaIn);
+                    JpegDirectory jpegDir = metadata.getFirstDirectoryOfType(JpegDirectory.class);
+                    if (jpegDir != null && jpegDir.containsTag(JpegDirectory.TAG_IMAGE_WIDTH)) {
+                        int fw = jpegDir.getInt(JpegDirectory.TAG_IMAGE_WIDTH);
+                        int fh = jpegDir.getInt(JpegDirectory.TAG_IMAGE_HEIGHT);
+                        pin.setImageWidth(fw);
+                        pin.setImageHeight(fh);
+                        return;
+                    }
+                } catch (Exception ex) {
+                    logger.warn("Не удалось получить размеры через metadata для пина {}: {}", pin.getId(), ex.getMessage());
+                }
+                // задаём дефолтные размеры, чтобы не было null в БД
+                pin.setImageWidth(null);
+                pin.setImageHeight(null);
+                return;
+            }
+            int w = img.getWidth();
+            int h = img.getHeight();
+            // пытаемся применить EXIF-ориентацию, но ошибки здесь не прерывают процесс
+            try (InputStream metaIn = p.toFile().exists()
+                    ? new java.io.FileInputStream(p.toFile())
+                    : new URL(pin.getImageUrl()).openStream()) {
+                Metadata metadata = ImageMetadataReader.readMetadata(metaIn);
+                ExifIFD0Directory dir = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
+                if (dir != null && dir.containsTag(ExifIFD0Directory.TAG_ORIENTATION)) {
+                    int orientation = dir.getInt(ExifIFD0Directory.TAG_ORIENTATION);
+                    if (orientation == 6 || orientation == 8) {
+                        int tmp = w; w = h; h = tmp;
+                    }
+                }
+            } catch (Exception ex) {
+                logger.warn("Не удалось прочитать EXIF ориентацию для пина {}: {}", pin.getId(), ex.getMessage());
+            }
+            pin.setImageWidth(w);
+            pin.setImageHeight(h);
+        } catch (Exception e) {
+            logger.warn("Не удалось вычислить размеры картинки для пина {}: {}", pin.getId(), e.getMessage());
+            // при ошибке ставим нулевые размеры
+            pin.setImageWidth(null);
+            pin.setImageHeight(null);
+        }
+    }
+
     @CacheEvict(value = "pins", allEntries = true)
     public Pin createPin(PinRequest pinRequest, String username) {
         User user = userRepository.findByUsername(username)
@@ -118,17 +199,8 @@ public class PinService {
             pin.setBoard(board);
         }
 
-        if (pin.getImageUrl() != null && !pin.getImageUrl().isEmpty()) {
-            try {
-                String filename = fileStorageService.getFilenameFromUrl(pin.getImageUrl());
-                Path filePath = fileStorageService.getFileStoragePath().resolve(filename).normalize();
-                BufferedImage bimg = ImageIO.read(filePath.toFile());
-                pin.setImageWidth(bimg.getWidth());
-                pin.setImageHeight(bimg.getHeight());
-            } catch (Exception e) {
-                logger.error("Ошибка при вычислении размеров изображения для пина: {}", e.getMessage());
-            }
-        }
+        // устанавливаем размеры изображения
+        calculateImageDimensions(pin);
 
         // Инициализируем счётчик комментариев
         pin.setCommentsCount(0);
@@ -219,9 +291,10 @@ public class PinService {
         }
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public PinResponse convertToPinResponse(Pin pin, User currentUser) {
         try {
+            // создание ответа
             PinResponse response = new PinResponse();
             response.setId(pin.getId());
 
@@ -239,7 +312,12 @@ public class PinService {
             // Устанавливаем сохранённые размеры изображения из сущности
             response.setImageWidth(pin.getImageWidth());
             response.setImageHeight(pin.getImageHeight());
-
+            // Расчитываем и устанавливаем соотношение сторон
+            if (pin.getImageWidth() != null && pin.getImageHeight() != null && pin.getImageHeight() > 0) {
+                response.setAspectRatio(pin.getImageWidth().doubleValue() / pin.getImageHeight().doubleValue());
+            } else {
+                response.setAspectRatio(1.0);
+            }
             response.setDescription(pin.getDescription());
             response.setTitle(pin.getTitle());
 
@@ -305,6 +383,8 @@ public class PinService {
                 fallbackResponse.setDescription(pin.getDescription());
                 fallbackResponse.setImageUrl(pin.getImageUrl());
                 fallbackResponse.setCreatedAt(pin.getCreatedAt());
+                // в fallback передаём default aspectRatio = 1.0
+                fallbackResponse.setAspectRatio(1.0);
             }
             return fallbackResponse;
         }
@@ -336,5 +416,77 @@ public class PinService {
         });
 
         return pinWithLikes;
+    }
+
+    /**
+     * Возвращает CursorPageResponse с пинами по курсору.
+     */
+    @Transactional(readOnly = true)
+    public CursorPageResponse<PinResponse, String> getPinsCursor(String cursor, int size, String sortDirection) {
+        // Декодируем курсор
+        Long cursorId = paginationService.decodeCursor(cursor, Long.class);
+        // Определяем направление сортировки
+        boolean isDesc = sortDirection == null || !sortDirection.equalsIgnoreCase("asc");
+        // Определяем fetchSize = size+1
+        int fetchSize = size > 0 ? size + 1 : DEFAULT_PAGE_SIZE + 1;
+
+        List<Pin> raw;
+        if (isDesc) {
+            if (cursorId == null) {
+                raw = pinRepository.findAllWithLikesAndComments();
+            } else {
+                raw = pinRepository.findByIdLessThanWithLikesAndComments(cursorId, org.springframework.data.domain.PageRequest.of(0, fetchSize));
+            }
+        } else {
+            if (cursorId == null) {
+                raw = pinRepository.findAllWithLikesAndComments();
+            } else {
+                raw = pinRepository.findByIdGreaterThanWithLikesAndComments(cursorId, org.springframework.data.domain.PageRequest.of(0, fetchSize));
+            }
+        }
+
+        boolean hasNext = raw.size() > size;
+        if (hasNext) {
+            raw.remove(raw.size() - 1);
+        }
+
+        // Преобразуем в DTO
+        User currentUser = userRepository.findByUsername(/* получить текущего пользователя, если нужно */"?").orElse(null);
+        List<PinResponse> content = raw.stream()
+                .map(pin -> convertToPinResponse(pin, currentUser))
+                .collect(Collectors.toList());
+
+        // Генерация курсоров
+        String nextCursor = hasNext ? paginationService.encodeCursor(raw.get(raw.size() - 1).getId()) : null;
+        boolean hasPrevious = cursorId != null;
+        String prevCursor = hasPrevious ? paginationService.encodeCursor(cursorId) : null;
+
+        // Общее число элементов
+        long totalElements = pinRepository.count();
+
+        return paginationService.createCursorPageResponse(
+                content,
+                nextCursor,
+                prevCursor,
+                hasNext,
+                hasPrevious,
+                size,
+                totalElements
+        );
+    }
+
+    /**
+     * Пересчитывает и сохраняет размеры изображений для всех существующих пинов.
+     */
+    @Transactional
+    public void recalcImageDimensionsForAllPins() {
+        List<Pin> pins = pinRepository.findAll();
+        for (Pin pin : pins) {
+            if (pin.getImageUrl() != null && !pin.getImageUrl().isEmpty()) {
+                // используем единый метод вычисления размеров
+                calculateImageDimensions(pin);
+                pinRepository.save(pin);
+            }
+        }
     }
 }

@@ -18,10 +18,12 @@ import com.example.server.UsPinterest.repository.LikeRepository;
 import com.example.server.UsPinterest.repository.PinRepository;
 import com.example.server.UsPinterest.repository.UserRepository;
 import com.example.server.UsPinterest.service.NotificationService;
+import com.example.server.UsPinterest.service.NotificationPublisher;
 import com.example.server.UsPinterest.service.PaginationService;
 import com.example.server.UsPinterest.service.PinService;
 import com.example.server.UsPinterest.service.FileStorageService;
 import com.example.server.UsPinterest.service.UserService;
+import com.example.server.UsPinterest.util.HateoasUtil;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
 import org.slf4j.Logger;
@@ -77,6 +79,9 @@ public class PinController {
     private NotificationService notificationService;
 
     @Autowired
+    private NotificationPublisher notificationPublisher;
+
+    @Autowired
     private Bucket bucket;
 
     @Autowired
@@ -85,135 +90,27 @@ public class PinController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private HateoasUtil hateoasUtil;
+
 
     @GetMapping
     public ResponseEntity<?> getAllPins(
             @RequestParam(required = false) String cursor,
-            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDirection) {
-
+        // Rate limiting
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
         if (!probe.isConsumed()) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                     .body(new MessageResponse("Слишком много запросов"));
         }
-
-        if (search != null && !search.isEmpty()) {
-            try {
-                logger.info("Поиск пинов по ключевому слову: {}", search);
-                PageResponse<Pin> response = pinService.getPins(search, 0, size);
-                return ResponseEntity.ok(response);
-            } catch (Exception e) {
-                logger.error("Ошибка поиска пинов: {}", e.getMessage(), e);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(new MessageResponse("Ошибка поиска пинов: " + e.getMessage()));
-            }
-        }
-
-        try {
-            User currentUser = userService.getCurrentUser();
-
-            Long cursorId = null;
-            if (cursor != null && !cursor.isEmpty()) {
-                try {
-                    cursorId = paginationService.decodeCursor(cursor, Long.class);
-                } catch (Exception e) {
-                    logger.error("Ошибка декодирования курсора: {}", e.getMessage());
-                }
-            }
-
-
-            List<Pin> pins = new ArrayList<>();
-            boolean hasNext = false;
-            boolean hasPrevious = cursor != null && !cursor.isEmpty();
-            Long nextCursorValue = null;
-            Long prevCursorValue = null;
-
-            Pageable pageable = PageRequest.of(0, size + 1);
-
-            if (sortDirection.equalsIgnoreCase("desc")) {
-                if (cursorId == null) {
-                    pins = new ArrayList<>(pinRepository.findAllWithLikes());
-                    if (pins.size() > size) {
-                        pins = pins.subList(0, size + 1);
-                    }
-                } else {
-                    pins = new ArrayList<>(pinRepository.findByIdLessThanWithLikesOrderByIdDesc(cursorId, pageable));
-                }
-
-                if (pins.size() > size) {
-                    hasNext = true;
-                    pins.remove(pins.size() - 1);
-                    nextCursorValue = pins.isEmpty() ? null : pins.get(pins.size() - 1).getId();
-                }
-
-                if (hasPrevious && cursorId != null) {
-                    Pageable prevPageable = PageRequest.of(0, 1);
-                    List<Pin> prevPins = pinRepository.findByIdGreaterThanOrderByIdAsc(cursorId, prevPageable);
-                    prevCursorValue = prevPins.isEmpty() ? null : prevPins.get(0).getId();
-                }
-            } else {
-                if (cursorId == null) {
-                    pins = new ArrayList<>(pinRepository.findAllWithLikes());
-                    if (pins.size() > size) {
-                        pins = pins.subList(0, size + 1);
-                    }
-                } else {
-                    pins = new ArrayList<>(pinRepository.findByIdGreaterThanWithLikesOrderByIdAsc(cursorId, pageable));
-                }
-
-                if (pins.size() > size) {
-                    hasNext = true;
-                    pins.remove(pins.size() - 1);
-                    nextCursorValue = pins.isEmpty() ? null : pins.get(pins.size() - 1).getId();
-                }
-
-                if (hasPrevious && cursorId != null) {
-                    Pageable prevPageable = PageRequest.of(0, 1);
-                    List<Pin> prevPins = pinRepository.findByIdLessThanOrderByIdDesc(cursorId, prevPageable);
-                    prevCursorValue = prevPins.isEmpty() ? null : prevPins.get(0).getId();
-                }
-            }
-
-            // Преобразуем список пинов в список PinResponse
-            List<PinResponse> pinResponses = pins.stream()
-                    .map(pin -> pinService.convertToPinResponse(pin, currentUser))
-                    .collect(Collectors.toList());
-
-            CursorPageResponse<PinResponse, String> pageResponse = paginationService.createCursorPageResponse(
-                    pinResponses,
-                    nextCursorValue,
-                    prevCursorValue,
-                    hasNext,
-                    hasPrevious,
-                    size,
-                    pinRepository.count()
-            );
-
-
-            HateoasResponse<CursorPageResponse<PinResponse, String>> response = new HateoasResponse<>(pageResponse);
-            response.addSelfLink("/api/pins?cursor=" + cursor + "&size=" + size);
-
-            if (hasNext && nextCursorValue != null) {
-                String nextCursor = paginationService.encodeCursor(nextCursorValue);
-                response.addLink("next", "/api/pins?cursor=" + nextCursor + "&size=" + size, "GET");
-            }
-
-            if (hasPrevious && prevCursorValue != null) {
-                String prevCursor = paginationService.encodeCursor(prevCursorValue);
-                response.addLink("prev", "/api/pins?cursor=" + prevCursor + "&size=" + size, "GET");
-            }
-
-            response.addLink("create", "/api/pins", "POST");
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            logger.error("Ошибка получения пинов: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new MessageResponse("Ошибка получения пинов: " + e.getMessage()));
-        }
+        // Получаем результат курсорной пагинации из сервиса
+        CursorPageResponse<PinResponse, String> pageResponse = pinService.getPinsCursor(cursor, size, sortDirection);
+        // Формируем HATEOAS-ответ
+        HateoasResponse<CursorPageResponse<PinResponse, String>> response =
+                hateoasUtil.buildCursorPageResponse(pageResponse, cursor, size);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/list-all")
@@ -226,7 +123,7 @@ public class PinController {
 
         try {
             User currentUser = userService.getCurrentUser();
-            List<Pin> pins = pinRepository.findAllWithLikes();
+            List<Pin> pins = pinRepository.findAllWithLikesAndComments();
 
             List<PinResponse> pinResponses = pins.stream()
                     .map(pin -> pinService.convertToPinResponse(pin, currentUser))
@@ -254,16 +151,7 @@ public class PinController {
         User currentUser = username != null ? userRepository.findByUsername(username).orElse(null) : null;
 
         PinResponse pinResponse = pinService.convertToPinResponse(pin, currentUser);
-        HateoasResponse<PinResponse> response = new HateoasResponse<>(pinResponse);
-
-        // Добавляем HATEOAS ссылки
-        response.addSelfLink("/api/pins/detail/" + id);
-        response.addLink("all-pins", "/api/pins", "GET");
-        response.addUpdateLink("/api/pins/detail/" + id);
-        response.addDeleteLink("/api/pins/detail/" + id);
-        response.addLink("comments", "/api/pins/detail/" + id + "/comments", "GET");
-        response.addLink("likes", "/api/pins/detail/" + id + "/likes", "GET");
-
+        HateoasResponse<PinResponse> response = hateoasUtil.buildPinDetailResponse(pinResponse);
         return ResponseEntity.ok(response);
     }
 
@@ -310,7 +198,8 @@ public class PinController {
             Pin pin = pinRepository.findById(id)
                     .orElseThrow(() -> new ResourceNotFoundException("Пин не найден"));
 
-            notificationService.createLikeNotification(user, pin);
+            // Публикуем событие для асинхронной отправки уведомления
+            notificationPublisher.publishLikeNotification(user.getId(), pin.getId());
 
             HateoasResponse<Void> response = new HateoasResponse<>(null);
             response.addSelfLink("/api/pins/" + id + "/like");
@@ -388,7 +277,8 @@ public class PinController {
             pin.setCommentsCount(totalComments);
             pinRepository.save(pin);
 
-            notificationService.createCommentNotification(user, pin, commentRequest.getText());
+            // Публикуем событие для асинхронной отправки уведомления
+            notificationPublisher.publishCommentNotification(user.getId(), pin.getId(), commentRequest.getText());
 
             // Возвращаем обновлённый PinResponse с актуальными счётчиками
             PinResponse pinResponse = pinService.convertToPinResponse(pin, user);
@@ -481,18 +371,8 @@ public class PinController {
             pin.setDescription(description);
             pin.setUser(user);
             pin.setCreatedAt(LocalDateTime.now());
-            // Автоматически вычисляем размеры изображения для пина
-            if (pin.getImageUrl() != null && !pin.getImageUrl().isEmpty()) {
-                try {
-                    String filename = fileStorageService.getFilenameFromUrl(pin.getImageUrl());
-                    Path filePath = fileStorageService.getFileStoragePath().resolve(filename).normalize();
-                    BufferedImage bimg = ImageIO.read(filePath.toFile());
-                    pin.setImageWidth(bimg.getWidth());
-                    pin.setImageHeight(bimg.getHeight());
-                } catch (Exception e) {
-                    logger.error("Ошибка при вычислении размеров изображения для пина: {}", e.getMessage());
-                }
-            }
+            // Вычисляем размеры изображения через сервис
+            pinService.calculateImageDimensions(pin);
 
             Pin savedPin = pinRepository.save(pin);
             PinResponse pinResponse = pinService.convertToPinResponse(savedPin, user);
@@ -504,8 +384,8 @@ public class PinController {
             response.addLink("all-pins", "/api/pins", "GET");
 
             return ResponseEntity.ok(response);
-        } catch (IOException e) {
-            logger.error("Ошибка при загрузке изображения", e);
+        } catch (Exception e) {
+            logger.error("Ошибка при обработке загрузки изображения: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResponse("Ошибка при загрузке изображения: " + e.getMessage()));
         }
@@ -542,5 +422,13 @@ public class PinController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResponse("Ошибка при удалении пина: " + e.getMessage()));
         }
+    }
+
+    // Однократный эндпоинт для пересчёта размеров изображений у всех существующих пинов
+    @PostMapping("/recalc-dimensions")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<?> recalcImageDimensions() {
+        pinService.recalcImageDimensionsForAllPins();
+        return ResponseEntity.ok(new MessageResponse("Dimensions recalculated for all pins"));
     }
 }

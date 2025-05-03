@@ -4,6 +4,8 @@ import com.example.server.UsPinterest.model.Photo;
 import com.example.server.UsPinterest.model.Pin;
 import com.example.server.UsPinterest.model.Post;
 import com.example.server.UsPinterest.model.User;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -21,6 +23,7 @@ public class Like {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)

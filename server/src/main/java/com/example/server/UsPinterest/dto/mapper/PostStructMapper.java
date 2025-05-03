@@ -14,6 +14,8 @@ public interface PostStructMapper {
     @Mapping(target = "username", source = "post.user.username")
     @Mapping(target = "userAvatar", source = "post.user.avatarUrl")
     @Mapping(target = "comments", ignore = true)
+    @Mapping(target = "likesCount", source = "post.likesCount")
+    @Mapping(target = "isLikedByCurrentUser", source = "post.likedByCurrentUser")
     PostResponse toDto(Post post);
 
     @Mapping(target = "user", ignore = true)

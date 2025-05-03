@@ -28,11 +28,14 @@ public interface PinRepository extends JpaRepository<Pin, Long> {
     List<Pin> findByIdLessThanOrderByIdDesc(Long id, Pageable pageable);
     List<Pin> findByIdGreaterThanOrderByIdAsc(Long id, Pageable pageable);
 
-    @Query("SELECT p FROM Pin p LEFT JOIN FETCH p.likes WHERE p.id = :id")
+    @Query("SELECT p FROM Pin p LEFT JOIN FETCH p.likes LEFT JOIN FETCH p.comments WHERE p.id = :id")
     Optional<Pin> findByIdWithLikesAndComments(@Param("id") Long id);
 
     @Query("SELECT p FROM Pin p LEFT JOIN FETCH p.comments WHERE p.id = :id")
     Optional<Pin> findByIdWithComments(@Param("id") Long id);
+
+    @Query("SELECT DISTINCT p FROM Pin p LEFT JOIN FETCH p.likes LEFT JOIN FETCH p.comments")
+    List<Pin> findAllWithLikesAndComments();
 
     @Query("SELECT DISTINCT p FROM Pin p LEFT JOIN FETCH p.likes")
     List<Pin> findAllWithLikes();
@@ -42,4 +45,10 @@ public interface PinRepository extends JpaRepository<Pin, Long> {
 
     @Query("SELECT DISTINCT p FROM Pin p LEFT JOIN FETCH p.likes WHERE p.id > :id ORDER BY p.id ASC")
     List<Pin> findByIdGreaterThanWithLikesOrderByIdAsc(@Param("id") Long id, Pageable pageable);
+
+    @Query("SELECT DISTINCT p FROM Pin p LEFT JOIN FETCH p.likes LEFT JOIN FETCH p.comments WHERE p.id < :id ORDER BY p.id DESC")
+    List<Pin> findByIdLessThanWithLikesAndComments(@Param("id") Long id, Pageable pageable);
+
+    @Query("SELECT DISTINCT p FROM Pin p LEFT JOIN FETCH p.likes LEFT JOIN FETCH p.comments WHERE p.id > :id ORDER BY p.id ASC")
+    List<Pin> findByIdGreaterThanWithLikesAndComments(@Param("id") Long id, Pageable pageable);
 }

@@ -8,6 +8,7 @@ import com.example.server.UsPinterest.model.User;
 import com.example.server.UsPinterest.repository.CommentRepository;
 import com.example.server.UsPinterest.repository.PostRepository;
 import com.example.server.UsPinterest.repository.UserRepository;
+import com.example.server.UsPinterest.service.NotificationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,8 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    @Autowired
+    private NotificationService notificationService;
 
     @Autowired
     public CommentService(CommentRepository commentRepository, PostRepository postRepository, UserRepository userRepository) {
@@ -51,6 +54,9 @@ public class CommentService {
         Comment savedComment = commentRepository.save(comment);
         logger.info("Комментарий создан: {} для поста: {} пользователем: {}",
                 savedComment.getId(), postId, user.getUsername());
+
+        // Создаем уведомление о комментарии к посту
+        notificationService.createPostCommentNotification(user, post, commentRequest.getText());
 
         return convertToCommentResponse(savedComment);
     }
