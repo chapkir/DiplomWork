@@ -1,5 +1,6 @@
 package com.example.diplomwork.presentation.ui.screens.login_screen
 
+import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -51,7 +53,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
-import com.example.diplomwork.presentation.system_settings.SetSystemBarsColor
 import com.example.diplomwork.presentation.ui.components.CustomVisualTransformationForPassword
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.presentation.ui.theme.BgDefault
@@ -72,16 +73,15 @@ fun LoginScreen(
     val loginError by loginViewModel.loginError.collectAsState()
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
+    val context = LocalContext.current
+    val activity = context as Activity
+    val window = activity.window
+
     LaunchedEffect(loginSuccess) {
         if (loginSuccess == true) {
             onLoginSuccess()
         }
     }
-
-    SetSystemBarsColor(
-        statusBarColor = BgDefault,
-        navigationBarColor = BgDefault,
-    )
 
     Box(
         modifier = Modifier

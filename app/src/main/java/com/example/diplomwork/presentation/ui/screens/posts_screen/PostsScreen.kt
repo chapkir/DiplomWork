@@ -1,5 +1,6 @@
 package com.example.diplomwork.presentation.ui.screens.posts_screen
 
+import android.widget.Toast
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -60,10 +61,11 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.diplomwork.R
 import com.example.diplomwork.data.model.PostResponse
-import com.example.diplomwork.presentation.ui.components.CommentsBottomSheet
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
-import com.example.diplomwork.presentation.ui.components.MenuBottomSheet
+import com.example.diplomwork.presentation.ui.components.bottom_sheets.CommentsBottomSheet
+import com.example.diplomwork.presentation.ui.components.bottom_sheets.ConfirmDeleteBottomSheet
+import com.example.diplomwork.presentation.ui.components.bottom_sheets.MenuBottomSheet
 import com.example.diplomwork.presentation.ui.components.rememberSlowFlingBehavior
 import com.example.diplomwork.presentation.ui.theme.BgDefault
 import com.example.diplomwork.presentation.viewmodel.PostsScreenViewModel
@@ -73,12 +75,15 @@ import kotlinx.coroutines.launch
 @Composable
 fun PostsScreen(
     onProfileClick: (Long?, String) -> Unit,
+    onBack: () -> Unit,
     viewModel: PostsScreenViewModel = hiltViewModel()
 ) {
 
     val coroutineScope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val openSheet = { coroutineScope.launch { sheetState.show() } }
+    val commentSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val openCommentSheet = { coroutineScope.launch { commentSheetState.show() } }
+
+    val context = LocalContext.current
 
     val posts by viewModel.posts.collectAsState()
     val comments by viewModel.comments.collectAsState()
@@ -97,6 +102,12 @@ fun PostsScreen(
             .collect { (index, offset) ->
                 isHeaderVisible = (index == 0 && offset == 0)
             }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.deleteStatus.collect { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        }
     }
 
     val headerHeight by animateDpAsState(
@@ -150,14 +161,14 @@ fun PostsScreen(
                     items(posts) { post ->
                         PostCard(
                             post = post,
-                            commentsCount = comments[post.id]?.size ?: 0,
                             onLikeClick = { viewModel.toggleLike(post.id) },
+                            onBack = onBack,
                             onCommentClick = {
                                 viewModel.selectPost(post.id)
                                 viewModel.loadCommentsForPost(post.id)
-                                openSheet()
+                                openCommentSheet()
                             },
-                            onProfileClick,
+                            onProfileClick = onProfileClick,
                             onDeletePost = { postId -> viewModel.deletePost(postId) }
                         )
                         Spacer(modifier = Modifier.height(8.dp))
@@ -180,7 +191,7 @@ fun PostsScreen(
                 )
             }
 
-            if (sheetState.isVisible) {
+            if (commentSheetState.isVisible) {
                 CommentsBottomSheet(
                     comments = comments[selectedPostId] ?: emptyList(),
                     onDismiss = {},
@@ -189,7 +200,7 @@ fun PostsScreen(
                             viewModel.addComment(postId, commentText)
                         }
                     },
-                    sheetState = sheetState
+                    sheetState = commentSheetState
                 )
             }
         }
@@ -200,17 +211,20 @@ fun PostsScreen(
 @Composable
 fun PostCard(
     post: PostResponse,
-    commentsCount: Int,
     onLikeClick: () -> Unit,
+    onBack: () -> Unit,
     onCommentClick: () -> Unit,
     onProfileClick: (Long?, String) -> Unit,
-    onDeletePost: (Long) -> Unit,
+    onDeletePost: (Long) -> Unit
 ) {
+
     val coroutineScope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val openSheet = {
-        coroutineScope.launch { sheetState.show() }
-    }
+    val menuSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val confirmDeleteSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val openMenuSheet = { coroutineScope.launch { menuSheetState.show() } }
+    val closeMenuSheet = { coroutineScope.launch { menuSheetState.hide() } }
+    val openConfirmDeleteSheet = { coroutineScope.launch { confirmDeleteSheetState.show() } }
+    val closeConfirmDeleteSheet = { coroutineScope.launch { confirmDeleteSheetState.hide() } }
 
     var isImageLoading by remember { mutableStateOf(true) }
 
@@ -257,7 +271,7 @@ fun PostCard(
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() }
-                        ) { openSheet() }
+                        ) { openMenuSheet() }
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_menu_dots_vertical),
@@ -393,7 +407,7 @@ fun PostCard(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = commentsCount.toString(),
+                    text = post.commentsCount.toString(),
                     style = MaterialTheme.typography.titleSmall,
                     color = Color.White
                 )
@@ -401,12 +415,23 @@ fun PostCard(
         }
     }
 
-    if (sheetState.isVisible) {
+    if (menuSheetState.isVisible) {
         MenuBottomSheet(
-            onDismiss = {},
-            onDelete = {},
-            sheetState = sheetState,
+            onDismiss = { closeMenuSheet() },
+            onDelete = { openConfirmDeleteSheet() },
+            sheetState = menuSheetState,
             isOwnContent = post.isOwnPost
+        )
+    }
+
+    if (confirmDeleteSheetState.isVisible) {
+        ConfirmDeleteBottomSheet(
+            onDismiss = { closeConfirmDeleteSheet() },
+            onDelete = {
+                onDeletePost(post.id)
+                closeMenuSheet()
+            },
+            sheetState = confirmDeleteSheetState,
         )
     }
 }

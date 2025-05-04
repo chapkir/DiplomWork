@@ -51,7 +51,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun NotificationScreen(
     onProfile: (Long, String) -> Unit,
-    onNotificationContent: (Long, String) -> Unit,
+    onNotificationContent: (Long?, String?) -> Unit,
     viewModel: NotificationViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -102,10 +102,7 @@ fun NotificationScreen(
                                 notification,
                                 onUserClick = { userId, username -> onProfile(userId, username) },
                                 onNotificationClick = { contentId, pictureUrl ->
-                                    onNotificationContent(
-                                        contentId,
-                                        pictureUrl
-                                    )
+                                    onNotificationContent(contentId, pictureUrl)
                                 }
                             )
                         }
@@ -120,7 +117,7 @@ fun NotificationScreen(
 fun NotificationItem(
     notification: NotificationResponse,
     onUserClick: (Long, String) -> Unit,
-    onNotificationClick: (Long, String) -> Unit
+    onNotificationClick: (Long?, String?) -> Unit
 ) {
     val annotatedText = buildAnnotatedString {
         pushStringAnnotation(
@@ -190,12 +187,19 @@ fun NotificationItem(
         Spacer(modifier = Modifier.width(10.dp))
 
         AsyncImage(
-            model = notification.pinImageUrl,
+            model =
+                if (notification.postImageUrl.isNullOrEmpty()) notification.pinImageUrl
+                else notification.postImageUrl,
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .size(51.dp)
                 .clip(RoundedCornerShape(9.dp))
+                .clickable {
+                    if (notification.postImageUrl.isNullOrEmpty())
+                        onNotificationClick(notification.pinId, notification.pinImageUrl)
+                    else return@clickable
+                }
         )
     }
 }

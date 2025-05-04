@@ -8,6 +8,7 @@ data class PostResponse(
     val text: String,
     val imageUrl: String?,
     val likesCount: Int,
+    val commentsCount: Int,
     val comments: List<CommentResponse>?,
     val isLikedByCurrentUser: Boolean,
     val isOwnPost: Boolean = false

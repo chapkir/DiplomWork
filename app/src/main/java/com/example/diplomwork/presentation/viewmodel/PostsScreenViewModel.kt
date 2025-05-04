@@ -10,10 +10,10 @@ import com.example.diplomwork.data.model.PostResponse
 import com.example.diplomwork.data.repos.CommentRepository
 import com.example.diplomwork.data.repos.PostRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
@@ -41,8 +41,8 @@ class PostsScreenViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
-    private val _deleteStatus = MutableStateFlow("")
-    val deleteStatus: StateFlow<String> = _deleteStatus
+    private val _deleteStatus = MutableSharedFlow<String>()
+    val deleteStatus = _deleteStatus.asSharedFlow()
 
     init {
         loadPosts()
@@ -58,7 +58,6 @@ class PostsScreenViewModel @Inject constructor(
                     post.copy(isOwnPost = post.username == currentUsername)
                 }
                 _posts.value = result
-                loadAllComments(result)
             } catch (e: Exception) {
                 _error.value = e.message ?: "Ошибка загрузки постов"
             } finally {
@@ -67,26 +66,12 @@ class PostsScreenViewModel @Inject constructor(
         }
     }
 
-    private fun loadAllComments(posts: List<PostResponse>) {
-        viewModelScope.launch {
-            val result = posts.map { post ->
-                async {
-                    val comments = runCatching {
-                        commentRepository.getPostComments(post.id)
-                    }.getOrDefault(emptyList())
-                    post.id to comments
-                }
-            }.awaitAll().toMap()
-
-            _comments.value = result
-        }
-    }
-
     fun toggleLike(postId: Long) {
         viewModelScope.launch {
             val post = _posts.value.find { it.id == postId } ?: return@launch
             val wasLiked = post.isLikedByCurrentUser
-            val newLikesCount = if (!wasLiked) post.likesCount + 1 else (post.likesCount - 1).coerceAtLeast(0)
+            val newLikesCount =
+                if (!wasLiked) post.likesCount + 1 else (post.likesCount - 1).coerceAtLeast(0)
 
             updatePost(postId) {
                 copy(
@@ -156,23 +141,17 @@ class PostsScreenViewModel @Inject constructor(
     fun deletePost(postId: Long) {
         viewModelScope.launch {
             try {
-                Log.e("piska", "pictureId до delete: $postId")
-
-                _deleteStatus.value = "Ниче не произошло"
-
                 val isDeleted = postRepository.deletePost(postId)
-                if (isDeleted) {
-                    _deleteStatus.value = "Ну тут вроде удаляется, но нужно обновлять страницу"
-                } else {
-                    _deleteStatus.value = "Ошибка удаления"
-                }
-
-                Log.e("piska", "pictureId после delete: $postId")
+                val message = if (isDeleted) "Удаление успешно" else "Ошибка удаления"
+                _deleteStatus.emit(message)
             } catch (e: Exception) {
-                Log.e("PictureDetailViewModel", "Ошибка удаления: ${e.message}", e)
-                _deleteStatus.value = "Ошибка удаления: ${e.message}"
+                _deleteStatus.emit("Ошибка удаления: ${e.message}")
             }
         }
+    }
+
+    suspend fun sendDeleteStatus(message: String) {
+        _deleteStatus.emit(message)
     }
 
     fun refreshPosts() {

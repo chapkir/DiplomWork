@@ -1,19 +1,15 @@
-package com.example.diplomwork.presentation.ui.components
+package com.example.diplomwork.presentation.ui.components.bottom_sheets
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -54,6 +50,7 @@ import coil.compose.AsyncImage
 import com.example.diplomwork.R
 import com.example.diplomwork.data.model.CommentResponse
 import com.example.diplomwork.presentation.ui.theme.BgDefault
+import com.example.diplomwork.presentation.ui.theme.ButtonPrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,11 +73,8 @@ fun CommentsBottomSheet(
         }
     }
 
-    val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        modifier = Modifier.padding(top = statusBarHeight),
         sheetState = sheetState,
         shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
         containerColor = BgDefault,
@@ -113,7 +107,8 @@ fun CommentsContent(
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
+            .fillMaxHeight(0.75f)
     ) {
         Row(
             modifier = Modifier
@@ -169,7 +164,7 @@ fun CommentsContent(
                 onValueChange = { commentText = it },
                 modifier = Modifier
                     .weight(1f)
-                    .height(52.dp),
+                    .height(56.dp),
                 placeholder = {
                     Text(
                         text = "Поделитесь своим мнением",
@@ -201,20 +196,19 @@ fun CommentsContent(
                     }
                 },
                 modifier = Modifier
-                    .size(52.dp)
+                    .size(56.dp)
                     .clip(CircleShape),
                 enabled = commentText.isNotBlank(),
                 colors = IconButtonColors(
-                    containerColor = Color.White,
+                    containerColor = ButtonPrimary,
                     disabledContainerColor = Color.Gray,
-                    contentColor = Color.Gray,
-                    disabledContentColor = Color.White
+                    contentColor = Color.White,
+                    disabledContentColor = BgDefault
                 )
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_arrow_up),
-                    contentDescription = "Отправить",
-                    tint = BgDefault
+                    contentDescription = "Отправить"
                 )
             }
         }

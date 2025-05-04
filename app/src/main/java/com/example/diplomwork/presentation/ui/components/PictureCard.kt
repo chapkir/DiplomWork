@@ -46,6 +46,7 @@ import coil.compose.AsyncImagePainter
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.diplomwork.R
+import com.example.diplomwork.presentation.ui.components.bottom_sheets.MenuBottomSheet
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

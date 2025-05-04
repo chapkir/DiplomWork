@@ -1,4 +1,4 @@
-package com.example.diplomwork.presentation.ui.components
+package com.example.diplomwork.presentation.ui.components.bottom_sheets
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource

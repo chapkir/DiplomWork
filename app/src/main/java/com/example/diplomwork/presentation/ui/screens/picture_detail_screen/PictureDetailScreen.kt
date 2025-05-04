@@ -1,6 +1,7 @@
 package com.example.diplomwork.presentation.ui.screens.picture_detail_screen
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,13 +35,14 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
 import com.example.diplomwork.presentation.system_settings.systemInsetHeight
-import com.example.diplomwork.presentation.ui.components.CommentItem
-import com.example.diplomwork.presentation.ui.components.CommentsBottomSheet
+import com.example.diplomwork.presentation.ui.components.bottom_sheets.CommentItem
+import com.example.diplomwork.presentation.ui.components.bottom_sheets.CommentsBottomSheet
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
+import com.example.diplomwork.presentation.ui.components.bottom_sheets.ConfirmDeleteBottomSheet
 import com.example.diplomwork.presentation.ui.navigation.PictureDetailScreenData
 import com.example.diplomwork.presentation.ui.theme.IconPrimary
-import com.example.diplomwork.util.AppConstants
 import com.example.diplomwork.presentation.viewmodel.PictureDetailScreenViewModel
+import com.example.diplomwork.util.AppConstants
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,15 +55,19 @@ fun PictureDetailScreen(
 ) {
 
     val coroutineScope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val openSheet = { coroutineScope.launch { sheetState.show() } }
+    val commentSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val confirmDeleteSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val openCommentSheet = { coroutineScope.launch { commentSheetState.show() } }
+    val closeCommentSheet = { coroutineScope.launch { commentSheetState.hide() } }
+    val openConfirmDeleteSheet = { coroutineScope.launch { confirmDeleteSheetState.show() } }
+    val closeConfirmDeleteSheet = { coroutineScope.launch { confirmDeleteSheetState.hide() } }
 
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
     if (uiState.deleteStatus.isNotEmpty()) {
         Toast.makeText(context, uiState.deleteStatus, Toast.LENGTH_SHORT).show()
-        if (uiState.deleteStatus == "Ну тут вроде удаляется, но нужно обновлять страницу") {
+        if (uiState.deleteStatus == "Удаление успешно") {
             onNavigateBack()
         }
     }
@@ -69,6 +75,7 @@ fun PictureDetailScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.Black)
             .imePadding()
     ) {
         if (uiState.isLoading) {
@@ -95,14 +102,15 @@ fun PictureDetailScreen(
                     username = uiState.pictureUsername,
                     userId = uiState.pictureUserId,
                     onLikeClick = { viewModel.toggleLike() },
-                    onCommentClick = { openSheet() },
-                    onProfileClick,
+                    onCommentClick = { openCommentSheet() },
+                    onProfileClick = onProfileClick,
                 )
             }
             item {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .background(Color.Black)
                         .padding(
                             bottom =
                                 systemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value
@@ -125,7 +133,7 @@ fun PictureDetailScreen(
 
                         if (uiState.comments.size > 2) {
                             TextButton(
-                                onClick = { openSheet() },
+                                onClick = { openCommentSheet() },
                                 modifier = Modifier.align(Alignment.End)
                             ) {
                                 Text(
@@ -159,7 +167,7 @@ fun PictureDetailScreen(
 
     if (uiState.isCurrentUserOwner) {
         IconButton(
-            onClick = { viewModel.deletePicture() },
+            onClick = { openConfirmDeleteSheet() },
             modifier = Modifier
                 .padding(
                     top = 16.dp,
@@ -175,12 +183,21 @@ fun PictureDetailScreen(
         }
     }
 
-    if (sheetState.isVisible) {
+    if (commentSheetState.isVisible) {
         CommentsBottomSheet(
             comments = uiState.comments,
-            onDismiss = { },
+            onDismiss = { closeCommentSheet() },
             onAddComment = { commentText -> viewModel.addComment(commentText) },
-            sheetState = sheetState
+            sheetState = commentSheetState
         )
+    }
+
+    if (confirmDeleteSheetState.isVisible) {
+        ConfirmDeleteBottomSheet(
+            onDismiss = { closeConfirmDeleteSheet() },
+            onDelete = { viewModel.deletePicture() },
+            sheetState = confirmDeleteSheetState,
+        )
+
     }
 }
