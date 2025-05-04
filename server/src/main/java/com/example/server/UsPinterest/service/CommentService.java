@@ -55,6 +55,11 @@ public class CommentService {
         logger.info("Комментарий создан: {} для поста: {} пользователем: {}",
                 savedComment.getId(), postId, user.getUsername());
 
+        // Обновляем счетчик комментариев в посте
+        long totalComments = commentRepository.countByPostId(postId);
+        post.setCommentsCount((int) totalComments);
+        postRepository.save(post);
+
         // Создаем уведомление о комментарии к посту
         notificationService.createPostCommentNotification(user, post, commentRequest.getText());
 
@@ -94,6 +99,13 @@ public class CommentService {
         }
 
         commentRepository.delete(comment);
+        // После удаления обновляем счетчик комментариев
+        long totalCommentsAfterDelete = commentRepository.countByPostId(postId);
+        Post parentPost = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Пост не найден с ID: " + postId));
+        parentPost.setCommentsCount((int) totalCommentsAfterDelete);
+        postRepository.save(parentPost);
+
         logger.info("Комментарий удален: {} из поста: {} пользователем: {}",
                 commentId, postId, user.getUsername());
     }

@@ -16,6 +16,7 @@ public interface PostStructMapper {
     @Mapping(target = "comments", ignore = true)
     @Mapping(target = "likesCount", source = "post.likesCount")
     @Mapping(target = "isLikedByCurrentUser", source = "post.likedByCurrentUser")
+    @Mapping(target = "commentsCount", expression = "java(post.getCommentsCount() != null ? post.getCommentsCount() : post.getComments().size())")
     PostResponse toDto(Post post);
 
     @Mapping(target = "user", ignore = true)
