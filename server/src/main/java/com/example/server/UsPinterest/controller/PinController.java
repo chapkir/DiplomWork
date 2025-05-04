@@ -113,35 +113,6 @@ public class PinController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/list-all")
-    public ResponseEntity<?> getAllPinsWithoutPagination(Authentication authentication) {
-        ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
-        if (!probe.isConsumed()) {
-            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .body(new MessageResponse("Слишком много запросов"));
-        }
-
-        try {
-            User currentUser = userService.getCurrentUser();
-            List<Pin> pins = pinRepository.findAllWithLikesAndComments();
-
-            List<PinResponse> pinResponses = pins.stream()
-                    .map(pin -> pinService.convertToPinResponse(pin, currentUser))
-                    .collect(Collectors.toList());
-
-            HateoasResponse<List<PinResponse>> response = new HateoasResponse<>(pinResponses);
-            response.addSelfLink("/api/pins/list-all");
-            response.addLink("paginated", "/api/pins", "GET");
-            response.addLink("create", "/api/pins", "POST");
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            logger.error("Ошибка получения всех пинов: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new MessageResponse("Ошибка получения пинов: " + e.getMessage()));
-        }
-    }
-
     @GetMapping("/detail/{id}")
     public ResponseEntity<?> getPinById(@PathVariable Long id, Authentication authentication) {
         // Используем сервис для получения пина с комментариями и лайками
@@ -435,21 +406,5 @@ public class PinController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResponse("Ошибка при удалении пина: " + e.getMessage()));
         }
-    }
-
-    // Однократный эндпоинт для пересчёта размеров изображений у всех существующих пинов
-    @PostMapping("/recalc-dimensions")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> recalcImageDimensions() {
-        pinService.recalcImageDimensionsForAllPins();
-        return ResponseEntity.ok(new MessageResponse("Dimensions recalculated for all pins"));
-    }
-
-    @PostMapping("/generate-variants")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> generateImageVariants(Authentication authentication) {
-        // Генерация WebP-версий для всех существующих пинов
-        pinService.generateImageVariantsForAllPins();
-        return ResponseEntity.ok(new MessageResponse("Image variants (FullHD и thumbnails) сгенерированы для всех пинов"));
     }
 }

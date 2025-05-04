@@ -15,6 +15,7 @@ public class PostResponse {
     private boolean isLikedByCurrentUser;
     private LocalDateTime createdAt;
     private String geolocation;
+    private int commentsCount;
 
     public PostResponse() {
     }
@@ -105,5 +106,13 @@ public class PostResponse {
 
     public void setGeolocation(String geolocation) {
         this.geolocation = geolocation;
+    }
+
+    public int getCommentsCount() {
+        return commentsCount;
+    }
+
+    public void setCommentsCount(int commentsCount) {
+        this.commentsCount = commentsCount;
     }
 }
