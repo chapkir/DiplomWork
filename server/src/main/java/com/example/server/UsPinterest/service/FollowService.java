@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.Optional;
 
@@ -48,7 +49,14 @@ public class FollowService {
         // Initialize follow entity with timestamp
         Follow follow = new Follow(follower, following);
 
-        return followMapper.toDto(followRepository.save(follow));
+        try {
+            // сохраняем и сразу выполняем flush, чтобы поймать нарушения ограничений БД
+            Follow saved = followRepository.saveAndFlush(follow);
+            return followMapper.toDto(saved);
+        } catch (DataIntegrityViolationException e) {
+            // В случае уникального ограничения - подписка уже существует
+            throw new FollowException("Подписка уже существует");
+        }
     }
 
     @Transactional

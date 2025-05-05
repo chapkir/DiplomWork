@@ -7,6 +7,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.dao.DataIntegrityViolationException;
+import java.util.Collections;
 
 
 @RestController
@@ -21,14 +23,15 @@ public class FollowController {
     }
 
     @PostMapping("/{followerId}/following/{followingId}")
-    public ResponseEntity<FollowResponse> follow(
+    public ResponseEntity<?> follow(
             @PathVariable Long followerId,
             @PathVariable Long followingId) {
         try {
             FollowResponse followResponse = followService.follow(followerId, followingId);
             return ResponseEntity.ok(followResponse);
-        } catch (FollowException e) {
-            return ResponseEntity.badRequest().build();
+        } catch (FollowException | DataIntegrityViolationException e) {
+            return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("message", e.getMessage()));
         }
     }
 

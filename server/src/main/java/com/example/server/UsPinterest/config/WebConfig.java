@@ -100,6 +100,8 @@ public class WebConfig implements WebMvcConfigurer {
                         "http://localhost:8081",
                         "http://127.0.0.1:8081",
                         "http://spotsychlen.ddns.net:8081",
+                        "http://chapkir.com",
+                        "http://chapkir.com:8081",
                         "capacitor://localhost",
                         "ionic://localhost",
                         "http://localhost",

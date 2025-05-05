@@ -4,6 +4,8 @@ import com.example.server.UsPinterest.dto.MessageResponse;
 import com.example.server.UsPinterest.dto.PageResponse;
 import com.example.server.UsPinterest.dto.PinRequest;
 import com.example.server.UsPinterest.dto.PinResponse;
+import com.example.server.UsPinterest.dto.PinFullHdResponse;
+import com.example.server.UsPinterest.dto.PinThumbnailResponse;
 import com.example.server.UsPinterest.exception.ResourceNotFoundException;
 import com.example.server.UsPinterest.model.Board;
 import com.example.server.UsPinterest.entity.Like;
@@ -355,26 +357,23 @@ public class PinService {
             }
             response.setIsLikedByCurrentUser(isLiked);
 
-            List<CommentResponse> commentResponses = pin.getComments().stream()
-                    .map(comment -> {
-                        CommentResponse cr = new CommentResponse();
-                        cr.setId(comment.getId());
-                        cr.setText(comment.getText());
-                        if (comment.getUser() != null) {
-                            cr.setUsername(comment.getUser().getUsername());
-                            String userImg = comment.getUser().getProfileImageUrl();
-                            if (userImg != null && !userImg.isEmpty()) {
-                                userImg = fileStorageService.updateImageUrl(userImg);
-                            }
-                            cr.setUserProfileImageUrl(userImg);
-                            cr.setUserId(comment.getUser().getId());
-                        } else {
-                            cr.setUsername("Unknown");
-                        }
-                        cr.setCreatedAt(comment.getCreatedAt());
-                        return cr;
-                    }).collect(Collectors.toList());
-            response.setComments(commentResponses);            // Добавляем ссылки на FullHD и thumbnail изображения            String fullhdUrl = pin.getFullhdImageUrl();            if (fullhdUrl != null && !fullhdUrl.isEmpty()) {                fullhdUrl = fileStorageService.updateImageUrl(fullhdUrl);            }            response.setFullhdImageUrl(fullhdUrl);            response.setFullhdWidth(pin.getFullhdWidth());            response.setFullhdHeight(pin.getFullhdHeight());            String thumbUrl = pin.getThumbnailImageUrl();            if (thumbUrl != null && !thumbUrl.isEmpty()) {                thumbUrl = fileStorageService.updateImageUrl(thumbUrl);            }            response.setThumbnailImageUrl(thumbUrl);            response.setThumbnailWidth(pin.getThumbnailWidth());            response.setThumbnailHeight(pin.getThumbnailHeight());
+            // Комментарии не включаем в общий ответ PinResponse, их можно получить через GET /api/pins/{pinId}/comments
+
+            // Добавляем ссылки на FullHD и thumbnail изображения
+            String fullhdUrl = pin.getFullhdImageUrl();
+            if (fullhdUrl != null && !fullhdUrl.isEmpty()) {
+                fullhdUrl = fileStorageService.updateImageUrl(fullhdUrl);
+            }
+            response.setFullhdImageUrl(fullhdUrl);
+            response.setFullhdWidth(pin.getFullhdWidth());
+            response.setFullhdHeight(pin.getFullhdHeight());
+            String thumbUrl = pin.getThumbnailImageUrl();
+            if (thumbUrl != null && !thumbUrl.isEmpty()) {
+                thumbUrl = fileStorageService.updateImageUrl(thumbUrl);
+            }
+            response.setThumbnailImageUrl(thumbUrl);
+            response.setThumbnailWidth(pin.getThumbnailWidth());
+            response.setThumbnailHeight(pin.getThumbnailHeight());
 
             return response;
         } catch (Exception e) {
@@ -476,6 +475,84 @@ public class PinService {
                 size,
                 totalElements
         );
+    }
+
+    // Новый метод: получение FullHD изображений пинов с курсорной пагинацией
+    @Transactional(readOnly = true)
+    public CursorPageResponse<PinFullHdResponse, String> getPinsFullhdCursor(String cursor, int size, String sortDirection) {
+        Long cursorId = paginationService.decodeCursor(cursor, Long.class);
+        boolean isDesc = sortDirection == null || !sortDirection.equalsIgnoreCase("asc");
+        int fetchSize = size > 0 ? size + 1 : DEFAULT_PAGE_SIZE + 1;
+        List<Pin> raw;
+        if (isDesc) {
+            if (cursorId == null) {
+                raw = pinRepository.findAllWithLikesAndComments();
+            } else {
+                raw = pinRepository.findByIdLessThanWithLikesAndComments(cursorId, PageRequest.of(0, fetchSize));
+            }
+        } else {
+            if (cursorId == null) {
+                raw = pinRepository.findAllWithLikesAndComments();
+            } else {
+                raw = pinRepository.findByIdGreaterThanWithLikesAndComments(cursorId, PageRequest.of(0, fetchSize));
+            }
+        }
+        boolean hasNext = raw.size() > size;
+        if (hasNext) raw.remove(raw.size() - 1);
+        List<PinFullHdResponse> content = raw.stream().map(pin -> {
+            PinFullHdResponse r = new PinFullHdResponse();
+            r.setId(pin.getId());
+            String url = pin.getFullhdImageUrl();
+            if (url != null && !url.isEmpty()) url = fileStorageService.updateImageUrl(url);
+            r.setFullhdImageUrl(url);
+            r.setFullhdWidth(pin.getFullhdWidth());
+            r.setFullhdHeight(pin.getFullhdHeight());
+            return r;
+        }).collect(Collectors.toList());
+        String nextCursor = hasNext ? paginationService.encodeCursor(raw.get(raw.size() - 1).getId()) : null;
+        boolean hasPrevious = cursorId != null;
+        String prevCursor = hasPrevious ? paginationService.encodeCursor(cursorId) : null;
+        long totalElements = pinRepository.count();
+        return paginationService.createCursorPageResponse(content, nextCursor, prevCursor, hasNext, hasPrevious, size, totalElements);
+    }
+
+    // Новый метод: получение миниатюр WebP изображений пинов с курсорной пагинацией
+    @Transactional(readOnly = true)
+    public CursorPageResponse<PinThumbnailResponse, String> getPinsThumbnailCursor(String cursor, int size, String sortDirection) {
+        Long cursorId = paginationService.decodeCursor(cursor, Long.class);
+        boolean isDesc = sortDirection == null || !sortDirection.equalsIgnoreCase("asc");
+        int fetchSize = size > 0 ? size + 1 : DEFAULT_PAGE_SIZE + 1;
+        List<Pin> raw;
+        if (isDesc) {
+            if (cursorId == null) {
+                raw = pinRepository.findAllWithLikesAndComments();
+            } else {
+                raw = pinRepository.findByIdLessThanWithLikesAndComments(cursorId, PageRequest.of(0, fetchSize));
+            }
+        } else {
+            if (cursorId == null) {
+                raw = pinRepository.findAllWithLikesAndComments();
+            } else {
+                raw = pinRepository.findByIdGreaterThanWithLikesAndComments(cursorId, PageRequest.of(0, fetchSize));
+            }
+        }
+        boolean hasNext = raw.size() > size;
+        if (hasNext) raw.remove(raw.size() - 1);
+        List<PinThumbnailResponse> content = raw.stream().map(pin -> {
+            PinThumbnailResponse r = new PinThumbnailResponse();
+            r.setId(pin.getId());
+            String url = pin.getThumbnailImageUrl();
+            if (url != null && !url.isEmpty()) url = fileStorageService.updateImageUrl(url);
+            r.setThumbnailImageUrl(url);
+            r.setThumbnailWidth(pin.getThumbnailWidth());
+            r.setThumbnailHeight(pin.getThumbnailHeight());
+            return r;
+        }).collect(Collectors.toList());
+        String nextCursor2 = hasNext ? paginationService.encodeCursor(raw.get(raw.size() - 1).getId()) : null;
+        boolean hasPrev2 = cursorId != null;
+        String prevCursor2 = hasPrev2 ? paginationService.encodeCursor(cursorId) : null;
+        long totalEl = pinRepository.count();
+        return paginationService.createCursorPageResponse(content, nextCursor2, prevCursor2, hasNext, hasPrev2, size, totalEl);
     }
 
     /**

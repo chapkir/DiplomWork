@@ -19,7 +19,6 @@ public class PinResponse {
     private Double aspectRatio;
     private int likesCount;
     private int commentsCount;
-    private List<CommentResponse> comments;
     private boolean isLikedByCurrentUser;
     private String fullhdImageUrl;
     private Integer fullhdWidth;
@@ -146,14 +145,6 @@ public class PinResponse {
 
     public void setCommentsCount(int commentsCount) {
         this.commentsCount = commentsCount;
-    }
-
-    public List<CommentResponse> getComments() {
-        return comments;
-    }
-
-    public void setComments(List<CommentResponse> comments) {
-        this.comments = comments;
     }
 
     public boolean getIsLikedByCurrentUser() {

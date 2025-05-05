@@ -118,21 +118,21 @@ public class FileStorageService {
         if (file == null || file.isEmpty()) {
             throw new IOException("Failed to store empty profile image");
         }
-
-        String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
-
-        String fileExtension = "";
-        if (originalFilename.contains(".")) {
-            fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        // Читаем исходное изображение
+        BufferedImage originalImg = ImageIO.read(file.getInputStream());
+        if (originalImg == null) {
+            throw new IOException("Не удалось прочитать изображение для аватара");
         }
-
-        String filename = "user_" + userId + fileExtension;
+        // Формируем имя файла с расширением .webp
+        String filename = "user_" + userId + ".webp";
         Path targetLocation = profileImagesLocation.resolve(filename);
-
-        try (InputStream inputStream = file.getInputStream()) {
-            Files.copy(inputStream, targetLocation, StandardCopyOption.REPLACE_EXISTING);
-        }
-
+        // Сжимаем и конвертируем в WebP с настройками миниатюры
+        BufferedImage webpImg = Thumbnails.of(originalImg)
+                .size(thumbnailMaxWidth, thumbnailMaxHeight)
+                .outputFormat("webp")
+                .asBufferedImage();
+        ImageIO.write(webpImg, "webp", targetLocation.toFile());
+        // Возвращаем URL к новому WebP-файлу
         return ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/uploads/profile-images/")
                 .path(filename)

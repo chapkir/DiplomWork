@@ -8,6 +8,8 @@ import com.example.server.UsPinterest.dto.CommentResponse;
 import com.example.server.UsPinterest.dto.MessageResponse;
 import com.example.server.UsPinterest.dto.PinRequest;
 import com.example.server.UsPinterest.dto.PinResponse;
+import com.example.server.UsPinterest.dto.PinFullHdResponse;
+import com.example.server.UsPinterest.dto.PinThumbnailResponse;
 import com.example.server.UsPinterest.entity.Comment;
 import com.example.server.UsPinterest.entity.Like;
 import com.example.server.UsPinterest.exception.ResourceNotFoundException;
@@ -406,5 +408,25 @@ public class PinController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResponse("Ошибка при удалении пина: " + e.getMessage()));
         }
+    }
+
+    @GetMapping("/fullhd")
+    public ResponseEntity<?> getPinsFullhd(
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "desc") String sortDirection) {
+        CursorPageResponse<PinFullHdResponse, String> page = pinService.getPinsFullhdCursor(cursor, size, sortDirection);
+        HateoasResponse<CursorPageResponse<PinFullHdResponse, String>> response = hateoasUtil.buildCursorPageResponse(page, cursor, size);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/thumbnails")
+    public ResponseEntity<?> getPinsThumbnails(
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "desc") String sortDirection) {
+        CursorPageResponse<PinThumbnailResponse, String> page = pinService.getPinsThumbnailCursor(cursor, size, sortDirection);
+        HateoasResponse<CursorPageResponse<PinThumbnailResponse, String>> response = hateoasUtil.buildCursorPageResponse(page, cursor, size);
+        return ResponseEntity.ok(response);
     }
 }

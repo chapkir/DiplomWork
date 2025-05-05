@@ -96,21 +96,11 @@ public class ProfileController {
             response.setGender(user.getGender());
             response.setBoards(boardService.getBoardsByUserId(user.getId(), false));
 
-            // Получаем пины пользователя с сортировкой по дате создания (сначала новые)
-            List<Pin> userPins = pinRepository.findByUserOrderByCreatedAtDesc(user);
-            List<PinResponse> pinResponses = userPins.stream()
-                    .map(pin -> pinService.convertToPinResponse(pin, user))
-                    .collect(Collectors.toList());
-            response.setPins(pinResponses);
-            response.setPinsCount(pinResponses.size());
-
-            // Получаем посты пользователя
-            List<Post> userPosts = postRepository.findByUserOrderByCreatedAtDesc(user);
-            List<PostResponse> postResponses = userPosts.stream()
-                    .map(post -> postService.convertToPostResponse(post, user))
-                    .collect(Collectors.toList());
-            response.setPosts(postResponses);
-            response.setPostsCount(postResponses.size());
+            // Убираем получение картинок и постов из базового профиля
+            // response.setPins(...);
+            // response.setPinsCount(...);
+            // response.setPosts(...);
+            // response.setPostsCount(...);
             response.setFollowersCount(followRepository.countByFollowing(user));
             response.setFollowingCount(followRepository.countByFollower(user));
 
@@ -286,5 +276,64 @@ public class ProfileController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Произошла ошибка при редактировании профиля: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/pictures")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<PinResponse>> getOwnProfilePictures() {
+        User currentUser = userService.getCurrentUser();
+        List<Pin> userPins = pinRepository.findByUserOrderByCreatedAtDesc(currentUser);
+        List<PinResponse> pinResponses = userPins.stream()
+                .map(pin -> pinService.convertToPinResponse(pin, currentUser))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(pinResponses);
+    }
+
+    @GetMapping("/posts")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<PostResponse>> getOwnProfilePosts() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        User currentUser = userService.getCurrentUser();
+        List<Post> userPosts = postRepository.findByUserOrderByCreatedAtDesc(currentUser);
+        List<PostResponse> postResponses = userPosts.stream()
+                .map(post -> postService.convertToPostResponse(post, currentUser))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(postResponses);
+    }
+
+    @GetMapping("/{userId}/pictures")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<PinResponse>> getUserPictures(@PathVariable Long userId) {
+        User targetUser = userService.getUserWithCollections(userId);
+        List<Pin> userPins = pinRepository.findByUserOrderByCreatedAtDesc(targetUser);
+        List<PinResponse> pinResponses = userPins.stream()
+                .map(pin -> pinService.convertToPinResponse(pin, targetUser))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(pinResponses);
+    }
+
+    @GetMapping("/{userId}/posts")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<PostResponse>> getUserPosts(@PathVariable Long userId) {
+        User targetUser = userService.getUserWithCollections(userId);
+        List<Post> userPosts = postRepository.findByUserOrderByCreatedAtDesc(targetUser);
+        List<PostResponse> postResponses = userPosts.stream()
+                .map(post -> postService.convertToPostResponse(post, targetUser))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(postResponses);
+    }
+
+    @GetMapping("/likesPictures/{userId}")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<PinResponse>> getUserLikedPictures(@PathVariable Long userId) {
+        User targetUser = userService.getUserWithCollections(userId);
+        List<Like> likes = likeRepository.findByUserOrderByIdDesc(targetUser);
+        List<PinResponse> pinResponses = likes.stream()
+                .map(like -> pinService.convertToPinResponse(like.getPin(), null))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(pinResponses);
     }
 }
