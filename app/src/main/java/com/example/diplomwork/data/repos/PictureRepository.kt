@@ -64,9 +64,9 @@ class PictureRepository @Inject constructor(
     fun getPagingPictures(): Flow<PagingData<PictureResponse>> {
         return Pager(
             config = PagingConfig(
-                pageSize = 5,
-                prefetchDistance = 5,
-                initialLoadSize = 5
+                pageSize = 20,
+                prefetchDistance = 15,
+                initialLoadSize = 20
             ),
             pagingSourceFactory = { PictureFactoryPaging(apiService) }
         ).flow

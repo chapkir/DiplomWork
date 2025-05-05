@@ -35,14 +35,12 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
 import com.example.diplomwork.presentation.system_settings.systemInsetHeight
+import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.presentation.ui.components.bottom_sheets.CommentItem
 import com.example.diplomwork.presentation.ui.components.bottom_sheets.CommentsBottomSheet
-import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.presentation.ui.components.bottom_sheets.ConfirmDeleteBottomSheet
-import com.example.diplomwork.presentation.ui.navigation.PictureDetailScreenData
 import com.example.diplomwork.presentation.ui.theme.IconPrimary
 import com.example.diplomwork.presentation.viewmodel.PictureDetailScreenViewModel
-import com.example.diplomwork.util.AppConstants
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

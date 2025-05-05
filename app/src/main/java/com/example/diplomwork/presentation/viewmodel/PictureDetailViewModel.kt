@@ -33,6 +33,7 @@ class PictureDetailScreenViewModel @Inject constructor(
 
     init {
         loadPictureData()
+        loadCommentsForPicture()
     }
 
     private fun loadPictureData() {
@@ -40,7 +41,6 @@ class PictureDetailScreenViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true)
 
             val pictureResult = safeApiCall { pictureRepository.getPicture(_pictureId) }
-            val commentsResult = safeApiCall { commentRepository.getPictureComments(_pictureId) }
 
             pictureResult.getOrNull()?.let { picture ->
                 val currentUserUsername = sessionManager.username
@@ -56,14 +56,23 @@ class PictureDetailScreenViewModel @Inject constructor(
                     commentsCount = picture.commentsCount,
                     isLiked = picture.isLikedByCurrentUser,
                     isCurrentUserOwner = isOwner,
-                    aspectRatio = picture.aspectRatio ?: 1f
+                    aspectRatio = picture.aspectRatio ?: 1f,
+                    isLoading = false
                 )
             }
+        }
+    }
 
-            _uiState.value = _uiState.value.copy(
-                comments = commentsResult.getOrNull() ?: emptyList(),
-                isLoading = false
-            )
+    private fun loadCommentsForPicture() {
+        viewModelScope.launch {
+            try {
+                val commentsResult = safeApiCall { commentRepository.getPictureComments(_pictureId) }
+                _uiState.value = _uiState.value.copy(
+                    comments = commentsResult.getOrNull() ?: emptyList(),
+                )
+            } catch (e: Exception) {
+                Log.e("PictureViewModel", "Ошибка загрузки комментариев: ${e.message}")
+            }
         }
     }
 

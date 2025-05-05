@@ -68,7 +68,7 @@ import com.example.diplomwork.presentation.ui.components.bottom_sheets.ConfirmDe
 import com.example.diplomwork.presentation.ui.components.bottom_sheets.MenuBottomSheet
 import com.example.diplomwork.presentation.ui.components.rememberSlowFlingBehavior
 import com.example.diplomwork.presentation.ui.theme.BgDefault
-import com.example.diplomwork.presentation.viewmodel.PostsScreenViewModel
+import com.example.diplomwork.presentation.viewmodel.PostsViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,7 +76,7 @@ import kotlinx.coroutines.launch
 fun PostsScreen(
     onProfileClick: (Long?, String) -> Unit,
     onBack: () -> Unit,
-    viewModel: PostsScreenViewModel = hiltViewModel()
+    viewModel: PostsViewModel = hiltViewModel()
 ) {
 
     val coroutineScope = rememberCoroutineScope()

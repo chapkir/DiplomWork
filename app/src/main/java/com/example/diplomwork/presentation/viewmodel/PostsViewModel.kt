@@ -20,7 +20,7 @@ import retrofit2.HttpException
 import javax.inject.Inject
 
 @HiltViewModel
-class PostsScreenViewModel @Inject constructor(
+class PostsViewModel @Inject constructor(
     private val postRepository: PostRepository,
     private val commentRepository: CommentRepository,
     private val sessionManager: SessionManager
