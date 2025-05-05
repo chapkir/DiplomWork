@@ -9,6 +9,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
+import java.io.IOException
 import javax.inject.Inject
 
 @HiltViewModel
@@ -34,7 +36,7 @@ class LoginViewModel @Inject constructor(
 
     fun login() {
         if (_username.value.isBlank() || _password.value.isBlank()) {
-            _loginError.value = "Логин и пароль не могут быть пустыми"
+            _loginError.value = "Заполните все поля"
             _loginSuccess.value = false
             return
         }
@@ -45,12 +47,28 @@ class LoginViewModel @Inject constructor(
             _loginSuccess.value = null
 
             try {
-                val response = authRepository.login(LoginRequest(_username.value, _password.value))
+                val response = authRepository.login(
+                    LoginRequest(_username.value, _password.value)
+                )
+
                 sessionManager.saveAuthData(response.token, response.refreshToken)
                 sessionManager.username = _username.value
+
                 _loginSuccess.value = true
             } catch (e: Exception) {
-                _loginError.value = "Ошибка авторизации: ${e.message}"
+                val errorMessage = when (e) {
+                    is HttpException -> when (e.code()) {
+                        401 -> "Неверный логин или пароль"
+                        500 -> "Неверный логин или пароль"
+                        else -> "Ошибка ${e.code()}: ${e.message()}"
+                    }
+
+                    is IOException -> "Проблема с интернетом. Проверьте соединение"
+
+                    else -> "Неизвестная ошибка: ${e.localizedMessage}"
+                }
+
+                _loginError.value = errorMessage
                 _loginSuccess.value = false
             } finally {
                 _isLoading.value = false

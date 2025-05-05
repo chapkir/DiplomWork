@@ -1,6 +1,5 @@
 package com.example.diplomwork.presentation.ui.screens.login_screen
 
-import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,7 +37,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -73,10 +71,6 @@ fun LoginScreen(
     val loginError by loginViewModel.loginError.collectAsState()
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
-    val context = LocalContext.current
-    val activity = context as Activity
-    val window = activity.window
-
     LaunchedEffect(loginSuccess) {
         if (loginSuccess == true) {
             onLoginSuccess()
@@ -107,7 +101,7 @@ fun LoginScreen(
 
             LoginTextField(
                 value = username,
-                onValueChange = loginViewModel::onUsernameChange,
+                onValueChange = { loginViewModel.onUsernameChange(it.replace(" ", "")) },
                 label = "Имя пользователя",
                 icon = Icons.Default.Person,
                 enabled = !isLoading,
@@ -119,7 +113,7 @@ fun LoginScreen(
 
             LoginTextField(
                 value = password,
-                onValueChange = loginViewModel::onPasswordChange,
+                onValueChange = { loginViewModel.onPasswordChange(it.replace(" ", "")) },
                 label = "Пароль",
                 icon = Icons.Default.Lock,
                 enabled = !isLoading,
@@ -207,6 +201,7 @@ fun LoginTextField(
             }
         } else null,
         enabled = enabled,
+        singleLine = true,
         maxLines = 1,
         shape = RoundedCornerShape(15.dp),
         modifier = modifier,
