@@ -150,7 +150,6 @@ fun CreateContentScreen(
                 onValueChange = { description = it },
                 label = { Text("Краткое описание") },
                 shape = RoundedCornerShape(15.dp),
-                maxLines = 1,
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(focusRequester),
@@ -189,7 +188,7 @@ fun CreateContentScreen(
                         viewModel.uploadContent(
                             type = whatContentCreate,
                             imageUri = imageUri,
-                            description = description,
+                            description = description.ifBlank { "" },
                             onSuccess = onContentAdded
                         )
                     },
