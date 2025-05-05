@@ -46,8 +46,14 @@ class ProfileViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    private val _isLoadingContent = MutableStateFlow(true)
-    val isLoadingContent: StateFlow<Boolean> = _isLoadingContent
+    private val _isLoadingPosts = MutableStateFlow(true)
+    val isLoadingPosts: StateFlow<Boolean> = _isLoadingPosts
+
+    private val _isLoadingPictures = MutableStateFlow(true)
+    val isLoadingPictures: StateFlow<Boolean> = _isLoadingPictures
+
+    private val _isLoadingLiked = MutableStateFlow(true)
+    val isLoadingLiked: StateFlow<Boolean> = _isLoadingLiked
 
     private val _isUploading = MutableStateFlow(false)
     val isUploading: StateFlow<Boolean> = _isUploading
@@ -89,7 +95,7 @@ class ProfileViewModel @Inject constructor(
 
     fun loadProfilePictures(){
         if (_profilePictures.value.isNotEmpty()) return
-        _isLoadingContent.value = true
+        _isLoadingPictures.value = true
         viewModelScope.launch {
             try {
                 _profilePictures.value = profileRepository.getOwnProfilePictures()
@@ -97,14 +103,14 @@ class ProfileViewModel @Inject constructor(
                 Log.e("ProfileViewModel", "Ошибка при загрузке картинок профиля: ${e.message}")
                 _error.value = "Ошибка при загрузке картинок пользователя"
             } finally {
-                _isLoadingContent.value = false
+                _isLoadingPictures.value = false
             }
         }
     }
 
     fun loadProfilePosts(){
         if (_profilePosts.value.isNotEmpty()) return
-        _isLoadingContent.value = true
+        _isLoadingPosts.value = true
         viewModelScope.launch {
             try {
                 _profilePosts.value = profileRepository.getOwnProfilePosts()
@@ -112,7 +118,7 @@ class ProfileViewModel @Inject constructor(
                 Log.e("ProfileViewModel", "Ошибка при загрузке картинок профиля: ${e.message}")
                 _error.value = "Ошибка при загрузке картинок пользователя"
             } finally {
-                _isLoadingContent.value = false
+                _isLoadingPosts.value = false
             }
         }
     }
@@ -120,6 +126,7 @@ class ProfileViewModel @Inject constructor(
     // Загружаем лайкнутые пины
     fun loadLikedPictures() {
         if (_likedPictures.value.isNotEmpty()) return
+        _isLoadingLiked.value = true
         viewModelScope.launch {
             try {
                 val result = profileRepository.getLikedPictures()
@@ -137,7 +144,7 @@ class ProfileViewModel @Inject constructor(
                 Log.e("ProfileViewModel", "Ошибка при загрузке лайкнутых пинов: ${e.message}")
                 _error.value = "Ошибка при загрузке лайкнутых пинов"
             } finally {
-                _isLoading.value = false
+                _isLoadingLiked.value = false
             }
         }
     }
@@ -190,7 +197,18 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun refreshProfile() {
-        loadProfile()
+    fun refreshPosts() {
+        _profilePosts.value = emptyList()
+        loadProfilePosts()
+    }
+
+    fun refreshPictures() {
+        _profilePictures.value = emptyList()
+        loadProfilePictures()
+    }
+
+    fun refreshLikesPictures() {
+        _likedPictures.value = emptyList()
+        loadLikedPictures()
     }
 }

@@ -37,6 +37,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.data.model.PictureResponse
 import com.example.diplomwork.data.model.PostResponse
 import com.example.diplomwork.presentation.ui.components.CustomTabPager
+import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.presentation.ui.components.PictureCard
 import com.example.diplomwork.presentation.viewmodel.ProfileViewModel
@@ -58,6 +59,11 @@ fun ProfileScreen(
     val profilePosts by profileViewModel.profilePosts.collectAsState()
     val likedPictures by profileViewModel.likedPictures.collectAsState()
     val isLoading by profileViewModel.isLoading.collectAsState()
+
+    val isLoadingPosts by profileViewModel.isLoadingPosts.collectAsState()
+    val isLoadingPictures by profileViewModel.isLoadingPictures.collectAsState()
+    val isLoadingLiked by profileViewModel.isLoadingLiked.collectAsState()
+
     val isUploading by profileViewModel.isUploading.collectAsState()
     val error by profileViewModel.error.collectAsState()
     val avatarUpdateCounter by profileViewModel.avatarUpdateCounter.collectAsState()
@@ -72,7 +78,7 @@ fun ProfileScreen(
     var isRefreshing by remember { mutableStateOf(false) }
 
     LaunchedEffect(pagerState.currentPage) {
-        when(pagerState.currentPage){
+        when (pagerState.currentPage) {
             0 -> profileViewModel.loadProfilePosts()
             1 -> profileViewModel.loadProfilePictures()
             2 -> profileViewModel.loadLikedPictures()
@@ -84,16 +90,32 @@ fun ProfileScreen(
     ) { uri: Uri? -> uri?.let { profileViewModel.uploadAvatarToServer(it, context) } }
 
     PullToRefreshBox(
-        isRefreshing = isLoading,
+        isRefreshing =
+            when (pagerState.currentPage) {
+                0 -> isLoadingPosts
+                1 -> isLoadingPictures
+                2 -> isLoadingLiked
+                else -> isLoading
+            },
         onRefresh = {
             isRefreshing = true
-            profileViewModel.refreshProfile()
+            when (pagerState.currentPage) {
+                0 -> profileViewModel.refreshPosts()
+                1 -> profileViewModel.refreshPictures()
+                2 -> profileViewModel.refreshLikesPictures()
+            }
         },
         state = stateRefresh,
         indicator = {
             Indicator(
                 modifier = Modifier.align(Alignment.TopCenter),
-                isRefreshing = isLoading,
+                isRefreshing =
+                    when (pagerState.currentPage) {
+                    0 -> isLoadingPosts
+                    1 -> isLoadingPictures
+                    2 -> isLoadingLiked
+                    else -> isLoading
+                },
                 containerColor = Color.Gray,
                 color = Color.White,
                 state = stateRefresh
@@ -133,9 +155,9 @@ fun ProfileScreen(
                         lineOffset = 2.37
                     ) { page ->
                         when (page) {
-                            0 -> PostsGrid(profilePosts)
-                            1 -> PicturesGrid(profilePictures, onImageClick)
-                            2 -> PicturesGrid(likedPictures, onImageClick)
+                            0 -> PostsGrid(profilePosts, isLoadingPosts)
+                            1 -> PicturesGrid(profilePictures, onImageClick, isLoadingPictures)
+                            2 -> PicturesGrid(likedPictures, onImageClick, isLoadingLiked)
                         }
                     }
                 }
@@ -163,7 +185,11 @@ private fun ErrorScreen(error: String?, onRetry: () -> Unit) {
 }
 
 @Composable
-private fun PicturesGrid(pictures: List<PictureResponse>, onPictureClick: (Long) -> Unit) {
+private fun PicturesGrid(
+    pictures: List<PictureResponse>,
+    onPictureClick: (Long) -> Unit,
+    isLoading: Boolean
+) {
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(3),
         modifier = Modifier.fillMaxSize(),
@@ -184,22 +210,27 @@ private fun PicturesGrid(pictures: List<PictureResponse>, onPictureClick: (Long)
 }
 
 @Composable
-private fun PostsGrid(posts: List<PostResponse>) {
+private fun PostsGrid(
+    posts: List<PostResponse>,
+    isLoading: Boolean
+) {
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(3),
         modifier = Modifier.fillMaxSize(),
     ) {
         itemsIndexed(items = posts, key = { _, post -> post.id }) { _, post ->
-            PictureCard(
-                imageUrl = post.imageUrl!!,
-                username = post.username,
-                userProfileImageUrl = post.userAvatar,
-                id = post.id,
-                aspectRatio = 1f,
-                onPictureClick = { },
-                contentPadding = 3,
-                screenName = "Profile"
-            )
+            if (isLoading) LoadingSpinnerForElement()
+            else
+                PictureCard(
+                    imageUrl = post.imageUrl!!,
+                    username = post.username,
+                    userProfileImageUrl = post.userAvatar,
+                    id = post.id,
+                    aspectRatio = 1f,
+                    onPictureClick = { },
+                    contentPadding = 3,
+                    screenName = "Profile"
+                )
         }
     }
 }
