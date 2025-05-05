@@ -198,7 +198,7 @@ import com.example.diplomwork.presentation.viewmodel.PicturesViewModel
 @Composable
 fun PicturesScreen(
     picturesViewModel: PicturesViewModel = hiltViewModel(),
-    onImageClick: (Long, String) -> Unit,
+    onImageClick: (Long) -> Unit,
     onProfileClick: (Long, String) -> Unit
 ) {
     val pagingPictures = picturesViewModel.picturesPagingFlow.collectAsLazyPagingItems()
@@ -215,7 +215,7 @@ fun PicturesScreen(
         PagingContentGrid(
             modifier = Modifier.fillMaxSize(),
             onImageClick = { picture ->
-                onImageClick(picture.id, picture.imageUrl)
+                onImageClick(picture.id)
             },
             onProfileClick = onProfileClick,
             onPictureDelete = { id -> picturesViewModel.deletePicture(id) },
@@ -277,7 +277,7 @@ fun PagingContentGrid(
                         items(pictures.itemCount) { index ->
                             pictures[index]?.let { picture ->
                                 PictureCard(
-                                    imageUrl = picture.imageUrl,
+                                    imageUrl = picture.fullhdImageUrl,
                                     username = picture.username,
                                     userId = picture.userId,
                                     aspectRatio = picture.aspectRatio ?: 1f,

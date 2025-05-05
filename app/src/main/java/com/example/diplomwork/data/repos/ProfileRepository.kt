@@ -4,6 +4,7 @@ import com.example.diplomwork.data.model.EditProfileRequest
 import com.example.diplomwork.data.model.PictureResponse
 import com.example.diplomwork.data.model.ProfileResponse
 import com.example.diplomwork.data.api.ApiService
+import com.example.diplomwork.data.model.PostResponse
 import dagger.hilt.android.scopes.ActivityScoped
 import okhttp3.MultipartBody
 import retrofit2.Response
@@ -22,7 +23,14 @@ class ProfileRepository @Inject constructor(
         return apiService.getProfileById(userId)
     }
 
-    // Загрузка изображения профиля
+    suspend fun getOwnProfilePictures(): List<PictureResponse> {
+        return apiService.getOwnProfilePictures()
+    }
+
+    suspend fun getOwnProfilePosts(): List<PostResponse> {
+        return apiService.getOwnProfilePosts()
+    }
+
     suspend fun uploadProfileImage(image: MultipartBody.Part): Response<Map<String, String>> {
         return apiService.uploadProfileImage(image)
     }

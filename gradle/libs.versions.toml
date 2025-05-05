@@ -1,6 +1,6 @@
 [versions]
 accompanistPermissions = "0.31.1-alpha"
-agp = "8.8.1"
+agp = "8.9.1"
 bucket4jCore = "7.6.0"
 caffeine = "3.1.8"
 converterGson = "2.11.0"

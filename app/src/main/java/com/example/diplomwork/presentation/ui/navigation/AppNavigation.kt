@@ -2,7 +2,6 @@ package com.example.diplomwork.presentation.ui.navigation
 
 import android.util.Log
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
@@ -14,7 +13,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -124,8 +122,8 @@ fun AppNavigation(navController: NavHostController) {
         ) {
             composable<Pictures> {
                 PicturesScreen(
-                    onImageClick = { pictureId, imageUrl ->
-                        navController.navigate(PictureDetailScreenData(pictureId, imageUrl))
+                    onImageClick = { pictureId ->
+                        navController.navigate(PictureDetailScreenData(pictureId))
                     },
                     onProfileClick = { userId, username ->
                         navController.navigate(
@@ -153,8 +151,8 @@ fun AppNavigation(navController: NavHostController) {
                         }
                     },
                     onBack = { navController.popBackStack() },
-                    onImageClick = { pictureId, imageUrl ->
-                        navController.navigate(PictureDetailScreenData(pictureId, imageUrl))
+                    onImageClick = { pictureId ->
+                        navController.navigate(PictureDetailScreenData(pictureId))
                     }
                 )
             }
@@ -167,8 +165,8 @@ fun AppNavigation(navController: NavHostController) {
                         }
                     },
                     onBack = { navController.popBackStack() },
-                    onImageClick = { pictureId, imageUrl ->
-                        navController.navigate(PictureDetailScreenData(pictureId, imageUrl))
+                    onImageClick = { pictureId ->
+                        navController.navigate(PictureDetailScreenData(pictureId))
                     },
                     onMapOpen = {
                         navController.navigate(Map)
@@ -185,12 +183,8 @@ fun AppNavigation(navController: NavHostController) {
                     }
                 )
             }
-            composable<PictureDetailScreenData> { backStackEntry ->
-                val pictureDetailScreenData =
-                    backStackEntry.toRoute<PictureDetailScreenData>()
-
+            composable<PictureDetailScreenData> {
                 PictureDetailScreen(
-                    pictureDetailScreenData,
                     onNavigateBack = { navController.popBackStack() },
                     onProfileClick = { userId, username ->
                         navController.navigate(
@@ -219,8 +213,8 @@ fun AppNavigation(navController: NavHostController) {
                     onProfile = { userId, username ->
                         navController.navigate(OtherProfileScreenData(userId, username))
                     },
-                    onNotificationContent = { pictureId, imageUrl ->
-                        navController.navigate(PictureDetailScreenData(pictureId!!, imageUrl!!))
+                    onNotificationContent = { pictureId ->
+                        navController.navigate(PictureDetailScreenData(pictureId!!))
                     }
                 )
             }

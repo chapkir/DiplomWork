@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.data.model.PictureResponse
+import com.example.diplomwork.data.model.PostResponse
 import com.example.diplomwork.data.model.ProfileResponse
 import com.example.diplomwork.data.repos.ProfileRepository
 import com.example.diplomwork.util.ImageUtils
@@ -33,11 +34,20 @@ class ProfileViewModel @Inject constructor(
     private val _profileData = MutableStateFlow<ProfileResponse?>(null)
     val profileData: StateFlow<ProfileResponse?> = _profileData
 
+    private val _profilePictures = MutableStateFlow<List<PictureResponse>>(emptyList())
+    val profilePictures: StateFlow<List<PictureResponse>> = _profilePictures
+
+    private val _profilePosts = MutableStateFlow<List<PostResponse>>(emptyList())
+    val profilePosts: StateFlow<List<PostResponse>> = _profilePosts
+
     private val _likedPictures = MutableStateFlow<List<PictureResponse>>(emptyList())
     val likedPictures: StateFlow<List<PictureResponse>> = _likedPictures
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading
+
+    private val _isLoadingContent = MutableStateFlow(true)
+    val isLoadingContent: StateFlow<Boolean> = _isLoadingContent
 
     private val _isUploading = MutableStateFlow(false)
     val isUploading: StateFlow<Boolean> = _isUploading
@@ -77,8 +87,39 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
+    fun loadProfilePictures(){
+        if (_profilePictures.value.isNotEmpty()) return
+        _isLoadingContent.value = true
+        viewModelScope.launch {
+            try {
+                _profilePictures.value = profileRepository.getOwnProfilePictures()
+            } catch (e: Exception) {
+                Log.e("ProfileViewModel", "Ошибка при загрузке картинок профиля: ${e.message}")
+                _error.value = "Ошибка при загрузке картинок пользователя"
+            } finally {
+                _isLoadingContent.value = false
+            }
+        }
+    }
+
+    fun loadProfilePosts(){
+        if (_profilePosts.value.isNotEmpty()) return
+        _isLoadingContent.value = true
+        viewModelScope.launch {
+            try {
+                _profilePosts.value = profileRepository.getOwnProfilePosts()
+            } catch (e: Exception) {
+                Log.e("ProfileViewModel", "Ошибка при загрузке картинок профиля: ${e.message}")
+                _error.value = "Ошибка при загрузке картинок пользователя"
+            } finally {
+                _isLoadingContent.value = false
+            }
+        }
+    }
+
     // Загружаем лайкнутые пины
     fun loadLikedPictures() {
+        if (_likedPictures.value.isNotEmpty()) return
         viewModelScope.launch {
             try {
                 val result = profileRepository.getLikedPictures()

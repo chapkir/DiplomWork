@@ -51,7 +51,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun NotificationScreen(
     onProfile: (Long, String) -> Unit,
-    onNotificationContent: (Long?, String?) -> Unit,
+    onNotificationContent: (Long?) -> Unit,
     viewModel: NotificationViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -101,8 +101,8 @@ fun NotificationScreen(
                             NotificationItem(
                                 notification,
                                 onUserClick = { userId, username -> onProfile(userId, username) },
-                                onNotificationClick = { contentId, pictureUrl ->
-                                    onNotificationContent(contentId, pictureUrl)
+                                onNotificationClick = { contentId ->
+                                    onNotificationContent(contentId)
                                 }
                             )
                         }
@@ -117,7 +117,7 @@ fun NotificationScreen(
 fun NotificationItem(
     notification: NotificationResponse,
     onUserClick: (Long, String) -> Unit,
-    onNotificationClick: (Long?, String?) -> Unit
+    onNotificationClick: (Long?) -> Unit
 ) {
     val annotatedText = buildAnnotatedString {
         pushStringAnnotation(
@@ -168,7 +168,7 @@ fun NotificationItem(
                                 val (id, username) = annotation.item.split(",")
                                 onUserClick(id.toLong(), username)
                             } else {
-                                onNotificationClick(notification.pinId, notification.pinImageUrl)
+                                onNotificationClick(notification.pinId)
                             }
                         }
                     }
@@ -197,7 +197,7 @@ fun NotificationItem(
                 .clip(RoundedCornerShape(9.dp))
                 .clickable {
                     if (notification.postImageUrl.isNullOrEmpty())
-                        onNotificationClick(notification.pinId, notification.pinImageUrl)
+                        onNotificationClick(notification.pinId)
                     else return@clickable
                 }
         )

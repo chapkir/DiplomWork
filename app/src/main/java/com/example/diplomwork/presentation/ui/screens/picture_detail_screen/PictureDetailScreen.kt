@@ -48,7 +48,6 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PictureDetailScreen(
-    pictureDetailScreenData: PictureDetailScreenData,
     onNavigateBack: () -> Unit,
     onProfileClick: (Long?, String) -> Unit,
     viewModel: PictureDetailScreenViewModel = hiltViewModel()
@@ -85,9 +84,7 @@ fun PictureDetailScreen(
         } else {
             item {
                 ImageView(
-                    imageRes =
-                        if (pictureDetailScreenData.imageUrl.startsWith("http")) pictureDetailScreenData.imageUrl
-                        else AppConstants.BASE_URL + pictureDetailScreenData.imageUrl,
+                    imageRes = uiState.picture?.fullhdImageUrl ?: "",
                     aspectRatio = uiState.aspectRatio
                 )
             }

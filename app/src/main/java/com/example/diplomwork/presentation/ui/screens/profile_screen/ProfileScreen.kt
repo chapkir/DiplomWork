@@ -48,12 +48,14 @@ import com.google.accompanist.pager.rememberPagerState
 fun ProfileScreen(
     onSettingsClick: () -> Unit,
     onBack: () -> Unit,
-    onImageClick: (Long, String) -> Unit,
+    onImageClick: (Long) -> Unit,
     onMapOpen: () -> Unit = {},
     profileViewModel: ProfileViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val profileData by profileViewModel.profileData.collectAsState()
+    val profilePictures by profileViewModel.profilePictures.collectAsState()
+    val profilePosts by profileViewModel.profilePosts.collectAsState()
     val likedPictures by profileViewModel.likedPictures.collectAsState()
     val isLoading by profileViewModel.isLoading.collectAsState()
     val isUploading by profileViewModel.isUploading.collectAsState()
@@ -62,11 +64,7 @@ fun ProfileScreen(
     val isOwnProfile by profileViewModel.isOwnProfile.collectAsState()
 
     val selectedTabIndex by remember { mutableIntStateOf(0) }
-    var onTabSelected by remember { mutableIntStateOf(0) }
     val tabTitles = listOf("Посты", "Картинки", "Избранное")
-
-    val ownPictures = profileData?.pins ?: emptyList()
-    val ownPosts = profileData?.posts ?: emptyList()
 
     val pagerState = rememberPagerState(initialPage = selectedTabIndex)
 
@@ -74,11 +72,11 @@ fun ProfileScreen(
     var isRefreshing by remember { mutableStateOf(false) }
 
     LaunchedEffect(pagerState.currentPage) {
-        onTabSelected = pagerState.currentPage
-    }
-
-    LaunchedEffect(Unit) {
-        profileViewModel.loadLikedPictures()
+        when(pagerState.currentPage){
+            0 -> profileViewModel.loadProfilePosts()
+            1 -> profileViewModel.loadProfilePictures()
+            2 -> profileViewModel.loadLikedPictures()
+        }
     }
 
     val pickImageLauncher = rememberLauncherForActivityResult(
@@ -135,8 +133,8 @@ fun ProfileScreen(
                         lineOffset = 2.37
                     ) { page ->
                         when (page) {
-                            0 -> PostsGrid(ownPosts)
-                            1 -> PicturesGrid(ownPictures, onImageClick)
+                            0 -> PostsGrid(profilePosts)
+                            1 -> PicturesGrid(profilePictures, onImageClick)
                             2 -> PicturesGrid(likedPictures, onImageClick)
                         }
                     }
@@ -165,19 +163,19 @@ private fun ErrorScreen(error: String?, onRetry: () -> Unit) {
 }
 
 @Composable
-private fun PicturesGrid(pictures: List<PictureResponse>, onPictureClick: (Long, String) -> Unit) {
+private fun PicturesGrid(pictures: List<PictureResponse>, onPictureClick: (Long) -> Unit) {
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(3),
         modifier = Modifier.fillMaxSize(),
     ) {
         items(pictures, key = { it.id }) { picture ->
             PictureCard(
-                imageUrl = picture.imageUrl,
+                imageUrl = picture.fullhdImageUrl,
                 username = picture.username,
                 userProfileImageUrl = picture.userProfileImageUrl,
                 id = picture.id,
                 aspectRatio = picture.aspectRatio ?: 1f,
-                onPictureClick = { onPictureClick(picture.id, picture.imageUrl) },
+                onPictureClick = { onPictureClick(picture.id) },
                 contentPadding = 3,
                 screenName = "Profile"
             )

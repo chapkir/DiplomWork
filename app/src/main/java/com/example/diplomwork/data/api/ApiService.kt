@@ -61,6 +61,12 @@ interface ApiService {
     @GET("api/profile")
     suspend fun getOwnProfile(): ProfileResponse
 
+    @GET("api/profile/pictures")
+    suspend fun getOwnProfilePictures(): List<PictureResponse>
+
+    @GET("api/profile/posts")
+    suspend fun getOwnProfilePosts(): List<PostResponse>
+
     @GET("api/profile/{userId}")
     suspend fun getProfileById(@Path("userId") userId: Long?): ProfileResponse
 
