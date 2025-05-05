@@ -43,12 +43,16 @@ class PictureRepository @Inject constructor(
         return apiService.searchPictures(query, page, size).data.content
     }
 
-    suspend fun deletePicture(id: Long): Boolean {
+    suspend fun deletePicture(id: Long): Result<Unit> {
         return try {
             val response = apiService.deletePicture(id)
-            response.isSuccessful
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Ошибка удаления: код ${response.code()}"))
+            }
         } catch (e: Exception) {
-            false
+            Result.failure(e)
         }
     }
 

@@ -2,16 +2,15 @@ package com.example.diplomwork.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.map
 import com.example.diplomwork.auth.SessionManager
-import com.example.diplomwork.data.model.PictureResponse
 import com.example.diplomwork.data.repos.PictureRepository
+import com.example.diplomwork.domain.usecase.DeletePictureUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -79,7 +78,8 @@ import javax.inject.Inject
 @HiltViewModel
 class PicturesViewModel @Inject constructor(
     private val pictureRepository: PictureRepository,
-    private val sessionManager: SessionManager
+    private val sessionManager: SessionManager,
+    private val deletePictureUseCase: DeletePictureUseCase
 ) : ViewModel() {
 
     private val currentUsername = sessionManager.username
@@ -93,4 +93,22 @@ class PicturesViewModel @Inject constructor(
             }
         }
         .cachedIn(viewModelScope)
+
+    private val _deleteStatus = MutableSharedFlow<String>(replay = 0)
+    val deleteStatus: SharedFlow<String> = _deleteStatus.asSharedFlow()
+
+    fun deletePicture(pictureId: Long) {
+        viewModelScope.launch {
+            val result = deletePictureUseCase.delete(pictureId)
+
+            val message = if (result.isSuccess) {
+                "Удаление успешно"
+            } else {
+                result.exceptionOrNull()?.message ?: "Ошибка удаления"
+            }
+
+            _deleteStatus.emit(message)
+        }
+    }
+
 }

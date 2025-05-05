@@ -1,5 +1,6 @@
 package com.example.diplomwork.presentation.ui.screens.pictures_screen
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -18,12 +19,16 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -198,6 +203,14 @@ fun PicturesScreen(
 ) {
     val pagingPictures = picturesViewModel.picturesPagingFlow.collectAsLazyPagingItems()
 
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        picturesViewModel.deleteStatus.collect { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         PagingContentGrid(
             modifier = Modifier.fillMaxSize(),
@@ -205,6 +218,7 @@ fun PicturesScreen(
                 onImageClick(picture.id, picture.imageUrl)
             },
             onProfileClick = onProfileClick,
+            onPictureDelete = { id -> picturesViewModel.deletePicture(id) },
             pictures = pagingPictures
         )
     }
@@ -216,6 +230,7 @@ fun PagingContentGrid(
     modifier: Modifier = Modifier,
     onImageClick: (PictureResponse) -> Unit,
     onProfileClick: (Long, String) -> Unit,
+    onPictureDelete: (Long) -> Unit,
     pictures: LazyPagingItems<PictureResponse>
 ) {
     val loadState = pictures.loadState
@@ -271,6 +286,7 @@ fun PagingContentGrid(
                                     isCurrentUserOwner = picture.isCurrentUserOwner,
                                     onPictureClick = { onImageClick(picture) },
                                     onProfileClick = onProfileClick,
+                                    onPictureDelete = onPictureDelete,
                                     screenName = "Picture"
                                 )
                             }

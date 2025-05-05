@@ -10,6 +10,7 @@ import com.example.diplomwork.data.model.CommentResponse
 import com.example.diplomwork.data.model.PictureResponse
 import com.example.diplomwork.data.repos.CommentRepository
 import com.example.diplomwork.data.repos.PictureRepository
+import com.example.diplomwork.domain.usecase.DeletePictureUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +22,8 @@ class PictureDetailScreenViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val pictureRepository: PictureRepository,
     private val commentRepository: CommentRepository,
-    private val sessionManager: SessionManager
+    private val sessionManager: SessionManager,
+    private val deletePictureUseCase: DeletePictureUseCase
 ) : ViewModel() {
 
     private val _pictureId: Long = savedStateHandle.get<Long>("pictureId") ?: 0L
@@ -67,13 +69,13 @@ class PictureDetailScreenViewModel @Inject constructor(
 
     fun deletePicture() {
         viewModelScope.launch {
-            val result = safeApiCall { pictureRepository.deletePicture(_pictureId) }
+            val result = deletePictureUseCase.delete(_pictureId)
 
-            if (result.isSuccess) {
-                _uiState.value = _uiState.value.copy(deleteStatus = "Удаление успешно")
-            } else {
-                _uiState.value = _uiState.value.copy(deleteStatus = "Ошибка удаления")
-            }
+            _uiState.value = _uiState.value.copy(
+                deleteStatus =
+                    if (result.isSuccess) "Удаление успешно"
+                    else result.exceptionOrNull()?.message ?: "Ошибка удаления"
+            )
         }
     }
 
@@ -94,7 +96,9 @@ class PictureDetailScreenViewModel @Inject constructor(
             if (result.isFailure) {
                 _uiState.value = _uiState.value.copy(
                     isLiked = wasLiked,
-                    likesCount = (_uiState.value.likesCount + if (wasLiked) 1 else -1).coerceAtLeast(0)
+                    likesCount = (_uiState.value.likesCount + if (wasLiked) 1 else -1).coerceAtLeast(
+                        0
+                    )
                 )
             }
         }
@@ -113,7 +117,10 @@ class PictureDetailScreenViewModel @Inject constructor(
                 val updatedComments = commentRepository.getPictureComments(_pictureId)
                 _uiState.value = _uiState.value.copy(comments = updatedComments)
             } else {
-                Log.e("PictureDetailViewModel", "Error adding comment: ${result.exceptionOrNull()?.message}")
+                Log.e(
+                    "PictureDetailViewModel",
+                    "Error adding comment: ${result.exceptionOrNull()?.message}"
+                )
             }
         }
     }

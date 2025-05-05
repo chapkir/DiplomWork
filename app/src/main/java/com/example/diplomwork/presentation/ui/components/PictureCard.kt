@@ -46,6 +46,7 @@ import coil.compose.AsyncImagePainter
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.diplomwork.R
+import com.example.diplomwork.presentation.ui.components.bottom_sheets.ConfirmDeleteBottomSheet
 import com.example.diplomwork.presentation.ui.components.bottom_sheets.MenuBottomSheet
 import kotlinx.coroutines.launch
 
@@ -60,15 +61,18 @@ fun PictureCard(
     id: Long,
     isCurrentUserOwner: Boolean = false,
     onPictureClick: () -> Unit,
-    onProfileClick: (Long, String) -> Unit = {_,_->},
+    onProfileClick: (Long, String) -> Unit = {_, _-> },
+    onPictureDelete: (Long) -> Unit = {_ -> },
     contentPadding: Int = 3,
     screenName: String
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val openSheet = {
-        coroutineScope.launch { sheetState.show() }
-    }
+    val menuSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val confirmDeleteSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val openMenuSheet = { coroutineScope.launch { menuSheetState.show() } }
+    val closeMenuSheet = { coroutineScope.launch { menuSheetState.hide() } }
+    val openConfirmDeleteSheet = { coroutineScope.launch { confirmDeleteSheetState.show() } }
+    val closeConfirmDeleteSheet = { coroutineScope.launch { confirmDeleteSheetState.hide() } }
 
     var isLoading by remember { mutableStateOf(true) }
     var isError by remember { mutableStateOf(false) }
@@ -197,7 +201,7 @@ fun PictureCard(
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() }
-                        ) { openSheet() }
+                        ) { openMenuSheet() }
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_menu_dots_vertical),
@@ -210,12 +214,23 @@ fun PictureCard(
         }
     }
 
-    if (sheetState.isVisible) {
+    if (menuSheetState.isVisible) {
         MenuBottomSheet(
-            onDismiss = {},
-            onDelete = {  },
-            sheetState = sheetState,
+            onDismiss = { closeMenuSheet() },
+            onDelete = { openConfirmDeleteSheet() },
+            sheetState = menuSheetState,
             isOwnContent = isCurrentUserOwner
+        )
+    }
+
+    if (confirmDeleteSheetState.isVisible) {
+        ConfirmDeleteBottomSheet(
+            onDismiss = { closeConfirmDeleteSheet() },
+            onDelete = {
+                onPictureDelete(id)
+                closeMenuSheet()
+            },
+            sheetState = confirmDeleteSheetState,
         )
     }
 }
