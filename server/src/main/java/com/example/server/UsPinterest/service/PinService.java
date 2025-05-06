@@ -121,9 +121,7 @@ public class PinService {
         );
     }
 
-    /**
-     * Вспомогательный метод: считает реальные размеры картинки и учитывает EXIF-ориентацию.
-     */
+
     public void calculateImageDimensions(Pin pin) {
         if (pin.getImageUrl() == null || pin.getImageUrl().isEmpty()) return;
         try {
@@ -420,9 +418,7 @@ public class PinService {
         return pinWithLikes;
     }
 
-    /**
-     * Возвращает CursorPageResponse с пинами по курсору.
-     */
+
     @Transactional(readOnly = true)
     public CursorPageResponse<PinResponse, String> getPinsCursor(String cursor, int size, String sortDirection) {
         // Декодируем курсор
@@ -507,6 +503,19 @@ public class PinService {
             r.setFullhdImageUrl(url);
             r.setFullhdWidth(pin.getFullhdWidth());
             r.setFullhdHeight(pin.getFullhdHeight());
+            // Set user info and aspect ratio
+            if (pin.getUser() != null) {
+                r.setUserId(pin.getUser().getId());
+                r.setUsername(pin.getUser().getUsername());
+                String avatar = pin.getUser().getProfileImageUrl();
+                if (avatar != null && !avatar.isEmpty()) avatar = fileStorageService.updateImageUrl(avatar);
+                r.setUserAvatar(avatar);
+            }
+            if (pin.getImageWidth() != null && pin.getImageHeight() != null && pin.getImageHeight() > 0) {
+                r.setAspectRatio(pin.getImageWidth().doubleValue() / pin.getImageHeight().doubleValue());
+            } else {
+                r.setAspectRatio(1.0);
+            }
             return r;
         }).collect(Collectors.toList());
         String nextCursor = hasNext ? paginationService.encodeCursor(raw.get(raw.size() - 1).getId()) : null;
@@ -546,6 +555,19 @@ public class PinService {
             r.setThumbnailImageUrl(url);
             r.setThumbnailWidth(pin.getThumbnailWidth());
             r.setThumbnailHeight(pin.getThumbnailHeight());
+            // Set user info and aspect ratio
+            if (pin.getUser() != null) {
+                r.setUserId(pin.getUser().getId());
+                r.setUsername(pin.getUser().getUsername());
+                String avatar = pin.getUser().getProfileImageUrl();
+                if (avatar != null && !avatar.isEmpty()) avatar = fileStorageService.updateImageUrl(avatar);
+                r.setUserAvatar(avatar);
+            }
+            if (pin.getImageWidth() != null && pin.getImageHeight() != null && pin.getImageHeight() > 0) {
+                r.setAspectRatio(pin.getImageWidth().doubleValue() / pin.getImageHeight().doubleValue());
+            } else {
+                r.setAspectRatio(1.0);
+            }
             return r;
         }).collect(Collectors.toList());
         String nextCursor2 = hasNext ? paginationService.encodeCursor(raw.get(raw.size() - 1).getId()) : null;
@@ -555,9 +577,6 @@ public class PinService {
         return paginationService.createCursorPageResponse(content, nextCursor2, prevCursor2, hasNext, hasPrev2, size, totalEl);
     }
 
-    /**
-     * Пересчитывает и сохраняет размеры изображений для всех существующих пинов.
-     */
     @Transactional
     public void recalcImageDimensionsForAllPins() {
         List<Pin> pins = pinRepository.findAll();
@@ -570,9 +589,6 @@ public class PinService {
         }
     }
 
-    /**
-     * Генерация WebP-версий (FullHD и миниатюры) для всех существующих пинов.
-     */
     @Transactional
     public void generateImageVariantsForAllPins() {
         List<Pin> pins = pinRepository.findAll();

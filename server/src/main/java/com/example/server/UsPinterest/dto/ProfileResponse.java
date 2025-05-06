@@ -7,7 +7,7 @@ import com.example.server.UsPinterest.dto.BoardResponse;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-@JsonInclude(JsonInclude.Include.ALWAYS)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProfileResponse {
     private Long id;
     private String username;

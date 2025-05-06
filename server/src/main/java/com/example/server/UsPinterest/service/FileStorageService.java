@@ -22,6 +22,13 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.metadata.Metadata;
+import com.drew.metadata.exif.ExifIFD0Directory;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
+import java.io.ByteArrayInputStream;
+
 @Service
 public class FileStorageService {
 
@@ -118,8 +125,14 @@ public class FileStorageService {
         if (file == null || file.isEmpty()) {
             throw new IOException("Failed to store empty profile image");
         }
-        // Читаем исходное изображение
-        BufferedImage originalImg = ImageIO.read(file.getInputStream());
+        // Читаем исходное изображение с применением ориентации
+        byte[] fileBytes = file.getBytes();
+        BufferedImage originalImg;
+        try (InputStream imgIn = new ByteArrayInputStream(fileBytes)) {
+            originalImg = ImageIO.read(imgIn);
+        }
+        // Применяем EXIF ориентацию
+        originalImg = applyExifOrientation(fileBytes, originalImg);
         if (originalImg == null) {
             throw new IOException("Не удалось прочитать изображение для аватара");
         }
@@ -206,22 +219,26 @@ public class FileStorageService {
         return thumbnailMaxHeight;
     }
 
-    /**
-     * Общий метод для ресайза и сохранения WebP изображений
-     */
+
     public ImageInfo storeResizedImage(MultipartFile file, String customFilename, Path targetDir, String uriPath, int width, int height) throws IOException {
         if (file == null || file.isEmpty()) {
             throw new IOException("Failed to store empty file");
         }
         ImageIO.scanForPlugins();
+        byte[] fileBytes = file.getBytes();
         String originalFilename = StringUtils.cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown");
         String baseName = customFilename != null ? customFilename : (originalFilename.contains(".") ? originalFilename.substring(0, originalFilename.lastIndexOf('.')) : originalFilename);
         String filename = baseName + ".webp";
         Path targetLocation = targetDir.resolve(filename);
-        BufferedImage img = ImageIO.read(file.getInputStream());
+        BufferedImage img;
+        try (InputStream imgIn = new ByteArrayInputStream(fileBytes)) {
+            img = ImageIO.read(imgIn);
+        }
         if (img == null) {
             throw new IOException("Failed to read image for resizing");
         }
+        // Применяем EXIF ориентацию
+        img = applyExifOrientation(fileBytes, img);
         BufferedImage outImg = Thumbnails.of(img).size(width, height).outputFormat("webp").asBufferedImage();
         try (OutputStream os = Files.newOutputStream(targetLocation)) {
             ImageIO.write(outImg, "webp", os);
@@ -254,5 +271,35 @@ public class FileStorageService {
         public String getUrl() { return url; }
         public int getWidth() { return width; }
         public int getHeight() { return height; }
+    }
+
+
+    private BufferedImage applyExifOrientation(byte[] imageBytes, BufferedImage image) {
+        try (InputStream metaIn = new ByteArrayInputStream(imageBytes)) {
+            Metadata metadata = ImageMetadataReader.readMetadata(metaIn);
+            ExifIFD0Directory directory = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
+            if (directory != null && directory.containsTag(ExifIFD0Directory.TAG_ORIENTATION)) {
+                int orientation = directory.getInt(ExifIFD0Directory.TAG_ORIENTATION);
+                AffineTransform transform = new AffineTransform();
+                switch (orientation) {
+                    case 3:
+                        transform.rotate(Math.toRadians(180), image.getWidth() / 2.0, image.getHeight() / 2.0);
+                        break;
+                    case 6:
+                        transform.rotate(Math.toRadians(90), image.getWidth() / 2.0, image.getHeight() / 2.0);
+                        break;
+                    case 8:
+                        transform.rotate(Math.toRadians(270), image.getWidth() / 2.0, image.getHeight() / 2.0);
+                        break;
+                    default:
+                        return image;
+                }
+                AffineTransformOp op = new AffineTransformOp(transform, AffineTransformOp.TYPE_BILINEAR);
+                return op.filter(image, null);
+            }
+        } catch (Exception e) {
+            logger.warn("Не удалось применить EXIF ориентацию: {}", e.getMessage());
+        }
+        return image;
     }
 }

@@ -94,13 +94,13 @@ public class ProfileController {
             response.setCity(user.getCity());
             response.setBirthDate(user.getBirthDate());
             response.setGender(user.getGender());
-            response.setBoards(boardService.getBoardsByUserId(user.getId(), false));
 
-            // Убираем получение картинок и постов из базового профиля
-            // response.setPins(...);
-            // response.setPinsCount(...);
-            // response.setPosts(...);
-            // response.setPostsCount(...);
+            // Set counts for own profile
+            int pinsCount = pinRepository.findByUserOrderByCreatedAtDesc(user).size();
+            response.setPinsCount(pinsCount);
+            int postsCount = postRepository.findByUserOrderByCreatedAtDesc(user).size();
+            response.setPostsCount(postsCount);
+
             response.setFollowersCount(followRepository.countByFollowing(user));
             response.setFollowingCount(followRepository.countByFollower(user));
 
@@ -186,31 +186,13 @@ public class ProfileController {
             response.setCity(targetUser.getCity());
             response.setBirthDate(targetUser.getBirthDate());
             response.setGender(targetUser.getGender());
-            response.setBoards(boardService.getBoardsByUserId(targetUser.getId(), false));
 
-            // Получаем пины пользователя с сортировкой по дате создания (сначала новые)
-            List<Pin> userPins = pinRepository.findByUserOrderByCreatedAtDesc(targetUser);
+            // Set counts for other profile
+            int otherPinsCount = pinRepository.findByUserOrderByCreatedAtDesc(targetUser).size();
+            response.setPinsCount(otherPinsCount);
+            int otherPostsCount = postRepository.findByUserOrderByCreatedAtDesc(targetUser).size();
+            response.setPostsCount(otherPostsCount);
 
-            // Если пользователь авторизован, получаем текущего пользователя для проверки лайков
-            final User currentUser = authentication != null
-                    ? userService.getUserWithCollectionsByUsername(authentication.getName())
-                    : null;
-
-            // Преобразуем пины с учетом контекста текущего пользователя (для отображения лайков)
-            List<PinResponse> pinResponses = userPins.stream()
-                    .map(pin -> pinService.convertToPinResponse(pin, currentUser))
-                    .collect(Collectors.toList());
-
-            response.setPins(pinResponses);
-            response.setPinsCount(pinResponses.size());
-
-            // Получаем посты пользователя
-            List<Post> userPosts = postRepository.findByUserOrderByCreatedAtDesc(targetUser);
-            List<PostResponse> postResponses = userPosts.stream()
-                    .map(post -> postService.convertToPostResponse(post, currentUser))
-                    .collect(Collectors.toList());
-            response.setPosts(postResponses);
-            response.setPostsCount(postResponses.size());
             response.setFollowersCount(followRepository.countByFollowing(targetUser));
             response.setFollowingCount(followRepository.countByFollower(targetUser));
 

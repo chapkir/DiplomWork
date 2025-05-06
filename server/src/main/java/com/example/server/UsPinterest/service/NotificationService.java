@@ -238,7 +238,15 @@ public class NotificationService {
         if (notification.getPin() != null) {
             response.setPinId(notification.getPin().getId());
 
-            String imageUrl = notification.getPin().getImageUrl();
+            // Use compressed WebP variant for pin image in notification
+            String imageUrl = null;
+            if (notification.getPin().getThumbnailImageUrl() != null && !notification.getPin().getThumbnailImageUrl().isEmpty()) {
+                imageUrl = notification.getPin().getThumbnailImageUrl();
+            } else if (notification.getPin().getFullhdImageUrl() != null && !notification.getPin().getFullhdImageUrl().isEmpty()) {
+                imageUrl = notification.getPin().getFullhdImageUrl();
+            } else {
+                imageUrl = notification.getPin().getImageUrl();
+            }
             if (imageUrl != null && !imageUrl.isEmpty()) {
                 response.setPinImageUrl(fileStorageService.updateImageUrl(imageUrl));
             }

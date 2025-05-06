@@ -196,7 +196,9 @@ async function loadFeed(append = false) {
     // Если не append и есть старый контент - очистить контейнер
     if (!append) container.innerHTML = '';
     pins.forEach(pin => {
-      const card = createCard(pin.imageUrl, pin.title, pin.username);
+      // Use thumbnailImageUrl if available for faster WebP loading
+      const src = pin.thumbnailImageUrl || pin.imageUrl;
+      const card = createCard(src, pin.title, pin.username);
       card.classList.add('fade-in');
       container.appendChild(card);
     });
@@ -281,8 +283,12 @@ async function loadProfile() {
 function createCard(img, title, subtitle) {
   const div = document.createElement('div');
   div.className = 'card';
+  // Use <picture> for WebP format
   div.innerHTML = `
-    ${img ? `<img src="${img}" alt="" class="lazy-img" loading="lazy">` : ''}
+    ${img ? `<picture>
+        <source srcset="${img}" type="image/webp">
+        <img src="${img}" alt="" class="lazy-img" loading="lazy">
+      </picture>` : ''}
     <div class="card-content">
       <div class="card-title">${title || ''}</div>
       ${subtitle ? `<div class="card-subtitle">${subtitle}</div>` : ''}

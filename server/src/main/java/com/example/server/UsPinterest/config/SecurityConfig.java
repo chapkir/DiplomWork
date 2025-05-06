@@ -70,7 +70,7 @@ public class SecurityConfig {
                     auth.requestMatchers("/api/posts/test-upload-image").permitAll();
                     auth.requestMatchers("/api/profile/edit").authenticated();
                     auth.requestMatchers("/", "/js/**", "/css/**", "/img/**", "/favicon.ico").permitAll();
-                    auth.requestMatchers("/index.html", "/pin.html", "/profile.html", "/search.html", "/acme-manager.html").permitAll();
+                    auth.requestMatchers("/index.html", "/pin.html", "/profile.html", "/search.html", "/acme-manager.html", "/privacy.html").permitAll();
                     auth.requestMatchers("/save-acme-token", "/acme-test").permitAll();
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
                     auth.requestMatchers("/.well-known/**").permitAll();

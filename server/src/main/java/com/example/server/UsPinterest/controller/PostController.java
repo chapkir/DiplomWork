@@ -109,10 +109,9 @@ public class PostController {
                 return new ResponseEntity<>(response, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
             }
 
-            // Удалена проверка директории, т.к. она теперь выполняется автоматически в init() метод FileStorageService
-            logger.info("Storing file: {}, size: {}, type: {}", file.getOriginalFilename(), file.getSize(), file.getContentType());
-            String imageUrl = fileStorageService.storeFile(file);
-            logger.info("File stored successfully. URL: {}", imageUrl);
+            // Generate FullHD WebP variant for post image
+            FileStorageService.ImageInfo fullhdInfo = fileStorageService.storeFullhdFile(file, null);
+            String imageUrl = fullhdInfo.getUrl();
 
             PostRequest postRequest = new PostRequest();
             postRequest.setText(text);
@@ -241,10 +240,9 @@ public class PostController {
                 return new ResponseEntity<>(response, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
             }
 
-            // Удалена проверка директории, т.к. она теперь выполняется автоматически в init() метод FileStorageService
-            logger.info("Storing file: {}, size: {}, type: {}", file.getOriginalFilename(), file.getSize(), file.getContentType());
-            String imageUrl = fileStorageService.storeFile(file);
-            logger.info("File stored successfully. URL: {}", imageUrl);
+            // Generate FullHD WebP variant for post image
+            FileStorageService.ImageInfo fullhdInfo = fileStorageService.storeFullhdFile(file, null);
+            String imageUrl = fullhdInfo.getUrl();
 
             PostRequest postRequest = new PostRequest();
             postRequest.setText(text);
