@@ -21,10 +21,11 @@ public class Follow {
     @JoinColumn(name = "following_id", nullable = false)
     private User following;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     public Follow() {
+        this.createdAt = LocalDateTime.now();
     }
 
     public Follow(User follower, User following) {

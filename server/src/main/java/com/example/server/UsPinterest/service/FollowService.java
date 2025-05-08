@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 
@@ -41,21 +42,29 @@ public class FollowService {
             throw new FollowException("Нельзя подписаться на самого себя");
         }
 
-        Optional<Follow> existingFollow = followRepository.findByFollowerAndFollowing(follower, following);
-        if (existingFollow.isPresent()) {
+        // Проверяем наличие подписки по id, чтобы обойти возможные проблемы с сущностями
+        if (followRepository.findByFollowerIdAndFollowingId(followerId, followingId).isPresent()) {
             throw new FollowException("Подписка уже существует");
         }
 
-        // Initialize follow entity with timestamp
-        Follow follow = new Follow(follower, following);
-
         try {
-            // сохраняем и сразу выполняем flush, чтобы поймать нарушения ограничений БД
-            Follow saved = followRepository.saveAndFlush(follow);
-            return followMapper.toDto(saved);
+            // Используем прямой SQL запрос через новый метод репозитория
+            LocalDateTime now = LocalDateTime.now();
+            followRepository.createFollowManually(followerId, followingId, now);
+
+            // Получаем созданную запись
+            Follow follow = followRepository.findByFollowerIdAndFollowingId(followerId, followingId)
+                    .orElseThrow(() -> new FollowException("Ошибка при создании подписки"));
+
+            return followMapper.toDto(follow);
         } catch (DataIntegrityViolationException e) {
-            // В случае уникального ограничения - подписка уже существует
-            throw new FollowException("Подписка уже существует");
+            String causeMessage = e.getMostSpecificCause().getMessage().toLowerCase();
+            // если уникальное ограничение по подписке
+            if (causeMessage.contains("unique") || causeMessage.contains("duplicate key")) {
+                throw new FollowException("Подписка уже существует");
+            }
+            // прочие нарушения целостности
+            throw e;
         }
     }
 
@@ -66,7 +75,7 @@ public class FollowService {
         User following = userRepository.findById(followingId)
                 .orElseThrow(() -> new FollowException("Пользователь не найден"));
 
-        long deleted = followRepository.deleteByFollowerAndFollowing(follower, following);
+        long deleted = followRepository.deleteByFollowerIdAndFollowingId(followerId, followingId);
         if (deleted == 0) {
             throw new FollowException("Подписка не найдена");
         }
@@ -95,7 +104,8 @@ public class FollowService {
                 .orElseThrow(() -> new FollowException("Пользователь не найден"));
         User following = userRepository.findById(followingId)
                 .orElseThrow(() -> new FollowException("Пользователь не найден"));
-        return followRepository.findByFollowerAndFollowing(follower, following).isPresent();
+        // Проверяем наличие подписки по id
+        return followRepository.findByFollowerIdAndFollowingId(followerId, followingId).isPresent();
     }
 
     public long getFollowingCount(Long userId) {
