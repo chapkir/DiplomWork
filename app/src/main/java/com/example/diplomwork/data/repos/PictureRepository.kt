@@ -56,7 +56,6 @@ class PictureRepository @Inject constructor(
         }
     }
 
-    // Получение имени текущего пользователя
     fun getCurrentUsername(): String {
         return sessionManager.username ?: ""
     }

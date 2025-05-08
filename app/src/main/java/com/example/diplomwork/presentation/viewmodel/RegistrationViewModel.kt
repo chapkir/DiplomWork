@@ -5,10 +5,14 @@ import androidx.lifecycle.viewModelScope
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.data.model.LoginRequest
 import com.example.diplomwork.data.model.RegisterRequest
+import com.example.diplomwork.data.model.UserExistsResponse
 import com.example.diplomwork.data.repos.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -19,7 +23,7 @@ class RegisterViewModel @Inject constructor(
 ) : ViewModel() {
 
     data class RegisterData(
-        val username: String = "",
+        var username: String = "",
         val firstName: String = "",
         val email: String = "",
         val birthDate: String = "",
@@ -38,8 +42,19 @@ class RegisterViewModel @Inject constructor(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
+    private val _isUsernameExists = MutableStateFlow(false)
+    val isUsernameExists: StateFlow<Boolean> = _isUsernameExists
+
     fun updateRegisterData(update: RegisterData.() -> RegisterData) {
-        _registerData.value = _registerData.value.update()
+        val currentData = _registerData.value
+        val newData = currentData.update()
+
+        _registerData.value = newData
+
+        if (currentData.username != newData.username) {
+            _isUsernameExists.value = false
+        }
+
         _errorMessage.value = null
     }
 
@@ -51,6 +66,22 @@ class RegisterViewModel @Inject constructor(
         if (_step.value > 0) _step.value -= 1
     }
 
+    suspend fun checkUsernameExists(): Boolean {
+        _isLoading.value = true
+        var result = _isUsernameExists.value
+        try {
+            result = authRepository.checkUsernameExists(_registerData.value.username).exists
+            _isUsernameExists.value = result
+        }
+        catch(e: Exception){
+            _errorMessage.value = "Ошибка: ${e.message}"
+        }
+        finally {
+            _isLoading.value = false
+        }
+        return result
+    }
+
     private fun validateRequiredFields(): Boolean {
         val f = _registerData.value
         return f.username.isNotBlank() && f.firstName.isNotBlank()
@@ -60,6 +91,7 @@ class RegisterViewModel @Inject constructor(
 
     fun register(onCompleteRegistration: () -> Unit) {
         viewModelScope.launch {
+            _isLoading.value = true
             if (!validateRequiredFields()) {
                 _errorMessage.value = "Заполните все обязательные поля"
                 return@launch

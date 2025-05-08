@@ -33,7 +33,8 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun provideProfileRepository(apiService: ApiService) = ProfileRepository(apiService)
+    fun provideProfileRepository(apiService: ApiService, sessionManager: SessionManager) =
+        ProfileRepository(apiService, sessionManager)
 
     @Provides
     @Singleton

@@ -16,7 +16,7 @@ val LightColorScheme = lightColorScheme(
     secondary = ButtonSecondary,  // Второстепенная кнопка
     background = BgDefault,  // Основной фон
     surface = BgElevated,  // Поднятые элементы
-    error = Error,  // Цвет для ошибок
+    error = ErrorColor,  // Цвет для ошибок
 
     // Для контрастных текстов
     onPrimary = TextPrimary,  // Цвет текста на основной кнопке
@@ -40,7 +40,7 @@ val DarkColorScheme = darkColorScheme(
     secondary = ButtonSecondary,  // Второстепенная кнопка
     background = BgDefault,  // Основной фон
     surface = BgElevated,  // Поднятые элементы
-    error = Error,  // Цвет для ошибок
+    error = ErrorColor,  // Цвет для ошибок
 
     // Для контрастных текстов
     onPrimary = TextPrimary,  // Цвет текста на основной кнопке

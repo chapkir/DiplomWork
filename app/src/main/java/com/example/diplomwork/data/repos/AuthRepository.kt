@@ -7,6 +7,7 @@ import com.example.diplomwork.data.model.TokenRefreshResponse
 import com.example.diplomwork.data.model.RegisterRequest
 import com.example.diplomwork.data.model.RegisterResponse
 import com.example.diplomwork.data.api.ApiService
+import com.example.diplomwork.data.model.UserExistsResponse
 import dagger.hilt.android.scopes.ActivityScoped
 import retrofit2.Response
 import javax.inject.Inject
@@ -37,7 +38,7 @@ class AuthRepository @Inject constructor(
     }
 
     // Проверка существования пользователя
-    suspend fun checkUsernameExists(username: String): Response<Boolean> {
+    suspend fun checkUsernameExists(username: String): UserExistsResponse {
         return apiService.checkUsernameExists(username)
     }
 }

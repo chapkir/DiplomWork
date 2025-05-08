@@ -15,6 +15,7 @@ import com.example.diplomwork.data.model.RegisterRequest
 import com.example.diplomwork.data.model.RegisterResponse
 import com.example.diplomwork.data.model.TokenRefreshRequest
 import com.example.diplomwork.data.model.TokenRefreshResponse
+import com.example.diplomwork.data.model.UserExistsResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -126,8 +127,8 @@ interface ApiService {
         @Body comment: CommentRequest
     ): CommentResponse
 
-    @GET("api/auth/check-username/{username}")
-    suspend fun checkUsernameExists(@Path("username") username: String): Response<Boolean>
+    @GET("api/users/exists/{username}")
+    suspend fun checkUsernameExists(@Path("username") username: String): UserExistsResponse
 
     @Multipart
     @POST("api/profile/image")

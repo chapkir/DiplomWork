@@ -128,7 +128,7 @@ class PictureDetailScreenViewModel @Inject constructor(
             } else {
                 Log.e(
                     "PictureDetailViewModel",
-                    "Error adding comment: ${result.exceptionOrNull()?.message}"
+                    "ErrorColor adding comment: ${result.exceptionOrNull()?.message}"
                 )
             }
         }

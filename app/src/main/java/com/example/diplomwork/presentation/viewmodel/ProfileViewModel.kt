@@ -25,11 +25,11 @@ import javax.inject.Inject
 class ProfileViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val profileRepository: ProfileRepository,
-    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _userId: Long? = savedStateHandle["userId"]
     private val _username: String = savedStateHandle["username"] ?: ""
+    private val currentUsername = profileRepository.getCurrentUsername()
 
     private val _profileData = MutableStateFlow<ProfileResponse?>(null)
     val profileData: StateFlow<ProfileResponse?> = _profileData
@@ -69,7 +69,7 @@ class ProfileViewModel @Inject constructor(
 
 
     init {
-        if(_username == sessionManager.username) loadProfile()
+        if(_username == currentUsername) loadProfile()
         else loadProfile(userId = _userId)
     }
 
@@ -187,12 +187,8 @@ class ProfileViewModel @Inject constructor(
     // Проверка авторизации
     fun checkAuth(onNavigateToLogin: () -> Unit) {
         viewModelScope.launch {
-            try {
-                if (!sessionManager.isLoggedIn()) {
-                    onNavigateToLogin()
-                }
-            } catch (e: Exception) {
-                Log.e("ProfileViewModel", "Ошибка проверки сессии: ${e.message}")
+            if (!profileRepository.isLoggedIn()) {
+                onNavigateToLogin()
             }
         }
     }

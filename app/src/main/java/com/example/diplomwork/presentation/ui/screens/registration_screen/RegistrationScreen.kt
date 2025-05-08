@@ -42,6 +42,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -66,8 +67,10 @@ import com.example.diplomwork.R
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.presentation.ui.theme.BgDefault
 import com.example.diplomwork.presentation.ui.theme.ButtonPrimary
+import com.example.diplomwork.presentation.ui.theme.ErrorColor
 import com.example.diplomwork.presentation.viewmodel.EditProfileViewModel
 import com.example.diplomwork.presentation.viewmodel.RegisterViewModel
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 fun hideKeyboard(context: Context) {
@@ -89,8 +92,10 @@ fun RegisterScreen(
 ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
+    val coroutineScope = rememberCoroutineScope()
 
     val registerData by registerViewModel.registerData.collectAsState()
+    val isUsernameExists by registerViewModel.isUsernameExists.collectAsState()
     val editProfileData by editProfileViewModel.editProfileData.collectAsState()
     val step by registerViewModel.step.collectAsState()
     val isLoading by registerViewModel.isLoading.collectAsState()
@@ -127,13 +132,27 @@ fun RegisterScreen(
         when (step) {
             0 -> {
                 StepTitle("Как тебя зовут?")
-                InputField("Введите имя пользователя", registerData.username, {
+                RegisterTextField("Введите имя пользователя", registerData.username, {
                     registerViewModel.updateRegisterData {
-                        copy(username = it.replace(" ", "").filter { c -> c.code in 32..126 })
+                        copy(
+                            username = it
+                                .replace(" ", "")
+                                .filter { c -> c.code in 32..126 })
                     }
-                }, KeyboardType.Text, focusRequester)
+                }, KeyboardType.Text, focusRequester, isUsernameExists = isUsernameExists)
+                if (isUsernameExists) {
+                    Spacer(Modifier.height(7.dp))
+                    Box(modifier = Modifier.fillMaxWidth(0.85f)) {
+                        Text(
+                            text = "Имя пользователя уже занято. Пожалуйста, попробуйте другое.",
+                            modifier = Modifier.padding(start = 5.dp, end = 20.dp),
+                            color = ErrorColor,
+                            fontSize = 13.sp,
+                        )
+                    }
+                }
                 Spacer(Modifier.height(15.dp))
-                InputField("Введите свое имя", registerData.firstName, {
+                RegisterTextField("Введите свое имя", registerData.firstName, {
                     registerViewModel.updateRegisterData {
                         copy(firstName = it.replace(" ", ""))
                     }
@@ -142,20 +161,20 @@ fun RegisterScreen(
 
             1 -> {
                 StepTitle("Придумайте пароль")
-                InputField("Введите пароль", registerData.password, {
+                RegisterTextField("Введите пароль", registerData.password, {
                     registerViewModel.updateRegisterData {
                         copy(password = it.replace(" ", ""))
                     }
                 }, KeyboardType.Password, focusRequester, isPassword = true)
                 Spacer(Modifier.height(15.dp))
-                InputField("Повторите пароль", confirmPassword, {
+                RegisterTextField("Повторите пароль", confirmPassword, {
                     confirmPassword = it
                 }, KeyboardType.Password, isPassword = true)
             }
 
             2 -> {
                 StepTitle("Введите email и дату рождения")
-                InputField("Введите email", registerData.email, {
+                RegisterTextField("Введите email", registerData.email, {
                     registerViewModel.updateRegisterData {
                         copy(email = it.replace(" ", ""))
                     }
@@ -171,13 +190,13 @@ fun RegisterScreen(
 
             3 -> {
                 StepTitle("Расскажите о себе")
-                InputField("О себе", editProfileData.bio ?: "", {
+                RegisterTextField("О себе", editProfileData.bio ?: "", {
                     editProfileViewModel.updateProfileData { copy(bio = it) }
                 }, KeyboardType.Text, focusRequester)
 
                 Spacer(Modifier.height(15.dp))
 
-                InputField("Город", editProfileData.city ?: "", {
+                RegisterTextField("Город", editProfileData.city ?: "", {
                     editProfileViewModel.updateProfileData { copy(city = it) }
                 }, KeyboardType.Text)
 
@@ -207,7 +226,15 @@ fun RegisterScreen(
             isLoading = isLoading,
             onNext = {
                 when (step) {
-                    0, 1 -> registerViewModel.nextStep()
+                    0 -> {
+                        coroutineScope.launch {
+                            if (!registerViewModel.checkUsernameExists())
+                                registerViewModel.nextStep()
+                        }
+                    }
+
+                    1 -> registerViewModel.nextStep()
+
                     2 -> registerViewModel.register {
                         focusManager.clearFocus()
                         registerViewModel.nextStep()
@@ -238,13 +265,14 @@ fun StepTitle(text: String) {
 }
 
 @Composable
-fun InputField(
+fun RegisterTextField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
     keyboardType: KeyboardType,
     focusRequester: FocusRequester = remember { FocusRequester() },
-    isPassword: Boolean = false
+    isPassword: Boolean = false,
+    isUsernameExists: Boolean = false
 ) {
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
@@ -288,10 +316,18 @@ fun InputField(
         ),
         shape = RoundedCornerShape(15.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Color.White,
-            unfocusedBorderColor = Color.Gray,
-            focusedLabelColor = Color.White,
-            unfocusedLabelColor = Color.Gray,
+            focusedBorderColor =
+                if (!isUsernameExists) Color.White
+                else ErrorColor,
+            unfocusedBorderColor =
+                if (!isUsernameExists) Color.Gray
+                else ErrorColor,
+            focusedLabelColor =
+                if (!isUsernameExists) Color.White
+                else ErrorColor,
+            unfocusedLabelColor =
+                if (!isUsernameExists) Color.Gray
+                else ErrorColor,
             focusedTextColor = Color.White,
             unfocusedTextColor = Color.Gray,
             cursorColor = Color.White,
@@ -388,8 +424,7 @@ fun NavigationButton(
         Button(
             onClick = onNext,
             modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .height(50.dp),
+                .fillMaxWidth(0.8f),
             enabled = isNextEnabled && !isLoading,
             shape = RoundedCornerShape(15.dp),
             colors = ButtonDefaults.buttonColors(
@@ -402,7 +437,7 @@ fun NavigationButton(
             if (isLoading && step == 3) LoadingSpinnerForElement()
             else Text(
                 if (step < 3) "Далее" else "Завершить",
-                fontWeight = FontWeight.Medium, fontSize = 18.sp
+                fontWeight = FontWeight.Bold, fontSize = 17.sp
             )
         }
     }

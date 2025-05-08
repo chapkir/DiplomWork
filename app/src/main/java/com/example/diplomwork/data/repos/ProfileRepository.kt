@@ -1,5 +1,6 @@
 package com.example.diplomwork.data.repos
 
+import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.data.model.EditProfileRequest
 import com.example.diplomwork.data.model.PictureResponse
 import com.example.diplomwork.data.model.ProfileResponse
@@ -12,7 +13,8 @@ import javax.inject.Inject
 
 @ActivityScoped
 class ProfileRepository @Inject constructor(
-    private val apiService: ApiService
+    private val apiService: ApiService,
+    private val sessionManager: SessionManager
 ) {
 
     suspend fun getOwnProfile(): ProfileResponse {
@@ -37,6 +39,14 @@ class ProfileRepository @Inject constructor(
 
     suspend fun editProfile(editProfileRequest: EditProfileRequest) {
         return apiService.editProfile(editProfileRequest)
+    }
+
+    fun getCurrentUsername(): String {
+        return sessionManager.username ?: ""
+    }
+
+    fun isLoggedIn(): Boolean {
+        return sessionManager.isLoggedIn()
     }
 
     suspend fun getLikedPictures(): Result<List<PictureResponse>> {
