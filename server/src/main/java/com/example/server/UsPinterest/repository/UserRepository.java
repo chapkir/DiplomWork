@@ -26,11 +26,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email);
 
-    @Query(value = "SELECT COUNT(*) FROM followers WHERE following_id = :userId", nativeQuery = true)
+    @Query(value = "SELECT COUNT(*) FROM follows WHERE following_id = :userId", nativeQuery = true)
     long countFollowersByUserId(@Param("userId") Long userId);
 
-
-    @Query(value = "SELECT COUNT(*) FROM followers WHERE follower_id = :userId", nativeQuery = true)
+    @Query(value = "SELECT COUNT(*) FROM follows WHERE follower_id = :userId", nativeQuery = true)
     long countFollowingByUserId(@Param("userId") Long userId);
 
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.boards WHERE u.id = :id")

@@ -67,6 +67,7 @@ public class SecurityConfig {
                     auth.requestMatchers("/api/piner/uploadImage/**").permitAll();
                     auth.requestMatchers("/api/pins/uploadImage/**").permitAll();
                     auth.requestMatchers("/api/files/**").permitAll();
+                    auth.requestMatchers("/api/locations/**").permitAll();
                     auth.requestMatchers("/api/posts/test-upload-image").permitAll();
                     auth.requestMatchers("/api/profile/edit").authenticated();
                     auth.requestMatchers("/", "/js/**", "/css/**", "/img/**", "/favicon.ico").permitAll();

@@ -234,6 +234,11 @@ public class UserService {
             user.setCity(request.getCity());
         }
 
-        return userRepository.save(user);
+        User updated = userRepository.save(user);
+        return updated;
+    }
+
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
     }
 }

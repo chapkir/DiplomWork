@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,5 +47,11 @@ public class UserController {
                 .orElse(ResponseEntity.status(404).body(
                         Map.of("message", "Пользователь не найден")
                 ));
+    }
+
+    @GetMapping("/exists/{username}")
+    public ResponseEntity<Map<String, Boolean>> existsUsername(@PathVariable String username) {
+        boolean exists = userService.existsByUsername(username);
+        return ResponseEntity.ok(Collections.singletonMap("exists", exists));
     }
 }
