@@ -13,6 +13,7 @@ public interface PostStructMapper {
     @Mapping(target = "userId", source = "post.user.id")
     @Mapping(target = "username", source = "post.user.username")
     @Mapping(target = "userAvatar", source = "post.user.avatarUrl")
+    @Mapping(target = "imageUrl", source = "post.imageUrl", defaultValue = "")
     @Mapping(target = "comments", ignore = true)
     @Mapping(target = "likesCount", source = "post.likesCount")
     @Mapping(target = "isLikedByCurrentUser", source = "post.likedByCurrentUser")

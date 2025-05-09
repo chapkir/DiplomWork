@@ -8,67 +8,202 @@
     <link rel="preload" href="js/app.js" as="script">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <script src="js/app.js" defer></script>
 </head>
 <body>
+<!-- Zen-inspired Header -->
 <header class="header">
     <div class="container">
-        <a href="#" class="logo" id="logo-link">Spotsy</a>
+        <a href="#" class="logo">
+            <span class="logo-gradient">Spotsy</span>
+        </a>
         <nav class="nav">
-            <a href="#" data-view="feed" class="nav-link active">Пины</a>
-            <a href="#" data-view="posts" class="nav-link">Посты</a>
+            <a href="#" data-view="posts" class="nav-link active">Посты</a>
+            <a href="#" data-view="feed" class="nav-link">Пины</a>
             <a href="#" data-view="profile" class="nav-link">Профиль</a>
-            <button id="logout-btn" class="nav-link" style="margin-left:auto; border:none; background:none;">Выйти</button>
-            <a href="privacy.html" class="nav-link" style="margin-left:1rem;">Политика конфиденциальности</a>
+            <button id="logout-btn" class="nav-link auth-action">Выйти</button>
+            <button class="nav-link auth-action" id="login-nav-btn">Войти</button>
+            <a href="privacy.html" class="nav-link small">Политика</a>
         </nav>
     </div>
 </header>
-<main>
+
+<!-- App views -->
+<main id="app-views">
     <!-- Login View -->
-    <section id="login-view" class="view">
+    <section id="login-view" class="auth-view view">
         <div class="auth-container">
-            <form id="login-form" class="auth-form">
-                <h2>Войти в Spotsy</h2>
-                <input id="login-username" type="text" placeholder="Имя пользователя" required>
-                <input id="login-password" type="password" placeholder="Пароль" required>
-                <button type="submit">Войти</button>
-                <p>Нет аккаунта? <a href="#" id="show-signup">Регистрация</a></p>
-            </form>
+            <div class="auth-card">
+                <div class="auth-header">
+                    <h2>Войти в Spotsy</h2>
+                    <p>Добро пожаловать обратно</p>
+                </div>
+                <form id="login-form" class="auth-form">
+                    <div class="form-group">
+                        <label for="login-username">Имя пользователя</label>
+                        <input id="login-username" type="text" placeholder="Введите имя пользователя" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Пароль</label>
+                        <input id="login-password" type="password" placeholder="Введите пароль" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Войти</button>
+                    <p class="auth-switch">Нет аккаунта? <a href="#" id="show-signup">Зарегистрироваться</a></p>
+                </form>
+            </div>
         </div>
     </section>
+
     <!-- Signup View -->
-    <section id="signup-view" class="view">
+    <section id="signup-view" class="auth-view view">
         <div class="auth-container">
-            <form id="signup-form" class="auth-form">
-                <h2>Регистрация</h2>
-                <input id="signup-username" type="text" placeholder="Имя пользователя" required>
-                <input id="signup-email" type="email" placeholder="Email" required>
-                <input id="signup-password" type="password" placeholder="Пароль" required>
-                <button type="submit">Зарегистрироваться</button>
-                <p>Уже есть аккаунт? <a href="#" id="show-login">Войти</a></p>
-            </form>
+            <div class="auth-card">
+                <div class="auth-header">
+                    <h2>Регистрация</h2>
+                    <p>Создайте аккаунт в Spotsy</p>
+                </div>
+                <form id="signup-form" class="auth-form">
+                    <div class="form-group">
+                        <label for="signup-username">Имя пользователя</label>
+                        <input id="signup-username" type="text" placeholder="Придумайте имя пользователя" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-email">Email</label>
+                        <input id="signup-email" type="email" placeholder="Введите email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password">Пароль</label>
+                        <input id="signup-password" type="password" placeholder="Придумайте пароль" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Зарегистрироваться</button>
+                    <p class="auth-switch">Уже есть аккаунт? <a href="#" id="show-login">Войти</a></p>
+                </form>
+            </div>
         </div>
     </section>
-    <!-- Pinned, Posts, Profile views below -->
-    <section id="feed-view" class="view active">
-        <div id="feed" class="masonry-grid"></div>
-        <button id="load-more-pins" class="load-more-btn">Загрузить ещё</button>
+
+    <!-- Welcome Hero Section for Posts View -->
+    <section id="posts-view" class="content-view view">
+        <div class="hero zen-hero">
+            <div class="container">
+                <div class="hero-content">
+                    <h1 class="hero-title">
+                        welcome to
+                        <div>a <span class="gradient-text">calmer</span> internet</div>
+                    </h1>
+                    <p class="hero-subtitle">
+                        Бережно созданный, ориентированный на уединение, наполненный функциями.
+                        Нам важен ваш опыт, а не ваши данные.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="content-header">
+                <h2>Популярные посты</h2>
+                <p>Истории и идеи от сообщества</p>
+            </div>
+
+            <div id="posts-feed" class="masonry-grid"></div>
+            <button id="load-more-posts" class="btn btn-secondary load-more-btn">Загрузить ещё</button>
+
+            <!-- Features Section -->
+            <div class="features">
+                <h2 class="section-title">Возможности для вас</h2>
+                <div class="feature-cards">
+                    <div class="feature-card">
+                        <h3>Пространства</h3>
+                        <p>Организуйте свои пины и посты в группы, чтобы легко находить вдохновение.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Компактный режим</h3>
+                        <p>Больше контента на экране, меньше отвлекающих элементов для лучшего погружения.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Предпросмотр</h3>
+                        <p>Просматривайте детали без перехода на страницу – еще быстрее и удобнее.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Разделенный вид</h3>
+                        <p>Работайте с несколькими постами одновременно, сравнивайте и находите лучшие идеи.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
-    <section id="posts-view" class="view">
-        <div id="posts-feed" class="masonry-grid"></div>
-        <button id="load-more-posts" class="load-more-btn">Загрузить ещё</button>
+
+    <section id="feed-view" class="content-view view">
+        <div class="container">
+            <div class="content-header">
+                <h2>Популярные пины</h2>
+                <p>Исследуйте новые идеи</p>
+            </div>
+            <div id="feed" class="masonry-grid"></div>
+            <button id="load-more-pins" class="btn btn-secondary load-more-btn">Загрузить ещё</button>
+        </div>
     </section>
-    <section id="profile-view" class="view">
-        <div id="profile-content"></div>
+
+    <section id="profile-view" class="view content-view">
+        <div class="container">
+            <div class="content-header">
+                <h2>Профиль</h2>
+                <p>Ваш персональный профиль и публикации</p>
+            </div>
+            <div id="profile-content">
+                <!-- Динамическое содержимое профиля загружается через JS -->
+            </div>
+        </div>
     </section>
-    <section id="pin-detail-view" class="view">
-        <div id="pin-detail-container"></div>
+
+    <section id="pin-detail-view" class="content-view view">
+        <div class="container">
+            <div id="pin-detail-container"></div>
+        </div>
     </section>
-    <section id="post-detail-view" class="view">
-        <div id="post-detail-container"></div>
+
+    <section id="post-detail-view" class="content-view view">
+        <div class="container">
+            <div id="post-detail-container"></div>
+        </div>
     </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <span class="logo-gradient">Spotsy</span>
+                    <p>Платформа для поиска визуальных идей</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>О нас</h4>
+                        <a href="#">Команда</a>
+                        <a href="#">Как это работает</a>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Ресурсы</h4>
+                        <a href="privacy.html">Политика конфиденциальности</a>
+                        <a href="#">Условия использования</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Spotsy. Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
 </main>
+
+<!-- Loading indicator -->
+<div id="global-loader" style="display: none;">
+    <div class="loader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">Загрузка</div>
+    </div>
+</div>
 </body>
 </html>

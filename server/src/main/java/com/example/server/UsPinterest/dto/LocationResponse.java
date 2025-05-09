@@ -9,6 +9,7 @@ public class LocationResponse {
     private Double latitude;
     private Double longitude;
     private String address;
+    private String nameplace;
     private LocalDateTime createdAt;
 
     public Long getId() {
@@ -57,6 +58,14 @@ public class LocationResponse {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public String getNameplace() {
+        return nameplace;
+    }
+
+    public void setNameplace(String nameplace) {
+        this.nameplace = nameplace;
     }
 
     public LocalDateTime getCreatedAt() {

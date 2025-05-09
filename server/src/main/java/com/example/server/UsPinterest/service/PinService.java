@@ -305,11 +305,14 @@ public class PinService {
                 String imageUrl = pin.getImageUrl();
                 if (imageUrl != null && !imageUrl.isEmpty()) {
                     imageUrl = fileStorageService.updateImageUrl(imageUrl);
+                } else {
+                    imageUrl = ""; // default to empty if null or empty
                 }
                 response.setImageUrl(imageUrl);
             } catch (Exception e) {
                 logger.error("Error updating image URL for pin {}: {}", pin.getId(), e.getMessage());
-                response.setImageUrl(pin.getImageUrl());
+                String fallbackUrl = pin.getImageUrl();
+                response.setImageUrl(fallbackUrl != null ? fallbackUrl : "");
             }
 
             // Устанавливаем сохранённые размеры изображения из сущности

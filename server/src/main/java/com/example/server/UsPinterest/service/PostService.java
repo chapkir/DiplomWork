@@ -2,6 +2,7 @@ package com.example.server.UsPinterest.service;
 
 import com.example.server.UsPinterest.dto.PostRequest;
 import com.example.server.UsPinterest.dto.PostResponse;
+import com.example.server.UsPinterest.dto.CursorPageResponse;
 import com.example.server.UsPinterest.dto.mapper.PostStructMapper;
 import com.example.server.UsPinterest.model.Post;
 import com.example.server.UsPinterest.model.User;
@@ -13,6 +14,7 @@ import com.example.server.UsPinterest.security.UserPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,7 @@ public class PostService {
     private final NotificationService notificationService;
     private final NotificationRepository notificationRepository;
     private final LikeRepository likeRepository;
+    private final PaginationService paginationService;
 
     @Autowired
     public PostService(PostRepository postRepository,
@@ -35,13 +38,15 @@ public class PostService {
                        PostStructMapper postStructMapper,
                        NotificationService notificationService,
                        NotificationRepository notificationRepository,
-                       LikeRepository likeRepository) {
+                       LikeRepository likeRepository,
+                       PaginationService paginationService) {
         this.postRepository = postRepository;
         this.userService = userService;
         this.postStructMapper = postStructMapper;
         this.notificationService = notificationService;
         this.notificationRepository = notificationRepository;
         this.likeRepository = likeRepository;
+        this.paginationService = paginationService;
     }
 
     @Transactional
@@ -232,5 +237,34 @@ public class PostService {
         return posts.stream()
                 .map(postStructMapper::toDto)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public CursorPageResponse<PostResponse, String> getPostsCursor(String cursor, int size) {
+        // Декодируем курсор как номер страницы
+        String pageStr = paginationService.decodeCursor(cursor, String.class);
+        int pageNo = 0;
+        if (pageStr != null) {
+            try { pageNo = Integer.parseInt(pageStr); } catch (NumberFormatException ignored) {}
+        }
+        // Запрос страницы из репозитория
+        Page<Post> page = postRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(pageNo, size));
+        // Конвертация в DTO
+        List<PostResponse> content = page.stream()
+                .map(postStructMapper::toDto)
+                .collect(Collectors.toList());
+        // Генерация курсоров
+        String nextCursor = page.hasNext() ? paginationService.encodeCursor(String.valueOf(pageNo + 1)) : null;
+        String prevCursor = page.hasPrevious() ? paginationService.encodeCursor(String.valueOf(pageNo - 1)) : null;
+        // Создаем и возвращаем CursorPageResponse
+        return paginationService.createCursorPageResponse(
+                content,
+                nextCursor,
+                prevCursor,
+                page.hasNext(),
+                page.hasPrevious(),
+                size,
+                page.getTotalElements()
+        );
     }
 }

@@ -76,6 +76,8 @@ public class SecurityConfig {
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
                     auth.requestMatchers("/.well-known/**").permitAll();
                     auth.requestMatchers("/uploads/**").permitAll();
+                    auth.requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll();
+                    auth.requestMatchers(HttpMethod.GET, "/api/profile/**").permitAll();
                     auth.anyRequest().authenticated(); // Требуем аутентификацию для всех остальных запросов
                 })
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

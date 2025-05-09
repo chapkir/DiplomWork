@@ -27,6 +27,9 @@ public class Location {
 
     private String address;
 
+    @Column(name = "nameplace")
+    private String nameplace;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -78,6 +81,14 @@ public class Location {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public String getNameplace() {
+        return nameplace;
+    }
+
+    public void setNameplace(String nameplace) {
+        this.nameplace = nameplace;
     }
 
     public LocalDateTime getCreatedAt() {

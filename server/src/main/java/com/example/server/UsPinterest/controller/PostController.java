@@ -4,6 +4,7 @@ import com.example.server.UsPinterest.dto.PostRequest;
 import com.example.server.UsPinterest.dto.PostResponse;
 import com.example.server.UsPinterest.dto.CommentRequest;
 import com.example.server.UsPinterest.dto.CommentResponse;
+import com.example.server.UsPinterest.dto.CursorPageResponse;
 import com.example.server.UsPinterest.security.CurrentUser;
 import com.example.server.UsPinterest.security.UserPrincipal;
 import com.example.server.UsPinterest.service.PostService;
@@ -294,6 +295,14 @@ public class PostController {
                 commentId, postId, currentUser.getUsername());
         commentService.deleteComment(commentId, postId, currentUser.getId());
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/cursor")
+    public ResponseEntity<CursorPageResponse<PostResponse, String>> getPostsCursor(
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "12") int size) {
+        CursorPageResponse<PostResponse, String> page = postService.getPostsCursor(cursor, size);
+        return ResponseEntity.ok(page);
     }
 
     // Обработчик исключений
