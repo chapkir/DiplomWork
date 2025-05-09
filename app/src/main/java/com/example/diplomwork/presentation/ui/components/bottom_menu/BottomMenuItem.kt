@@ -2,11 +2,11 @@ package com.example.diplomwork.presentation.ui.components.bottom_menu
 
 import com.example.diplomwork.R
 import com.example.diplomwork.presentation.ui.navigation.AddContent
-import com.example.diplomwork.presentation.ui.navigation.Pictures
 import com.example.diplomwork.presentation.ui.navigation.Notification
-import com.example.diplomwork.presentation.ui.navigation.Posts
 import com.example.diplomwork.presentation.ui.navigation.OwnProfile
+import com.example.diplomwork.presentation.ui.navigation.Pictures
 import com.example.diplomwork.presentation.ui.navigation.Screen
+import com.example.diplomwork.presentation.ui.navigation.Search
 
 sealed class BottomNavItem(
     val route: Screen,
@@ -15,15 +15,15 @@ sealed class BottomNavItem(
     val isAddButton: Boolean = false,
 ) {
     object PostsScreen : BottomNavItem(
-        route = Posts,
+        route = Pictures,
         icon = R.drawable.ic_home,
-        label = "Posts",
+        label = "Spots",
     )
 
     object PicturesScreen : BottomNavItem(
-        route = Pictures,
-        icon = R.drawable.ic_picture,
-        label = "Pictures"
+        route = Search,
+        icon = R.drawable.ic_search,
+        label = "Search"
     )
 
     object AddContentScreen : BottomNavItem(

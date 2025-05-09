@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -51,11 +52,8 @@ fun ImageView(
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
                 .aspectRatio(aspectRatio)
-                .graphicsLayer {
-                    clip = true
-                }
+                .graphicsLayer { clip = true }
                 .clip(RoundedCornerShape(30.dp))
         ) {
 
@@ -96,10 +94,7 @@ fun ImageView(
                         }
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(aspectRatio)
-                    .clip(RoundedCornerShape(12.dp))
+                modifier = Modifier.fillMaxSize(),
             )
 
             when {

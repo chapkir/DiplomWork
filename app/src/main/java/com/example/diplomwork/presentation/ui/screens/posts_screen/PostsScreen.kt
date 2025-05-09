@@ -95,14 +95,6 @@ fun PostsScreen(
     var isRefreshing by remember { mutableStateOf(false) }
 
     val listState = rememberLazyListState()
-    var isHeaderVisible by remember { mutableStateOf(true) }
-
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
-            .collect { (index, offset) ->
-                isHeaderVisible = (index == 0 && offset == 0)
-            }
-    }
 
     LaunchedEffect(Unit) {
         viewModel.deleteStatus.collect { message ->
@@ -110,28 +102,8 @@ fun PostsScreen(
         }
     }
 
-    val headerHeight by animateDpAsState(
-        targetValue = if (isHeaderVisible) 60.dp else 0.dp,
-        animationSpec = tween(durationMillis = 600)
-    )
-
     Column(modifier = Modifier.fillMaxWidth()) {
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(headerHeight),
-            contentAlignment = Alignment.CenterStart
-        ) {
-            if (isHeaderVisible) {
-                Text(
-                    text = "Spotsy",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 35.sp,
-                    color = Color.White
-                )
-            }
-        }
 
         PullToRefreshBox(
             isRefreshing = isLoading,

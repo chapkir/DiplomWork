@@ -1,18 +1,14 @@
 package com.example.diplomwork.presentation.ui.navigation
 
-import android.util.Log
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -33,10 +29,9 @@ import com.example.diplomwork.presentation.ui.screens.pictures_screen.PicturesSc
 import com.example.diplomwork.presentation.ui.screens.posts_screen.PostsScreen
 import com.example.diplomwork.presentation.ui.screens.profile_screen.ProfileScreen
 import com.example.diplomwork.presentation.ui.screens.registration_screen.RegisterScreen
+import com.example.diplomwork.presentation.ui.screens.search_screen.SearchScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.EditProfileScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.SettingsScreen
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,63 +56,29 @@ fun AppNavigation(navController: NavHostController) {
         hiddenScreens.none { it != null && route.startsWith(it) }
     }
 
-    var searchQuery by remember { mutableStateOf("") }
-    var lastSearchJob by remember { mutableStateOf<Job?>(null) }
-    var isSearchActive by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
     val whatCreateSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val openSheet = {
-        coroutineScope.launch { whatCreateSheetState.show() }
-    }
-
-
-    // Функция для задержки поиска
-    fun performSearch(query: String) {
-        lastSearchJob?.cancel()
-        lastSearchJob = coroutineScope.launch {
-            delay(400) // Задержка в 400 мс
-            searchQuery = query
-            isSearchActive = query.isNotEmpty()
-            Log.d("AppNavigation", "Выполняется поиск по запросу: $query")
-            if (currentRoute != Pictures::class.simpleName) {
-                navController.navigate(Pictures)
-            }
-        }
-    }
-
-    BackHandler(enabled = isSearchActive) {
-        performSearch("")
-    }
+    val openSheet = { coroutineScope.launch { whatCreateSheetState.show() } }
 
     Scaffold(
-        topBar = {
-            GetTopBars(
-                currentRoute = currentRoute,
-                onSearch = { query ->
-                    performSearch(query)
-                },
-            )
-        },
+        topBar = { GetTopBars(currentRoute = currentRoute) },
         bottomBar = {
             if (showBottomBar) BottomNavigationBar(
                 currentRoute = currentRoute,
                 onNavigate = { route ->
-                    if (route == Pictures && searchQuery.isNotEmpty()) {
-                        searchQuery = ""
-                        isSearchActive = false
-                    }
                     navController.navigate(route) {
                         popUpTo(route) { inclusive = false }
                     }
                 },
                 onAddClicked = { openSheet() }
             )
-        }
+        },
+        containerColor = Color.Black,
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = if (sessionManager.isLoggedIn()) Posts else Login,
+            startDestination = if (sessionManager.isLoggedIn()) Search else Login,
             modifier = Modifier.padding(paddingValues)
         ) {
             composable<Pictures> {
@@ -129,8 +90,7 @@ fun AppNavigation(navController: NavHostController) {
                         navController.navigate(
                             OtherProfileScreenData(userId, username)
                         )
-                    },
-                    //searchQuery = searchQuery
+                    }
                 )
             }
             composable<Login> {
@@ -193,7 +153,7 @@ fun AppNavigation(navController: NavHostController) {
                     }
                 )
             }
-            composable<Posts> {
+            composable<Spots> {
                 PostsScreen(
                     onProfileClick = { userId, username ->
                         navController.navigate(
@@ -206,6 +166,10 @@ fun AppNavigation(navController: NavHostController) {
 
             composable<Map> {
                 MapScreen()
+            }
+
+            composable<Search> {
+                SearchScreen()
             }
 
             composable<Notification> {

@@ -241,7 +241,7 @@ fun PrivacyPolicyText(modifier: Modifier = Modifier) {
 
         pushStringAnnotation(
             tag = "URL",
-            annotation = "https://spotsy.ru/privacy"
+            annotation = "http://chapkir.ru/privacy.html"
         )
         withStyle(
             style = SpanStyle(

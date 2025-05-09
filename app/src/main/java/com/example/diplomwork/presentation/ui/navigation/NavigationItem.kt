@@ -18,7 +18,7 @@ object Register : Screen
 object Pictures : Screen
 
 @Serializable
-object Posts : Screen
+object Spots : Screen
 
 @Serializable
 object AddContent : Screen
@@ -34,6 +34,9 @@ object EditProfile : Screen
 
 @Serializable
 object Settings : Screen
+
+@Serializable
+object Search : Screen
 
 @Serializable
 object Map : Screen
