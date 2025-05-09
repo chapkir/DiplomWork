@@ -5,14 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.data.model.LoginRequest
 import com.example.diplomwork.data.model.RegisterRequest
-import com.example.diplomwork.data.model.UserExistsResponse
 import com.example.diplomwork.data.repos.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -45,6 +41,12 @@ class RegisterViewModel @Inject constructor(
     private val _isUsernameExists = MutableStateFlow(false)
     val isUsernameExists: StateFlow<Boolean> = _isUsernameExists
 
+    private val _isEnteredPasswordsMatch = MutableStateFlow(true)
+    val isEnteredPasswordsMatch: StateFlow<Boolean> =_isEnteredPasswordsMatch
+
+    private val _confirmPassword = MutableStateFlow("")
+    val confirmPassword: StateFlow<String> = _confirmPassword
+
     fun updateRegisterData(update: RegisterData.() -> RegisterData) {
         val currentData = _registerData.value
         val newData = currentData.update()
@@ -54,6 +56,14 @@ class RegisterViewModel @Inject constructor(
         if (currentData.username != newData.username) {
             _isUsernameExists.value = false
         }
+
+        _isEnteredPasswordsMatch.value =
+            when{
+                registerData.value.password == "" -> true
+                newData.password == _confirmPassword.value -> true
+                _confirmPassword.value == "" -> true
+                else -> false
+            }
 
         _errorMessage.value = null
     }
@@ -81,6 +91,18 @@ class RegisterViewModel @Inject constructor(
         }
         return result
     }
+
+    fun onConfirmPasswordChange(password: String){
+        _confirmPassword.value = password
+        _isEnteredPasswordsMatch.value =
+            when{
+                registerData.value.password == "" -> true
+                _confirmPassword.value == "" -> true
+                else -> password == _registerData.value.password
+            }
+    }
+
+
 
     private fun validateRequiredFields(): Boolean {
         val f = _registerData.value
@@ -134,24 +156,23 @@ class RegisterViewModel @Inject constructor(
                 val firstName = registerData.value.firstName
                 val usernameRegex = "^[a-zA-Z0-9_]{3,15}$".toRegex()
 
-                username.matches(usernameRegex)
-                        && firstName.isNotBlank()
+                username.matches(usernameRegex) && firstName.isNotBlank()
             }
 
             1 -> {
                 val password = registerData.value.password
+                val confirmPassword = confirmPassword.value
+                val isPasswordsMatch = _isEnteredPasswordsMatch.value
                 val passwordRegex = "^\\S{8,}$".toRegex()
 
-                password.matches(passwordRegex)
+                password.matches(passwordRegex) && confirmPassword.isNotBlank() && isPasswordsMatch
             }
 
             2 -> {
                 val email = registerData.value.email
                 val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$".toRegex()
 
-                email.isNotBlank()
-                        && email.matches(emailRegex)
-                        && !email.contains(" ")
+                email.isNotBlank() && email.matches(emailRegex) && !email.contains(" ")
             }
 
             3 -> true

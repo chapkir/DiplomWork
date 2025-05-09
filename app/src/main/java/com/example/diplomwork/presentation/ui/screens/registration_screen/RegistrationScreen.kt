@@ -100,7 +100,8 @@ fun RegisterScreen(
     val step by registerViewModel.step.collectAsState()
     val isLoading by registerViewModel.isLoading.collectAsState()
     val errorMessage by registerViewModel.errorMessage.collectAsState()
-    var confirmPassword by rememberSaveable { mutableStateOf("") }
+    val confirmPassword by registerViewModel.confirmPassword.collectAsState()
+    val isEnteredPasswordsMatch by registerViewModel.isEnteredPasswordsMatch.collectAsState()
 
     val genders = listOf("Мужской", "Женский", "Другой")
     val focusRequester = remember { FocusRequester() }
@@ -139,7 +140,7 @@ fun RegisterScreen(
                                 .replace(" ", "")
                                 .filter { c -> c.code in 32..126 })
                     }
-                }, KeyboardType.Text, focusRequester, isUsernameExists = isUsernameExists)
+                }, KeyboardType.Text, focusRequester, isError = isUsernameExists)
                 if (isUsernameExists) {
                     Spacer(Modifier.height(7.dp))
                     Box(modifier = Modifier.fillMaxWidth(0.85f)) {
@@ -168,8 +169,20 @@ fun RegisterScreen(
                 }, KeyboardType.Password, focusRequester, isPassword = true)
                 Spacer(Modifier.height(15.dp))
                 RegisterTextField("Повторите пароль", confirmPassword, {
-                    confirmPassword = it
-                }, KeyboardType.Password, isPassword = true)
+                    registerViewModel.onConfirmPasswordChange(it.replace(" ", ""))
+                }, KeyboardType.Password, isPassword = true, isError = !isEnteredPasswordsMatch)
+                if (!isEnteredPasswordsMatch) {
+                    Spacer(Modifier.height(7.dp))
+                    Box(modifier = Modifier.fillMaxWidth(0.85f)) {
+                        Text(
+                            text = "Пароли не совпадают.",
+                            modifier = Modifier.padding(start = 5.dp, end = 20.dp),
+                            color = ErrorColor,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
 
             2 -> {
@@ -233,7 +246,9 @@ fun RegisterScreen(
                         }
                     }
 
-                    1 -> registerViewModel.nextStep()
+                    1 -> {
+                        registerViewModel.nextStep()
+                    }
 
                     2 -> registerViewModel.register {
                         focusManager.clearFocus()
@@ -272,7 +287,7 @@ fun RegisterTextField(
     keyboardType: KeyboardType,
     focusRequester: FocusRequester = remember { FocusRequester() },
     isPassword: Boolean = false,
-    isUsernameExists: Boolean = false
+    isError: Boolean = false
 ) {
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
@@ -299,6 +314,7 @@ fun RegisterTextField(
                 }
             }
         } else null,
+        isError = isError,
         modifier = if (label != "О себе") {
             Modifier
                 .fillMaxWidth(0.85f)
@@ -316,23 +332,18 @@ fun RegisterTextField(
         ),
         shape = RoundedCornerShape(15.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor =
-                if (!isUsernameExists) Color.White
-                else ErrorColor,
-            unfocusedBorderColor =
-                if (!isUsernameExists) Color.Gray
-                else ErrorColor,
-            focusedLabelColor =
-                if (!isUsernameExists) Color.White
-                else ErrorColor,
-            unfocusedLabelColor =
-                if (!isUsernameExists) Color.Gray
-                else ErrorColor,
+            focusedBorderColor = Color.White,
+            unfocusedBorderColor = Color.Gray,
+            errorBorderColor = ErrorColor,
+            focusedLabelColor = Color.White,
+            unfocusedLabelColor = Color.Gray,
+            errorLabelColor = ErrorColor,
             focusedTextColor = Color.White,
             unfocusedTextColor = Color.Gray,
             cursorColor = Color.White,
-            focusedTrailingIconColor = Color.Gray,
+            focusedTrailingIconColor = Color.White,
             unfocusedTrailingIconColor = Color.Gray,
+            errorTrailingIconColor = Color.White
         )
     )
 }
