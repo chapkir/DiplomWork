@@ -18,8 +18,12 @@ public class Post {
     private Long id;
 
     private String text;
+    @Column(name = "image_url")
     private String imageUrl;
+
+    @Column(name = "likes_count")
     private int likesCount;
+
     private String geolocation;
 
     @Column(name = "created_at")

@@ -145,7 +145,7 @@ public class FileStorageService {
                 .outputFormat("webp")
                 .asBufferedImage();
         ImageIO.write(webpImg, "webp", targetLocation.toFile());
-        // Возвращаем URL к новому WebP-файлу
+        // Возвращаем URL к статическому ресурсу
         return ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/uploads/profile-images/")
                 .path(filename)
@@ -166,17 +166,35 @@ public class FileStorageService {
             return imageUrl;
         }
 
-        if (imageUrl.startsWith(ServletUriComponentsBuilder.fromCurrentContextPath().toUriString())) {
+        // если URL абсолютный - оставляем его
+        if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
             return imageUrl;
         }
 
-        if (imageUrl.startsWith("/")) {
-            return ServletUriComponentsBuilder.fromCurrentContextPath()
-                    .path(imageUrl)
-                    .toUriString();
+        // конвертировать пути /uploads/* в /api/files/* для доступа через контроллер
+        String path;
+        if (imageUrl.contains("/uploads/fullhd/")) {
+            path = imageUrl.replace("/uploads/fullhd/", "/api/files/fullhd/");
+        } else if (imageUrl.contains("/uploads/profile-images/")) {
+            path = imageUrl.replace("/uploads/profile-images/", "/api/files/profile-images/");
+        } else if (imageUrl.contains("/uploads/")) {
+            path = imageUrl.replace("/uploads/", "/api/files/");
+        } else {
+            path = imageUrl;
         }
 
-        return imageUrl;
+        // проверяем относительный путь - он должен начинаться с /
+        if (!path.startsWith("/")) {
+            path = "/" + path;
+        }
+
+        // конвертируем в абсолютный URL с хостом
+        String absoluteUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path(path)
+                .toUriString();
+
+        logger.debug("Преобразование URL: {} -> {}", imageUrl, absoluteUrl);
+        return absoluteUrl;
     }
 
     public Path getFileStoragePath() {
@@ -219,7 +237,6 @@ public class FileStorageService {
         return thumbnailMaxHeight;
     }
 
-
     public ImageInfo storeResizedImage(MultipartFile file, String customFilename, Path targetDir, String uriPath, int width, int height) throws IOException {
         if (file == null || file.isEmpty()) {
             throw new IOException("Failed to store empty file");
@@ -248,11 +265,23 @@ public class FileStorageService {
     }
 
     public ImageInfo storeFullhdFile(MultipartFile file, String customFilename) throws IOException {
-        return storeResizedImage(file, customFilename, fullhdImagesLocation, "/uploads/" + fullhdImagesDir + "/", fullhdMaxWidth, fullhdMaxHeight);
+        ImageInfo info = storeResizedImage(file, customFilename, fullhdImagesLocation, "/uploads/" + fullhdImagesDir + "/", fullhdMaxWidth, fullhdMaxHeight);
+        String filename = getFilenameFromUrl(info.getUrl());
+        String url = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/uploads/" + fullhdImagesDir + "/")
+                .path(filename)
+                .toUriString();
+        return new ImageInfo(url, info.getWidth(), info.getHeight());
     }
 
     public ImageInfo storeThumbnailFile(MultipartFile file, String customFilename) throws IOException {
-        return storeResizedImage(file, customFilename, thumbnailImagesLocation, "/uploads/" + thumbnailImagesDir + "/", thumbnailMaxWidth, thumbnailMaxHeight);
+        ImageInfo info = storeResizedImage(file, customFilename, thumbnailImagesLocation, "/uploads/" + thumbnailImagesDir + "/", thumbnailMaxWidth, thumbnailMaxHeight);
+        String filename = getFilenameFromUrl(info.getUrl());
+        String url = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/uploads/" + thumbnailImagesDir + "/")
+                .path(filename)
+                .toUriString();
+        return new ImageInfo(url, info.getWidth(), info.getHeight());
     }
 
     /**

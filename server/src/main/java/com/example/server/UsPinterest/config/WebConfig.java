@@ -58,14 +58,15 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/**")
-                .addResourceLocations("classpath:/static/")
-                .setCachePeriod(3600);
-
         String uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize().toString();
         logger.info("Configuring resource handler for uploads. Path: {}", uploadPath);
 
         registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:" + uploadPath + "/")
+                .setCachePeriod(3600);
+
+        // Поддержка старых ссылок без 's'
+        registry.addResourceHandler("/upload/**")
                 .addResourceLocations("file:" + uploadPath + "/")
                 .setCachePeriod(3600);
 
@@ -79,7 +80,10 @@ public class WebConfig implements WebMvcConfigurer {
         String fullhdPath = Paths.get(uploadDir, fullhdImagesDir).toAbsolutePath().normalize().toString();
         logger.info("Configuring resource handler for fullhd images. Path: {}", fullhdPath);
         registry.addResourceHandler("/uploads/" + fullhdImagesDir + "/**")
-                .addResourceLocations("file:" + fullhdPath + "/")
+                .addResourceLocations(
+                        "file:" + fullhdPath + "/",
+                        "file:" + uploadPath + "/"
+                )
                 .setCachePeriod(3600);
 
         String thumbnailPath = Paths.get(uploadDir, thumbnailImagesDir).toAbsolutePath().normalize().toString();
@@ -118,6 +122,13 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addMapping("/api/posts/test-upload-image")
                 .allowedOrigins("*")
                 .allowedMethods("POST", "OPTIONS")
+                .allowedHeaders("*")
+                .maxAge(3600);
+
+        // Конфигурация для API Files
+        registry.addMapping("/api/files/**")
+                .allowedOrigins("*")
+                .allowedMethods("GET", "OPTIONS")
                 .allowedHeaders("*")
                 .maxAge(3600);
 

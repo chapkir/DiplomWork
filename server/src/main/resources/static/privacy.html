@@ -4,44 +4,117 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Политика конфиденциальности - Spotsy</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<!-- Header -->
 <header class="header">
     <div class="container">
-        <a href="index.html" class="logo">Spotsy</a>
+        <a href="index.html" class="logo">
+            <span class="logo-gradient">Spotsy</span>
+        </a>
         <nav class="nav">
-            <a href="index.html" class="nav-link">Пины</a>
-            <a href="index.html" class="nav-link">Посты</a>
-            <a href="index.html" class="nav-link">Профиль</a>
-            <a href="privacy.html" class="nav-link active" style="margin-left:auto;">Политика конфиденциальности</a>
+            <a href="index.html" class="nav-link">Главная</a>
+            <a href="index.html#posts-view" class="nav-link">Посты</a>
+            <a href="privacy.html" class="nav-link active">Политика конфиденциальности</a>
         </nav>
     </div>
 </header>
-<main style="margin-top:2rem; margin-bottom:2rem;">
-    <section class="container">
-        <h1>Политика конфиденциальности</h1>
-        <p>Настоящая Политика конфиденциальности описывает, какие персональные данные мы собираем, как мы их используем и защищаем при использовании вами веб-сайта Spotsy.</p>
-        <h2>1. Сбор и использование данных</h2>
-        <p>При регистрации и использовании сайта мы можем запрашивать и обрабатывать следующую информацию:</p>
-        <ul>
-            <li>Имя пользователя, адрес электронной почты и пароль для учетной записи.</li>
-            <li>Файлы изображений и описания, которые вы загружаете на сайт.</li>
-            <li>Технические данные (IP-адрес, тип устройства, браузер) для обеспечения безопасности и улучшения качества сервиса.</li>
-        </ul>
-        <h2>2. Cookies</h2>
-        <p>Мы используем cookies для хранения ваших предпочтений, аутентификации и сбора статистики. Вы можете отключить cookies в настройках браузера, но некоторые функции сайта могут перестать работать корректно.</p>
-        <h2>3. Передача данных третьим лицам</h2>
-        <p>Мы не передаем ваши персональные данные третьим лицам, за исключением случаев, предусмотренных законодательством или необходимых для работы сервисов (например, почтовые сервисы для подтверждения регистрации).</p>
-        <h2>4. Безопасность данных</h2>
-        <p>Мы принимаем технические и организационные меры для защиты ваших данных от несанкционированного доступа и утраты.</p>
-        <h2>5. Права пользователей</h2>
-        <p>Вы имеете право запрашивать изменение или удаление своих персональных данных в любое время, обратившись по указанным ниже контактам.</p>
-        <h2>6. Изменения Политики</h2>
-        <p>Мы можем периодически обновлять данную Политику конфиденциальности. О всех изменениях будет сообщено на этой странице.</p>
-        <p>Если у вас есть вопросы или замечания, свяжитесь с нами по электронной почте: <a href="mailto:support@spotsy.ru">support@spotsy.ru</a>.</p>
-    </section>
+
+<!-- Privacy Content -->
+<main class="content-view" style="display: block; padding: var(--spacing-xl) 0;">
+    <div class="container">
+        <div class="content-header">
+            <h2>Политика конфиденциальности</h2>
+            <p>Мы заботимся о ваших данных</p>
+        </div>
+
+        <div class="privacy-content" style="background: var(--background-alt); padding: var(--spacing-lg); border-radius: 12px; margin-bottom: var(--spacing-lg);">
+            <p>Настоящая Политика конфиденциальности описывает, какие персональные данные мы собираем, как мы их используем и защищаем при использовании вами веб-сайта Spotsy.</p>
+
+            <div class="privacy-section">
+                <h3 style="color: var(--primary); margin: var(--spacing-md) 0 var(--spacing-sm);">1. Сбор и использование данных</h3>
+                <p>При регистрации и использовании сайта мы можем запрашивать и обрабатывать следующую информацию:</p>
+                <ul style="list-style-type: none; padding-left: var(--spacing-md);">
+                    <li style="margin-bottom: var(--spacing-xs); position: relative;">
+                        <span style="color: var(--primary); position: absolute; left: -20px;">•</span>
+                        Имя пользователя, адрес электронной почты и пароль для учетной записи.
+                    </li>
+                    <li style="margin-bottom: var(--spacing-xs); position: relative;">
+                        <span style="color: var(--primary); position: absolute; left: -20px;">•</span>
+                        Файлы изображений и описания, которые вы загружаете на сайт.
+                    </li>
+                    <li style="margin-bottom: var(--spacing-xs); position: relative;">
+                        <span style="color: var(--primary); position: absolute; left: -20px;">•</span>
+                        Технические данные (IP-адрес, тип устройства, браузер) для обеспечения безопасности.
+                    </li>
+                </ul>
+            </div>
+
+            <div class="privacy-section">
+                <h3 style="color: var(--primary); margin: var(--spacing-md) 0 var(--spacing-sm);">2. Cookies</h3>
+                <p>Мы используем cookies для хранения ваших предпочтений, аутентификации и сбора статистики. Вы можете отключить cookies в настройках браузера, но некоторые функции сайта могут перестать работать корректно.</p>
+            </div>
+
+            <div class="privacy-section">
+                <h3 style="color: var(--primary); margin: var(--spacing-md) 0 var(--spacing-sm);">3. Передача данных третьим лицам</h3>
+                <p>Мы не передаем ваши персональные данные третьим лицам, за исключением случаев, предусмотренных законодательством или необходимых для работы сервисов (например, почтовые сервисы для подтверждения регистрации).</p>
+            </div>
+
+            <div class="privacy-section">
+                <h3 style="color: var(--primary); margin: var(--spacing-md) 0 var(--spacing-sm);">4. Безопасность данных</h3>
+                <p>Мы принимаем технические и организационные меры для защиты ваших данных от несанкционированного доступа и утраты. Все данные хранятся с использованием современных методов шифрования.</p>
+            </div>
+
+            <div class="privacy-section">
+                <h3 style="color: var(--primary); margin: var(--spacing-md) 0 var(--spacing-sm);">5. Права пользователей</h3>
+                <p>Вы имеете право запрашивать изменение или удаление своих персональных данных в любое время, обратившись по указанным ниже контактам. Мы стремимся обрабатывать такие запросы в кратчайшие сроки.</p>
+            </div>
+
+            <div class="privacy-section">
+                <h3 style="color: var(--primary); margin: var(--spacing-md) 0 var(--spacing-sm);">6. Изменения Политики</h3>
+                <p>Мы можем периодически обновлять данную Политику конфиденциальности. О всех изменениях будет сообщено на этой странице.</p>
+            </div>
+        </div>
+
+        <div class="contact-section" style="text-align: center; margin-top: var(--spacing-lg);">
+            <p>Если у вас есть вопросы или замечания, свяжитесь с нами по электронной почте:</p>
+            <a href="mailto:support@spotsy.ru" style="color: var(--primary); font-weight: 500; text-decoration: none;">support@spotsy.ru</a>
+            <div style="margin-top: var(--spacing-md);">
+                <a href="index.html" class="btn btn-primary">Вернуться на главную</a>
+            </div>
+        </div>
+    </div>
 </main>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <span class="logo-gradient">Spotsy</span>
+                <p>Платформа для поиска визуальных идей</p>
+            </div>
+            <div class="footer-links">
+                <div class="footer-column">
+                    <h4>О платформе</h4>
+                    <a href="#">О нас</a>
+                    <a href="#">Команда</a>
+                </div>
+                <div class="footer-column">
+                    <h4>Ресурсы</h4>
+                    <a href="privacy.html">Политика конфиденциальности</a>
+                    <a href="#">Условия использования</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Spotsy. Все права защищены.</p>
+        </div>
+    </div>
+</footer>
 </body>
 </html>

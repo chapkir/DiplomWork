@@ -9,6 +9,7 @@ import com.example.server.UsPinterest.model.Post;
 import com.example.server.UsPinterest.repository.LocationRepository;
 import com.example.server.UsPinterest.repository.PinRepository;
 import com.example.server.UsPinterest.repository.PostRepository;
+import com.example.server.UsPinterest.service.GeocodingService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,13 +21,16 @@ public class LocationService {
     private final LocationRepository locationRepository;
     private final PostRepository postRepository;
     private final PinRepository pinRepository;
+    private final GeocodingService geocodingService;
 
     public LocationService(LocationRepository locationRepository,
                            PostRepository postRepository,
-                           PinRepository pinRepository) {
+                           PinRepository pinRepository,
+                           GeocodingService geocodingService) {
         this.locationRepository = locationRepository;
         this.postRepository = postRepository;
         this.pinRepository = pinRepository;
+        this.geocodingService = geocodingService;
     }
 
     @Transactional
@@ -44,6 +48,8 @@ public class LocationService {
         }
         location.setLatitude(request.getLatitude());
         location.setLongitude(request.getLongitude());
+        String placeName = geocodingService.getPlaceName(request.getLatitude(), request.getLongitude());
+        location.setNameplace(placeName);
         location.setAddress(request.getAddress());
         Location saved = locationRepository.save(location);
         return toDto(saved);
@@ -75,6 +81,7 @@ public class LocationService {
         dto.setLatitude(location.getLatitude());
         dto.setLongitude(location.getLongitude());
         dto.setAddress(location.getAddress());
+        dto.setNameplace(location.getNameplace());
         dto.setCreatedAt(location.getCreatedAt());
         return dto;
     }

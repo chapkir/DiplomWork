@@ -50,13 +50,15 @@ public class Notification {
     @JsonIgnoreProperties({"password", "email", "boards", "comments", "likes"})
     private Post post;
 
-    @Column(nullable = false)
+    @Column(name = "created_at", nullable = true)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
+    @Column(name = "is_read", nullable = true)
     private boolean isRead = false;
 
-    public Notification() {}
+    public Notification() {
+        this.createdAt = LocalDateTime.now();
+    }
 
     // Геттеры и сеттеры
     public Long getId() {
