@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -32,10 +31,8 @@ import com.example.diplomwork.presentation.ui.screens.registration_screen.Regist
 import com.example.diplomwork.presentation.ui.screens.search_screen.SearchScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.EditProfileScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.SettingsScreen
-import com.example.diplomwork.presentation.ui.screens.spots_screen.PreviewPlacesScreen
 import com.example.diplomwork.presentation.ui.screens.spots_screen.SpotsScreen
 import com.example.diplomwork.presentation.ui.theme.BgDefault
-import com.example.diplomwork.presentation.ui.theme.BgElevated
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,7 +76,7 @@ fun AppNavigation(navController: NavHostController) {
             )
         },
         containerColor =
-            when(currentRoute) {
+            when (currentRoute) {
                 Login::class.simpleName -> BgDefault
                 Register::class.simpleName -> BgDefault
                 else -> BgDefault
@@ -165,7 +162,16 @@ fun AppNavigation(navController: NavHostController) {
             }
 
             composable<Spots> {
-                PreviewPlacesScreen()
+                SpotsScreen(
+                    onImageClick = { pictureId ->
+                        navController.navigate(PictureDetailScreenData(pictureId))
+                    },
+                    onProfileClick = { userId, username ->
+                        navController.navigate(
+                            OtherProfileScreenData(userId, username)
+                        )
+                    }
+                )
             }
 
             composable<Posts> {

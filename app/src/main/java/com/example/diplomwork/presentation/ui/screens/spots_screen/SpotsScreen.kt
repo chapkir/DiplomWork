@@ -3,6 +3,7 @@ package com.example.diplomwork.presentation.ui.screens.spots_screen
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,20 +16,26 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,15 +46,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import com.example.diplomwork.R
+import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.presentation.ui.components.bottom_sheets.ConfirmDeleteBottomSheet
 import com.example.diplomwork.presentation.ui.components.bottom_sheets.MenuBottomSheet
+import com.example.diplomwork.presentation.ui.screens.pictures_screen.ErrorRetryBlock
 import com.example.diplomwork.presentation.ui.theme.BgDefault
 import com.example.diplomwork.presentation.ui.theme.BgElevated
 import com.example.diplomwork.presentation.viewmodel.PicturesViewModel
@@ -59,15 +75,20 @@ import kotlinx.coroutines.launch
 
 private const val aspectRatio = 0.75f
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SpotsScreen(
     picturesViewModel: PicturesViewModel = hiltViewModel(),
     onImageClick: (Long) -> Unit,
     onProfileClick: (Long, String) -> Unit
 ) {
-    val pictures = picturesViewModel.picturesPagingFlow.collectAsLazyPagingItems()
+    val spots = picturesViewModel.picturesPagingFlow.collectAsLazyPagingItems()
 
     val context = LocalContext.current
+
+    val loadState = spots.loadState
+    val isRefreshing = loadState.refresh is LoadState.Loading
+    val stateRefresh = rememberPullToRefreshState()
 
     LaunchedEffect(Unit) {
         picturesViewModel.deleteStatus.collect { message ->
@@ -75,22 +96,105 @@ fun SpotsScreen(
         }
     }
 
-    LazyColumn(
-        modifier = Modifier
-            .padding(top = 20.dp)
-            .fillMaxSize()
-            .background(BgDefault),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { spots.refresh() },
+        state = stateRefresh,
+        indicator = {
+            Indicator(
+                modifier = Modifier.align(Alignment.TopCenter),
+                isRefreshing = isRefreshing,
+                containerColor = Color.Gray,
+                color = Color.White,
+                state = stateRefresh
+            )
+        }
     ) {
-        items(pictures.itemCount) { place ->
-            SpotsCard(place = place)
+        when {
+            loadState.refresh is LoadState.Loading -> {
+                LoadingSpinnerForScreen()
+            }
+
+            loadState.refresh is LoadState.Error -> {
+                val e = (loadState.refresh as LoadState.Error).error
+                ErrorRetryBlock(error = e.message ?: "Ошибка", onRetry = { spots.retry() })
+            }
+
+            spots.itemCount == 0 -> {
+                Text(
+                    text = "Нет доступных мест",
+                    color = Color.White,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+
+            else -> {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(1),
+                    modifier = Modifier
+                        .padding(top = 20.dp)
+                        .fillMaxSize()
+                        .background(BgDefault),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    items(spots.itemCount) { index ->
+                        spots[index]?.let { spot ->
+                            SpotsCard(
+                                imageUrl = spot.imageUrl,
+                                username = spot.username,
+                                title = spot.title,
+                                description = spot.description,
+                                userId = spot.userId,
+                                aspectRatio = spot.aspectRatio ?: 1f,
+                                userProfileImageUrl = spot.userProfileImageUrl,
+                                id = spot.id,
+                                isCurrentUserOwner = spot.isCurrentUserOwner,
+                                onSpotClick = { onImageClick(spot.id) },
+                                onProfileClick = onProfileClick,
+                                onSpotDelete = { id -> picturesViewModel.deletePicture(id) },
+                            )
+                        }
+                    }
+                    if (loadState.append is LoadState.Loading) {
+                        item() {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                modifier = Modifier
+                                    .padding(16.dp)
+                            )
+                        }
+                    }
+
+                    if (loadState.append is LoadState.Error) {
+                        val e = (loadState.append as LoadState.Error).error
+                        item() {
+                            ErrorRetryBlock(
+                                error = e.message ?: "Ошибка загрузки",
+                                onRetry = { spots.retry() })
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SpotsCard(place: Place) {
+fun SpotsCard(
+    imageUrl: String,
+    username: String,
+    title: String,
+    description: String,
+    userId: Long,
+    aspectRatio: Float,
+    userProfileImageUrl: String?,
+    id: Long,
+    isCurrentUserOwner: Boolean = false,
+    onSpotClick: () -> Unit,
+    onProfileClick: (Long, String) -> Unit,
+    onSpotDelete: (Long) -> Unit,
+) {
 
     val coroutineScope = rememberCoroutineScope()
     val menuSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -106,7 +210,7 @@ fun SpotsCard(place: Place) {
         modifier = Modifier
             .padding(horizontal = 10.dp)
             .fillMaxWidth()
-            .clickable { }
+            .clickable { onSpotClick() }
     ) {
         Box(
             modifier = Modifier
@@ -114,22 +218,85 @@ fun SpotsCard(place: Place) {
                 .graphicsLayer { clip = true }
                 .background(BgElevated)
         ) {
-            Row(
-                modifier = Modifier.fillMaxSize()
+            Column(
+                modifier = Modifier.fillMaxWidth()
             ) {
-                ImagesPager(
-                    imageUrls = place.imageUrls, modifier = Modifier
-                        .aspectRatio(aspectRatio)
-                        .weight(0.55f)
-                )
-
-                PlaceInfo(
-                    place = place,
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
                     modifier = Modifier
-                        .fillMaxHeight()
-                        .padding(8.dp)
-                        .weight(0.8f)
-                )
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp, horizontal = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(RoundedCornerShape(50))
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) { onProfileClick(userId, username) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        AsyncImage(
+                            model = userProfileImageUrl ?: R.drawable.default_avatar,
+                            contentDescription = "Avatar",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.matchParentSize()
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) { onProfileClick(userId, username) },
+                    ) {
+                        Text(
+                            text = username,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(15.dp)
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) { openMenuSheet() }
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_menu_dots_vertical),
+                            contentDescription = "Menu",
+                            tint = Color.White
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    ImagesPager(
+                        imageUrls = imageUrl,
+                        modifier = Modifier
+                            .padding(start = 7.dp)
+                            .weight(0.55f)
+                    )
+
+                    PlaceInfo(
+                        rating = 5,
+                        title = title,
+                        description = description,
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .padding(8.dp)
+                            .weight(0.8f)
+                    )
+                }
             }
         }
     }
@@ -157,20 +324,20 @@ fun SpotsCard(place: Place) {
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun ImagesPager(imageUrls: List<Int>, modifier: Modifier) {
-
+fun ImagesPager(
+    imageUrls: String,
+    modifier: Modifier
+) {
     val pagerState = rememberPagerState()
 
     Column(
         modifier = modifier
     ) {
         Box(
-            modifier = Modifier
-                .aspectRatio(aspectRatio)
-                .weight(0.55f)
+
         ) {
             HorizontalPager(
-                count = imageUrls.size,
+                count = 5,
                 state = pagerState,
                 modifier = Modifier.fillMaxSize()
             ) { page ->
@@ -196,15 +363,27 @@ fun ImagesPager(imageUrls: List<Int>, modifier: Modifier) {
                                             Color(0xFFB8D1FF),
                                             Color(0xFF2B7EFE),
                                         )
-                                    )
+                                    ),
+                                    shape = RoundedCornerShape(12.dp)
                                 )
-                                .blur(50.dp)
+                                .blur(50.dp),
                         )
 
                         AsyncImage(
-                            model = imageUrls[page],
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(imageUrls) // TODO Когда несколько картинок imageUrls[page]
+                                .crossfade(300)
+                                .diskCachePolicy(CachePolicy.ENABLED)
+                                .memoryCachePolicy(CachePolicy.ENABLED)
+                                .build(),
                             contentDescription = null,
                             contentScale = ContentScale.Crop,
+//                            onState = { state ->
+//                                isLoading = state is AsyncImagePainter.State.Loading
+//                                if (state is AsyncImagePainter.State.Error) {
+//                                    isError = true
+//                                }
+//                            },
                             modifier = Modifier
                                 .matchParentSize()
                                 .clip(RoundedCornerShape(12.dp))
@@ -217,7 +396,7 @@ fun ImagesPager(imageUrls: List<Int>, modifier: Modifier) {
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.CenterHorizontally)
-                .padding(bottom = 10.dp)
+                .padding(bottom = 10.dp, top = 5.dp)
         ) {
             HorizontalPagerIndicator(
                 pagerState = pagerState,
@@ -233,12 +412,17 @@ fun ImagesPager(imageUrls: List<Int>, modifier: Modifier) {
 }
 
 @Composable
-fun PlaceInfo(place: Place, modifier: Modifier = Modifier) {
+fun PlaceInfo(
+    rating: Int,
+    title: String,
+    description: String,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier,
     ) {
         Text(
-            text = place.title,
+            text = title,
             fontSize = 16.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
@@ -246,25 +430,22 @@ fun PlaceInfo(place: Place, modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(4.dp))
 
         // Рейтинг
-        RatingBar(rating = place.rating)
+        RatingBar(rating = rating)
 
         Spacer(modifier = Modifier.height(4.dp))
 
         // Геотег
         Text(
-            text = place.location,
+            text = "place.location",
             fontSize = 12.sp,
             color = Color.Gray
         )
-
-
-
 
         Spacer(modifier = Modifier.height(4.dp))
 
         // Описание
         Text(
-            text = place.description,
+            text = description,
             fontSize = 13.sp,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
@@ -285,45 +466,4 @@ fun RatingBar(rating: Int) {
             )
         }
     }
-}
-
-data class Place(
-    val id: Int,
-    val title: String,
-    val location: String,
-    val description: String,
-    val rating: Int,
-    val imageUrls: List<Int>
-)
-
-// Пример данных
-val samplePlaces = listOf(
-    Place(
-        id = 1,
-        title = "Атмосферная кофейня",
-        location = "Невский проспект",
-        description = "Место для спокойного отдыха и чашечки кофе.",
-        rating = 4,
-        imageUrls = listOf(
-            R.drawable.default_img_1,
-            R.drawable.defoult_image
-        )
-    ),
-    Place(
-        id = 2,
-        title = "Живописная галерея",
-        location = "Васильевский остров",
-        description = "Лучшие произведения современного искусства.",
-        rating = 5,
-        imageUrls = listOf(
-            R.drawable.default_img_1,
-            R.drawable.defoult_image,
-            R.drawable.defoult_image
-        )
-    )
-)
-
-@Composable
-fun PreviewPlacesScreen() {
-    SpotsScreen(places = samplePlaces)
 }
