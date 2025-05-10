@@ -27,6 +27,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -66,12 +67,15 @@ import com.example.diplomwork.presentation.ui.components.bottom_sheets.MenuBotto
 import com.example.diplomwork.presentation.ui.screens.pictures_screen.ErrorRetryBlock
 import com.example.diplomwork.presentation.ui.theme.BgDefault
 import com.example.diplomwork.presentation.ui.theme.BgElevated
+import com.example.diplomwork.presentation.ui.theme.ButtonPrimary
+import com.example.diplomwork.presentation.ui.theme.DividerDark
 import com.example.diplomwork.presentation.viewmodel.PicturesViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 private const val aspectRatio = 0.75f
 
@@ -129,12 +133,10 @@ fun SpotsScreen(
             }
 
             else -> {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(1),
+                LazyColumn(
                     modifier = Modifier
-                        .padding(top = 20.dp)
                         .fillMaxSize()
-                        .background(BgDefault),
+                        .background(Color.Black),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     items(spots.itemCount) { index ->
@@ -276,7 +278,9 @@ fun SpotsCard(
                         )
                     }
                 }
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(5.dp))
+                HorizontalDivider(thickness = 2.dp, color = DividerDark)
+                Spacer(modifier = Modifier.height(12.dp))
                 Row(
                     modifier = Modifier.fillMaxSize()
                 ) {
@@ -288,7 +292,7 @@ fun SpotsCard(
                     )
 
                     PlaceInfo(
-                        rating = 5,
+                        rating = Random.nextInt(1, 6),
                         title = title,
                         description = description,
                         modifier = Modifier
@@ -339,7 +343,9 @@ fun ImagesPager(
             HorizontalPager(
                 count = 5,
                 state = pagerState,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(12.dp)),
             ) { page ->
                 Card(
                     shape = RoundedCornerShape(12.dp),
@@ -360,11 +366,10 @@ fun ImagesPager(
                                 .background(
                                     Brush.linearGradient(
                                         colors = listOf(
-                                            Color(0xFFB8D1FF),
-                                            Color(0xFF2B7EFE),
+                                            Color(0xFFFFA292),
+                                            Color(0xFFD5523B),
                                         )
                                     ),
-                                    shape = RoundedCornerShape(12.dp)
                                 )
                                 .blur(50.dp),
                         )
@@ -396,13 +401,12 @@ fun ImagesPager(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.CenterHorizontally)
-                .padding(bottom = 10.dp, top = 5.dp)
+                .padding(bottom = 10.dp, top = 10.dp)
         ) {
             HorizontalPagerIndicator(
                 pagerState = pagerState,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter),
-                activeColor = Color.White,
+                modifier = Modifier.align(Alignment.BottomCenter),
+                activeColor = ButtonPrimary,
                 inactiveColor = Color.LightGray,
                 indicatorWidth = 6.dp,
                 spacing = 4.dp

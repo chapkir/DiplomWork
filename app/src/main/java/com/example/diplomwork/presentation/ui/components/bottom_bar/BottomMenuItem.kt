@@ -1,10 +1,9 @@
-package com.example.diplomwork.presentation.ui.components.bottom_menu
+package com.example.diplomwork.presentation.ui.components.bottom_bar
 
 import com.example.diplomwork.R
 import com.example.diplomwork.presentation.ui.navigation.AddContent
 import com.example.diplomwork.presentation.ui.navigation.Notification
 import com.example.diplomwork.presentation.ui.navigation.OwnProfile
-import com.example.diplomwork.presentation.ui.navigation.Pictures
 import com.example.diplomwork.presentation.ui.navigation.Screen
 import com.example.diplomwork.presentation.ui.navigation.Search
 import com.example.diplomwork.presentation.ui.navigation.Spots

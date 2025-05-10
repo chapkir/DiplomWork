@@ -49,8 +49,8 @@ fun MenuBottomSheet(
             HorizontalDivider(color = Color.LightGray)
             Spacer(modifier = Modifier.height(24.dp))
             MenuItem(title = "Скачать изображение", onClick = {})
-            MenuItem(title = "Пожаловаться на картинку", onClick = {})
-            MenuItem(title = "Скрыть картинку", onClick = {})
+            MenuItem(title = "Пожаловаться на место", onClick = {})
+            MenuItem(title = "Скрыть место", onClick = {})
             if (isOwnContent) MenuItem(title = "Удалить", onClick = { onDelete() })
         }
     }

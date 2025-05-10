@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -15,7 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
 import com.example.diplomwork.auth.SessionManager
-import com.example.diplomwork.presentation.ui.components.bottom_menu.BottomNavigationBar
+import com.example.diplomwork.presentation.ui.components.bottom_bar.BottomNavigationBar
 import com.example.diplomwork.presentation.ui.components.top_bar.GetTopBars
 import com.example.diplomwork.presentation.ui.screens.create_content_screens.CreateContentScreen
 import com.example.diplomwork.presentation.ui.screens.create_content_screens.WhatCreateBottomSheet
@@ -79,6 +80,7 @@ fun AppNavigation(navController: NavHostController) {
             when (currentRoute) {
                 Login::class.simpleName -> BgDefault
                 Register::class.simpleName -> BgDefault
+                Spots::class.simpleName -> Color.Black
                 else -> BgDefault
             },
     ) { paddingValues ->
