@@ -3,11 +3,8 @@ package com.example.diplomwork.presentation.viewmodel
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.diplomwork.data.model.CommentResponse
-import com.example.diplomwork.data.model.PictureResponse
 import com.example.diplomwork.data.repos.UploadRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -22,7 +19,7 @@ import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
-class AddContentViewModel @Inject constructor(
+class CreateContentViewModel @Inject constructor(
     private val uploadRepository: UploadRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {

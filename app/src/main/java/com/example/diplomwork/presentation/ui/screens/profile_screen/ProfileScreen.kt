@@ -140,7 +140,7 @@ fun ProfileScreen(
                         isUploading = isUploading,
                         onAvatarClick = { pickImageLauncher.launch("image/*") },
                         onSettingsClick = onSettingsClick,
-                        onSubscribe = {},
+                        onSubscribe = {  },
                         onUnsubscribe = {},
                         onBack = onBack,
                         avatarUpdateKey = avatarUpdateCounter,

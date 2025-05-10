@@ -179,7 +179,7 @@ fun ProfileHeader(
         ) {
             StatCard("$followersCount", "Подписчики", Modifier.weight(1f))
             StatCard("$followingCount", "Подписки", Modifier.weight(1f))
-            StatCard("$picturesCount", "Картинки", Modifier.weight(1f))
+            StatCard("$picturesCount", "Места", Modifier.weight(1f))
         }
         Spacer(modifier = Modifier.height(9.dp))
 
@@ -194,9 +194,7 @@ fun ProfileHeader(
             ) {
                 Button(
                     modifier = Modifier.fillMaxWidth(0.5f),
-                    onClick = {
-                        onSubscribe()
-                    },
+                    onClick = { onSubscribe() },
                     colors = ButtonColors(
                         containerColor = Color.Red.copy(alpha = 0.9f),
                         contentColor = Color.White,

@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.diplomwork.presentation.ui.theme.BgDefault
+import com.example.diplomwork.presentation.ui.theme.BgElevated
 
 @Composable
 fun StatCard(
@@ -31,7 +32,7 @@ fun StatCard(
             Modifier
                 .height(60.dp)
                 .background(
-                    color = BgDefault,
+                    color = BgElevated,
                     shape = RoundedCornerShape(12.dp)
                 )
                 .padding(10.dp)

@@ -30,8 +30,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -39,7 +37,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,14 +49,14 @@ import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForElemen
 import com.example.diplomwork.presentation.ui.navigation.CreateContentScreenData
 import com.example.diplomwork.presentation.ui.theme.ButtonPrimary
 import com.example.diplomwork.presentation.ui.theme.ErrorColor
-import com.example.diplomwork.presentation.viewmodel.AddContentViewModel
+import com.example.diplomwork.presentation.viewmodel.CreateContentViewModel
 
 @Composable
 fun CreateContentScreen(
     createContentScreenData: CreateContentScreenData,
     onContentAdded: () -> Unit,
     onBack: () -> Unit,
-    viewModel: AddContentViewModel = hiltViewModel()
+    viewModel: CreateContentViewModel = hiltViewModel()
 ) {
 
     val focusManager = LocalFocusManager.current
