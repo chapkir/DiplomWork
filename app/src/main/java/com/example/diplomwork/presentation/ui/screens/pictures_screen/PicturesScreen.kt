@@ -214,9 +214,7 @@ fun PicturesScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         PagingContentGrid(
             modifier = Modifier.fillMaxSize(),
-            onImageClick = { picture ->
-                onImageClick(picture.id)
-            },
+            onImageClick = { picture -> onImageClick(picture.id) },
             onProfileClick = onProfileClick,
             onPictureDelete = { id -> picturesViewModel.deletePicture(id) },
             pictures = pagingPictures

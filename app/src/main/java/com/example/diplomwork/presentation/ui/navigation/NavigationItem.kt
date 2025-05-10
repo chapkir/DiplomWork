@@ -21,6 +21,9 @@ object Pictures : Screen
 object Spots : Screen
 
 @Serializable
+object Posts : Screen
+
+@Serializable
 object AddContent : Screen
 
 @Serializable
@@ -45,6 +48,9 @@ object Map : Screen
 object ViewPost : Screen
 
 @Serializable
+object Gallery : Screen
+
+@Serializable
 data class PictureDetailScreenData(
     val pictureId: Long
 ) : Screen
@@ -52,12 +58,6 @@ data class PictureDetailScreenData(
 @Serializable
 data class CreateContentScreenData(
     val imageUrl: String,
-    val whatContentCreate: String,
-) : Screen
-
-@Serializable
-data class GalleryScreenData(
-    val whatContentCreate: String,
 ) : Screen
 
 @Serializable

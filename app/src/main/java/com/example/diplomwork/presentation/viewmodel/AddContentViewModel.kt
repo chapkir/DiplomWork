@@ -6,6 +6,8 @@ import android.provider.OpenableColumns
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.diplomwork.data.model.CommentResponse
+import com.example.diplomwork.data.model.PictureResponse
 import com.example.diplomwork.data.repos.UploadRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -25,13 +27,22 @@ class AddContentViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
+    data class CreateContentUiState(
+        val title: String = "",
+        val description: String = "",
+        val imageUrl: String = ""
+    )
+
+    private val _UiState = MutableStateFlow(CreateContentUiState())
+    val UiState: StateFlow<CreateContentUiState> = _UiState
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
     private val _isError = MutableStateFlow<String?>(null)
     val isError: StateFlow<String?> = _isError
 
-    fun uploadContent(type: String, imageUri: Uri?, description: String, onSuccess: () -> Unit) {
+    fun uploadContent(imageUri: Uri?, description: String, onSuccess: () -> Unit) {
         viewModelScope.launch {
             _isLoading.value = true
             _isError.value = null
@@ -41,11 +52,7 @@ class AddContentViewModel @Inject constructor(
                 val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
                 val descriptionBody = description.toRequestBody("text/plain".toMediaTypeOrNull())
 
-                val response = when (type) {
-                    "Picture" -> uploadRepository.uploadImage(body, descriptionBody)
-                    "Post" -> uploadRepository.uploadPost(body, descriptionBody)
-                    else -> throw IllegalArgumentException("Неизвестный тип: $type")
-                }
+                val response = uploadRepository.uploadImage(body, descriptionBody)
 
                 if (response.isSuccessful) {
                     onSuccess()

@@ -73,14 +73,9 @@ fun WhatCreateBottomSheet(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                CreateContentButton("Картинка", R.drawable.ic_picture) {
+                CreateContentButton("Спот", R.drawable.ic_map_marker) {
                     onDismiss()
-                    onAddContent("Picture")
-                }
-
-                CreateContentButton("Пост", R.drawable.ic_picture) {
-                    onDismiss()
-                    onAddContent("Post")
+                    onAddContent("Spot")
                 }
             }
         }

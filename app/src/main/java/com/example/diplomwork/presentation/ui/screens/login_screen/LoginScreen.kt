@@ -93,7 +93,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(115.dp))
             Text(
                 text = "Spotsy",
-                color = Color.White,
+                color = ButtonPrimary,
                 fontSize = 60.sp,
                 fontWeight = FontWeight.Bold,
             )
@@ -130,7 +130,7 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth(0.75f),
                 shape = RoundedCornerShape(15.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = ButtonPrimary,
+                    containerColor = ButtonPrimary.copy(alpha = 0.96f),
                     contentColor = Color.White,
                     disabledContainerColor = Color.Gray,
                     disabledContentColor = Color.White
@@ -237,24 +237,41 @@ fun PrivacyPolicyText(modifier: Modifier = Modifier) {
     val uriHandler = LocalUriHandler.current
 
     val annotatedText = buildAnnotatedString {
-        append("Продолжая, вы соглашаетесь с ")
+        append("Продолжая, вы соглашаетесь с положениями таких документов Spotsy, как ")
 
         pushStringAnnotation(
-            tag = "URL",
+            tag = "URL_PRIVACY",
             annotation = "http://chapkir.ru/privacy.html"
         )
         withStyle(
             style = SpanStyle(
-                color = Color(0xFF1E88E5),
+                color = ButtonPrimary.copy(alpha = 0.9f),
                 textDecoration = TextDecoration.Underline,
                 fontWeight = FontWeight.Medium
             )
         ) {
-            append("Политикой конфиденциальности")
+            append("Политика конфиденциальности")
         }
         pop()
 
-        append(" и подтверждаете, что прочли её.")
+        append(" и ")
+
+        pushStringAnnotation(
+            tag = "URL_PRIVACY",
+            annotation = "http://chapkir.ru/privacy.html"
+        )
+        withStyle(
+            style = SpanStyle(
+                color = ButtonPrimary.copy(alpha = 0.9f),
+                textDecoration = TextDecoration.Underline,
+                fontWeight = FontWeight.Medium
+            )
+        ) {
+            append("Пользовательское соглашение")
+        }
+        pop()
+
+        append(", а также подтверждаете, что прочли их.")
     }
 
     ClickableText(
@@ -264,11 +281,11 @@ fun PrivacyPolicyText(modifier: Modifier = Modifier) {
             .padding(horizontal = 22.dp, vertical = 13.dp),
         style = TextStyle(
             fontSize = 12.sp,
-            color = Color.Gray,
+            color = Color.LightGray,
             textAlign = TextAlign.Center
         ),
         onClick = { offset ->
-            annotatedText.getStringAnnotations(tag = "URL", start = offset, end = offset)
+            annotatedText.getStringAnnotations(tag = "URL_PRIVACY", start = offset, end = offset)
                 .firstOrNull()?.let { annotation ->
                     uriHandler.openUri(annotation.item)
                 }

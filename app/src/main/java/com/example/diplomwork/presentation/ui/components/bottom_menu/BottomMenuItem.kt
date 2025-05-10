@@ -7,6 +7,7 @@ import com.example.diplomwork.presentation.ui.navigation.OwnProfile
 import com.example.diplomwork.presentation.ui.navigation.Pictures
 import com.example.diplomwork.presentation.ui.navigation.Screen
 import com.example.diplomwork.presentation.ui.navigation.Search
+import com.example.diplomwork.presentation.ui.navigation.Spots
 
 sealed class BottomNavItem(
     val route: Screen,
@@ -15,7 +16,7 @@ sealed class BottomNavItem(
     val isAddButton: Boolean = false,
 ) {
     object PostsScreen : BottomNavItem(
-        route = Pictures,
+        route = Spots,
         icon = R.drawable.ic_home,
         label = "Spots",
     )

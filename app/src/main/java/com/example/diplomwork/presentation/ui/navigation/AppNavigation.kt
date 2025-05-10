@@ -32,6 +32,10 @@ import com.example.diplomwork.presentation.ui.screens.registration_screen.Regist
 import com.example.diplomwork.presentation.ui.screens.search_screen.SearchScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.EditProfileScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.SettingsScreen
+import com.example.diplomwork.presentation.ui.screens.spots_screen.PreviewPlacesScreen
+import com.example.diplomwork.presentation.ui.screens.spots_screen.SpotsScreen
+import com.example.diplomwork.presentation.ui.theme.BgDefault
+import com.example.diplomwork.presentation.ui.theme.BgElevated
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,7 +51,7 @@ fun AppNavigation(navController: NavHostController) {
             PictureDetailScreenData::class.simpleName,
             Login::class.simpleName,
             Register::class.simpleName,
-            GalleryScreenData::class.simpleName,
+            Gallery::class.simpleName,
             CreateContentScreenData::class.simpleName,
             EditProfile::class.simpleName,
         )
@@ -74,11 +78,16 @@ fun AppNavigation(navController: NavHostController) {
                 onAddClicked = { openSheet() }
             )
         },
-        containerColor = Color.Black,
+        containerColor =
+            when(currentRoute) {
+                Login::class.simpleName -> BgDefault
+                Register::class.simpleName -> BgDefault
+                else -> BgDefault
+            },
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = if (sessionManager.isLoggedIn()) Search else Login,
+            startDestination = if (sessionManager.isLoggedIn()) Spots else Login,
             modifier = Modifier.padding(paddingValues)
         ) {
             composable<Pictures> {
@@ -143,6 +152,7 @@ fun AppNavigation(navController: NavHostController) {
                     }
                 )
             }
+
             composable<PictureDetailScreenData> {
                 PictureDetailScreen(
                     onNavigateBack = { navController.popBackStack() },
@@ -153,7 +163,12 @@ fun AppNavigation(navController: NavHostController) {
                     }
                 )
             }
+
             composable<Spots> {
+                PreviewPlacesScreen()
+            }
+
+            composable<Posts> {
                 PostsScreen(
                     onProfileClick = { userId, username ->
                         navController.navigate(
@@ -214,16 +229,12 @@ fun AppNavigation(navController: NavHostController) {
                     onBack = { navController.popBackStack() }
                 )
             }
-            composable<GalleryScreenData> { backStackEntry ->
-                val galleryScreenData = backStackEntry.toRoute<GalleryScreenData>()
-                val whatContentCreate = galleryScreenData.whatContentCreate
-
+            composable<Gallery> {
                 GalleryScreen(
                     onImageSelected = { uri ->
                         navController.navigate(
                             CreateContentScreenData(
-                                uri.toString(),
-                                whatContentCreate
+                                uri.toString()
                             )
                         )
                     },
@@ -250,9 +261,9 @@ fun AppNavigation(navController: NavHostController) {
 
         if (whatCreateSheetState.isVisible) {
             WhatCreateBottomSheet(
-                onAddContent = { whatContentCreate ->
+                onAddContent = {
                     coroutineScope.launch { whatCreateSheetState.hide() }
-                    navController.navigate(GalleryScreenData(whatContentCreate = whatContentCreate))
+                    navController.navigate(Gallery)
                 },
                 onDismiss = {
                     coroutineScope.launch { whatCreateSheetState.hide() }

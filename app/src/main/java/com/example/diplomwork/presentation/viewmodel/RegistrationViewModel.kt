@@ -102,8 +102,6 @@ class RegisterViewModel @Inject constructor(
             }
     }
 
-
-
     private fun validateRequiredFields(): Boolean {
         val f = _registerData.value
         return f.username.isNotBlank() && f.firstName.isNotBlank()

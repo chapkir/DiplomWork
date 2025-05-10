@@ -280,7 +280,7 @@ fun StepTitle(text: String) {
 }
 
 @Composable
-fun RegisterTextField(
+private fun RegisterTextField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,

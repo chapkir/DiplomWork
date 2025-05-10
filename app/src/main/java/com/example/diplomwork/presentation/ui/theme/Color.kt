@@ -14,9 +14,9 @@ val DarkBlue = Color(0xFF212855)
 val DarkWhite = Color(0xFFDAD8D8)
 
 // Фоновые цвета
-val BgDefault = Color(0xFF1B1B1B)  // Основной фон
+val BgDefault = Color(0xFF121212)  // Основной фон
 val BgProfile = Color(0xFF282828)  // Фон профиля
-val BgElevated = Color(0xFF2E2E2E)  // Поднятые элементы
+val BgElevated = Color(0xFF1e1e1e)  // Поднятые элементы
 val BgOverlay = Color(0xAA000000)  // Полупрозрачный фон для оверлеев
 
 // Текстовые цвета
@@ -25,7 +25,8 @@ val TextSecondary = Color(0xFFB0B0B0)  // Второстепенный текс�
 val TextDisabled = Color(0xFF888888)  // Текст для неактивных элементов
 
 // Кнопки и акценты
-val ButtonPrimary = Color(0xFF2B7EFE)  // Основная кнопка
+//val ButtonPrimary = Color(0xFF2B7EFE)  // Основная кнопка
+val ButtonPrimary = Color(0xFFD5523B)  // Основная кнопка
 val ButtonSecondary = Color(0xFF4D4D4D)  // Второстепенная кнопка
 val ButtonDestructive = Color(0xFFE74C3C)  // Красная кнопка (удаление, предупреждения)
 

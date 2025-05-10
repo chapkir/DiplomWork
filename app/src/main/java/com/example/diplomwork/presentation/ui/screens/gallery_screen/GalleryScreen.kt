@@ -113,7 +113,12 @@ fun GalleryScreen(
                 )
             }
             Spacer(modifier = Modifier.width(23.dp))
-            Text("Галерея", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.Bold)
+            Text(
+                text = "Выберите фото спота",
+                color = Color.White,
+                fontSize = 21.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
 
         Spacer(modifier = Modifier.height(20.dp))
