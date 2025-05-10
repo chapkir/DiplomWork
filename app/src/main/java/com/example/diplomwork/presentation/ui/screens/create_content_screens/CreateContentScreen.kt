@@ -24,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -60,8 +59,7 @@ fun CreateContentScreen(
 ) {
 
     val focusManager = LocalFocusManager.current
-
-    var description by remember { mutableStateOf("") }
+    val createContentData by viewModel.createContentData.collectAsState()
     val imageUri = createContentScreenData.imageUrl.toUri()
     var aspectRatio by remember { mutableFloatStateOf(1f) }
 
@@ -126,48 +124,26 @@ fun CreateContentScreen(
 
             AddContentTextField(
                 label = "Название",
-                value = description,
-                onValueChange = { description = it }
+                value = createContentData.title,
+                onValueChange = { viewModel.updateCreateContentData { copy( title = it ) } }
             )
 
             AddContentTextField(
                 label = "Описание",
-                value = description,
-                onValueChange = { description = it }
+                value = createContentData.description,
+                onValueChange = { viewModel.updateCreateContentData { copy( description = it ) } }
             )
 
             AddContentTextField(
                 label = "Геоданные",
-                value = description,
-                onValueChange = { description = it }
+                value = createContentData.geo,
+                onValueChange = { viewModel.updateCreateContentData { copy( geo = it ) } }
             )
 
-            OutlinedTextField(
-                value = description,
-                onValueChange = { description = it },
-                label = { Text("Краткое описание") },
-                shape = RoundedCornerShape(15.dp),
-                modifier = Modifier
-                    .fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = Color.Gray,
-                    focusedLabelColor = Color.White,
-                    unfocusedLabelColor = Color.Gray,
-                    focusedLeadingIconColor = Color.White,
-                    unfocusedLeadingIconColor = Color.Gray,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.Gray,
-                    cursorColor = Color.White,
-                    focusedTrailingIconColor = Color.Gray,
-                    unfocusedTrailingIconColor = Color.Gray,
-                    disabledTextColor = Color.Gray,
-                    disabledBorderColor = Color.Gray,
-                    disabledLabelColor = Color.Gray,
-                    disabledSupportingTextColor = Color.Gray,
-                    disabledLeadingIconColor = Color.Gray,
-                    disabledTrailingIconColor = Color.Gray
-                )
+            AddContentTextField(
+                label = "Рейтинг",
+                value = createContentData.rating,
+                onValueChange = { viewModel.updateCreateContentData { copy( rating = it ) } }
             )
 
             error?.let {
@@ -183,7 +159,6 @@ fun CreateContentScreen(
                     onClick = {
                         viewModel.uploadContent(
                             imageUri = imageUri,
-                            description = description.ifBlank { "" },
                             onSuccess = onContentAdded
                         )
                     },

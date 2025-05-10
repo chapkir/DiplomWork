@@ -6,6 +6,7 @@ import android.provider.OpenableColumns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.diplomwork.data.repos.UploadRepository
+import com.example.diplomwork.presentation.viewmodel.RegisterViewModel.RegisterData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,14 +25,15 @@ class CreateContentViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
-    data class CreateContentUiState(
+    data class CreateContentData(
         val title: String = "",
         val description: String = "",
-        val imageUrl: String = ""
+        val geo: String = "",
+        val rating: String = ""
     )
 
-    private val _UiState = MutableStateFlow(CreateContentUiState())
-    val UiState: StateFlow<CreateContentUiState> = _UiState
+    private val _createContentData = MutableStateFlow(CreateContentData())
+    val createContentData: StateFlow<CreateContentData> = _createContentData
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -39,7 +41,19 @@ class CreateContentViewModel @Inject constructor(
     private val _isError = MutableStateFlow<String?>(null)
     val isError: StateFlow<String?> = _isError
 
-    fun uploadContent(imageUri: Uri?, description: String, onSuccess: () -> Unit) {
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage
+
+    fun updateCreateContentData(update: CreateContentData.() -> CreateContentData) {
+        val currentData = _createContentData.value
+        val newData = currentData.update()
+
+        _createContentData.value = newData
+
+        _errorMessage.value = null
+    }
+
+    fun uploadContent(imageUri: Uri?, onSuccess: () -> Unit) {
         viewModelScope.launch {
             _isLoading.value = true
             _isError.value = null
@@ -47,9 +61,10 @@ class CreateContentViewModel @Inject constructor(
                 val file = prepareFile(imageUri ?: throw Exception("URI отсутствует"))
                 val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
                 val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
-                val descriptionBody = description.toRequestBody("text/plain".toMediaTypeOrNull())
+                val descriptionBody = _createContentData.value.description.toRequestBody("text/plain".toMediaTypeOrNull())
+                val titleBody = _createContentData.value.title.toRequestBody("text/plain".toMediaTypeOrNull())
 
-                val response = uploadRepository.uploadImage(body, descriptionBody)
+                val response = uploadRepository.uploadImage(body, descriptionBody, titleBody)
 
                 if (response.isSuccessful) {
                     onSuccess()

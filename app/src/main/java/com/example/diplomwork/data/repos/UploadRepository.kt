@@ -16,9 +16,10 @@ class UploadRepository @Inject constructor(
 
     suspend fun uploadImage(
         file: MultipartBody.Part,
-        description: RequestBody
+        description: RequestBody,
+        title: RequestBody,
     ): Response<PictureResponse> {
-        return apiService.uploadImage(file, description)
+        return apiService.uploadImage(file, description, title)
     }
 
     suspend fun uploadPost(

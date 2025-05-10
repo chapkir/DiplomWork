@@ -70,7 +70,7 @@ fun ProfileScreen(
     val isOwnProfile by profileViewModel.isOwnProfile.collectAsState()
 
     val selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabTitles = listOf("Посты", "Картинки", "Избранное")
+    val tabTitles = listOf("Места", "Избранное")
 
     val pagerState = rememberPagerState(initialPage = selectedTabIndex)
 
@@ -79,9 +79,9 @@ fun ProfileScreen(
 
     LaunchedEffect(pagerState.currentPage) {
         when (pagerState.currentPage) {
-            0 -> profileViewModel.loadProfilePosts()
-            1 -> profileViewModel.loadProfilePictures()
-            2 -> profileViewModel.loadLikedPictures()
+            //0 -> profileViewModel.loadProfilePosts()
+            0 -> profileViewModel.loadProfilePictures()
+            1 -> profileViewModel.loadLikedPictures()
         }
     }
 
@@ -92,17 +92,17 @@ fun ProfileScreen(
     PullToRefreshBox(
         isRefreshing =
             when (pagerState.currentPage) {
-                0 -> isLoadingPosts
-                1 -> isLoadingPictures
-                2 -> isLoadingLiked
+                //0 -> isLoadingPosts
+                0 -> isLoadingPictures
+                1 -> isLoadingLiked
                 else -> isLoading
             },
         onRefresh = {
             isRefreshing = true
             when (pagerState.currentPage) {
-                0 -> profileViewModel.refreshPosts()
-                1 -> profileViewModel.refreshPictures()
-                2 -> profileViewModel.refreshLikesPictures()
+                //0 -> profileViewModel.refreshPosts()
+                0 -> profileViewModel.refreshPictures()
+                1 -> profileViewModel.refreshLikesPictures()
             }
         },
         state = stateRefresh,
@@ -111,9 +111,9 @@ fun ProfileScreen(
                 modifier = Modifier.align(Alignment.TopCenter),
                 isRefreshing =
                     when (pagerState.currentPage) {
-                    0 -> isLoadingPosts
-                    1 -> isLoadingPictures
-                    2 -> isLoadingLiked
+                    //0 -> isLoadingPosts
+                    0 -> isLoadingPictures
+                    1 -> isLoadingLiked
                     else -> isLoading
                 },
                 containerColor = Color.Gray,
@@ -155,9 +155,9 @@ fun ProfileScreen(
                         lineOffset = 2.37
                     ) { page ->
                         when (page) {
-                            0 -> PostsGrid(profilePosts, isLoadingPosts)
-                            1 -> PicturesGrid(profilePictures, onImageClick, isLoadingPictures)
-                            2 -> PicturesGrid(likedPictures, onImageClick, isLoadingLiked)
+                            //0 -> PostsGrid(profilePosts, isLoadingPosts)
+                            0 -> PicturesGrid(profilePictures, onImageClick, isLoadingPictures)
+                            1 -> PicturesGrid(likedPictures, onImageClick, isLoadingLiked)
                         }
                     }
                 }
@@ -196,7 +196,7 @@ private fun PicturesGrid(
     ) {
         items(pictures, key = { it.id }) { picture ->
             PictureCard(
-                imageUrl = picture.fullhdImageUrl,
+                imageUrl = picture.imageUrl,
                 username = picture.username,
                 userProfileImageUrl = picture.userProfileImageUrl,
                 id = picture.id,
