@@ -86,6 +86,8 @@ dependencies {
     implementation("com.drewnoakes:metadata-extractor:2.16.0")
     implementation("net.coobird:thumbnailator:0.4.8")
     implementation("org.sejda.imageio:webp-imageio:0.1.1")
+
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0")
 }
 
 tasks.test {

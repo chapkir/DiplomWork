@@ -44,7 +44,7 @@ public class CompatibilityController {
 
         try {
             User currentUser = userService.getCurrentUser();
-            List<PinResponse> pinResponses = pinRepository.findAllWithLikes().stream()
+            List<PinResponse> pinResponses = pinRepository.findAll().stream()
                     .map(pin -> pinService.convertToPinResponse(pin, currentUser))
                     .collect(Collectors.toList());
 

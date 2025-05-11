@@ -3,7 +3,6 @@ package com.example.server.UsPinterest.controller;
 import com.example.server.UsPinterest.dto.PinResponse;
 import com.example.server.UsPinterest.dto.ProfileResponse;
 import com.example.server.UsPinterest.dto.CommentResponse;
-import com.example.server.UsPinterest.dto.ApiResponse;
 import com.example.server.UsPinterest.dto.EditProfileRequest;
 import com.example.server.UsPinterest.dto.PostResponse;
 import com.example.server.UsPinterest.exception.ResourceNotFoundException;

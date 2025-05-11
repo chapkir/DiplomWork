@@ -1,6 +1,5 @@
 package com.example.server.UsPinterest.controller;
 
-import com.example.server.UsPinterest.dto.ApiResponse;
 import com.example.server.UsPinterest.dto.PageResponse;
 import com.example.server.UsPinterest.dto.PinResponse;
 import com.example.server.UsPinterest.dto.ProfileResponse;
@@ -30,7 +29,7 @@ public class SearchController {
     private Bucket bucket;
 
     @GetMapping("/pins")
-    public ResponseEntity<ApiResponse<PageResponse<PinResponse>>> searchPins(
+    public ResponseEntity<PageResponse<PinResponse>> searchPins(
             @RequestParam(required = false) String query,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -43,11 +42,11 @@ public class SearchController {
 
         logger.info("Поиск пинов по запросу: {}, страница: {}, размер: {}", query, page, size);
         PageResponse<PinResponse> result = searchService.searchPins(query, page, size, sortBy, sortDirection);
-        return ResponseEntity.ok(ApiResponse.success(result));
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/users")
-    public ResponseEntity<ApiResponse<PageResponse<ProfileResponse>>> searchUsers(
+    public ResponseEntity<PageResponse<ProfileResponse>> searchUsers(
             @RequestParam(required = false) String query,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
@@ -58,11 +57,11 @@ public class SearchController {
 
         logger.info("Поиск пользователей по запросу: {}, страница: {}, размер: {}", query, page, size);
         PageResponse<ProfileResponse> result = searchService.searchUsers(query, page, size);
-        return ResponseEntity.ok(ApiResponse.success(result));
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Map<String, Object>>> search(
+    public ResponseEntity<Map<String, Object>> search(
             @RequestParam(required = false) String query,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
@@ -80,6 +79,6 @@ public class SearchController {
         result.put("pins", pinsResult);
         result.put("users", usersResult);
 
-        return ResponseEntity.ok(ApiResponse.success(result));
+        return ResponseEntity.ok(result);
     }
 }

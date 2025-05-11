@@ -28,9 +28,14 @@ import com.drew.metadata.exif.ExifIFD0Directory;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.io.ByteArrayInputStream;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.example.server.UsPinterest.service.ImageProcessor;
 
 @Service
 public class FileStorageService {
+
+    @Autowired
+    private ImageProcessor imageProcessor;
 
     private static final Logger logger = LoggerFactory.getLogger(FileStorageService.class);
 
@@ -237,56 +242,24 @@ public class FileStorageService {
         return thumbnailMaxHeight;
     }
 
-    private int[] calculateDimensionsWithAspectRatio(int originalWidth, int originalHeight, int maxWidth, int maxHeight) {
-        double aspectRatio = (double) originalWidth / originalHeight;
-
-        // Определяем границы масштабирования в зависимости от ориентации изображения
-        int widthBound = maxWidth;
-        int heightBound = maxHeight;
-        if (originalHeight > originalWidth) {
-            // Для портретных изображений используем перевёрнутые границы
-            widthBound = maxHeight;
-            heightBound = maxWidth;
-        }
-
-        int newWidth = widthBound;
-        int newHeight = (int) (widthBound / aspectRatio);
-
-        if (newHeight > heightBound) {
-            newHeight = heightBound;
-            newWidth = (int) (heightBound * aspectRatio);
-        }
-
-        return new int[]{newWidth, newHeight};
-    }
-
     public ImageInfo storeResizedImage(MultipartFile file, String customFilename, Path targetDir, String uriPath, int maxWidth, int maxHeight) throws IOException {
         if (file == null || file.isEmpty()) {
             throw new IOException("Failed to store empty file");
         }
-        ImageIO.scanForPlugins();
         byte[] fileBytes = file.getBytes();
         String originalFilename = StringUtils.cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown");
         String baseName = customFilename != null ? customFilename : (originalFilename.contains(".") ? originalFilename.substring(0, originalFilename.lastIndexOf('.')) : originalFilename);
         String filename = baseName + ".webp";
         Path targetLocation = targetDir.resolve(filename);
-        BufferedImage img;
-        try (InputStream imgIn = new ByteArrayInputStream(fileBytes)) {
-            img = ImageIO.read(imgIn);
-        }
-        if (img == null) {
-            throw new IOException("Failed to read image for resizing");
-        }
-        // Применяем EXIF ориентацию
-        img = applyExifOrientation(fileBytes, img);
+
+        // Читаем изображение и применяем ориентацию EXIF
+        BufferedImage img = imageProcessor.readImage(fileBytes);
 
         // Рассчитываем новые размеры с сохранением пропорций
-        int[] newDimensions = calculateDimensionsWithAspectRatio(img.getWidth(), img.getHeight(), maxWidth, maxHeight);
+        int[] dims = imageProcessor.calculateDimensions(img.getWidth(), img.getHeight(), maxWidth, maxHeight);
 
-        BufferedImage outImg = Thumbnails.of(img)
-                .size(newDimensions[0], newDimensions[1])
-                .outputFormat("webp")
-                .asBufferedImage();
+        // Меняем размер и конвертируем в WebP
+        BufferedImage outImg = imageProcessor.resizeAndConvertToWebP(img, dims[0], dims[1]);
 
         try (OutputStream os = Files.newOutputStream(targetLocation)) {
             ImageIO.write(outImg, "webp", os);
@@ -332,7 +305,6 @@ public class FileStorageService {
         public int getWidth() { return width; }
         public int getHeight() { return height; }
     }
-
 
     private BufferedImage applyExifOrientation(byte[] imageBytes, BufferedImage image) {
         try (InputStream metaIn = new ByteArrayInputStream(imageBytes)) {

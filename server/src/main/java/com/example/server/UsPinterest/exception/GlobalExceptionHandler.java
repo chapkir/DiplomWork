@@ -19,7 +19,6 @@ import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MultipartException;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -31,9 +30,10 @@ import java.io.IOException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.example.server.UsPinterest.dto.ErrorResponse;
 
 @RestControllerAdvice(annotations = RestController.class)
-public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
@@ -42,33 +42,41 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
-        ErrorResponse error = new ErrorResponse(LocalDateTime.now(),
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
                 HttpStatus.NOT_FOUND.value(),
-                HttpStatus.NOT_FOUND.getReasonPhrase(),
+                "Not Found",
                 ex.getMessage(),
-                request.getRequestURI());
+                request.getRequestURI()
+        );
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
-    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
-                                                                  HttpHeaders headers,
-                                                                  HttpStatusCode status,
-                                                                  WebRequest request) {
-        String msg = ex.getBindingResult().getFieldErrors().stream()
-                .map(e -> e.getField() + ": " + e.getDefaultMessage())
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
+        String message = ex.getBindingResult().getFieldErrors().stream()
+                .map(err -> err.getField() + ": " + err.getDefaultMessage())
                 .collect(Collectors.joining(", "));
-        HttpServletRequest httpRequest = request instanceof ServletWebRequest
-                ? ((ServletWebRequest) request).getRequest()
-                : null;
-        String path = httpRequest != null ? httpRequest.getRequestURI() : "unknown";
-        HttpStatus httpStatusEnum = HttpStatus.resolve(status.value());
-        String reason = httpStatusEnum != null ? httpStatusEnum.getReasonPhrase() : "";
-        ErrorResponse error = new ErrorResponse(LocalDateTime.now(),
-                status.value(),
-                reason,
-                msg,
-                path);
-        return new ResponseEntity<>(error, status);
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                "Validation Error",
+                message,
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGeneric(Exception ex, HttpServletRequest request) {
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Internal Server Error",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -80,24 +88,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 msg,
                 request.getRequestURI());
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(Exception.class)
-    public void handleAll(Exception ex, HttpServletRequest request, HttpServletResponse response) {
-        try {
-            ErrorResponse error = new ErrorResponse(
-                    LocalDateTime.now(),
-                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                    HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-                    ex.getMessage(),
-                    request.getRequestURI());
-            response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-            String json = objectMapper.writeValueAsString(error);
-            response.getWriter().write(json);
-        } catch (IOException ioEx) {
-            logger.error("Ошибка в обработчике исключений: {}", ioEx.getMessage(), ioEx);
-        }
     }
 
     @ExceptionHandler(BadCredentialsException.class)

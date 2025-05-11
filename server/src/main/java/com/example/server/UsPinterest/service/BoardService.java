@@ -147,4 +147,16 @@ public class BoardService {
         dto.setPins(new ArrayList<>());
         return dto;
     }
-} 
+
+    @Transactional
+    public Board getOrCreateByTitle(String title) {
+        return boardRepository.findByTitle(title)
+                .orElseGet(() -> {
+                    Board board = new Board();
+                    board.setTitle(title);
+                    board.setDescription("");
+                    board.setPins(new ArrayList<>());
+                    return boardRepository.save(board);
+                });
+    }
+}

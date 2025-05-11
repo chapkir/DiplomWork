@@ -231,9 +231,8 @@ public class PinController {
             User user = userRepository.findByUsername(authentication.getName())
                     .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
 
-            // Загружаем пин с комментариями
-            Pin pin = pinRepository.findByIdWithComments(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("Пин не найден"));
+            // Загружаем пин с комментариями и лайками
+            Pin pin = pinService.getPinWithLikesAndComments(id);
 
             Comment comment = new Comment();
             comment.setText(commentRequest.getText());
@@ -271,9 +270,8 @@ public class PinController {
 
     @GetMapping("/{id}/comments")
     public ResponseEntity<?> getPinComments(@PathVariable Long id) {
-        // Загружаем пин с комментариями
-        Pin pin = pinRepository.findByIdWithComments(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Пин не найден"));
+        // Загружаем пин с комментариями и лайками
+        Pin pin = pinService.getPinWithLikesAndComments(id);
 
         List<CommentResponse> comments = pin.getComments().stream()
                 .map(comment -> {

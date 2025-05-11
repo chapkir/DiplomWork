@@ -3,6 +3,8 @@ package com.example.server.UsPinterest.controller;
 import com.example.server.UsPinterest.dto.BoardRequest;
 import com.example.server.UsPinterest.dto.BoardResponse;
 import com.example.server.UsPinterest.service.BoardService;
+import com.example.server.UsPinterest.service.UserService;
+import com.example.server.UsPinterest.model.User;
 
 import io.github.bucket4j.Bucket;
 import org.slf4j.Logger;
@@ -26,6 +28,9 @@ public class BoardController {
 
     @Autowired
     private BoardService boardService;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private Bucket bucket;
@@ -78,12 +83,13 @@ public class BoardController {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
         }
 
-        if (authentication == null) {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         logger.info("Запрос досок текущего пользователя, включая пины: {}", includePins);
-        List<BoardResponse> boards = boardService.getBoardsByUserId(null, includePins); // null означает "текущий пользователь"
+        List<BoardResponse> boards = boardService.getBoardsByUserId(currentUser.getId(), includePins);
         return ResponseEntity.ok(boards);
     }
 
