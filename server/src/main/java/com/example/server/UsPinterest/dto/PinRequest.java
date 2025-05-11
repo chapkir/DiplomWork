@@ -15,6 +15,7 @@ public class PinRequest {
     private String description;
 
     private Long boardId;
+    private Double rating;
 
     public PinRequest() {}
 
@@ -45,5 +46,13 @@ public class PinRequest {
     }
     public void setBoardId(Long boardId) {
         this.boardId = boardId;
+    }
+
+    public Double getRating() {
+        return rating;
+    }
+
+    public void setRating(Double rating) {
+        this.rating = rating;
     }
 } 

@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import java.util.List;
 
 public interface BoardRepository extends JpaRepository<Board, Long> {
+    boolean existsByTitle(String title);
     @EntityGraph(attributePaths = {"pins"})
     List<Board> findByUserId(Long userId);
 } 

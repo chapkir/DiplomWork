@@ -67,6 +67,9 @@ public class Pin {
     @Column(name = "comments_count")
     private Integer commentsCount = 0;
 
+    @Column(name = "rating")
+    private Double rating;
+
     // Поля для Full HD и миниатюрных изображений
     @Column(length = 1000, name = "fullhd_image_url")
     private String fullhdImageUrl;
@@ -197,6 +200,14 @@ public class Pin {
 
     public void setCommentsCount(Integer commentsCount) {
         this.commentsCount = commentsCount;
+    }
+
+    public Double getRating() {
+        return rating;
+    }
+
+    public void setRating(Double rating) {
+        this.rating = rating;
     }
 
     public String getFullhdImageUrl() { return fullhdImageUrl; }

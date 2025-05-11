@@ -195,6 +195,7 @@ public class PinService {
         pin.setImageUrl(pinRequest.getImageUrl());
         pin.setDescription(pinRequest.getDescription());
         pin.setUser(user);
+        pin.setRating(pinRequest.getRating());
 
         if (pinRequest.getBoardId() != null) {
             Board board = boardService.getBoardById(pinRequest.getBoardId())
@@ -375,6 +376,7 @@ public class PinService {
             response.setThumbnailImageUrl(thumbUrl);
             response.setThumbnailWidth(pin.getThumbnailWidth());
             response.setThumbnailHeight(pin.getThumbnailHeight());
+            response.setRating(pin.getRating());
 
             return response;
         } catch (Exception e) {

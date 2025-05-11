@@ -237,7 +237,30 @@ public class FileStorageService {
         return thumbnailMaxHeight;
     }
 
-    public ImageInfo storeResizedImage(MultipartFile file, String customFilename, Path targetDir, String uriPath, int width, int height) throws IOException {
+    private int[] calculateDimensionsWithAspectRatio(int originalWidth, int originalHeight, int maxWidth, int maxHeight) {
+        double aspectRatio = (double) originalWidth / originalHeight;
+
+        // Определяем границы масштабирования в зависимости от ориентации изображения
+        int widthBound = maxWidth;
+        int heightBound = maxHeight;
+        if (originalHeight > originalWidth) {
+            // Для портретных изображений используем перевёрнутые границы
+            widthBound = maxHeight;
+            heightBound = maxWidth;
+        }
+
+        int newWidth = widthBound;
+        int newHeight = (int) (widthBound / aspectRatio);
+
+        if (newHeight > heightBound) {
+            newHeight = heightBound;
+            newWidth = (int) (heightBound * aspectRatio);
+        }
+
+        return new int[]{newWidth, newHeight};
+    }
+
+    public ImageInfo storeResizedImage(MultipartFile file, String customFilename, Path targetDir, String uriPath, int maxWidth, int maxHeight) throws IOException {
         if (file == null || file.isEmpty()) {
             throw new IOException("Failed to store empty file");
         }
@@ -256,7 +279,15 @@ public class FileStorageService {
         }
         // Применяем EXIF ориентацию
         img = applyExifOrientation(fileBytes, img);
-        BufferedImage outImg = Thumbnails.of(img).size(width, height).outputFormat("webp").asBufferedImage();
+
+        // Рассчитываем новые размеры с сохранением пропорций
+        int[] newDimensions = calculateDimensionsWithAspectRatio(img.getWidth(), img.getHeight(), maxWidth, maxHeight);
+
+        BufferedImage outImg = Thumbnails.of(img)
+                .size(newDimensions[0], newDimensions[1])
+                .outputFormat("webp")
+                .asBufferedImage();
+
         try (OutputStream os = Files.newOutputStream(targetLocation)) {
             ImageIO.write(outImg, "webp", os);
         }

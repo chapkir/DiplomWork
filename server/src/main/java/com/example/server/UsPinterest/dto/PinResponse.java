@@ -26,6 +26,7 @@ public class PinResponse {
     private String thumbnailImageUrl;
     private Integer thumbnailWidth;
     private Integer thumbnailHeight;
+    private Double rating;
 
     public Long getId() {
         return id;
@@ -201,5 +202,13 @@ public class PinResponse {
 
     public void setThumbnailHeight(Integer thumbnailHeight) {
         this.thumbnailHeight = thumbnailHeight;
+    }
+
+    public Double getRating() {
+        return rating;
+    }
+
+    public void setRating(Double rating) {
+        this.rating = rating;
     }
 }
