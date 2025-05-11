@@ -42,18 +42,16 @@ public class CacheConfig {
     @Primary
     public CacheManager cacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager(CACHE_NAMES);
-        cacheManager.setCaffeine(caffeineCacheBuilder());
+        cacheManager.setCaffeine(caffeineConfig());
         cacheManager.setAllowNullValues(true);
         return cacheManager;
     }
 
-    private Caffeine<Object, Object> caffeineCacheBuilder() {
+    @Bean
+    public Caffeine<Object, Object> caffeineConfig() {
         return Caffeine.newBuilder()
-                .initialCapacity(100)
-                .maximumSize(1000)
                 .expireAfterWrite(10, TimeUnit.MINUTES)
-                .expireAfterAccess(5, TimeUnit.MINUTES)
-                .recordStats();
+                .maximumSize(10000);
     }
 
     @Bean(name = "extendedPinCacheManager")

@@ -56,6 +56,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.example.server.UsPinterest.dto.mapper.PinStructMapper;
 import com.example.server.UsPinterest.dto.mapper.PinFullHdStructMapper;
 import com.example.server.UsPinterest.dto.mapper.PinThumbnailStructMapper;
+import org.springframework.context.ApplicationEventPublisher;
 
 @Service
 @Transactional
@@ -93,6 +94,9 @@ public class PinService {
 
     @Autowired
     private PinThumbnailStructMapper pinThumbnailStructMapper;
+
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
 
     @Cacheable(value = "pins", key = "#id")
     public Optional<Pin> getPinById(Long id) {
@@ -208,13 +212,7 @@ public class PinService {
         pin.setDescription(pinRequest.getDescription());
         pin.setUser(user);
         pin.setRating(pinRequest.getRating());
-
-        // Автоматически помещаем пин с высоким рейтингом на доску "Высокий рейтинг"
-        Double rating = pinRequest.getRating();
-        if (rating != null && rating >= 4.0) {
-            Board highBoard = boardService.getOrCreateByTitle("Высокий рейтинг");
-            pin.setBoard(highBoard);
-        } else if (pinRequest.getBoardId() != null) {
+        if (pinRequest.getBoardId() != null) {
             Board board = boardService.getBoardById(pinRequest.getBoardId())
                     .orElseThrow(() -> new RuntimeException("Доска не найдена"));
             pin.setBoard(board);
@@ -225,7 +223,10 @@ public class PinService {
 
         // Инициализируем счётчик комментариев
         pin.setCommentsCount(0);
-        return pinRepository.save(pin);
+        Pin savedPin = pinRepository.save(pin);
+        // Publish event for additional processing (e.g., high-rating board assignment)
+        eventPublisher.publishEvent(new com.example.server.UsPinterest.event.PinCreatedEvent(savedPin));
+        return savedPin;
     }
 
     @Cacheable(value = "pins", key = "'user_' + #username")
@@ -234,6 +235,7 @@ public class PinService {
     }
 
     @Transactional
+    @CacheEvict(value = {"pins", "search"}, allEntries = true)
     public Map<String, Object> likePin(Long pinId, String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
@@ -265,6 +267,7 @@ public class PinService {
     }
 
     @Transactional
+    @CacheEvict(value = {"pins", "search"}, allEntries = true)
     public Map<String, Object> unlikePin(Long pinId, String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
@@ -291,6 +294,7 @@ public class PinService {
         return responseMap;
     }
 
+    @CacheEvict(value = {"pins", "search"}, allEntries = true)
     public String updatePinImageUrl(Pin pin) {
         if (pin == null || pin.getImageUrl() == null) {
             return null;
@@ -347,12 +351,12 @@ public class PinService {
         return response;
     }
 
-    @Cacheable(value = "pins", key = "'cursor_lt_' + #cursorId + '_' + #limit")
+    @Cacheable(cacheManager = "extendedPinCacheManager", value = "extended_pins", key = "'cursor_lt_' + #cursorId + '_' + #limit")
     public List<Pin> findPinsLessThan(Long cursorId, int limit) {
         return pinRepository.findByIdLessThanOrderByIdDesc(cursorId, PageRequest.of(0, limit));
     }
 
-    @Cacheable(value = "pins", key = "'cursor_gt_' + #cursorId + '_' + #limit")
+    @Cacheable(cacheManager = "extendedPinCacheManager", value = "extended_pins", key = "'cursor_gt_' + #cursorId + '_' + #limit")
     public List<Pin> findPinsGreaterThan(Long cursorId, int limit) {
         return pinRepository.findByIdGreaterThanOrderByIdAsc(cursorId, PageRequest.of(0, limit));
     }
@@ -369,6 +373,7 @@ public class PinService {
     }
 
 
+    @Cacheable(cacheManager = "extendedPinCacheManager", value = "extended_pins", key = "'cursorPage_' + #cursor + '_' + #size + '_' + #sortDirection")
     @Transactional(readOnly = true)
     public CursorPageResponse<PinResponse, String> getPinsCursor(String cursor, int size, String sortDirection) {
         // Декодируем курсор и определяем fetchSize, направление сортировки
@@ -423,6 +428,7 @@ public class PinService {
     }
 
     // Новый метод: получение FullHD изображений пинов с курсорной пагинацией
+    @Cacheable(cacheManager = "extendedPinCacheManager", value = "extended_pins", key = "'cursorFullhd_' + #cursor + '_' + #size + '_' + #sortDirection")
     @Transactional(readOnly = true)
     public CursorPageResponse<PinFullHdResponse, String> getPinsFullhdCursor(String cursor, int size, String sortDirection) {
         Long cursorId = paginationService.decodeCursor(cursor, Long.class);
@@ -472,6 +478,7 @@ public class PinService {
     }
 
     // Новый метод: получение миниатюр WebP изображений пинов с курсорной пагинацией
+    @Cacheable(cacheManager = "extendedPinCacheManager", value = "extended_pins", key = "'cursorThumbnail_' + #cursor + '_' + #size + '_' + #sortDirection")
     @Transactional(readOnly = true)
     public CursorPageResponse<PinThumbnailResponse, String> getPinsThumbnailCursor(String cursor, int size, String sortDirection) {
         Long cursorId = paginationService.decodeCursor(cursor, Long.class);
@@ -511,6 +518,7 @@ public class PinService {
     }
 
     @Transactional
+    @CacheEvict(value = {"pins", "search"}, allEntries = true)
     public void recalcImageDimensionsForAllPins() {
         List<Pin> pins = pinRepository.findAll();
         for (Pin pin : pins) {
@@ -523,6 +531,7 @@ public class PinService {
     }
 
     @Transactional
+    @CacheEvict(value = {"pins", "search"}, allEntries = true)
     public void generateImageVariantsForAllPins() {
         List<Pin> pins = pinRepository.findAll();
         for (Pin pin : pins) {
