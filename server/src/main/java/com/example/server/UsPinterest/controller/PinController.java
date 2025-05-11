@@ -22,7 +22,8 @@ import com.example.server.UsPinterest.repository.UserRepository;
 import com.example.server.UsPinterest.service.NotificationService;
 import com.example.server.UsPinterest.service.NotificationPublisher;
 import com.example.server.UsPinterest.service.PaginationService;
-import com.example.server.UsPinterest.service.PinService;
+import com.example.server.UsPinterest.service.PinCrudService;
+import com.example.server.UsPinterest.service.PinQueryService;
 import com.example.server.UsPinterest.service.FileStorageService;
 import com.example.server.UsPinterest.service.UserService;
 import com.example.server.UsPinterest.util.HateoasUtil;
@@ -60,7 +61,10 @@ public class PinController {
     private static final Logger logger = LoggerFactory.getLogger(PinController.class);
 
     @Autowired
-    private PinService pinService;
+    private PinCrudService pinCrudService;
+
+    @Autowired
+    private PinQueryService pinQueryService;
 
     @Autowired
     private PaginationService paginationService;
@@ -108,7 +112,7 @@ public class PinController {
                     .body(new MessageResponse("Слишком много запросов"));
         }
         // Получаем результат курсорной пагинации из сервиса
-        CursorPageResponse<PinResponse, String> pageResponse = pinService.getPinsCursor(cursor, size, sortDirection);
+        CursorPageResponse<PinResponse, String> pageResponse = pinQueryService.getPinsCursor(cursor, size, sortDirection);
         // Формируем HATEOAS-ответ
         HateoasResponse<CursorPageResponse<PinResponse, String>> response =
                 hateoasUtil.buildCursorPageResponse(pageResponse, cursor, size);
@@ -118,12 +122,12 @@ public class PinController {
     @GetMapping("/detail/{id}")
     public ResponseEntity<?> getPinById(@PathVariable Long id, Authentication authentication) {
         // Используем сервис для получения пина с комментариями и лайками
-        Pin pin = pinService.getPinWithLikesAndComments(id);
+        Pin pin = pinQueryService.getPinWithLikesAndComments(id);
 
         String username = authentication != null ? authentication.getName() : null;
         User currentUser = username != null ? userRepository.findByUsername(username).orElse(null) : null;
 
-        PinResponse pinResponse = pinService.convertToPinResponse(pin, currentUser);
+        PinResponse pinResponse = pinQueryService.convertToPinResponse(pin, currentUser);
         HateoasResponse<PinResponse> response = hateoasUtil.buildPinDetailResponse(pinResponse);
         return ResponseEntity.ok(response);
     }
@@ -138,8 +142,8 @@ public class PinController {
         }
 
         String username = authentication.getName();
-        Pin pin = pinService.createPin(pinRequest, username);
-        PinResponse pinResponse = pinService.convertToPinResponse(pin,
+        Pin pin = pinCrudService.createPin(pinRequest, username);
+        PinResponse pinResponse = pinQueryService.convertToPinResponse(pin,
                 userRepository.findByUsername(username).orElse(null));
 
         HateoasResponse<PinResponse> response = new HateoasResponse<>(pinResponse);
@@ -162,7 +166,7 @@ public class PinController {
                     .body(new MessageResponse("Слишком много запросов"));
         }
 
-        Map<String, Object> likeResult = pinService.likePin(id, authentication.getName());
+        Map<String, Object> likeResult = pinCrudService.likePin(id, authentication.getName());
 
         User user = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
@@ -190,7 +194,7 @@ public class PinController {
                     .body(new MessageResponse("Слишком много запросов"));
         }
 
-        Map<String, Object> unlikeResult = pinService.unlikePin(id, authentication.getName());
+        Map<String, Object> unlikeResult = pinCrudService.unlikePin(id, authentication.getName());
 
         HateoasResponse<Void> response = new HateoasResponse<>(null);
         response.addSelfLink("/api/pins/" + id + "/unlike");
@@ -216,7 +220,7 @@ public class PinController {
         // Загружаем пользователя и пин
         User user = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
-        Pin pin = pinService.getPinWithLikesAndComments(id);
+        Pin pin = pinQueryService.getPinWithLikesAndComments(id);
 
         Comment comment = new Comment();
         comment.setText(commentRequest.getText());
@@ -235,7 +239,7 @@ public class PinController {
         notificationPublisher.publishCommentNotification(user.getId(), pin.getId(), commentRequest.getText());
 
         // Формируем ответ
-        PinResponse pinResponse = pinService.convertToPinResponse(pin, user);
+        PinResponse pinResponse = pinQueryService.convertToPinResponse(pin, user);
         HateoasResponse<PinResponse> response = new HateoasResponse<>(pinResponse);
         response.addSelfLink("/api/pins/" + id + "/comments");
         response.addLink("pin", "/api/pins/detail/" + id, "GET");
@@ -248,7 +252,7 @@ public class PinController {
     @GetMapping("/{id}/comments")
     public ResponseEntity<?> getPinComments(@PathVariable Long id) {
         // Загружаем пин с комментариями и лайками
-        Pin pin = pinService.getPinWithLikesAndComments(id);
+        Pin pin = pinQueryService.getPinWithLikesAndComments(id);
 
         List<CommentResponse> comments = pin.getComments().stream()
                 .map(comment -> {
@@ -326,7 +330,7 @@ public class PinController {
             pin.setUser(user);
             pin.setCreatedAt(LocalDateTime.now());
             // Вычисляем размеры изображения через сервис
-            pinService.calculateImageDimensions(pin);
+            pinQueryService.calculateImageDimensions(pin);
             // Сохраняем новые WebP-версии в полях сущности
             pin.setFullhdImageUrl(fullhdInfo.getUrl());
             pin.setFullhdWidth(fullhdInfo.getWidth());
@@ -336,7 +340,7 @@ public class PinController {
             pin.setThumbnailHeight(thumbnailInfo.getHeight());
 
             Pin savedPin = pinRepository.save(pin);
-            PinResponse pinResponse = pinService.convertToPinResponse(savedPin, user);
+            PinResponse pinResponse = pinQueryService.convertToPinResponse(savedPin, user);
             HateoasResponse<PinResponse> response = new HateoasResponse<>(pinResponse);
 
             // Добавляем HATEOAS ссылки
@@ -372,7 +376,7 @@ public class PinController {
 
             notificationService.deleteNotificationsByPin(pin);
 
-            pinService.deletePin(id);
+            pinCrudService.deletePin(id);
 
             return ResponseEntity.noContent().build();
         } catch (ResourceNotFoundException e) {
@@ -390,7 +394,7 @@ public class PinController {
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "desc") String sortDirection) {
-        CursorPageResponse<PinFullHdResponse, String> page = pinService.getPinsFullhdCursor(cursor, size, sortDirection);
+        CursorPageResponse<PinFullHdResponse, String> page = pinQueryService.getPinsFullhdCursor(cursor, size, sortDirection);
         HateoasResponse<CursorPageResponse<PinFullHdResponse, String>> response = hateoasUtil.buildCursorPageResponse(page, cursor, size);
         return ResponseEntity.ok(response);
     }
@@ -400,7 +404,7 @@ public class PinController {
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "desc") String sortDirection) {
-        CursorPageResponse<PinThumbnailResponse, String> page = pinService.getPinsThumbnailCursor(cursor, size, sortDirection);
+        CursorPageResponse<PinThumbnailResponse, String> page = pinQueryService.getPinsThumbnailCursor(cursor, size, sortDirection);
         HateoasResponse<CursorPageResponse<PinThumbnailResponse, String>> response = hateoasUtil.buildCursorPageResponse(page, cursor, size);
         return ResponseEntity.ok(response);
     }

@@ -20,4 +20,5 @@ public interface PinStructMapper {
 
     Pin toEntity(PinRequest request);
 
+    // updateEntity can be implemented manually or via default method later
 }
