@@ -152,7 +152,7 @@ fun ProfileScreen(
                         tabTitles = tabTitles,
                         pagerState = pagerState,
                         modifier = Modifier.fillMaxSize(),
-                        lineOffset = 2.37
+                        lineOffset = 2.25
                     ) { page ->
                         when (page) {
                             //0 -> PostsGrid(profilePosts, isLoadingPosts)
@@ -196,7 +196,7 @@ private fun PicturesGrid(
     ) {
         items(pictures, key = { it.id }) { picture ->
             PictureCard(
-                imageUrl = picture.imageUrl,
+                imageUrl = picture.fullhdImageUrl,
                 username = picture.username,
                 userProfileImageUrl = picture.userProfileImageUrl,
                 id = picture.id,

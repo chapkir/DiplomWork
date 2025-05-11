@@ -143,7 +143,7 @@ fun SpotsScreen(
                     items(spots.itemCount) { index ->
                         spots[index]?.let { spot ->
                             SpotsCard(
-                                imageUrl = spot.imageUrl,
+                                imageUrl = spot.fullhdImageUrl,
                                 username = spot.username,
                                 title = spot.title,
                                 description = spot.description,

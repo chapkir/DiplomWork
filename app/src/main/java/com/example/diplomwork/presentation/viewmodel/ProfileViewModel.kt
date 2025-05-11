@@ -98,7 +98,7 @@ class ProfileViewModel @Inject constructor(
         _isLoadingPictures.value = true
         viewModelScope.launch {
             try {
-                _profilePictures.value = profileRepository.getOwnProfilePictures()
+                    _profilePictures.value = profileRepository.getOwnProfilePictures()
             } catch (e: Exception) {
                 Log.e("ProfileViewModel", "Ошибка при загрузке картинок профиля: ${e.message}")
                 _error.value = "Ошибка при загрузке картинок пользователя"
