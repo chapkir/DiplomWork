@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.DecimalMax;
+import com.example.server.UsPinterest.validation.Step;
 
 public class PinRequest {
 
@@ -19,6 +20,7 @@ public class PinRequest {
     private Long boardId;
     @DecimalMin(value = "1.0", message = "Rating must be at least 1.0")
     @DecimalMax(value = "5.0", message = "Rating must be at most 5.0")
+    @Step(value = 0.5, message = "Rating must be in increments of 0.5")
     private Double rating;
 
     public PinRequest() {}

@@ -162,31 +162,24 @@ public class PinController {
                     .body(new MessageResponse("Слишком много запросов"));
         }
 
-        try {
-            Map<String, Object> likeResult = pinService.likePin(id, authentication.getName());
+        Map<String, Object> likeResult = pinService.likePin(id, authentication.getName());
 
+        User user = userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+        Pin pin = pinRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Пин не найден"));
 
-            User user = userRepository.findByUsername(authentication.getName())
-                    .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
-            Pin pin = pinRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("Пин не найден"));
+        // Публикуем событие для асинхронной отправки уведомления
+        notificationPublisher.publishLikeNotification(user.getId(), pin.getId());
 
-            // Публикуем событие для асинхронной отправки уведомления
-            notificationPublisher.publishLikeNotification(user.getId(), pin.getId());
+        HateoasResponse<Void> response = new HateoasResponse<>(null);
+        response.addSelfLink("/api/pins/" + id + "/like");
+        response.addLink("pin", "/api/pins/detail/" + id, "GET");
+        response.addLink("unlike", "/api/pins/" + id + "/unlike", "POST");
+        response.getMeta().setMessage("Лайк успешно добавлен");
 
-            HateoasResponse<Void> response = new HateoasResponse<>(null);
-            response.addSelfLink("/api/pins/" + id + "/like");
-            response.addLink("pin", "/api/pins/detail/" + id, "GET");
-            response.addLink("unlike", "/api/pins/" + id + "/unlike", "POST");
-            response.getMeta().setMessage("Лайк успешно добавлен");
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            logger.error("Ошибка при добавлении лайка для пина {}: {}", id, e.getMessage());
-            throw e;
-        }
+        return ResponseEntity.ok(response);
     }
-
 
     @DeleteMapping("/{id}/likes")
     @PreAuthorize("hasRole('USER')")
@@ -197,22 +190,15 @@ public class PinController {
                     .body(new MessageResponse("Слишком много запросов"));
         }
 
-        try {
-            Map<String, Object> unlikeResult = pinService.unlikePin(id, authentication.getName());
+        Map<String, Object> unlikeResult = pinService.unlikePin(id, authentication.getName());
 
-            HateoasResponse<Void> response = new HateoasResponse<>(null);
-            response.addSelfLink("/api/pins/" + id + "/unlike");
-            response.addLink("pin", "/api/pins/detail/" + id, "GET");
-            response.addLink("like", "/api/pins/" + id + "/like", "POST");
-            response.getMeta().setMessage("Лайк успешно удален");
+        HateoasResponse<Void> response = new HateoasResponse<>(null);
+        response.addSelfLink("/api/pins/" + id + "/unlike");
+        response.addLink("pin", "/api/pins/detail/" + id, "GET");
+        response.getMeta().setMessage((Boolean) unlikeResult.get("liked") ? "" : "Лайк удалён");
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            logger.error("Ошибка при удалении лайка для пина {}: {}", id, e.getMessage());
-            throw e;
-        }
+        return ResponseEntity.ok(response);
     }
-
 
     @PostMapping("/{id}/comments")
     @PreAuthorize("hasRole('USER')")
@@ -227,44 +213,35 @@ public class PinController {
                     .body(new MessageResponse("Слишком много запросов"));
         }
 
-        try {
-            User user = userRepository.findByUsername(authentication.getName())
-                    .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+        // Загружаем пользователя и пин
+        User user = userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+        Pin pin = pinService.getPinWithLikesAndComments(id);
 
-            // Загружаем пин с комментариями и лайками
-            Pin pin = pinService.getPinWithLikesAndComments(id);
+        Comment comment = new Comment();
+        comment.setText(commentRequest.getText());
+        comment.setPin(pin);
+        comment.setUser(user);
+        comment.setCreatedAt(LocalDateTime.now());
 
-            Comment comment = new Comment();
-            comment.setText(commentRequest.getText());
-            comment.setPin(pin);
-            comment.setUser(user);
-            comment.setCreatedAt(LocalDateTime.now());
+        // Сохраняем комментарий и обновляем пин
+        commentRepository.save(comment);
+        pin.getComments().add(comment);
+        long totalCommentsLong = commentRepository.countByPinId(id);
+        pin.setCommentsCount(Math.toIntExact(totalCommentsLong));
+        pinRepository.save(pin);
 
-            // Сохраняем комментарий в БД
-            commentRepository.save(comment);
-            // Добавляем комментарий в коллекцию пина и обновляем счётчик комментариев
-            pin.getComments().add(comment);
-            long totalCommentsLong = commentRepository.countByPinId(id);
-            int totalComments = Math.toIntExact(totalCommentsLong);
-            pin.setCommentsCount(totalComments);
-            pinRepository.save(pin);
+        // Публикуем уведомление
+        notificationPublisher.publishCommentNotification(user.getId(), pin.getId(), commentRequest.getText());
 
-            // Публикуем событие для асинхронной отправки уведомления
-            notificationPublisher.publishCommentNotification(user.getId(), pin.getId(), commentRequest.getText());
-
-            // Возвращаем обновлённый PinResponse с актуальными счётчиками
-            PinResponse pinResponse = pinService.convertToPinResponse(pin, user);
-            HateoasResponse<PinResponse> response = new HateoasResponse<>(pinResponse);
-            response.addSelfLink("/api/pins/" + id + "/comments");
-            response.addLink("pin", "/api/pins/detail/" + id, "GET");
-            response.addLink("all-comments", "/api/pins/" + id + "/comments", "GET");
-            response.getMeta().setMessage("Комментарий успешно добавлен");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            logger.error("Ошибка при добавлении комментария к пину {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new MessageResponse("Ошибка при добавлении комментария: " + e.getMessage()));
-        }
+        // Формируем ответ
+        PinResponse pinResponse = pinService.convertToPinResponse(pin, user);
+        HateoasResponse<PinResponse> response = new HateoasResponse<>(pinResponse);
+        response.addSelfLink("/api/pins/" + id + "/comments");
+        response.addLink("pin", "/api/pins/detail/" + id, "GET");
+        response.addLink("all-comments", "/api/pins/" + id + "/comments", "GET");
+        response.getMeta().setMessage("Комментарий успешно добавлен");
+        return ResponseEntity.ok(response);
     }
 
 
