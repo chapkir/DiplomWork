@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -287,7 +288,7 @@ fun SpotsCard(
                     ImagesPager(
                         imageUrls = imageUrl,
                         modifier = Modifier
-                            .padding(start = 7.dp)
+                            .padding(start = 10.dp)
                             .weight(0.55f)
                     )
 
@@ -297,7 +298,7 @@ fun SpotsCard(
                         description = description,
                         modifier = Modifier
                             .fillMaxHeight()
-                            .padding(8.dp)
+                            .padding(start = 15.dp)
                             .weight(0.8f)
                     )
                 }
@@ -426,31 +427,33 @@ fun PlaceInfo(
         modifier = modifier,
     ) {
         Text(
-            text = title,
-            fontSize = 16.sp,
+            text = if (title == "") "Без названия" else title,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Рейтинг
         RatingBar(rating = rating)
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Геотег
         Text(
-            text = "place.location",
+            text = "Локация не указана",
             fontSize = 12.sp,
             color = Color.Gray
         )
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Описание
         Text(
-            text = description,
+            text = if (description == "") "Без описания" else description,
             fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
         )
