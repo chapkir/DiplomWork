@@ -2,6 +2,7 @@ package com.example.diplomwork.presentation.ui.screens.gallery_screen
 
 import android.net.Uri
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,6 +53,7 @@ import com.example.diplomwork.R
 import com.example.diplomwork.presentation.ui.components.CustomTabPager
 import com.example.diplomwork.presentation.ui.components.checkGalleryPermission
 import com.example.diplomwork.presentation.ui.components.requestGalleryPermission
+import com.example.diplomwork.presentation.ui.theme.ButtonPrimary
 import com.example.diplomwork.presentation.viewmodel.GalleryViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.rememberPagerState
@@ -59,7 +62,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun GalleryScreen(
-    onImageSelected: (Uri) -> Unit,
+    onImageSelected: (List<String>) -> Unit,
     onClose: () -> Unit,
     viewModel: GalleryViewModel = hiltViewModel()
 ) {
@@ -76,6 +79,9 @@ fun GalleryScreen(
 
     val pagerState = rememberPagerState(initialPage = selectedTabIndex)
 
+    var selectedImages by remember { mutableStateOf(listOf<Uri>()) }
+    val uriStrings = selectedImages.map { it.toString() }
+
     LaunchedEffect(pagerState.currentPage) {
         onTabSelected = pagerState.currentPage
     }
@@ -84,12 +90,6 @@ fun GalleryScreen(
     LaunchedEffect(Unit) {
         if (hasPermission) {
             viewModel.loadGalleryData()
-        } else {
-            requestGalleryPermission(context) { granted ->
-                hasPermission = granted
-                if (granted) viewModel.loadGalleryData()
-                else onClose()
-            }
         }
     }
 
@@ -114,9 +114,9 @@ fun GalleryScreen(
             }
             Spacer(modifier = Modifier.width(23.dp))
             Text(
-                text = "Выберите фото спота",
+                text = "Выберите до 5 фото одного места",
                 color = Color.White,
-                fontSize = 21.sp,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -144,18 +144,51 @@ fun GalleryScreen(
                                 contentPadding = PaddingValues(5.dp)
                             ) {
                                 items(images) { imageUri ->
-                                    Image(
-                                        painter = rememberAsyncImagePainter(imageUri),
-                                        contentDescription = null,
+                                    val isSelected = imageUri in selectedImages
+                                    val selectedIndex = selectedImages.indexOf(imageUri) + 1
+
+                                    Box(
                                         modifier = Modifier
                                             .size(120.dp)
                                             .padding(3.dp)
                                             .clip(RoundedCornerShape(8.dp))
+                                            .background(
+                                                if (isSelected) Color.White.copy(alpha = 0.2f)
+                                                else Color.Transparent
+                                            )
                                             .clickable {
-                                                onImageSelected(imageUri)
+                                                if (isSelected) {
+                                                    selectedImages = selectedImages - imageUri
+                                                } else if (selectedImages.size < 5) {
+                                                    selectedImages = selectedImages + imageUri
+                                                }
                                             },
-                                        contentScale = ContentScale.Crop
-                                    )
+                                        contentAlignment = Alignment.BottomEnd
+                                    ) {
+                                        Image(
+                                            painter = rememberAsyncImagePainter(imageUri),
+                                            contentDescription = null,
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+
+                                        if (isSelected) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .background(Color.Gray.copy(alpha = 0.5f))
+                                            )
+
+                                            Text(
+                                                text = selectedIndex.toString(),
+                                                color = Color.White,
+                                                fontSize = 32.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier
+                                                    .align(Alignment.Center)
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -209,7 +242,6 @@ fun GalleryScreen(
                                 requestGalleryPermission(context) { granted ->
                                     hasPermission = granted
                                     if (granted) viewModel.loadGalleryData()
-                                    else onClose()
                                 }
                             }) {
                                 Text("Разрешить")
@@ -217,6 +249,28 @@ fun GalleryScreen(
                         }
                     }
                 }
+            }
+        }
+    }
+
+    if (selectedImages.isNotEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            contentAlignment = Alignment.BottomEnd
+        ) {
+            FloatingActionButton(
+                onClick = { onImageSelected(uriStrings) },
+                modifier = Modifier.width(100.dp),
+                containerColor = ButtonPrimary,
+            ) {
+                Text(
+                    text = "Далее",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.example.diplomwork.presentation.ui.screens.create_content_screens
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,10 +10,15 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -60,7 +66,9 @@ fun CreateContentScreen(
 
     val focusManager = LocalFocusManager.current
     val createContentData by viewModel.createContentData.collectAsState()
-    val imageUri = createContentScreenData.imageUrl.toUri()
+    val imageUrls = createContentScreenData.imageUrls
+    val imageUrlsUri = imageUrls.map { it.toUri() }
+
     var aspectRatio by remember { mutableFloatStateOf(1f) }
 
     val isLoading by viewModel.isLoading.collectAsState()
@@ -70,6 +78,8 @@ fun CreateContentScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
+            .verticalScroll(rememberScrollState())
+            .imePadding()
     ) {
         // Заголовок
         Row(
@@ -90,60 +100,63 @@ fun CreateContentScreen(
 
         // Контент
         Column(
-            modifier = Modifier
-                .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(15.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Card(
-                shape = RoundedCornerShape(12.dp),
-                elevation = CardDefaults.cardElevation(5.dp),
-                modifier = Modifier
-                    .width(130.dp)
-            ) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(imageUri)
-                        .crossfade(300)
-                        .build(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    onState = { state ->
-                        if (state is AsyncImagePainter.State.Success) {
-                            val size = state.painter.intrinsicSize
-                            if (size.width > 0 && size.height > 0) {
-                                aspectRatio = size.width / size.height
-                            }
-                        }
-                    },
-                    modifier = Modifier
-                        .aspectRatio(aspectRatio)
-                        .clip(RoundedCornerShape(12.dp))
-                )
+            LazyRow {
+                items(imageUrlsUri) { imageUri ->
+                    Card(
+                        shape = RoundedCornerShape(12.dp),
+                        elevation = CardDefaults.cardElevation(5.dp),
+                        modifier = Modifier
+                            .width(130.dp)
+                            .padding(horizontal = 5.dp)
+                    ) {
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(imageUri)
+                                .crossfade(300)
+                                .build(),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            onState = { state ->
+                                if (state is AsyncImagePainter.State.Success) {
+                                    val size = state.painter.intrinsicSize
+                                    if (size.width > 0 && size.height > 0) {
+                                        aspectRatio = size.width / size.height
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .aspectRatio(aspectRatio)
+                                .clip(RoundedCornerShape(12.dp))
+                        )
+                    }
+                }
             }
 
             AddContentTextField(
                 label = "Название",
                 value = createContentData.title,
-                onValueChange = { viewModel.updateCreateContentData { copy( title = it ) } }
+                onValueChange = { viewModel.updateCreateContentData { copy(title = it) } }
             )
 
             AddContentTextField(
                 label = "Описание",
                 value = createContentData.description,
-                onValueChange = { viewModel.updateCreateContentData { copy( description = it ) } }
+                onValueChange = { viewModel.updateCreateContentData { copy(description = it) } }
             )
 
             AddContentTextField(
                 label = "Геоданные",
                 value = createContentData.geo,
-                onValueChange = { viewModel.updateCreateContentData { copy( geo = it ) } }
+                onValueChange = { viewModel.updateCreateContentData { copy(geo = it) } }
             )
 
             AddContentTextField(
                 label = "Рейтинг",
                 value = createContentData.rating,
-                onValueChange = { viewModel.updateCreateContentData { copy( rating = it ) } }
+                onValueChange = { viewModel.updateCreateContentData { copy(rating = it) } }
             )
 
             error?.let {
@@ -158,7 +171,7 @@ fun CreateContentScreen(
                 Button(
                     onClick = {
                         viewModel.uploadContent(
-                            imageUri = imageUri,
+                            imageUri = imageUrlsUri[0],
                             onSuccess = onContentAdded
                         )
                     },
@@ -183,7 +196,7 @@ fun CreateContentScreen(
                             "Опубликовать",
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
                         )
                     }
                 }
@@ -192,6 +205,7 @@ fun CreateContentScreen(
     }
 }
 
+
 @Composable
 private fun AddContentTextField(
     label: String,
@@ -199,22 +213,21 @@ private fun AddContentTextField(
     onValueChange: (String) -> Unit,
     isError: Boolean = false
 ) {
-    val focusManager = LocalFocusManager.current
 
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
         isError = isError,
-        modifier = if (label != "Введите описание") {
+        modifier = if (label != "Описание") {
             Modifier
-                .fillMaxWidth(0.9f)
+                .fillMaxWidth(0.95f)
         } else {
             Modifier
-                .fillMaxWidth(0.9f)
-                .height(140.dp)
+                .fillMaxWidth(0.95f)
+                .height(100.dp)
         },
-        singleLine = label != "Введите описание",
+        singleLine = label != "Описание",
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
         textStyle = TextStyle(
             fontSize = 15.sp,

@@ -1,5 +1,6 @@
 package com.example.diplomwork.presentation.ui.navigation
 
+import android.net.Uri
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
@@ -81,6 +82,8 @@ fun AppNavigation(navController: NavHostController) {
                 Login::class.simpleName -> BgDefault
                 Register::class.simpleName -> BgDefault
                 Spots::class.simpleName -> Color.Black
+                CreateContentScreenData::class.simpleName -> Color.Black
+                Gallery::class.simpleName -> Color.Black
                 else -> BgDefault
             },
     ) { paddingValues ->
@@ -239,11 +242,9 @@ fun AppNavigation(navController: NavHostController) {
             }
             composable<Gallery> {
                 GalleryScreen(
-                    onImageSelected = { uri ->
+                    onImageSelected = { selectedImages ->
                         navController.navigate(
-                            CreateContentScreenData(
-                                uri.toString()
-                            )
+                            CreateContentScreenData(selectedImages)
                         )
                     },
                     onClose = { navController.popBackStack() }
@@ -251,9 +252,7 @@ fun AppNavigation(navController: NavHostController) {
             }
 
             composable<CreateContentScreenData> { backStackEntry ->
-                val createContentScreenData =
-                    backStackEntry.toRoute<CreateContentScreenData>()
-
+                val createContentScreenData = backStackEntry.toRoute<CreateContentScreenData>()
                 CreateContentScreen(
                     createContentScreenData = createContentScreenData,
                     onContentAdded = {
@@ -263,8 +262,6 @@ fun AppNavigation(navController: NavHostController) {
                     onBack = { navController.popBackStack() }
                 )
             }
-
-
         }
 
         if (whatCreateSheetState.isVisible) {

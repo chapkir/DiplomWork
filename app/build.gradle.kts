@@ -50,7 +50,7 @@ android {
     }
     packaging {
         resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
         }
     }
     buildToolsVersion = "35.0.1"
@@ -78,6 +78,8 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation (libs.androidx.material)
+    implementation (libs.androidx.ui.util)
+    implementation (libs.androidx.foundation.layout)
 
     implementation(libs.hilt.navigation.compose)
     implementation(libs.hilt.android)

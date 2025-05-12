@@ -1,5 +1,6 @@
 package com.example.diplomwork.presentation.ui.navigation
 
+import android.net.Uri
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -57,7 +58,7 @@ data class PictureDetailScreenData(
 
 @Serializable
 data class CreateContentScreenData(
-    val imageUrl: String,
+    val imageUrls: List<String>,
 ) : Screen
 
 @Serializable

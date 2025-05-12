@@ -1,10 +1,11 @@
 [versions]
 accompanistPermissions = "0.31.1-alpha"
-agp = "8.9.1"
+agp = "8.9.2"
 bucket4jCore = "7.6.0"
 caffeine = "3.1.8"
 converterGson = "2.11.0"
 
+foundationLayout = "1.8.1"
 hiltAndroid = "2.51.1"
 hiltNavigationCompose = "1.2.0"
 kspPlugin = "2.1.0-1.0.29"
@@ -14,20 +15,20 @@ httpmime = "4.5.14"
 jjwtJackson = "0.11.5"
 
 kotlin = "2.1.0"
-coreKtx = "1.15.0"
+coreKtx = "1.16.0"
 
 junit = "4.13.2"
-junitVersion = "1.1.5"
+junitVersion = "1.2.1"
 kotlinxMetadataJvm = "0.6.2"
-lifecycleRuntimeKtx = "2.8.7"
+lifecycleRuntimeKtx = "2.9.0"
 activityCompose = "1.10.1"
-composeBom = "2025.03.00"
+composeBom = "2025.05.00"
 lombokVersion = "1.18.36"
 mapsMobile = "4.14.0-lite"
-materialVersion = "1.7.8"
-navigationCompose = "2.8.9"
+materialVersion = "1.8.1"
+navigationCompose = "2.9.0"
 coil-compose = "2.7.0"
-compose-foundation = "1.7.8"
+compose-foundation = "1.8.1"
 
 material = "1.12.0"
 okhttp = "4.12.0"
@@ -35,9 +36,10 @@ pagingRuntime = "3.3.6"
 retrofit = "2.11.0"
 
 springBootStarter = "3.4.1"
-uiTestAndroid = "1.7.8"
+uiTestAndroid = "1.8.1"
 
-viewModel = "2.8.7"
+uiUtil = "1.8.1"
+viewModel = "2.9.0"
 
 loggingInterceptor = "4.9.3"
 
@@ -45,7 +47,7 @@ serializationVersion = "2.0.0"
 serializationKotlin = "1.7.1"
 
 accompanistPager = "0.28.0"
-composeTesting = "1.0.0-alpha03"
+composeTesting = "1.0.0-alpha04"
 
 
 [libraries]
@@ -53,8 +55,10 @@ accompanist-pager = { module = "com.google.accompanist:accompanist-pager", versi
 accompanist-pager-indicators = { module = "com.google.accompanist:accompanist-pager-indicators", version.ref = "accompanistPager" }
 
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
+androidx-foundation-layout = { module = "androidx.compose.foundation:foundation-layout", version.ref = "foundationLayout" }
 androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "pagingRuntime" }
 androidx-paging-runtime = { module = "androidx.paging:paging-runtime", version.ref = "pagingRuntime" }
+androidx-ui-util = { module = "androidx.compose.ui:ui-util", version.ref = "uiUtil" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serializationKotlin" }
 accompanist-systemuicontroller = "com.google.accompanist:accompanist-systemuicontroller:0.36.0"
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
