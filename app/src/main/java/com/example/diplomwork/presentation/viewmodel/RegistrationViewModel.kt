@@ -135,8 +135,8 @@ class RegisterViewModel @Inject constructor(
                 val loginResponse = authRepository.login(
                     LoginRequest(registerValue.username, registerValue.password)
                 )
-
-                sessionManager.authToken = loginResponse.token
+                sessionManager.saveAuthData(loginResponse.token, loginResponse.refreshToken)
+                sessionManager.username = registerData.value.username
                 onCompleteRegistration()
 
             } catch (e: Exception) {

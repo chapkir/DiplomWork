@@ -24,9 +24,20 @@ class GalleryViewModel @Inject constructor(
     private val _images = MutableStateFlow<List<Uri>>(emptyList())
     val images: StateFlow<List<Uri>> = _images
 
+    private val _selectedImages = MutableStateFlow<List<Uri>>(emptyList())
+    val selectedImages: StateFlow<List<Uri>> = _selectedImages
+
     private val _albums = MutableStateFlow<List<GalleryAlbum>>(emptyList())
     val albums: StateFlow<List<GalleryAlbum>> = _albums
 
+
+    fun addImage(uri: Uri) {
+        _selectedImages.value += uri
+    }
+
+    fun removeImage(uri: Uri) {
+        _selectedImages.value -= uri
+    }
 
     fun loadGalleryData() {
         viewModelScope.launch(Dispatchers.IO) {

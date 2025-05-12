@@ -63,7 +63,7 @@ class LoginViewModel @Inject constructor(
                         else -> "Ошибка ${e.code()}: ${e.message()}"
                     }
 
-                    is IOException -> "Проблема с интернетом. Проверьте соединение"
+                    is IOException -> "Ошибка внутреннего сервера"
 
                     else -> "Неизвестная ошибка: ${e.localizedMessage}"
                 }

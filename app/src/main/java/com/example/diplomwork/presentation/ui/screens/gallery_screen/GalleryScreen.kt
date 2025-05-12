@@ -70,6 +70,7 @@ fun GalleryScreen(
     val scope = rememberCoroutineScope()
 
     val images by viewModel.images.collectAsState()
+    val selectedImages by viewModel.selectedImages.collectAsState()
     val albums by viewModel.albums.collectAsState()
     var hasPermission by remember { mutableStateOf(checkGalleryPermission(context)) }
 
@@ -79,14 +80,12 @@ fun GalleryScreen(
 
     val pagerState = rememberPagerState(initialPage = selectedTabIndex)
 
-    var selectedImages by remember { mutableStateOf(listOf<Uri>()) }
     val uriStrings = selectedImages.map { it.toString() }
 
     LaunchedEffect(pagerState.currentPage) {
         onTabSelected = pagerState.currentPage
     }
 
-    // Загружаем данные при входе в экран
     LaunchedEffect(Unit) {
         if (hasPermission) {
             viewModel.loadGalleryData()
@@ -158,9 +157,9 @@ fun GalleryScreen(
                                             )
                                             .clickable {
                                                 if (isSelected) {
-                                                    selectedImages = selectedImages - imageUri
+                                                    viewModel.removeImage(imageUri)
                                                 } else if (selectedImages.size < 5) {
-                                                    selectedImages = selectedImages + imageUri
+                                                    viewModel.addImage(imageUri)
                                                 }
                                             },
                                         contentAlignment = Alignment.BottomEnd

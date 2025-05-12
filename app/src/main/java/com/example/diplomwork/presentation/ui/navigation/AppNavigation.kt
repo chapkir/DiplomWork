@@ -11,6 +11,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -35,6 +36,7 @@ import com.example.diplomwork.presentation.ui.screens.settings_screens.EditProfi
 import com.example.diplomwork.presentation.ui.screens.settings_screens.SettingsScreen
 import com.example.diplomwork.presentation.ui.screens.spots_screen.SpotsScreen
 import com.example.diplomwork.presentation.ui.theme.BgDefault
+import com.example.diplomwork.presentation.viewmodel.GalleryViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
