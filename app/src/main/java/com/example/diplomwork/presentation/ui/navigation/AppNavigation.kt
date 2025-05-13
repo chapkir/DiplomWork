@@ -55,6 +55,7 @@ fun AppNavigation(navController: NavHostController) {
             Gallery::class.simpleName,
             CreateContentScreenData::class.simpleName,
             EditProfile::class.simpleName,
+            Map::class.simpleName
         )
 
     val showBottomBar = currentRoute.let { route ->
@@ -91,7 +92,7 @@ fun AppNavigation(navController: NavHostController) {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = if (sessionManager.isLoggedIn()) Map else Login,
+            startDestination = if (sessionManager.isLoggedIn()) Spots else Login,
             modifier = Modifier.padding(paddingValues)
         ) {
             composable<Pictures> {
@@ -193,7 +194,10 @@ fun AppNavigation(navController: NavHostController) {
             }
 
             composable<Map> {
-                MapScreen()//(onLocationSelected = { _, _, _ ->  })
+                MapScreen(
+                    onLocationSelected = { _, _, _, _ ->  },
+                    onBack = { navController.popBackStack() },
+                )
             }
 
             composable<Search> {

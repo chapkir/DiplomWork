@@ -1,18 +1,34 @@
 package com.example.diplomwork.presentation.ui.screens.map_screen
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.graphics.BitmapFactory
-import android.util.Log
+import android.view.inputmethod.InputMethodManager
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -23,9 +39,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.graphics.scale
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -33,6 +54,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.diplomwork.R
+import com.example.diplomwork.presentation.ui.theme.BgElevated
+import com.example.diplomwork.presentation.ui.theme.ButtonPrimary
+import com.example.diplomwork.presentation.ui.theme.ErrorColor
 import com.example.diplomwork.presentation.viewmodel.MapViewModel
 import com.yandex.mapkit.MapKitFactory
 import com.yandex.mapkit.geometry.Point
@@ -40,11 +64,23 @@ import com.yandex.mapkit.map.CameraPosition
 import com.yandex.mapkit.mapview.MapView
 import com.yandex.runtime.image.ImageProvider
 
+private fun hideKeyboard(context: Context) {
+    val inputMethodManager =
+        context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+    val activity = context as Activity
+    val currentFocus = activity.currentFocus
+    if (currentFocus != null) {
+        inputMethodManager.hideSoftInputFromWindow(currentFocus.windowToken, 0)
+    }
+}
+
 @Suppress("DEPRECATION")
 @SuppressLint("MissingPermission")
 @Composable
 fun MapScreen(
-    viewModel: MapViewModel = hiltViewModel()
+    viewModel: MapViewModel = hiltViewModel(),
+    onLocationSelected: (String?, String?, Double, Double) -> Unit,
+    onBack: () -> Unit
 ) {
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -72,50 +108,8 @@ fun MapScreen(
 
     var mapView by remember { mutableStateOf<MapView?>(null) }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { viewModel.updateSearchQuery(it) },
-            label = { Text("Введите адрес или название места") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = {
-                viewModel.searchPlace()
-            })
-        )
-
-        Button(
-            onClick = { viewModel.searchPlace() },
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .align(Alignment.CenterHorizontally)
-        ) {
-            Text("Поиск")
-        }
-
-        Button(
-            onClick = {
-                searchResultPoint?.let {
-
-                }
-            },
-            modifier = Modifier
-                .padding(16.dp)
-                .align(Alignment.CenterHorizontally)
-        ) {
-            Text("Добавить место")
-        }
-
-        searchResultPoint?.let {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("Название: ${searchResultName ?: "—"}")
-                Text("Адрес: ${searchResultAddress ?: "—"}")
-                Text("Координаты: ${it.latitude}, ${it.longitude}")
-            }
-        }
-
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Карта на весь экран
         AndroidView(
             factory = {
                 MapView(context).apply {
@@ -141,10 +135,148 @@ fun MapScreen(
                     view.map.mapObjects.addPlacemark(it).setIcon(icon)
                 }
             },
+            modifier = Modifier.fillMaxSize()
+        )
+
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
-        )
+                .padding(top = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { viewModel.updateSearchQuery(it) },
+                leadingIcon = {
+                    IconButton(
+                        onClick = { onBack() },
+                        modifier = Modifier
+                            .size(36.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_arrow_left),
+                            contentDescription = "OnBack",
+                            tint = Color.White
+                        )
+                    }
+                },
+                placeholder = {
+                    Text(
+                        text = "Введите адрес или название",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Normal
+                    )
+                },
+                trailingIcon = {
+                    IconButton(
+                        onClick = {
+                            hideKeyboard(context)
+                            viewModel.searchPlace()
+                        },
+                        modifier = Modifier.padding(end = 5.dp),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_search),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(20.dp)
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(0.95f),
+                textStyle = TextStyle(
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = Color.White
+                ),
+                shape = RoundedCornerShape(18.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = BgElevated.copy(alpha = 0.85f),
+                    unfocusedContainerColor = BgElevated.copy(alpha = 0.85f),
+                    focusedBorderColor = Color.Transparent,
+                    unfocusedBorderColor = Color.Transparent,
+                    errorBorderColor = ErrorColor,
+                    focusedPlaceholderColor = Color.White,
+                    unfocusedPlaceholderColor = Color.White,
+                    errorLabelColor = ErrorColor,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    cursorColor = Color.White,
+                ),
+                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(
+                    onSearch = {
+                        hideKeyboard(context)
+                        viewModel.searchPlace()
+                    }
+                )
+            )
+        }
+
+        // Нижняя карточка с результатом
+        searchResultPoint?.let {
+            Card(
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = BgElevated.copy(alpha = 0.9f)),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth(0.95f)
+                    .padding(bottom = 25.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "Название: ${searchResultName ?: "—"}",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Адрес: ${searchResultAddress ?: "—"}",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Координаты: ${it.latitude}, ${it.longitude}",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+
+                    Spacer(modifier = Modifier.height(15.dp))
+
+                    Button(
+                        onClick = {
+                            onLocationSelected(
+                                searchResultName,
+                                searchResultAddress,
+                                it.latitude,
+                                it.longitude
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.CenterHorizontally),
+                        colors = ButtonDefaults.buttonColors(containerColor = ButtonPrimary),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text(
+                            text = "Добавить место",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 

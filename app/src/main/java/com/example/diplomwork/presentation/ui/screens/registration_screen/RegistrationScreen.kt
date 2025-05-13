@@ -73,7 +73,7 @@ import com.example.diplomwork.presentation.viewmodel.RegisterViewModel
 import kotlinx.coroutines.launch
 import java.util.Locale
 
-fun hideKeyboard(context: Context) {
+private fun hideKeyboard(context: Context) {
     val inputMethodManager =
         context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
     val activity = context as Activity
