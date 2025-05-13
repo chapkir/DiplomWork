@@ -34,6 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.diplomwork.data.model.PictureResponse
 import com.example.diplomwork.data.model.PostResponse
 import com.example.diplomwork.presentation.ui.components.CustomTabPager
@@ -131,6 +132,7 @@ fun ProfileScreen(
                 error != null -> ErrorScreen(error) { profileViewModel.loadLikedPictures() }
                 profileData != null -> {
                     ProfileHeader(
+                        userId = profileData?.id ?: 0L,
                         username = profileData?.username ?: "Неизвестный",
                         firstName = profileData?.firstName ?: "Неизвестный",
                         picturesCount = profileData?.pinsCount ?: 0,
@@ -140,7 +142,7 @@ fun ProfileScreen(
                         isUploading = isUploading,
                         onAvatarClick = { pickImageLauncher.launch("image/*") },
                         onSettingsClick = onSettingsClick,
-                        onSubscribe = {  },
+                        onSubscribe = { profileViewModel.subscribe(1, 1) },
                         onUnsubscribe = {},
                         onBack = onBack,
                         avatarUpdateKey = avatarUpdateCounter,

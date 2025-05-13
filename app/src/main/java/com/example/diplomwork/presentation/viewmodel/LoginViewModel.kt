@@ -52,7 +52,7 @@ class LoginViewModel @Inject constructor(
                 )
 
                 sessionManager.saveAuthData(response.token, response.refreshToken)
-                sessionManager.username = _username.value
+                //sessionManager.username = _username.value
 
                 _loginSuccess.value = true
             } catch (e: Exception) {

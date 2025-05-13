@@ -4,11 +4,11 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Base64
 import android.util.Log
-import com.google.gson.Gson
-import java.util.Date
 import androidx.core.content.edit
 import com.example.diplomwork.util.AppConstants
+import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,6 +25,7 @@ class SessionManager @Inject constructor(@ApplicationContext context: Context) {
         private const val KEY_EXPIRATION = "token_expiration"
         private const val KEY_SERVER_URL = "server_url"
         private const val KEY_USERNAME = "username"
+        private const val KEY_USERID = "userId"
 
         private const val TAG = "SessionManager"
         private const val DEFAULT_SERVER_URL = AppConstants.BASE_URL
@@ -45,8 +46,12 @@ class SessionManager @Inject constructor(@ApplicationContext context: Context) {
             prefs.edit() { putString(KEY_SERVER_URL, value) }
         }
 
-    val userId: String?
-        get() = authToken?.let { decodeJwtPayload(it)?.sub }
+    var userId: String?
+        get() = prefs.getString(KEY_USERID, null)
+        set(value) {
+            prefs.edit() { putString(KEY_USERID, value) }
+            Log.d(TAG, "Сохранен userID - $userId")
+        }
 
     var username: String?
         get() = prefs.getString(KEY_USERNAME, null)
@@ -82,9 +87,10 @@ class SessionManager @Inject constructor(@ApplicationContext context: Context) {
         authToken = token
         tokenExpiration = decodeJwtPayload(token)?.exp?.times(1000)
         val claims = decodeJwtPayload(token)
+        username = claims?.username
+        userId = claims?.sub
         refreshToken?.let { this.refreshToken = it }
         Log.d(TAG, "Сохранены аутентификационные данные")
-        Log.d(TAG, "userId из токена: ${claims?.iat} или ${claims?.exp}")
     }
 
     private fun decodeJwtPayload(token: String): JwtClaims? {

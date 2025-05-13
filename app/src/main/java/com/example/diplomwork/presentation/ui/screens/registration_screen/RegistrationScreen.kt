@@ -132,7 +132,7 @@ fun RegisterScreen(
 
         when (step) {
             0 -> {
-                StepTitle("Как тебя зовут?")
+                StepTitle("Как вас зовут?")
                 RegisterTextField("Введите имя пользователя", registerData.username, {
                     registerViewModel.updateRegisterData {
                         copy(
@@ -152,6 +152,7 @@ fun RegisterScreen(
                         )
                     }
                 }
+                //Hint("Уникальный идентификатор, по которому люди смогут найти вас в Spotsy.")
                 Spacer(Modifier.height(15.dp))
                 RegisterTextField("Введите свое имя", registerData.firstName, {
                     registerViewModel.updateRegisterData {
@@ -267,6 +268,21 @@ fun RegisterScreen(
 
 }
 
+@Composable
+fun Hint(text: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth(0.85f)
+            .padding(horizontal = 4.dp)
+    ) {
+        Text(
+            text = text,
+            color = Color.Gray,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
 
 @Composable
 fun StepTitle(text: String) {

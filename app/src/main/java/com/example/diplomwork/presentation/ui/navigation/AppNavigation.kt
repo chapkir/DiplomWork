@@ -91,7 +91,7 @@ fun AppNavigation(navController: NavHostController) {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = if (sessionManager.isLoggedIn()) Spots else Login,
+            startDestination = if (sessionManager.isLoggedIn()) Map else Login,
             modifier = Modifier.padding(paddingValues)
         ) {
             composable<Pictures> {
@@ -193,7 +193,7 @@ fun AppNavigation(navController: NavHostController) {
             }
 
             composable<Map> {
-                MapScreen()
+                MapScreen()//(onLocationSelected = { _, _, _ ->  })
             }
 
             composable<Search> {
@@ -228,7 +228,6 @@ fun AppNavigation(navController: NavHostController) {
                         }
                     },
                     onHelpCenterClick = {},
-                    onPrivacyPolicyClick = {}
                 )
             }
 

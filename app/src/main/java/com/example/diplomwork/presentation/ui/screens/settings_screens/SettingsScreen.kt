@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -35,8 +36,9 @@ fun SettingsScreen(
     onPrivacyClick: () -> Unit,
     onLogoutClick: () -> Unit,
     onHelpCenterClick: () -> Unit,
-    onPrivacyPolicyClick: () -> Unit,
 ) {
+    val uriHandler = LocalUriHandler.current
+
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -76,7 +78,16 @@ fun SettingsScreen(
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             SettingItem("Справочный центр", onHelpCenterClick)
-            SettingItem("Политика конфиденциальности", onPrivacyPolicyClick)
+
+            SettingItem(
+                title = "Политика конфиденциальности",
+                onClick = { uriHandler.openUri("http://chapkir.ru/privacy.html") }
+            )
+
+            SettingItem(
+                title = "Пользовательское соглашение",
+                onClick = { uriHandler.openUri("http://chapkir.ru/privacy.html") }
+            )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 

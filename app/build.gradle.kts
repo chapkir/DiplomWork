@@ -93,7 +93,8 @@ dependencies {
     implementation (libs.accompanist.pager.indicators)
     implementation(libs.accompanist.permissions)
 
-    implementation (libs.maps.mobile)
+    implementation (libs.maps.mobile.yandex)
+    implementation (libs.play.services.location)
 
     implementation(libs.kotlinx.metadata.jvm)
 

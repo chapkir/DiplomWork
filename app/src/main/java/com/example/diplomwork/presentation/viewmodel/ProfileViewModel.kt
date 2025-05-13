@@ -10,6 +10,7 @@ import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.data.model.PictureResponse
 import com.example.diplomwork.data.model.PostResponse
 import com.example.diplomwork.data.model.ProfileResponse
+import com.example.diplomwork.data.repos.FollowRepository
 import com.example.diplomwork.data.repos.ProfileRepository
 import com.example.diplomwork.util.ImageUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,6 +26,7 @@ import javax.inject.Inject
 class ProfileViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val profileRepository: ProfileRepository,
+    private val followRepository: FollowRepository,
 ) : ViewModel() {
 
     private val _userId: Long? = savedStateHandle["userId"]
@@ -190,6 +192,18 @@ class ProfileViewModel @Inject constructor(
             if (!profileRepository.isLoggedIn()) {
                 onNavigateToLogin()
             }
+        }
+    }
+
+    fun subscribe(followerId: Long, followingId: Long){
+        viewModelScope.launch {
+            val subscribe = followRepository.subscribe(followerId, followingId)
+        }
+    }
+
+    fun unsubscribe(followerId: Long, followingId: Long){
+        viewModelScope.launch {
+            val unsubscribe = followRepository.unsubscribe(followerId, followingId)
         }
     }
 

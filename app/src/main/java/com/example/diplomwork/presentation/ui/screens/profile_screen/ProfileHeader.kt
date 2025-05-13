@@ -32,6 +32,7 @@ import com.example.diplomwork.presentation.ui.screens.profile_screen.profile_com
 
 @Composable
 fun ProfileHeader(
+    userId: Long,
     username: String,
     firstName: String,
     picturesCount: Int,
@@ -41,8 +42,8 @@ fun ProfileHeader(
     isUploading: Boolean = false,
     onAvatarClick: () -> Unit,
     onSettingsClick: () -> Unit,
-    onSubscribe: () -> Unit,
-    onUnsubscribe: () -> Unit,
+    onSubscribe: (Long) -> Unit,
+    onUnsubscribe: (Long) -> Unit,
     onBack: () -> Unit,
     avatarUpdateKey: Int,
     isOwnProfile: Boolean = false,
@@ -194,7 +195,7 @@ fun ProfileHeader(
             ) {
                 Button(
                     modifier = Modifier.fillMaxWidth(0.5f),
-                    onClick = { onSubscribe() },
+                    onClick = { onSubscribe(userId) },
                     colors = ButtonColors(
                         containerColor = Color.Red.copy(alpha = 0.9f),
                         contentColor = Color.White,
