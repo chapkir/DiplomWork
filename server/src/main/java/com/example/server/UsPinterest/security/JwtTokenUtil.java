@@ -14,6 +14,7 @@ import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 
 import java.security.Key;
+import com.example.server.UsPinterest.security.UserPrincipal;
 
 @Component
 public class JwtTokenUtil {
@@ -30,9 +31,20 @@ public class JwtTokenUtil {
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
+        String subject;
+        String username;
+        if (userDetails instanceof UserPrincipal) {
+            UserPrincipal principal = (UserPrincipal) userDetails;
+            subject = principal.getId().toString();
+            username = principal.getUsername();
+        } else {
+            subject = userDetails.getUsername();
+            username = userDetails.getUsername();
+        }
+        claims.put("username", username);
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(userDetails.getUsername())
+                .setSubject(subject)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
                 .signWith(getSignKey())
@@ -41,12 +53,12 @@ public class JwtTokenUtil {
 
     public String getUsernameFromToken(String token) {
         try {
-            return Jwts.parserBuilder()
+            Claims claims = Jwts.parserBuilder()
                     .setSigningKey(getSignKey())
                     .build()
                     .parseClaimsJws(token)
-                    .getBody()
-                    .getSubject();
+                    .getBody();
+            return claims.get("username", String.class);
         } catch (Exception e) {
             return null;
         }

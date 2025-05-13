@@ -8,6 +8,7 @@ import com.example.server.UsPinterest.exception.TokenRefreshException;
 import com.example.server.UsPinterest.model.RefreshToken;
 import com.example.server.UsPinterest.model.User;
 import com.example.server.UsPinterest.security.JwtTokenUtil;
+import com.example.server.UsPinterest.security.UserPrincipal;
 import com.example.server.UsPinterest.service.RefreshTokenService;
 import com.example.server.UsPinterest.service.UserService;
 
@@ -80,14 +81,9 @@ public class AuthController {
                 .map(refreshTokenService::verifyExpiration)
                 .map(RefreshToken::getUser)
                 .map(user -> {
-                    UserDetails userDetails = org.springframework.security.core.userdetails.User
-                            .withUsername(user.getUsername())
-                            .password(user.getPassword())
-                            .authorities("ROLE_USER")
-                            .build();
-
-                    String token = jwtTokenUtil.generateToken(userDetails);
-                    RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user.getId());
+                    UserPrincipal userPrincipal = new UserPrincipal(user);
+                    String token = jwtTokenUtil.generateToken(userPrincipal);
+                    RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(userPrincipal.getId());
                     return ResponseEntity.ok(new TokenRefreshResponse(token, newRefreshToken.getToken()));
                 })
                 .orElseThrow(() -> new TokenRefreshException(requestRefreshToken,
