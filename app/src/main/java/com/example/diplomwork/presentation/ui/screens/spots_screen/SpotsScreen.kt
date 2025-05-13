@@ -18,9 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
@@ -58,7 +55,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
-import coil.compose.AsyncImagePainter
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.diplomwork.R
@@ -66,7 +62,6 @@ import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.presentation.ui.components.bottom_sheets.ConfirmDeleteBottomSheet
 import com.example.diplomwork.presentation.ui.components.bottom_sheets.MenuBottomSheet
 import com.example.diplomwork.presentation.ui.screens.pictures_screen.ErrorRetryBlock
-import com.example.diplomwork.presentation.ui.theme.BgDefault
 import com.example.diplomwork.presentation.ui.theme.BgElevated
 import com.example.diplomwork.presentation.ui.theme.ButtonPrimary
 import com.example.diplomwork.presentation.ui.theme.DividerDark
@@ -258,7 +253,7 @@ fun SpotsCard(
                     ) {
                         Text(
                             text = username,
-                            fontSize = 14.sp,
+                            fontSize = 15.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color.White,
                             textAlign = TextAlign.Center
@@ -285,21 +280,21 @@ fun SpotsCard(
                 Row(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    ImagesPager(
-                        imageUrls = imageUrl,
-                        modifier = Modifier
-                            .padding(start = 10.dp)
-                            .weight(0.55f)
-                    )
-
                     PlaceInfo(
                         rating = Random.nextInt(1, 6),
                         title = title,
                         description = description,
                         modifier = Modifier
                             .fillMaxHeight()
-                            .padding(start = 15.dp)
+                            .padding(start = 10.dp, end = 15.dp)
                             .weight(0.8f)
+                    )
+
+                    ImagesPager(
+                        imageUrls = imageUrl,
+                        modifier = Modifier
+                            .padding(end = 10.dp)
+                            .weight(0.55f)
                     )
                 }
             }
@@ -338,63 +333,59 @@ fun ImagesPager(
     Column(
         modifier = modifier
     ) {
-        Box(
-
-        ) {
-            HorizontalPager(
-                count = 5,
-                state = pagerState,
+        HorizontalPager(
+            count = 5,
+            state = pagerState,
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(12.dp)),
+        ) { page ->
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(5.dp),
                 modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(12.dp)),
-            ) { page ->
-                Card(
-                    shape = RoundedCornerShape(12.dp),
-                    elevation = CardDefaults.cardElevation(5.dp),
+                    .fillMaxWidth()
+            ) {
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .aspectRatio(aspectRatio)
+                        .graphicsLayer { clip = true }
                 ) {
+
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(aspectRatio)
-                            .graphicsLayer { clip = true }
-                    ) {
+                            .fillMaxSize()
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        Color(0xFFFFA292),
+                                        Color(0xFFD5523B),
+                                    )
+                                ),
+                            )
+                            .blur(50.dp),
+                    )
 
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(
-                                    Brush.linearGradient(
-                                        colors = listOf(
-                                            Color(0xFFFFA292),
-                                            Color(0xFFD5523B),
-                                        )
-                                    ),
-                                )
-                                .blur(50.dp),
-                        )
-
-                        AsyncImage(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data(imageUrls) // TODO Когда несколько картинок imageUrls[page]
-                                .crossfade(300)
-                                .diskCachePolicy(CachePolicy.ENABLED)
-                                .memoryCachePolicy(CachePolicy.ENABLED)
-                                .build(),
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(imageUrls) // TODO Когда несколько картинок imageUrls[page]
+                            .crossfade(300)
+                            .diskCachePolicy(CachePolicy.ENABLED)
+                            .memoryCachePolicy(CachePolicy.ENABLED)
+                            .build(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
 //                            onState = { state ->
 //                                isLoading = state is AsyncImagePainter.State.Loading
 //                                if (state is AsyncImagePainter.State.Error) {
 //                                    isError = true
 //                                }
 //                            },
-                            modifier = Modifier
-                                .matchParentSize()
-                                .clip(RoundedCornerShape(12.dp))
-                        )
-                    }
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clip(RoundedCornerShape(12.dp))
+                    )
                 }
             }
         }
@@ -454,7 +445,7 @@ fun PlaceInfo(
             text = if (description == "") "Без описания" else description,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
-            maxLines = 2,
+            maxLines = 4,
             overflow = TextOverflow.Ellipsis
         )
     }

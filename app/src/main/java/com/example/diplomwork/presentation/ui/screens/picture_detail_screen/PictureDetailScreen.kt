@@ -89,6 +89,7 @@ fun PictureDetailScreen(
 
             item {
                 ActionBar(
+                    title = uiState.pictureTitle,
                     description = uiState.pictureDescription,
                     likesCount = uiState.likesCount,
                     isLiked = uiState.isLiked,
