@@ -51,7 +51,7 @@ public class UserController {
 
     @GetMapping("/exists/{username}")
     public ResponseEntity<Map<String, Boolean>> existsUsername(@PathVariable String username) {
-        boolean exists = userService.existsByUsername(username);
+        boolean exists = userService.existsByUsernameIgnoreCase(username);
         return ResponseEntity.ok(Collections.singletonMap("exists", exists));
     }
 }

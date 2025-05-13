@@ -179,6 +179,11 @@ public class UserService {
         return likeRepository.existsByUserIdAndPostId(userId, postId);
     }
 
+    @Transactional(readOnly = true)
+    public boolean existsByUsernameIgnoreCase(String username) {
+        return userRepository.existsByUsernameIgnoreCase(username);
+    }
+
     @Transactional
     @CacheEvict(value = {"posts", "pins"}, allEntries = true)
     public void addLikeToPost(User user, Post post) {

@@ -49,4 +49,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.likes WHERE u.username = :username")
     Optional<User> findByUsernameWithLikes(@Param("username") String username);
+
+    // Проверка существования имени пользователя без учёта регистра
+    boolean existsByUsernameIgnoreCase(String username);
 }

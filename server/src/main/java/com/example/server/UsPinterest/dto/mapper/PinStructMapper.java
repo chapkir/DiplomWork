@@ -10,8 +10,8 @@ import com.example.server.UsPinterest.model.Pin;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface PinStructMapper {
 
-    @Mapping(target = "boardId", source = "pin.board.id")
-    @Mapping(target = "boardTitle", source = "pin.board.title")
+    @Mapping(target = "boardId", expression = "java(pin.getBoard() != null ? pin.getBoard().getId() : null)")
+    @Mapping(target = "boardTitle", expression = "java(pin.getBoard() != null ? pin.getBoard().getTitle() : null)")
     @Mapping(target = "userId", source = "pin.user.id")
     @Mapping(target = "username", source = "pin.user.username")
     @Mapping(target = "userProfileImageUrl", source = "pin.user.profileImageUrl")
