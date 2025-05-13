@@ -285,74 +285,77 @@ public class PinController {
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> uploadImage(
-            @RequestParam("file") MultipartFile file,
+    public ResponseEntity<?> uploadImages(
+            @RequestParam("file") MultipartFile[] files,
             @RequestParam(value = "text", defaultValue = "") String text,
             @RequestParam(value = "title", defaultValue = "") String title,
             @RequestParam(value = "description", defaultValue = "") String description,
             Authentication authentication) {
 
-        logger.info("uploadImage called: file={}, text={}, title={}, description={}", file.getOriginalFilename(), text, title, description);
+        logger.info("uploadImages called: filesCount={}, text={}, title={}, description={}", files.length, text, title, description);
 
         if (!bucket.tryConsume(1)) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                     .body(new MessageResponse("Слишком много запросов. Пожалуйста, попробуйте позже."));
         }
 
-        if (file.isEmpty()) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Файл не выбран"));
-        }
-
-        String contentType = file.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Файл должен быть изображением"));
+        if (files == null || files.length == 0) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Файлы не выбраны"));
         }
 
         String username = authentication.getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
 
+        List<PinResponse> pinResponses = new ArrayList<>();
+
         try {
-            String imageUrl = fileStorageService.storeFile(file);
+            for (MultipartFile fileItem : files) {
+                if (fileItem.isEmpty()) {
+                    return ResponseEntity.badRequest().body(new MessageResponse("Файл не выбран"));
+                }
+                String contentTypeItem = fileItem.getContentType();
+                if (contentTypeItem == null || !contentTypeItem.startsWith("image/")) {
+                    return ResponseEntity.badRequest().body(new MessageResponse("Файл должен быть изображением"));
+                }
 
-            // Генерация FullHD и миниатюрных изображений
-            String filename = fileStorageService.getFilenameFromUrl(imageUrl);
-            String baseName = filename != null && filename.contains(".") ? filename.substring(0, filename.lastIndexOf(".")) : filename;
-            FileStorageService.ImageInfo fullhdInfo = fileStorageService.storeFullhdFile(file, baseName);
-            FileStorageService.ImageInfo thumbnailInfo = fileStorageService.storeThumbnailFile(file, baseName);
+                String imageUrl = fileStorageService.storeFile(fileItem);
+                String filename = fileStorageService.getFilenameFromUrl(imageUrl);
+                String baseName = filename != null && filename.contains(".")
+                        ? filename.substring(0, filename.lastIndexOf("."))
+                        : filename;
+                FileStorageService.ImageInfo fullhdInfo = fileStorageService.storeFullhdFile(fileItem, baseName);
+                FileStorageService.ImageInfo thumbnailInfo = fileStorageService.storeThumbnailFile(fileItem, baseName);
 
-            Pin pin = new Pin();
-            // Выбираем title: приоритет у параметра title, иначе text, иначе пустая строка
-            String pinTitle = (title != null && !title.isEmpty()) ? title : (text != null ? text : "");
-            pin.setTitle(pinTitle);
-            pin.setImageUrl(imageUrl);
-            pin.setDescription(description);
-            pin.setUser(user);
-            pin.setCreatedAt(LocalDateTime.now());
-            // Вычисляем размеры изображения через сервис
-            pinQueryService.calculateImageDimensions(pin);
-            // Сохраняем новые WebP-версии в полях сущности
-            pin.setFullhdImageUrl(fullhdInfo.getUrl());
-            pin.setFullhdWidth(fullhdInfo.getWidth());
-            pin.setFullhdHeight(fullhdInfo.getHeight());
-            pin.setThumbnailImageUrl(thumbnailInfo.getUrl());
-            pin.setThumbnailWidth(thumbnailInfo.getWidth());
-            pin.setThumbnailHeight(thumbnailInfo.getHeight());
+                Pin pin = new Pin();
+                String pinTitle = (title != null && !title.isEmpty()) ? title : (text != null ? text : "");
+                pin.setTitle(pinTitle);
+                pin.setImageUrl(imageUrl);
+                pin.setDescription(description);
+                pin.setUser(user);
+                pin.setCreatedAt(LocalDateTime.now());
+                pinQueryService.calculateImageDimensions(pin);
+                pin.setFullhdImageUrl(fullhdInfo.getUrl());
+                pin.setFullhdWidth(fullhdInfo.getWidth());
+                pin.setFullhdHeight(fullhdInfo.getHeight());
+                pin.setThumbnailImageUrl(thumbnailInfo.getUrl());
+                pin.setThumbnailWidth(thumbnailInfo.getWidth());
+                pin.setThumbnailHeight(thumbnailInfo.getHeight());
 
-            Pin savedPin = pinRepository.save(pin);
-            PinResponse pinResponse = pinQueryService.convertToPinResponse(savedPin, user);
-            HateoasResponse<PinResponse> response = new HateoasResponse<>(pinResponse);
+                Pin savedPin = pinRepository.save(pin);
+                PinResponse pinResponse = pinQueryService.convertToPinResponse(savedPin, user);
+                pinResponses.add(pinResponse);
+            }
 
-            // Добавляем HATEOAS ссылки
-            response.addSelfLink("/api/pins/detail/" + savedPin.getId());
-            response.addLink("image", savedPin.getImageUrl(), "GET");
+            HateoasResponse<List<PinResponse>> response = new HateoasResponse<>(pinResponses);
+            response.addSelfLink("/api/pins/upload");
             response.addLink("all-pins", "/api/pins", "GET");
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            logger.error("Ошибка при обработке загрузки изображения: {}", e.getMessage(), e);
+            logger.error("Ошибка при обработке загрузки изображений: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new MessageResponse("Ошибка при загрузке изображения: " + e.getMessage()));
+                    .body(new MessageResponse("Ошибка при загрузке изображений: " + e.getMessage()));
         }
     }
 
