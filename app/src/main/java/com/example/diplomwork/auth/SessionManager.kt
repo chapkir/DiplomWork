@@ -87,7 +87,7 @@ class SessionManager @Inject constructor(@ApplicationContext context: Context) {
         authToken = token
         tokenExpiration = decodeJwtPayload(token)?.exp?.times(1000)
         val claims = decodeJwtPayload(token)
-        username = claims?.username
+        username = claims?.sub
         userId = claims?.sub
         refreshToken?.let { this.refreshToken = it }
         Log.d(TAG, "Сохранены аутентификационные данные")

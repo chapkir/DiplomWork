@@ -15,11 +15,11 @@ class UploadRepository @Inject constructor(
 ) {
 
     suspend fun uploadImage(
-        file: MultipartBody.Part,
+        files: List<MultipartBody.Part>,
         description: RequestBody,
         title: RequestBody,
     ): Response<PictureResponse> {
-        return apiService.uploadImage(file, description, title)
+        return apiService.uploadImage(files, description, title)
     }
 
     suspend fun uploadPost(

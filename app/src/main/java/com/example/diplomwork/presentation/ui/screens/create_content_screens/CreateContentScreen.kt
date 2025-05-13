@@ -170,7 +170,7 @@ fun CreateContentScreen(
                 Button(
                     onClick = {
                         viewModel.uploadContent(
-                            imageUri = imageUrlsUri[0],
+                            imageUris = imageUrlsUri,
                             onSuccess = onContentAdded
                         )
                     },

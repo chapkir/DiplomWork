@@ -53,18 +53,28 @@ class CreateContentViewModel @Inject constructor(
         _errorMessage.value = null
     }
 
-    fun uploadContent(imageUri: Uri?, onSuccess: () -> Unit) {
+    fun uploadContent(imageUris: List<Uri>, onSuccess: () -> Unit) {
         viewModelScope.launch {
             _isLoading.value = true
             _isError.value = null
             try {
-                val file = prepareFile(imageUri ?: throw Exception("URI отсутствует"))
-                val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
-                val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
-                val descriptionBody = _createContentData.value.description.toRequestBody("text/plain".toMediaTypeOrNull())
-                val titleBody = _createContentData.value.title.toRequestBody("text/plain".toMediaTypeOrNull())
 
-                val response = uploadRepository.uploadImage(body, descriptionBody, titleBody)
+                val parts = imageUris.map { uri ->
+                    val file = prepareFile(uri)
+                    val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+                    MultipartBody.Part.createFormData("file", file.name, requestFile)
+                }
+
+                val descriptionBody = _createContentData.value.description
+                    .toRequestBody("text/plain".toMediaTypeOrNull())
+                val titleBody = _createContentData.value.title
+                    .toRequestBody("text/plain".toMediaTypeOrNull())
+
+                val response = uploadRepository.uploadImage(
+                    files = parts,
+                    description = descriptionBody,
+                    title = titleBody
+                )
 
                 if (response.isSuccessful) {
                     onSuccess()

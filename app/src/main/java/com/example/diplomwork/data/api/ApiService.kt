@@ -98,7 +98,7 @@ interface ApiService {
     @Multipart
     @POST("api/pins/upload")
     suspend fun uploadImage(
-        @Part file: MultipartBody.Part,
+        @Part files: List<MultipartBody.Part>,
         @Part("description") description: RequestBody,
         @Part("title") title: RequestBody
     ): Response<PictureResponse>
