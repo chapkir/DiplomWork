@@ -4,10 +4,12 @@ import android.app.Activity
 import android.app.DatePickerDialog
 import android.content.Context
 import android.icu.util.Calendar
+import android.os.Build
 import android.view.inputmethod.InputMethodManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,10 +26,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -66,10 +72,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.presentation.ui.theme.BgDefault
+import com.example.diplomwork.presentation.ui.theme.BgElevated
 import com.example.diplomwork.presentation.ui.theme.ButtonPrimary
 import com.example.diplomwork.presentation.ui.theme.ErrorColor
+import com.example.diplomwork.presentation.ui.theme.SuccessColor
 import com.example.diplomwork.presentation.viewmodel.EditProfileViewModel
 import com.example.diplomwork.presentation.viewmodel.RegisterViewModel
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -106,8 +117,10 @@ fun RegisterScreen(
     val genders = listOf("Мужской", "Женский", "Другой")
     val focusRequester = remember { FocusRequester() }
 
-    LaunchedEffect(step) {
-        focusRequester.requestFocus()
+    if (step < 4) {
+        LaunchedEffect(step) {
+            focusRequester.requestFocus()
+        }
     }
 
     Column(
@@ -220,6 +233,11 @@ fun RegisterScreen(
                     editProfileViewModel.updateProfileData { copy(gender = it) }
                 }
             }
+
+            4 -> {
+                StepTitle("Дайте разрешения")
+                StepPermissions()
+            }
         }
         errorMessage?.let {
             Spacer(modifier = Modifier.height(10.dp))
@@ -288,7 +306,7 @@ fun Hint(text: String) {
 fun StepTitle(text: String) {
     Text(
         text = text,
-        color = Color.White.copy(alpha = 0.9f),
+        color = Color.White,
         fontSize = 24.sp,
         fontWeight = FontWeight.Bold
     )
@@ -481,7 +499,7 @@ fun StepIndicator(
         modifier = Modifier
             .fillMaxWidth()
     ) {
-        if (currentStep != 3) {
+        if (currentStep != 4) {
             IconButton(
                 onClick = {
                     if (currentStep == 0) onBackOut()
@@ -505,18 +523,18 @@ fun StepIndicator(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            for (i in 0..3) {
+            for (i in 0..4) {
                 Box(
                     modifier = Modifier
                         .size(12.dp)
                         .clip(CircleShape)
                         .background(if (i == currentStep) Color.White else Color.Gray)
                 )
-                if (i < 3) Spacer(modifier = Modifier.width(8.dp))
+                if (i < 4) Spacer(modifier = Modifier.width(8.dp))
             }
         }
 
-        if (currentStep == 3) {
+        if (currentStep > 2) {
             IconButton(
                 onClick = {
                     onEditSkip()
@@ -578,3 +596,144 @@ fun DatePickerButton(
     }
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun StepPermissions() {
+    val galleryPermission = rememberPermissionState(
+        permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+            android.Manifest.permission.READ_MEDIA_IMAGES
+        else
+            android.Manifest.permission.READ_EXTERNAL_STORAGE
+    )
+
+    val notificationPermission = rememberPermissionState(
+        permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+            android.Manifest.permission.POST_NOTIFICATIONS
+        else
+            ""
+    )
+
+    val locationPermission = rememberPermissionState(
+        permission = android.Manifest.permission.ACCESS_FINE_LOCATION
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(start = 16.dp, end = 16.dp, top = 10.dp)
+    ) {
+
+        PermissionCard(
+            title = "Медиафайлы",
+            description = "Разрешите доступ к галерее, чтобы загружать фотографии интересных мест.",
+            isGranted = galleryPermission.status.isGranted,
+            onRequest = { galleryPermission.launchPermissionRequest() }
+        )
+
+        Spacer(modifier = Modifier.height(15.dp))
+
+        PermissionCard(
+            title = "Местоположение",
+            description = "Разрешите доступ к вашему местоположению, чтобы видеть места рядом с вами.",
+            isGranted = locationPermission.status.isGranted,
+            onRequest = { locationPermission.launchPermissionRequest() }
+        )
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Spacer(modifier = Modifier.height(15.dp))
+
+            PermissionCard(
+                title = "Уведомления",
+                description = "Разрешите нам отправлять уведомления об интересных местах и событиях рядом с вами.",
+                isGranted = notificationPermission.status.isGranted,
+                onRequest = { notificationPermission.launchPermissionRequest() }
+            )
+        }
+
+    }
+}
+
+@Composable
+fun PermissionCard(
+    title: String,
+    description: String,
+    isGranted: Boolean,
+    onRequest: () -> Unit
+) {
+    val wasRequested = remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) {
+                wasRequested.value = true
+                onRequest()
+            },
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = BgElevated
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 20.dp, top = 16.dp, bottom = 16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = 5.dp, end = 40.dp)
+            ) {
+                Text(
+                    text = title,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.height(5.dp))
+                Text(
+                    text = description,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Gray
+                )
+            }
+
+            when {
+                !wasRequested.value -> {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_arrow_right),
+                        contentDescription = "Нажмите, чтобы запросить разрешение",
+                        tint = Color.Gray,
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .size(34.dp)
+                    )
+                }
+                isGranted -> {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Разрешение предоставлено",
+                        tint = SuccessColor,
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .size(28.dp)
+                    )
+                }
+                else -> {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Разрешение отклонено",
+                        tint = ErrorColor,
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .size(28.dp)
+                    )
+                }
+            }
+        }
+    }
+}

@@ -345,9 +345,13 @@ fun PostCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .clickable(
                     indication = null,
-                    interactionSource = remember { MutableInteractionSource() }) { onLikeClick() }) {
+                    interactionSource = remember { MutableInteractionSource() }
+                    ) { onLikeClick() }
+            ) {
                 Icon(
                     painter = painterResource(
                         id = if (post.isLikedByCurrentUser) R.drawable.ic_favs_filled else R.drawable.ic_favs

@@ -100,7 +100,7 @@ fun AppNavigation(navController: NavHostController) {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = if (sessionManager.isLoggedIn()) Spots else Login,
+            startDestination = if (sessionManager.isLoggedIn()) Spots else Register,
             modifier = Modifier.padding(paddingValues)
         ) {
             composable<Pictures> {

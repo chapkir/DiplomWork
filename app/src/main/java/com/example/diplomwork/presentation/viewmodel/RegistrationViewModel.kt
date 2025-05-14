@@ -69,7 +69,7 @@ class RegisterViewModel @Inject constructor(
     }
 
     fun nextStep() {
-        if (_step.value < 3) _step.value += 1
+        if (_step.value < 4) _step.value += 1
     }
 
     fun previousStep() {
@@ -174,6 +174,8 @@ class RegisterViewModel @Inject constructor(
             }
 
             3 -> true
+
+            4 -> true
 
             else -> false
         }
