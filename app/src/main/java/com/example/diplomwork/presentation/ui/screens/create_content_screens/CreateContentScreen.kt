@@ -37,7 +37,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -53,18 +52,17 @@ import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForElemen
 import com.example.diplomwork.presentation.ui.navigation.CreateContentScreenData
 import com.example.diplomwork.presentation.ui.theme.ButtonPrimary
 import com.example.diplomwork.presentation.ui.theme.ErrorColor
-import com.example.diplomwork.presentation.viewmodel.CreateContentViewModel
+import com.example.diplomwork.presentation.viewmodel.CreateSpotViewModel
 
 @Composable
 fun CreateContentScreen(
     createContentScreenData: CreateContentScreenData,
     onContentAdded: () -> Unit,
     onBack: () -> Unit,
-    viewModel: CreateContentViewModel = hiltViewModel()
+    viewModel: CreateSpotViewModel = hiltViewModel()
 ) {
 
-    val focusManager = LocalFocusManager.current
-    val createContentData by viewModel.createContentData.collectAsState()
+    val createContentData by viewModel.createSpotData.collectAsState()
     val imageUrls = createContentScreenData.imageUrls
     val imageUrlsUri = imageUrls.map { it.toUri() }
 

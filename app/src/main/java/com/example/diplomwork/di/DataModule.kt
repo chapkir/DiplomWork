@@ -8,6 +8,7 @@ import com.example.diplomwork.data.repos.ProfileRepository
 import com.example.diplomwork.data.repos.SearchRepository
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.data.repos.FollowRepository
+import com.example.diplomwork.data.repos.LocationRepository
 import com.example.diplomwork.data.repos.UploadRepository
 import dagger.Module
 import dagger.Provides
@@ -39,6 +40,10 @@ object DataModule {
     @Provides
     @Singleton
     fun provideFollowRepository(apiService: ApiService) = FollowRepository(apiService)
+
+    @Provides
+    @Singleton
+    fun provideLocationRepository(apiService: ApiService) = LocationRepository(apiService)
 
     @Provides
     @Singleton

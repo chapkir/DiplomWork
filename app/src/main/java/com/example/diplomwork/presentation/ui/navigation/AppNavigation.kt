@@ -100,7 +100,7 @@ fun AppNavigation(navController: NavHostController) {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = if (sessionManager.isLoggedIn()) Settings else Login,
+            startDestination = if (sessionManager.isLoggedIn()) Spots else Login,
             modifier = Modifier.padding(paddingValues)
         ) {
             composable<Pictures> {
@@ -203,7 +203,17 @@ fun AppNavigation(navController: NavHostController) {
 
             composable<Map> {
                 MapScreen(
-                    onLocationSelected = { _, _, _, _ -> },
+                    onLocationSelected = { spotName, spotAddress, latitude, longitude ->
+                        navController.navigate(
+                            CreateContentScreenData(
+                                spotName,
+                                spotAddress,
+                                latitude,
+                                longitude,
+                                emptyList()
+                            )
+                        )
+                    },
                     onBack = { navController.popBackStack() },
                 )
             }
@@ -277,9 +287,9 @@ fun AppNavigation(navController: NavHostController) {
             composable<Gallery> {
                 GalleryScreen(
                     onImageSelected = { selectedImages ->
-                        navController.navigate(
-                            CreateContentScreenData(selectedImages)
-                        )
+                        //navController.navigate(
+                            //CreateContentScreenData(selectedImages)
+                        //)
                     },
                     onClose = { navController.popBackStack() }
                 )
@@ -302,7 +312,7 @@ fun AppNavigation(navController: NavHostController) {
             WhatCreateBottomSheet(
                 onAddContent = {
                     coroutineScope.launch { whatCreateSheetState.hide() }
-                    navController.navigate(Gallery)
+                    navController.navigate(Map)
                 },
                 onDismiss = {
                     coroutineScope.launch { whatCreateSheetState.hide() }

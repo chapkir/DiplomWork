@@ -64,6 +64,10 @@ data class PictureDetailScreenData(
 
 @Serializable
 data class CreateContentScreenData(
+    val spotName: String?,
+    val spotAddress: String?,
+    val latitude: Double,
+    val longitude: Double,
     val imageUrls: List<String>,
 ) : Screen
 

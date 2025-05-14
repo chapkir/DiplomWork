@@ -280,6 +280,12 @@ fun SpotsCard(
                 Row(
                     modifier = Modifier.fillMaxSize()
                 ) {
+                    ImagesPager(
+                        imageUrls = imageUrl,
+                        modifier = Modifier
+                            .padding(end = 10.dp)
+                            .weight(0.55f)
+                    )
                     PlaceInfo(
                         rating = Random.nextInt(1, 6),
                         title = title,
@@ -288,13 +294,6 @@ fun SpotsCard(
                             .fillMaxHeight()
                             .padding(start = 10.dp, end = 15.dp)
                             .weight(0.8f)
-                    )
-
-                    ImagesPager(
-                        imageUrls = imageUrl,
-                        modifier = Modifier
-                            .padding(end = 10.dp)
-                            .weight(0.55f)
                     )
                 }
             }
