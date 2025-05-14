@@ -17,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -26,18 +25,13 @@ import androidx.compose.ui.unit.sp
 import com.example.diplomwork.R
 
 @Composable
-fun SettingsScreen(
-    onBack: () -> Unit,
-    onEditProfileClick: () -> Unit,
-    onAccountManagementClick: () -> Unit,
-    onPrivacyClick: () -> Unit,
-    onLogoutClick: () -> Unit,
-    onHelpCenterClick: () -> Unit,
-    onLicensesClick: () -> Unit
+fun ManagementAccount(
+    onBack: () -> Unit
 ) {
-    val uriHandler = LocalUriHandler.current
-
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -58,49 +52,67 @@ fun SettingsScreen(
             }
             Spacer(modifier = Modifier.width(22.dp))
             Text(
-                text = "Настройки",
+                text = "Управление аккаунтом",
                 color = Color.White,
                 fontSize = 21.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
             )
         }
-
         HorizontalDivider()
 
-        Column {
-            SettingItem("Редактировать профиль", onEditProfileClick)
-            SettingItem("Управление аккаунтом", onAccountManagementClick)
-            SettingItem("Приватность", onPrivacyClick)
+        Text(
+            text = "Ваш аккаунт",
+            color = Color.Gray,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(start = 16.dp, top = 20.dp, bottom = 5.dp)
+        )
+        SettingItem(
+            title = "Персональные данные",
+            onClick = { }
+        )
+        SettingItem(
+            title = "Адрес эдектронной почты",
+            onClick = { }
+        )
+        SettingItem(
+            title = "Изменить пароль",
+            onClick = { }
+        )
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+        HorizontalDivider(modifier = Modifier.padding(top = 10.dp))
+
+        Text(
+            text = "Деактивация и удаление",
+            color = Color.Gray,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(start = 16.dp, top = 20.dp, bottom = 5.dp)
+        )
 
             SettingItem(
-                title = "Справочный центр",
-                onClick = onHelpCenterClick,
-                actionIcon = R.drawable.ic_arrow_up_right
+                title = "Отключение аккаунта",
+                onClick = { }
+            )
+            Text(
+                text = "Отключение аккаунта для временного скрытия мест и профиля",
+                color = Color.Gray,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 16.dp)
             )
 
             SettingItem(
-                title = "Политика конфиденциальности",
-                onClick = { uriHandler.openUri("http://chapkir.ru/privacy.html") },
-                actionIcon = R.drawable.ic_arrow_up_right
+                title = "Удаление данных и аккаунта",
+                onClick = { }
             )
-
-            SettingItem(
-                title = "Пользовательское соглашение",
-                onClick = { uriHandler.openUri("http://chapkir.ru/privacy.html") },
-                actionIcon = R.drawable.ic_arrow_up_right
+            Text(
+                text = "Безвозвратное удаление данных и всего, что связано с аккаунтом",
+                color = Color.Gray,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 16.dp)
             )
-
-            SettingItem(
-                title = "Сведения",
-                onClick = { onLicensesClick() }
-            )
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-            SettingItem("Выйти из аккаунта", onLogoutClick, isLogoutButton = true)
-        }
     }
 }

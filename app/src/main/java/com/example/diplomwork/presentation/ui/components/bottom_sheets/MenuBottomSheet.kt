@@ -30,6 +30,9 @@ fun MenuBottomSheet(
     onDismiss: () -> Unit,
     isOwnContent: Boolean,
     onDelete: () -> Unit,
+    onDownloadPicture: () -> Unit = {},
+    onReportSpot: () -> Unit = {},
+    onHideSpot: () -> Unit = {},
     sheetState: SheetState
 ) {
     ModalBottomSheet(
@@ -48,9 +51,9 @@ fun MenuBottomSheet(
         ) {
             HorizontalDivider(color = Color.LightGray)
             Spacer(modifier = Modifier.height(24.dp))
-            MenuItem(title = "Скачать изображение", onClick = {})
-            MenuItem(title = "Пожаловаться на место", onClick = {})
-            MenuItem(title = "Скрыть место", onClick = {})
+            //MenuItem(title = "Скачать изображение", onClick = { onDownloadPicture() })
+            MenuItem(title = "Пожаловаться на место", onClick = { onReportSpot() })
+            MenuItem(title = "Скрыть место", onClick = { onHideSpot() })
             if (isOwnContent) MenuItem(title = "Удалить", onClick = { onDelete() })
         }
     }

@@ -3,10 +3,12 @@ package com.example.diplomwork.presentation.viewmodel
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.diplomwork.data.model.LocationRequest
+import com.example.diplomwork.data.repos.LocationRepository
 import com.example.diplomwork.data.repos.UploadRepository
-import com.example.diplomwork.presentation.viewmodel.RegisterViewModel.RegisterData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,20 +22,32 @@ import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
-class CreateContentViewModel @Inject constructor(
+class CreateSpotViewModel @Inject constructor(
     private val uploadRepository: UploadRepository,
-    @ApplicationContext private val context: Context
+    private val locationRepository: LocationRepository,
+    @ApplicationContext private val context: Context,
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-    data class CreateContentData(
+    private val _spotName: String = savedStateHandle.get<String>("spotName") ?: ""
+    private val _spotAddress: String = savedStateHandle.get<String>("spotAddress") ?: ""
+    private val _latitude: Double = savedStateHandle.get<Double>("latitude") ?: 0.0
+    private val _longitude: Double = savedStateHandle.get<Double>("longitude") ?: 0.0
+
+    data class CreateSpotData(
         val title: String = "",
         val description: String = "",
         val geo: String = "",
+        val address: String = "",
         val rating: String = ""
     )
 
-    private val _createContentData = MutableStateFlow(CreateContentData())
-    val createContentData: StateFlow<CreateContentData> = _createContentData
+    private val _createSpotData = MutableStateFlow(CreateSpotData(
+        title = _spotName,
+        geo = "$_latitude, $_longitude",
+        address = _spotAddress
+    ))
+    val createSpotData: StateFlow<CreateSpotData> = _createSpotData
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -44,12 +58,10 @@ class CreateContentViewModel @Inject constructor(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
-    fun updateCreateContentData(update: CreateContentData.() -> CreateContentData) {
-        val currentData = _createContentData.value
+    fun updateCreateContentData(update: CreateSpotData.() -> CreateSpotData) {
+        val currentData = _createSpotData.value
         val newData = currentData.update()
-
-        _createContentData.value = newData
-
+        _createSpotData.value = newData
         _errorMessage.value = null
     }
 
@@ -58,18 +70,20 @@ class CreateContentViewModel @Inject constructor(
             _isLoading.value = true
             _isError.value = null
             try {
-
+                // Подготовка файлов к загрузке
                 val parts = imageUris.map { uri ->
                     val file = prepareFile(uri)
                     val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
                     MultipartBody.Part.createFormData("file", file.name, requestFile)
                 }
 
-                val descriptionBody = _createContentData.value.description
+                // Подготовка данных
+                val descriptionBody = _createSpotData.value.description
                     .toRequestBody("text/plain".toMediaTypeOrNull())
-                val titleBody = _createContentData.value.title
+                val titleBody = _createSpotData.value.title
                     .toRequestBody("text/plain".toMediaTypeOrNull())
 
+                // Загрузка изображений
                 val response = uploadRepository.uploadImage(
                     files = parts,
                     description = descriptionBody,
@@ -77,12 +91,30 @@ class CreateContentViewModel @Inject constructor(
                 )
 
                 if (response.isSuccessful) {
-                    onSuccess()
+                    // Получаем ID загруженной картинки (например, из ответа)
+                    val pictureId = response.body()?.id ?: 0L
+
+                    // Создаем запрос на добавление локации
+                    val locationRequest = LocationRequest(
+                        pictureId = pictureId,
+                        latitude = _latitude,
+                        longitude = _longitude,
+                        address = _spotAddress
+                    )
+
+                    // Отправляем данные на сервер
+                    val locationResponse = locationRepository.addLocation(locationRequest)
+
+                    if (locationResponse.isSuccessful) {
+                        onSuccess()
+                    } else {
+                        _isError.value = "Ошибка локации: ${locationResponse.code()}"
+                    }
                 } else {
-                    _isError.value = "Ошибка сервера: ${response.code()}"
+                    _isError.value = "Ошибка загрузки изображения: ${response.code()}"
                 }
             } catch (e: Exception) {
-                _isError.value = "Ошибка загрузки: ${e.localizedMessage}"
+                _isError.value = "Ошибка: ${e.localizedMessage}"
             } finally {
                 _isLoading.value = false
             }

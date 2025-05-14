@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -36,6 +37,8 @@ import com.mikepenz.aboutlibraries.util.withContext
 fun LicensesScreen(
     onBack: () -> Unit
 ) {
+
+    val uriHandler = LocalUriHandler.current
 
     Column(
         modifier = Modifier
@@ -61,7 +64,7 @@ fun LicensesScreen(
             }
             Spacer(modifier = Modifier.width(22.dp))
             Text(
-                text = "Сведения о лицензиях",
+                text = "Сведения о приложении",
                 color = Color.White,
                 fontSize = 21.sp,
                 fontWeight = FontWeight.Bold,
@@ -70,6 +73,7 @@ fun LicensesScreen(
         }
 
         HorizontalDivider()
+
         LibrariesContainer(
             modifier = Modifier.fillMaxSize(),
             librariesBlock = { ctx ->
@@ -77,13 +81,23 @@ fun LicensesScreen(
             },
             header = {
                 item {
-                    Box(
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
+                            .fillMaxWidth(),
                     ) {
-                        Text("Версия: 1.0.0")
+                        SettingItem(
+                            title = "Условия использования отдельных сервисов Яндекс Карт",
+                            onClick = { uriHandler.openUri("https://yandex.ru/legal/maps_api/") },
+                            actionIcon = R.drawable.ic_arrow_up_right
+                        )
+                        HorizontalDivider()
+                        Text(
+                            text = "Лицензии",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.LightGray,
+                            modifier = Modifier.padding(start = 15.dp, top = 20.dp)
+                        )
                     }
                 }
             },

@@ -3,6 +3,7 @@ package com.example.diplomwork.presentation.ui.navigation
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -16,6 +17,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
 import com.example.diplomwork.auth.SessionManager
+import com.example.diplomwork.presentation.ui.components.CustomSnackbarHost
 import com.example.diplomwork.presentation.ui.components.bottom_bar.BottomNavigationBar
 import com.example.diplomwork.presentation.ui.components.top_bar.GetTopBars
 import com.example.diplomwork.presentation.ui.screens.create_content_screens.CreateContentScreen
@@ -32,6 +34,7 @@ import com.example.diplomwork.presentation.ui.screens.registration_screen.Regist
 import com.example.diplomwork.presentation.ui.screens.search_screen.SearchScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.EditProfileScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.LicensesScreen
+import com.example.diplomwork.presentation.ui.screens.settings_screens.ManagementAccount
 import com.example.diplomwork.presentation.ui.screens.settings_screens.SettingsScreen
 import com.example.diplomwork.presentation.ui.screens.spots_screen.SpotsScreen
 import com.example.diplomwork.presentation.ui.theme.BgDefault
@@ -40,31 +43,36 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavigation(navController: NavHostController) {
+    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
         ?.substringAfterLast('.') ?: ""
 
-    val hiddenScreens =
+    val visibleScreens =
         listOf(
-            PictureDetailScreenData::class.simpleName,
-            Login::class.simpleName,
-            Register::class.simpleName,
-            Gallery::class.simpleName,
-            CreateContentScreenData::class.simpleName,
-            EditProfile::class.simpleName,
-            Map::class.simpleName,
-            Licenses::class.simpleName
+            Spots::class.simpleName,
+            Settings::class.simpleName,
+            Search::class.simpleName,
+            OwnProfile::class.simpleName,
+            OtherProfileScreenData::class.simpleName,
+            Notification::class.simpleName,
         )
 
     val showBottomBar = currentRoute.let { route ->
-        hiddenScreens.none { it != null && route.startsWith(it) }
+        visibleScreens.any() { it != null && route.startsWith(it) }
     }
 
     val coroutineScope = rememberCoroutineScope()
 
     val whatCreateSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val openSheet = { coroutineScope.launch { whatCreateSheetState.show() } }
+
+    fun showFunInDevSnackbar() {
+        coroutineScope.launch {
+            snackbarHostState.showSnackbar("Упс. Извините, функция находится в разработке.")
+        }
+    }
 
     Scaffold(
         topBar = { GetTopBars(currentRoute = currentRoute) },
@@ -79,19 +87,20 @@ fun AppNavigation(navController: NavHostController) {
                 onAddClicked = { openSheet() }
             )
         },
+        snackbarHost = { CustomSnackbarHost(snackbarHostState) },
         containerColor =
             when (currentRoute) {
                 Login::class.simpleName -> BgDefault
                 Register::class.simpleName -> BgDefault
                 Spots::class.simpleName -> Color.Black
-                CreateContentScreenData::class.simpleName -> Color.Black
-                Gallery::class.simpleName -> Color.Black
+                CreateSpotScreenData::class.simpleName -> Color.Black
+                GalleryScreenData::class.simpleName -> Color.Black
                 else -> BgDefault
             },
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = if (sessionManager.isLoggedIn()) Settings else Login,
+            startDestination = if (sessionManager.isLoggedIn()) Spots else Map,
             modifier = Modifier.padding(paddingValues)
         ) {
             composable<Pictures> {
@@ -192,13 +201,6 @@ fun AppNavigation(navController: NavHostController) {
                 )
             }
 
-            composable<Map> {
-                MapScreen(
-                    onLocationSelected = { _, _, _, _ -> },
-                    onBack = { navController.popBackStack() },
-                )
-            }
-
             composable<Search> {
                 SearchScreen()
             }
@@ -222,15 +224,19 @@ fun AppNavigation(navController: NavHostController) {
                             popUpTo(EditProfile)
                         }
                     },
-                    onAccountManagementClick = {},
-                    onPrivacyClick = {},
+                    onAccountManagementClick = {
+                        navController.navigate(ManagementAccount) {
+                            popUpTo(ManagementAccount) { inclusive = false }
+                        }
+                    },
+                    onPrivacyClick = { showFunInDevSnackbar() }, // TODO
                     onLogoutClick = {
                         sessionManager.clearSession()
                         navController.navigate(Login) {
                             popUpTo(Login) { inclusive = true }
                         }
                     },
-                    onHelpCenterClick = {},
+                    onHelpCenterClick = { showFunInDevSnackbar() }, // TODO
                     onLicensesClick = {
                         navController.navigate(Licenses) {
                             popUpTo(Licenses) { inclusive = false }
@@ -245,6 +251,12 @@ fun AppNavigation(navController: NavHostController) {
                 )
             }
 
+            composable<ManagementAccount> {
+                ManagementAccount(
+                    onBack = { navController.popBackStack() },
+                )
+            }
+
             composable<Register> {
                 RegisterScreen(
                     onCompleteRegistration = {
@@ -255,26 +267,49 @@ fun AppNavigation(navController: NavHostController) {
                     onBack = { navController.popBackStack() }
                 )
             }
-            composable<Gallery> {
-                GalleryScreen(
-                    onImageSelected = { selectedImages ->
-                        navController.navigate(
-                            CreateContentScreenData(selectedImages)
+
+            composable<Map> {
+                MapScreen(
+                    onLocationSelected = { spotName, spotAddress, latitude, longitude ->
+                        val data = GalleryScreenData(
+                            spotName = spotName,
+                            spotAddress = spotAddress,
+                            latitude = latitude,
+                            longitude = longitude
                         )
+                        navController.navigate(data)
                     },
-                    onClose = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
                 )
             }
 
-            composable<CreateContentScreenData> { backStackEntry ->
-                val createContentScreenData = backStackEntry.toRoute<CreateContentScreenData>()
+            composable<GalleryScreenData> { backStackEntry ->
+                val galleryData = backStackEntry.toRoute<GalleryScreenData>()
+
+                GalleryScreen(
+                    onImageSelected = { selectedImages ->
+                        val createSpotData = CreateSpotScreenData(
+                            spotName = galleryData.spotName,
+                            spotAddress = galleryData.spotAddress,
+                            latitude = galleryData.latitude,
+                            longitude = galleryData.longitude,
+                            imageUrls = selectedImages
+                        )
+                        navController.navigate(createSpotData)
+                    },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable<CreateSpotScreenData> { backStackEntry ->
+                val createSpotScreenData = backStackEntry.toRoute<CreateSpotScreenData>()
                 CreateContentScreen(
-                    createContentScreenData = createContentScreenData,
+                    createContentScreenData = createSpotScreenData,
                     onContentAdded = {
                         navController.popBackStack()
                         navController.popBackStack()
                     },
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
                 )
             }
         }
@@ -283,7 +318,7 @@ fun AppNavigation(navController: NavHostController) {
             WhatCreateBottomSheet(
                 onAddContent = {
                     coroutineScope.launch { whatCreateSheetState.hide() }
-                    navController.navigate(Gallery)
+                    navController.navigate(Map)
                 },
                 onDismiss = {
                     coroutineScope.launch { whatCreateSheetState.hide() }

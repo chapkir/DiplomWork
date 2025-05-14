@@ -111,6 +111,17 @@ fun EditProfileScreen(
         HorizontalDivider()
         Spacer(modifier = Modifier.height(25.dp))
 
+        Text(
+            text = "Заполните одно или несколько полей и нажмите кнопку \"Сохранить\"",
+            color = Color.LightGray,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(0.85f)
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
         CustomOutlinedTextField(
             value = profileState.firstName,
             onValueChange = { viewModel.updateProfileData { copy(firstName = it) } },

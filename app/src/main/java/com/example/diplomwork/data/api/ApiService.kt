@@ -4,6 +4,8 @@ import com.example.diplomwork.data.model.ApiResponse
 import com.example.diplomwork.data.model.CommentRequest
 import com.example.diplomwork.data.model.CommentResponse
 import com.example.diplomwork.data.model.EditProfileRequest
+import com.example.diplomwork.data.model.LocationRequest
+import com.example.diplomwork.data.model.LocationResponse
 import com.example.diplomwork.data.model.LoginRequest
 import com.example.diplomwork.data.model.LoginResponse
 import com.example.diplomwork.data.model.NotificationResponse
@@ -127,6 +129,11 @@ interface ApiService {
         @Path("postId") postId: Long,
         @Body comment: CommentRequest
     ): CommentResponse
+
+    @POST("api/locations")
+    suspend fun addLocation(
+        @Body spot: LocationRequest
+    ): Response<Unit>
 
     @GET("api/users/exists/{username}")
     suspend fun checkUsernameExists(@Path("username") username: String): UserExistsResponse

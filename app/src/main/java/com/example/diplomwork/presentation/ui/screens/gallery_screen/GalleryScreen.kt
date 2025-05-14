@@ -1,6 +1,5 @@
 package com.example.diplomwork.presentation.ui.screens.gallery_screen
 
-import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -63,7 +62,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun GalleryScreen(
     onImageSelected: (List<String>) -> Unit,
-    onClose: () -> Unit,
+    onBack: () -> Unit,
     viewModel: GalleryViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -100,22 +99,21 @@ fun GalleryScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
-                onClick = { onClose() },
+                onClick = { onBack() },
                 modifier = Modifier
-                    .padding(start = 23.dp)
-                    .size(20.dp)
+                    .padding(start = 7.dp, end = 5.dp)
+                    .size(32.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_close),
-                    contentDescription = "Закрыть",
+                    painter = painterResource(id = R.drawable.ic_arrow_left),
+                    contentDescription = "Back",
                     tint = Color.White,
                 )
             }
-            Spacer(modifier = Modifier.width(23.dp))
             Text(
                 text = "Выберите до 5 фото одного места",
                 color = Color.White,
-                fontSize = 16.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
         }

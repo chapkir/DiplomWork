@@ -1,6 +1,5 @@
 package com.example.diplomwork.presentation.ui.navigation
 
-import android.net.Uri
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -49,10 +48,10 @@ object Map : Screen
 object ViewPost : Screen
 
 @Serializable
-object Gallery : Screen
+object Licenses : Screen
 
 @Serializable
-object Licenses : Screen
+object ManagementAccount : Screen
 
 @Serializable
 data class PictureDetailScreenData(
@@ -60,8 +59,20 @@ data class PictureDetailScreenData(
 ) : Screen
 
 @Serializable
-data class CreateContentScreenData(
-    val imageUrls: List<String>,
+data class GalleryScreenData(
+    val spotName: String? = null,
+    val spotAddress: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null
+) : Screen
+
+@Serializable
+data class CreateSpotScreenData(
+    val spotName: String? = null,
+    val spotAddress: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val imageUrls: List<String> = emptyList(),
 ) : Screen
 
 @Serializable

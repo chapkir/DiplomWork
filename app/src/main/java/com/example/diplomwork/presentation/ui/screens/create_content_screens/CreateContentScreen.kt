@@ -4,16 +4,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -22,22 +24,29 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusEvent
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -49,22 +58,23 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
+import com.example.diplomwork.R
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForElement
-import com.example.diplomwork.presentation.ui.navigation.CreateContentScreenData
+import com.example.diplomwork.presentation.ui.navigation.CreateSpotScreenData
 import com.example.diplomwork.presentation.ui.theme.ButtonPrimary
 import com.example.diplomwork.presentation.ui.theme.ErrorColor
-import com.example.diplomwork.presentation.viewmodel.CreateContentViewModel
+import com.example.diplomwork.presentation.viewmodel.CreateSpotViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun CreateContentScreen(
-    createContentScreenData: CreateContentScreenData,
+    createContentScreenData: CreateSpotScreenData,
     onContentAdded: () -> Unit,
     onBack: () -> Unit,
-    viewModel: CreateContentViewModel = hiltViewModel()
+    viewModel: CreateSpotViewModel = hiltViewModel()
 ) {
-
-    val focusManager = LocalFocusManager.current
-    val createContentData by viewModel.createContentData.collectAsState()
+    val createSpotData by viewModel.createSpotData.collectAsState()
     val imageUrls = createContentScreenData.imageUrls
     val imageUrlsUri = imageUrls.map { it.toUri() }
 
@@ -80,81 +90,138 @@ fun CreateContentScreen(
             .verticalScroll(rememberScrollState())
             .imePadding()
     ) {
-        // Заголовок
-        Row(
+
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+                .padding(top = 20.dp, bottom = 20.dp),
         ) {
+            IconButton(
+                onClick = { onBack() },
+                modifier = Modifier
+                    .padding(start = 12.dp, end = 12.dp)
+                    .size(35.dp)
+                    .align(Alignment.CenterStart)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_arrow_left),
+                    contentDescription = "Back",
+                    tint = Color.White,
+                )
+            }
             Text(
                 text = "Добавление спота",
-                textAlign = TextAlign.Center,
                 color = Color.White,
+                fontSize = 21.sp,
                 fontWeight = FontWeight.Bold,
-                fontSize = 22.sp
+                modifier = Modifier.align(Alignment.Center)
             )
         }
+
+        HorizontalDivider(modifier = Modifier.padding(bottom = 20.dp))
 
         // Контент
         Column(
             verticalArrangement = Arrangement.spacedBy(15.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            LazyRow {
-                items(imageUrlsUri) { imageUri ->
-                    Card(
-                        shape = RoundedCornerShape(12.dp),
-                        elevation = CardDefaults.cardElevation(5.dp),
+            if (imageUrls.isEmpty()) {
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(5.dp),
+                    modifier = Modifier
+                        .width(130.dp)
+                        .padding(horizontal = 5.dp)
+                ) {
+                    Box(
                         modifier = Modifier
-                            .width(130.dp)
-                            .padding(horizontal = 5.dp)
+                            .aspectRatio(0.75f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        Color(0xFFFFA292),
+                                        Color(0xFFD5523B),
+                                    )
+                                ),
+                            ),
                     ) {
-                        AsyncImage(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data(imageUri)
-                                .crossfade(300)
-                                .build(),
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            onState = { state ->
-                                if (state is AsyncImagePainter.State.Success) {
-                                    val size = state.painter.intrinsicSize
-                                    if (size.width > 0 && size.height > 0) {
-                                        aspectRatio = size.width / size.height
-                                    }
-                                }
-                            },
+                        TextButton(
+                            onClick = { },
+                            modifier = Modifier.align(Alignment.Center),
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = Color.White.copy(alpha = 0.9f)
+                            )
+                        ) {
+                            Text(
+                                text = "Добавьте фото",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
+                }
+            } else {
+                LazyRow {
+                    items(imageUrlsUri) { imageUri ->
+                        Card(
+                            shape = RoundedCornerShape(12.dp),
+                            elevation = CardDefaults.cardElevation(5.dp),
                             modifier = Modifier
-                                .aspectRatio(aspectRatio)
-                                .clip(RoundedCornerShape(12.dp))
-                        )
+                                .width(130.dp)
+                                .padding(horizontal = 5.dp)
+                        ) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(imageUri)
+                                    .crossfade(300)
+                                    .build(),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                onState = { state ->
+                                    if (state is AsyncImagePainter.State.Success) {
+                                        val size = state.painter.intrinsicSize
+                                        if (size.width > 0 && size.height > 0) {
+                                            aspectRatio = size.width / size.height
+                                        }
+                                    }
+                                },
+                                modifier = Modifier
+                                    .aspectRatio(aspectRatio)
+                                    .clip(RoundedCornerShape(12.dp))
+                            )
+                        }
                     }
                 }
             }
 
             AddContentTextField(
                 label = "Название",
-                value = createContentData.title,
+                value = createSpotData.title,
                 onValueChange = { viewModel.updateCreateContentData { copy(title = it) } }
             )
 
             AddContentTextField(
-                label = "Описание",
-                value = createContentData.description,
+                label = "Описание (необязательно)",
+                value = createSpotData.description,
                 onValueChange = { viewModel.updateCreateContentData { copy(description = it) } }
             )
 
             AddContentTextField(
-                label = "Геоданные",
-                value = createContentData.geo,
+                label = "Координаты",
+                value = createSpotData.geo,
                 onValueChange = { viewModel.updateCreateContentData { copy(geo = it) } }
             )
 
             AddContentTextField(
+                label = "Адрес (необязательно)",
+                value = createSpotData.address,
+                onValueChange = { viewModel.updateCreateContentData { copy(address = it) } }
+            )
+
+            AddContentTextField(
                 label = "Рейтинг",
-                value = createContentData.rating,
+                value = createSpotData.rating,
                 onValueChange = { viewModel.updateCreateContentData { copy(rating = it) } }
             )
 
@@ -210,14 +277,17 @@ private fun AddContentTextField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
-    isError: Boolean = false
+    isError: Boolean = false,
+    readOnly: Boolean = false,
 ) {
+    val coroutineScope = rememberCoroutineScope()
 
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
         isError = isError,
+        readOnly = readOnly,
         modifier = if (label != "Описание") {
             Modifier
                 .fillMaxWidth(0.95f)
