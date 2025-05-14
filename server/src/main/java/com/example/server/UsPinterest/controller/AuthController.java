@@ -21,10 +21,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -43,6 +46,8 @@ public class AuthController {
     private final Counter authLoginCounter;
 
     private final Counter authRegisterCounter;
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest) {
@@ -63,6 +68,8 @@ public class AuthController {
     public ResponseEntity<TokenRefreshResponse> login(@Valid @RequestBody LoginRequest request) {
         authLoginCounter.increment();
         String accessToken = userService.loginUser(request.getUsername(), request.getPassword());
+        // Логируем сгенерированный JWT для отладки
+        logger.info("Выдан JWT токен для пользователя {}: {}", request.getUsername(), accessToken);
         User user = userService.getUserWithCollectionsByUsername(request.getUsername());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
@@ -141,5 +148,18 @@ public class AuthController {
         Map<String, String> response = new HashMap<>();
         response.put("message", "Email успешно подтвержден");
         return ResponseEntity.ok(response);
+    }
+
+    // Тестовый эндпоинт для валидации JWT
+    @GetMapping("/validate")
+    public ResponseEntity<String> validateToken(@RequestHeader("Authorization") String header) {
+        String token = header.startsWith("Bearer ") ? header.substring(7) : header;
+        try {
+            jwtTokenUtil.validateJwtToken(token);
+            return ResponseEntity.ok("JWT валиден");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpServletResponse.SC_UNAUTHORIZED)
+                    .body("JWT невалиден: " + e.getMessage());
+        }
     }
 }

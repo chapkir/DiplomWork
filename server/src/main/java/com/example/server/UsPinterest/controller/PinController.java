@@ -85,7 +85,7 @@ public class PinController {
     private final TagRepository tagRepository;
     private final PictureRepository pictureRepository;
 
-    @GetMapping({"", "/all"})
+    @GetMapping({""})
     public ResponseEntity<?> getAllPins(
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "20") int size,

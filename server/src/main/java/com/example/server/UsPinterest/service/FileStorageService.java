@@ -65,6 +65,9 @@ public class FileStorageService {
     @Value("${file.thumbnail.max-height}")
     private int thumbnailMaxHeight;
 
+    @Value("${app.url}")
+    private String appUrl;
+
     private Path fileStorageLocation;
     private Path profileImagesLocation;
     private Path fullhdImagesLocation;
@@ -118,10 +121,7 @@ public class FileStorageService {
             Files.copy(inputStream, targetLocation, StandardCopyOption.REPLACE_EXISTING);
         }
 
-        return ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/uploads/")
-                .path(filename)
-                .toUriString();
+        return appUrl + "/uploads/" + filename;
     }
 
     public String storeFile(MultipartFile file) throws IOException {
@@ -153,10 +153,7 @@ public class FileStorageService {
                 .asBufferedImage();
         ImageIO.write(webpImg, "webp", targetLocation.toFile());
         // Возвращаем URL к статическому ресурсу
-        return ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/uploads/profile-images/")
-                .path(filename)
-                .toUriString();
+        return appUrl + "/uploads/profile-images/" + filename;
     }
 
     public String getFilenameFromUrl(String imageUrl) {
@@ -196,9 +193,7 @@ public class FileStorageService {
         }
 
         // конвертируем в абсолютный URL с хостом
-        String absoluteUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path(path)
-                .toUriString();
+        String absoluteUrl = appUrl + path;
 
         logger.debug("Преобразование URL: {} -> {}", imageUrl, absoluteUrl);
         return absoluteUrl;
@@ -266,27 +261,21 @@ public class FileStorageService {
         try (OutputStream os = Files.newOutputStream(targetLocation)) {
             ImageIO.write(outImg, "webp", os);
         }
-        String url = ServletUriComponentsBuilder.fromCurrentContextPath().path(uriPath).path(filename).toUriString();
+        String url = appUrl + uriPath + filename;
         return new ImageInfo(url, outImg.getWidth(), outImg.getHeight());
     }
 
     public ImageInfo storeFullhdFile(MultipartFile file, String customFilename) throws IOException {
         ImageInfo info = storeResizedImage(file, customFilename, fullhdImagesLocation, "/uploads/" + fullhdImagesDir + "/", fullhdMaxWidth, fullhdMaxHeight);
         String filename = getFilenameFromUrl(info.getUrl());
-        String url = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/uploads/" + fullhdImagesDir + "/")
-                .path(filename)
-                .toUriString();
+        String url = appUrl + "/uploads/" + fullhdImagesDir + "/" + filename;
         return new ImageInfo(url, info.getWidth(), info.getHeight());
     }
 
     public ImageInfo storeThumbnailFile(MultipartFile file, String customFilename) throws IOException {
         ImageInfo info = storeResizedImage(file, customFilename, thumbnailImagesLocation, "/uploads/" + thumbnailImagesDir + "/", thumbnailMaxWidth, thumbnailMaxHeight);
         String filename = getFilenameFromUrl(info.getUrl());
-        String url = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/uploads/" + thumbnailImagesDir + "/")
-                .path(filename)
-                .toUriString();
+        String url = appUrl + "/uploads/" + thumbnailImagesDir + "/" + filename;
         return new ImageInfo(url, info.getWidth(), info.getHeight());
     }
 

@@ -71,13 +71,16 @@ public class UserService {
             );
         } catch (BadCredentialsException e) {
             throw new RuntimeException("Неверное имя пользователя или пароль");
+        } catch (DisabledException e) {
+            // Пользователь не подтвердил email, но выдаем токен
+            logger.warn("Пользователь {} не подтвердил email, выдаем токен: {}", username, e.getMessage());
         }
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         return jwtTokenUtil.generateToken(userDetails);
     }
 
-    @Cacheable(value = "users", key = "#username")          
+    @Cacheable(value = "users", key = "#username")
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
     }

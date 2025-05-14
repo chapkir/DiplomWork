@@ -1,6 +1,7 @@
 package com.example.server.UsPinterest.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class TokenRefreshResponse {
     private String accessToken;
@@ -15,10 +16,12 @@ public class TokenRefreshResponse {
         this.refreshToken = refreshToken;
     }
 
+    @JsonIgnore
     public String getAccessToken() {
         return accessToken;
     }
 
+    @JsonIgnore
     public void setAccessToken(String accessToken) {
         this.accessToken = accessToken;
     }
