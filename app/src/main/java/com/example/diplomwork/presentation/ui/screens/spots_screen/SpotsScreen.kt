@@ -305,6 +305,9 @@ fun SpotsCard(
         MenuBottomSheet(
             onDismiss = { closeMenuSheet() },
             onDelete = { openConfirmDeleteSheet() },
+            onReportSpot = {  }, // TODO
+            onDownloadPicture = {  }, // TODO
+            onHideSpot = {  }, // TODO
             sheetState = menuSheetState,
             isOwnContent = isCurrentUserOwner
         )

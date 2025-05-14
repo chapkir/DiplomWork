@@ -55,6 +55,9 @@ object Gallery : Screen
 object Licenses : Screen
 
 @Serializable
+object ManagementAccount : Screen
+
+@Serializable
 data class PictureDetailScreenData(
     val pictureId: Long
 ) : Screen

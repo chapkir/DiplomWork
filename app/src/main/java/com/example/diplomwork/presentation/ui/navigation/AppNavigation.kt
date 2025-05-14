@@ -3,6 +3,7 @@ package com.example.diplomwork.presentation.ui.navigation
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -16,6 +17,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
 import com.example.diplomwork.auth.SessionManager
+import com.example.diplomwork.presentation.ui.components.CustomSnackbarHost
 import com.example.diplomwork.presentation.ui.components.bottom_bar.BottomNavigationBar
 import com.example.diplomwork.presentation.ui.components.top_bar.GetTopBars
 import com.example.diplomwork.presentation.ui.screens.create_content_screens.CreateContentScreen
@@ -32,6 +34,7 @@ import com.example.diplomwork.presentation.ui.screens.registration_screen.Regist
 import com.example.diplomwork.presentation.ui.screens.search_screen.SearchScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.EditProfileScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.LicensesScreen
+import com.example.diplomwork.presentation.ui.screens.settings_screens.ManagementAccount
 import com.example.diplomwork.presentation.ui.screens.settings_screens.SettingsScreen
 import com.example.diplomwork.presentation.ui.screens.spots_screen.SpotsScreen
 import com.example.diplomwork.presentation.ui.theme.BgDefault
@@ -40,31 +43,36 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavigation(navController: NavHostController) {
+    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
         ?.substringAfterLast('.') ?: ""
 
-    val hiddenScreens =
+    val visibleScreens =
         listOf(
-            PictureDetailScreenData::class.simpleName,
-            Login::class.simpleName,
-            Register::class.simpleName,
-            Gallery::class.simpleName,
-            CreateContentScreenData::class.simpleName,
-            EditProfile::class.simpleName,
-            Map::class.simpleName,
-            Licenses::class.simpleName
+            Spots::class.simpleName,
+            Settings::class.simpleName,
+            Search::class.simpleName,
+            OwnProfile::class.simpleName,
+            OtherProfileScreenData::class.simpleName,
+            Notification::class.simpleName,
         )
 
     val showBottomBar = currentRoute.let { route ->
-        hiddenScreens.none { it != null && route.startsWith(it) }
+        visibleScreens.any() { it != null && route.startsWith(it) }
     }
 
     val coroutineScope = rememberCoroutineScope()
 
     val whatCreateSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val openSheet = { coroutineScope.launch { whatCreateSheetState.show() } }
+
+    fun showFunInDevSnackbar() {
+        coroutineScope.launch {
+            snackbarHostState.showSnackbar("Упс. Извините, функция находится в разработке.")
+        }
+    }
 
     Scaffold(
         topBar = { GetTopBars(currentRoute = currentRoute) },
@@ -79,6 +87,7 @@ fun AppNavigation(navController: NavHostController) {
                 onAddClicked = { openSheet() }
             )
         },
+        snackbarHost = { CustomSnackbarHost(snackbarHostState) },
         containerColor =
             when (currentRoute) {
                 Login::class.simpleName -> BgDefault
@@ -222,15 +231,19 @@ fun AppNavigation(navController: NavHostController) {
                             popUpTo(EditProfile)
                         }
                     },
-                    onAccountManagementClick = {},
-                    onPrivacyClick = {},
+                    onAccountManagementClick = {
+                        navController.navigate(ManagementAccount) {
+                            popUpTo(ManagementAccount) { inclusive = false }
+                        }
+                    },
+                    onPrivacyClick = { showFunInDevSnackbar() }, // TODO
                     onLogoutClick = {
                         sessionManager.clearSession()
                         navController.navigate(Login) {
                             popUpTo(Login) { inclusive = true }
                         }
                     },
-                    onHelpCenterClick = {},
+                    onHelpCenterClick = { showFunInDevSnackbar() }, // TODO
                     onLicensesClick = {
                         navController.navigate(Licenses) {
                             popUpTo(Licenses) { inclusive = false }
@@ -241,6 +254,12 @@ fun AppNavigation(navController: NavHostController) {
 
             composable<Licenses> {
                 LicensesScreen(
+                    onBack = { navController.popBackStack() },
+                )
+            }
+
+            composable<ManagementAccount> {
+                ManagementAccount(
                     onBack = { navController.popBackStack() },
                 )
             }
