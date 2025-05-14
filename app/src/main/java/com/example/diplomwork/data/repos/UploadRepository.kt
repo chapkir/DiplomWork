@@ -1,8 +1,9 @@
 package com.example.diplomwork.data.repos
 
+import com.example.diplomwork.data.api.ApiService
+import com.example.diplomwork.data.model.ApiResponseWrapper
 import com.example.diplomwork.data.model.PictureResponse
 import com.example.diplomwork.data.model.PostResponse
-import com.example.diplomwork.data.api.ApiService
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -14,12 +15,18 @@ class UploadRepository @Inject constructor(
     private val apiService: ApiService
 ) {
 
-    suspend fun uploadImage(
+    suspend fun uploadSpot(
         files: List<MultipartBody.Part>,
-        description: RequestBody,
         title: RequestBody,
-    ): Response<PictureResponse> {
-        return apiService.uploadImage(files, description, title)
+        description: RequestBody,
+        rating: RequestBody,
+    ): Response<ApiResponseWrapper<List<PictureResponse>>> {
+        return apiService.uploadSpot(
+            files = files,
+            title = title,
+            description = description,
+            rating = rating
+        )
     }
 
     suspend fun uploadPost(

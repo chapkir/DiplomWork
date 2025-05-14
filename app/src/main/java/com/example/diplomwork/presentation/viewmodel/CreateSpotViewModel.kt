@@ -3,6 +3,7 @@ package com.example.diplomwork.presentation.viewmodel
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -39,7 +40,7 @@ class CreateSpotViewModel @Inject constructor(
         val description: String = "",
         val geo: String = "",
         val address: String = "",
-        val rating: String = ""
+        val rating: String = "0"
     )
 
     private val _createSpotData = MutableStateFlow(CreateSpotData(
@@ -70,31 +71,30 @@ class CreateSpotViewModel @Inject constructor(
             _isLoading.value = true
             _isError.value = null
             try {
-                // Подготовка файлов к загрузке
                 val parts = imageUris.map { uri ->
                     val file = prepareFile(uri)
                     val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
                     MultipartBody.Part.createFormData("file", file.name, requestFile)
                 }
 
-                // Подготовка данных
-                val descriptionBody = _createSpotData.value.description
-                    .toRequestBody("text/plain".toMediaTypeOrNull())
                 val titleBody = _createSpotData.value.title
                     .toRequestBody("text/plain".toMediaTypeOrNull())
+                val descriptionBody = _createSpotData.value.description
+                    .toRequestBody("text/plain".toMediaTypeOrNull())
+                val ratingBody = _createSpotData.value.rating
+                    .toRequestBody("text/plain".toMediaTypeOrNull())
 
-                // Загрузка изображений
-                val response = uploadRepository.uploadImage(
+                val response = uploadRepository.uploadSpot(
                     files = parts,
+                    title = titleBody,
                     description = descriptionBody,
-                    title = titleBody
+                    rating = ratingBody
                 )
 
                 if (response.isSuccessful) {
-                    // Получаем ID загруженной картинки (например, из ответа)
-                    val pictureId = response.body()?.id ?: 0L
+                    val pictureList = response.body()?.data ?: emptyList()
+                    val pictureId = pictureList.firstOrNull()?.id ?: 0L
 
-                    // Создаем запрос на добавление локации
                     val locationRequest = LocationRequest(
                         pictureId = pictureId,
                         latitude = _latitude,
@@ -102,7 +102,6 @@ class CreateSpotViewModel @Inject constructor(
                         address = _spotAddress
                     )
 
-                    // Отправляем данные на сервер
                     val locationResponse = locationRepository.addLocation(locationRequest)
 
                     if (locationResponse.isSuccessful) {
@@ -111,7 +110,7 @@ class CreateSpotViewModel @Inject constructor(
                         _isError.value = "Ошибка локации: ${locationResponse.code()}"
                     }
                 } else {
-                    _isError.value = "Ошибка загрузки изображения: ${response.code()}"
+                    _isError.value = "Ошибка загрузки: ${response.code()}"
                 }
             } catch (e: Exception) {
                 _isError.value = "Ошибка: ${e.localizedMessage}"
@@ -125,8 +124,12 @@ class CreateSpotViewModel @Inject constructor(
         val (name, size) = getFileDetails(uri)
         require(size <= 50 * 1024 * 1024) { "Файл больше 50MB" }
 
-        val tempFile = File(context.cacheDir, name).apply { createNewFile() }
-        context.contentResolver.openInputStream(uri)?.use { input ->
+        val tempFile = File.createTempFile("upload_", "_$name", context.cacheDir)
+
+        val inputStream = context.contentResolver.openInputStream(uri)
+            ?: throw IllegalArgumentException("Не удалось открыть файл по URI")
+
+        inputStream.use { input ->
             tempFile.outputStream().use { output -> input.copyTo(output) }
         }
 
@@ -135,16 +138,17 @@ class CreateSpotViewModel @Inject constructor(
     }
 
     private fun getFileDetails(uri: Uri): Pair<String, Long> {
-        val cursor = context.contentResolver.query(uri, null, null, null, null)
-        val name = cursor?.use {
-            val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-            if (it.moveToFirst() && nameIndex != -1) it.getString(nameIndex) else null
-        } ?: "image_${System.currentTimeMillis()}.jpg"
+        var name = "image_${System.currentTimeMillis()}.jpg"
+        var size = -1L
 
-        val size = context.contentResolver.query(uri, null, null, null, null)?.use {
-            val sizeIndex = it.getColumnIndex(OpenableColumns.SIZE)
-            if (it.moveToFirst() && sizeIndex != -1) it.getLong(sizeIndex) else -1
-        } ?: -1
+        context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+            val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+            if (cursor.moveToFirst()) {
+                if (nameIndex != -1) name = cursor.getString(nameIndex)
+                if (sizeIndex != -1) size = cursor.getLong(sizeIndex)
+            }
+        }
 
         return name to size
     }

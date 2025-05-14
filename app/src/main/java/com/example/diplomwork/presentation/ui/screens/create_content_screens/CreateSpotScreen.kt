@@ -1,5 +1,6 @@
 package com.example.diplomwork.presentation.ui.screens.create_content_screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -234,7 +235,7 @@ fun CreateSpotScreen(
                     onClick = {
                         viewModel.uploadContent(
                             imageUris = imageUrlsUri,
-                            onSuccess = onContentAdded
+                            onSuccess = onContentAdded,
                         )
                     },
                     colors = ButtonDefaults.buttonColors(

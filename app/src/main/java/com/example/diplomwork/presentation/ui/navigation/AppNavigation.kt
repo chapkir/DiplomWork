@@ -308,6 +308,7 @@ fun AppNavigation(navController: NavHostController) {
                     onContentAdded = {
                         navController.popBackStack()
                         navController.popBackStack()
+                        navController.popBackStack()
                     },
                     onBack = { navController.popBackStack() },
                 )

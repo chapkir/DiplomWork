@@ -1,11 +1,11 @@
 package com.example.diplomwork.data.api
 
 import com.example.diplomwork.data.model.ApiResponse
+import com.example.diplomwork.data.model.ApiResponseWrapper
 import com.example.diplomwork.data.model.CommentRequest
 import com.example.diplomwork.data.model.CommentResponse
 import com.example.diplomwork.data.model.EditProfileRequest
 import com.example.diplomwork.data.model.LocationRequest
-import com.example.diplomwork.data.model.LocationResponse
 import com.example.diplomwork.data.model.LoginRequest
 import com.example.diplomwork.data.model.LoginResponse
 import com.example.diplomwork.data.model.NotificationResponse
@@ -99,11 +99,12 @@ interface ApiService {
 
     @Multipart
     @POST("api/pins/upload")
-    suspend fun uploadImage(
+    suspend fun uploadSpot(
         @Part files: List<MultipartBody.Part>,
+        @Part("title") title: RequestBody,
         @Part("description") description: RequestBody,
-        @Part("title") title: RequestBody
-    ): Response<PictureResponse>
+        @Part("rating") rating: RequestBody
+    ): Response<ApiResponseWrapper<List<PictureResponse>>>
 
     @Multipart
     @POST("api/posts/with-image")
