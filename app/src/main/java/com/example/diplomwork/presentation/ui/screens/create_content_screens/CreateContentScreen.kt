@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.relocation.BringIntoViewRequester
-import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -41,7 +39,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -64,18 +61,17 @@ import com.example.diplomwork.presentation.ui.navigation.CreateSpotScreenData
 import com.example.diplomwork.presentation.ui.theme.ButtonPrimary
 import com.example.diplomwork.presentation.ui.theme.ErrorColor
 import com.example.diplomwork.presentation.viewmodel.CreateSpotViewModel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Composable
-fun CreateContentScreen(
-    createContentScreenData: CreateSpotScreenData,
+fun CreateSpotScreen(
+    createSpotScreenData: CreateSpotScreenData,
     onContentAdded: () -> Unit,
     onBack: () -> Unit,
     viewModel: CreateSpotViewModel = hiltViewModel()
 ) {
+
     val createSpotData by viewModel.createSpotData.collectAsState()
-    val imageUrls = createContentScreenData.imageUrls
+    val imageUrls = createSpotScreenData.imageUrls
     val imageUrlsUri = imageUrls.map { it.toUri() }
 
     var aspectRatio by remember { mutableFloatStateOf(1f) }

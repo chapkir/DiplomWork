@@ -1,15 +1,17 @@
 package com.example.diplomwork.data.repos
 
+import com.example.diplomwork.data.api.ApiService
 import com.example.diplomwork.data.model.LoginRequest
 import com.example.diplomwork.data.model.LoginResponse
-import com.example.diplomwork.data.model.TokenRefreshRequest
-import com.example.diplomwork.data.model.TokenRefreshResponse
 import com.example.diplomwork.data.model.RegisterRequest
 import com.example.diplomwork.data.model.RegisterResponse
-import com.example.diplomwork.data.api.ApiService
+import com.example.diplomwork.data.model.TokenRefreshRequest
+import com.example.diplomwork.data.model.TokenRefreshResponse
 import com.example.diplomwork.data.model.UserExistsResponse
 import dagger.hilt.android.scopes.ActivityScoped
+import retrofit2.HttpException
 import retrofit2.Response
+import java.io.IOException
 import javax.inject.Inject
 
 @ActivityScoped
@@ -18,8 +20,13 @@ class AuthRepository @Inject constructor(
 ) {
 
     // Логин
-    suspend fun login(loginRequest: LoginRequest): LoginResponse {
-        return apiService.login(loginRequest)
+    suspend fun login(request: LoginRequest): LoginResponse {
+        val response = apiService.login(request)
+        if (response.isSuccessful) {
+            return response.body() ?: throw IOException("Пустое тело от сервера")
+        } else {
+            throw HttpException(response)
+        }
     }
 
     // Обновление токена

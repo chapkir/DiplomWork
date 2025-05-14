@@ -53,7 +53,7 @@ interface ApiService {
     ): ApiResponse<PageResponse<PictureResponse>>
 
     @POST("api/auth/login")
-    suspend fun login(@Body loginRequest: LoginRequest): LoginResponse
+    suspend fun login(@Body loginRequest: LoginRequest): Response<LoginResponse>
 
     @POST("api/auth/refresh")
     suspend fun refreshToken(@Body request: TokenRefreshRequest): TokenRefreshResponse
@@ -134,6 +134,9 @@ interface ApiService {
     suspend fun addLocation(
         @Body spot: LocationRequest
     ): Response<Unit>
+
+    @GET("api/pictures/{pictureId}")
+    suspend fun getLocationBySpot(@Path("pictureId") pictureId: Long): UserExistsResponse
 
     @GET("api/users/exists/{username}")
     suspend fun checkUsernameExists(@Path("username") username: String): UserExistsResponse

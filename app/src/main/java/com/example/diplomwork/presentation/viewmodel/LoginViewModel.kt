@@ -1,5 +1,6 @@
 package com.example.diplomwork.presentation.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.diplomwork.auth.SessionManager
@@ -52,7 +53,6 @@ class LoginViewModel @Inject constructor(
                 )
 
                 sessionManager.saveAuthData(response.token, response.refreshToken)
-                //sessionManager.username = _username.value
 
                 _loginSuccess.value = true
             } catch (e: Exception) {

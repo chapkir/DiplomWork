@@ -20,7 +20,7 @@ import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.presentation.ui.components.CustomSnackbarHost
 import com.example.diplomwork.presentation.ui.components.bottom_bar.BottomNavigationBar
 import com.example.diplomwork.presentation.ui.components.top_bar.GetTopBars
-import com.example.diplomwork.presentation.ui.screens.create_content_screens.CreateContentScreen
+import com.example.diplomwork.presentation.ui.screens.create_content_screens.CreateSpotScreen
 import com.example.diplomwork.presentation.ui.screens.create_content_screens.WhatCreateBottomSheet
 import com.example.diplomwork.presentation.ui.screens.gallery_screen.GalleryScreen
 import com.example.diplomwork.presentation.ui.screens.login_screen.LoginScreen
@@ -100,7 +100,7 @@ fun AppNavigation(navController: NavHostController) {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = if (sessionManager.isLoggedIn()) Spots else Map,
+            startDestination = if (sessionManager.isLoggedIn()) Spots else Login,
             modifier = Modifier.padding(paddingValues)
         ) {
             composable<Pictures> {
@@ -303,8 +303,8 @@ fun AppNavigation(navController: NavHostController) {
 
             composable<CreateSpotScreenData> { backStackEntry ->
                 val createSpotScreenData = backStackEntry.toRoute<CreateSpotScreenData>()
-                CreateContentScreen(
-                    createContentScreenData = createSpotScreenData,
+                CreateSpotScreen(
+                    createSpotScreenData = createSpotScreenData,
                     onContentAdded = {
                         navController.popBackStack()
                         navController.popBackStack()

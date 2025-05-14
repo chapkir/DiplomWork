@@ -90,7 +90,12 @@ fun LicensesScreen(
                             onClick = { uriHandler.openUri("https://yandex.ru/legal/maps_api/") },
                             actionIcon = R.drawable.ic_arrow_up_right
                         )
-                        HorizontalDivider()
+                        SettingItem(
+                            title = "Иконки взяты с сайта Flaticon",
+                            onClick = { uriHandler.openUri("https://www.flaticon.com/ru/icon-fonts-most-downloaded") },
+                            actionIcon = R.drawable.ic_arrow_up_right
+                        )
+                        HorizontalDivider(modifier = Modifier.padding(top = 10.dp))
                         Text(
                             text = "Лицензии",
                             fontSize = 18.sp,

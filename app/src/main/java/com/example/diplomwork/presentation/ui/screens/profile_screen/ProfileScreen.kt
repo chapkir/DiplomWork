@@ -3,17 +3,21 @@ package com.example.diplomwork.presentation.ui.screens.profile_screen
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -35,12 +39,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.paging.LoadState
 import com.example.diplomwork.data.model.PictureResponse
 import com.example.diplomwork.data.model.PostResponse
 import com.example.diplomwork.presentation.ui.components.CustomTabPager
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.presentation.ui.components.PictureCard
+import com.example.diplomwork.presentation.ui.components.SpotsCard
+import com.example.diplomwork.presentation.ui.screens.pictures_screen.ErrorRetryBlock
 import com.example.diplomwork.presentation.viewmodel.ProfileViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.rememberPagerState
@@ -188,25 +195,32 @@ private fun ErrorScreen(error: String?, onRetry: () -> Unit) {
 
 @Composable
 private fun PicturesGrid(
-    pictures: List<PictureResponse>,
+    spots: List<PictureResponse>,
     onPictureClick: (Long) -> Unit,
     isLoading: Boolean
 ) {
-    LazyVerticalStaggeredGrid(
-        columns = StaggeredGridCells.Fixed(3),
-        modifier = Modifier.fillMaxSize(),
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        items(pictures, key = { it.id }) { picture ->
-            PictureCard(
-                imageUrl = picture.fullhdImageUrl,
-                username = picture.username,
-                userProfileImageUrl = picture.userProfileImageUrl,
-                id = picture.id,
-                aspectRatio = picture.aspectRatio ?: 1f,
-                onPictureClick = { onPictureClick(picture.id) },
-                contentPadding = 3,
-                screenName = "Profile"
-            )
+        items(spots.size) { index ->
+            spots[index].let { spot ->
+                SpotsCard(
+                    imageUrl = spot.fullhdImageUrl,
+                    username = spot.username,
+                    title = spot.title,
+                    description = spot.description,
+                    userId = spot.userId,
+                    aspectRatio = spot.aspectRatio ?: 1f,
+                    userProfileImageUrl = spot.userProfileImageUrl,
+                    id = spot.id,
+                    isCurrentUserOwner = spot.isCurrentUserOwner,
+                    onSpotClick = { onPictureClick(spot.id) },
+                    screenName = "Profile"
+                )
+            }
         }
     }
 }
