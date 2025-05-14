@@ -28,14 +28,16 @@ import com.drew.metadata.exif.ExifIFD0Directory;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.io.ByteArrayInputStream;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import com.example.server.UsPinterest.service.ImageProcessor;
+import org.springframework.scheduling.annotation.Async;
+import java.util.concurrent.CompletableFuture;
 
 @Service
+@RequiredArgsConstructor
 public class FileStorageService {
 
-    @Autowired
-    private ImageProcessor imageProcessor;
+    private final ImageProcessor imageProcessor;
 
     private static final Logger logger = LoggerFactory.getLogger(FileStorageService.class);
 
@@ -62,6 +64,9 @@ public class FileStorageService {
 
     @Value("${file.thumbnail.max-height}")
     private int thumbnailMaxHeight;
+
+    @Value("${app.url}")
+    private String appUrl;
 
     private Path fileStorageLocation;
     private Path profileImagesLocation;
@@ -116,10 +121,7 @@ public class FileStorageService {
             Files.copy(inputStream, targetLocation, StandardCopyOption.REPLACE_EXISTING);
         }
 
-        return ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/uploads/")
-                .path(filename)
-                .toUriString();
+        return appUrl + "/uploads/" + filename;
     }
 
     public String storeFile(MultipartFile file) throws IOException {
@@ -151,10 +153,7 @@ public class FileStorageService {
                 .asBufferedImage();
         ImageIO.write(webpImg, "webp", targetLocation.toFile());
         // Возвращаем URL к статическому ресурсу
-        return ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/uploads/profile-images/")
-                .path(filename)
-                .toUriString();
+        return appUrl + "/uploads/profile-images/" + filename;
     }
 
     public String getFilenameFromUrl(String imageUrl) {
@@ -194,9 +193,7 @@ public class FileStorageService {
         }
 
         // конвертируем в абсолютный URL с хостом
-        String absoluteUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path(path)
-                .toUriString();
+        String absoluteUrl = appUrl + path;
 
         logger.debug("Преобразование URL: {} -> {}", imageUrl, absoluteUrl);
         return absoluteUrl;
@@ -264,28 +261,40 @@ public class FileStorageService {
         try (OutputStream os = Files.newOutputStream(targetLocation)) {
             ImageIO.write(outImg, "webp", os);
         }
-        String url = ServletUriComponentsBuilder.fromCurrentContextPath().path(uriPath).path(filename).toUriString();
+        String url = appUrl + uriPath + filename;
         return new ImageInfo(url, outImg.getWidth(), outImg.getHeight());
     }
 
     public ImageInfo storeFullhdFile(MultipartFile file, String customFilename) throws IOException {
         ImageInfo info = storeResizedImage(file, customFilename, fullhdImagesLocation, "/uploads/" + fullhdImagesDir + "/", fullhdMaxWidth, fullhdMaxHeight);
         String filename = getFilenameFromUrl(info.getUrl());
-        String url = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/uploads/" + fullhdImagesDir + "/")
-                .path(filename)
-                .toUriString();
+        String url = appUrl + "/uploads/" + fullhdImagesDir + "/" + filename;
         return new ImageInfo(url, info.getWidth(), info.getHeight());
     }
 
     public ImageInfo storeThumbnailFile(MultipartFile file, String customFilename) throws IOException {
         ImageInfo info = storeResizedImage(file, customFilename, thumbnailImagesLocation, "/uploads/" + thumbnailImagesDir + "/", thumbnailMaxWidth, thumbnailMaxHeight);
         String filename = getFilenameFromUrl(info.getUrl());
-        String url = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/uploads/" + thumbnailImagesDir + "/")
-                .path(filename)
-                .toUriString();
+        String url = appUrl + "/uploads/" + thumbnailImagesDir + "/" + filename;
         return new ImageInfo(url, info.getWidth(), info.getHeight());
+    }
+
+    /**
+     * Асинхронная генерация FullHD варианта изображения
+     */
+    @Async("imageProcessingExecutor")
+    public CompletableFuture<ImageInfo> storeFullhdFileAsync(MultipartFile file, String customFilename) throws IOException {
+        ImageInfo info = storeFullhdFile(file, customFilename);
+        return CompletableFuture.completedFuture(info);
+    }
+
+    /**
+     * Асинхронная генерация миниатюрного варианта изображения
+     */
+    @Async("imageProcessingExecutor")
+    public CompletableFuture<ImageInfo> storeThumbnailFileAsync(MultipartFile file, String customFilename) throws IOException {
+        ImageInfo info = storeThumbnailFile(file, customFilename);
+        return CompletableFuture.completedFuture(info);
     }
 
     /**
@@ -333,5 +342,21 @@ public class FileStorageService {
             logger.warn("Не удалось применить EXIF ориентацию: {}", e.getMessage());
         }
         return image;
+    }
+
+    /**
+     * Удаляет физический файл по его URL, если он находится в локальном хранилище
+     */
+    public void deleteStoredFile(String fileUrl) {
+        if (fileUrl == null || fileUrl.isEmpty()) return;
+        String filename = getFilenameFromUrl(fileUrl);
+        if (filename == null) return;
+        try {
+            Path filePath = fileStorageLocation.resolve(filename).normalize();
+            Files.deleteIfExists(filePath);
+            logger.info("Deleted file from storage: {}", filePath);
+        } catch (Exception e) {
+            logger.warn("Failed to delete file {}: {}", fileUrl, e.getMessage());
+        }
     }
 }

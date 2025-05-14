@@ -2,7 +2,7 @@ package com.example.server.UsPinterest.dto;
 
 public class NotificationEvent {
     public enum Type {
-        LIKE, COMMENT
+        LIKE, COMMENT, MENTION
     }
 
     private Type type;

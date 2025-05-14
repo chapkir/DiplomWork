@@ -17,7 +17,7 @@ import jakarta.persistence.Index;
 public class Notification {
 
     public enum NotificationType {
-        LIKE, COMMENT, FOLLOW, POST
+        LIKE, COMMENT, FOLLOW, POST, MENTION
     }
 
     @Id

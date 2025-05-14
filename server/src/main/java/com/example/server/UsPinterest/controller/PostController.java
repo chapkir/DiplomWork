@@ -12,7 +12,6 @@ import com.example.server.UsPinterest.service.CommentService;
 import com.example.server.UsPinterest.service.FileStorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -25,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
+import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
 import java.util.List;
@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/posts")
 @Timed(value = "post.controller", description = "Metrics for PostController endpoints")
 public class PostController {
@@ -41,20 +42,9 @@ public class PostController {
     private final PostService postService;
     private final FileStorageService fileStorageService;
     private final CommentService commentService;
-
-    @Autowired
-    private Counter postCreateCounter;
-    @Autowired
-    private Counter profileImageUploadCounter;
-    @Autowired
-    private DistributionSummary fileUploadSizeSummary;
-
-    @Autowired
-    public PostController(PostService postService, FileStorageService fileStorageService, CommentService commentService) {
-        this.postService = postService;
-        this.fileStorageService = fileStorageService;
-        this.commentService = commentService;
-    }
+    private final Counter postCreateCounter;
+    private final Counter profileImageUploadCounter;
+    private final DistributionSummary fileUploadSizeSummary;
 
     @PostMapping
     @PreAuthorize("hasRole('USER')")

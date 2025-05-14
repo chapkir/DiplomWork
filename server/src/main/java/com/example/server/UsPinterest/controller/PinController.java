@@ -12,6 +12,7 @@ import com.example.server.UsPinterest.dto.PinFullHdResponse;
 import com.example.server.UsPinterest.dto.PinThumbnailResponse;
 import com.example.server.UsPinterest.entity.Comment;
 import com.example.server.UsPinterest.entity.Like;
+import com.example.server.UsPinterest.model.Tag;
 import com.example.server.UsPinterest.exception.ResourceNotFoundException;
 import com.example.server.UsPinterest.model.Pin;
 import com.example.server.UsPinterest.model.User;
@@ -19,6 +20,7 @@ import com.example.server.UsPinterest.repository.CommentRepository;
 import com.example.server.UsPinterest.repository.LikeRepository;
 import com.example.server.UsPinterest.repository.PinRepository;
 import com.example.server.UsPinterest.repository.UserRepository;
+import com.example.server.UsPinterest.repository.TagRepository;
 import com.example.server.UsPinterest.service.NotificationService;
 import com.example.server.UsPinterest.service.NotificationPublisher;
 import com.example.server.UsPinterest.service.PaginationService;
@@ -31,9 +33,6 @@ import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -41,6 +40,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import lombok.RequiredArgsConstructor;
 
 import jakarta.validation.Valid;
 import java.io.IOException;
@@ -53,54 +53,39 @@ import java.util.stream.Collectors;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.nio.file.Path;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+import com.example.server.UsPinterest.dto.UploadRequest;
+import com.example.server.UsPinterest.model.Picture;
+import com.example.server.UsPinterest.repository.PictureRepository;
+import com.example.server.UsPinterest.dto.PictureResponse;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/pins")
 public class PinController {
 
     private static final Logger logger = LoggerFactory.getLogger(PinController.class);
 
-    @Autowired
-    private PinCrudService pinCrudService;
+    private final PinCrudService pinCrudService;
+    private final PinQueryService pinQueryService;
+    private final PaginationService paginationService;
+    private final PinRepository pinRepository;
+    private final UserRepository userRepository;
+    private final LikeRepository likeRepository;
+    private final CommentRepository commentRepository;
+    private final NotificationService notificationService;
+    private final NotificationPublisher notificationPublisher;
+    private final Bucket bucket;
+    private final FileStorageService fileStorageService;
+    private final UserService userService;
+    private final HateoasUtil hateoasUtil;
+    private final TagRepository tagRepository;
+    private final PictureRepository pictureRepository;
 
-    @Autowired
-    private PinQueryService pinQueryService;
-
-    @Autowired
-    private PaginationService paginationService;
-
-    @Autowired
-    private PinRepository pinRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private LikeRepository likeRepository;
-
-    @Autowired
-    private CommentRepository commentRepository;
-
-    @Autowired
-    private NotificationService notificationService;
-
-    @Autowired
-    private NotificationPublisher notificationPublisher;
-
-    @Autowired
-    private Bucket bucket;
-
-    @Autowired
-    private FileStorageService fileStorageService;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private HateoasUtil hateoasUtil;
-
-
-    @GetMapping
+    @GetMapping({""})
     public ResponseEntity<?> getAllPins(
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "20") int size,
@@ -119,7 +104,7 @@ public class PinController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/detail/{id}")
+    @GetMapping({"/{id}", "/detail/{id}"})
     public ResponseEntity<?> getPinById(@PathVariable Long id, Authentication authentication) {
         // Используем сервис для получения пина с комментариями и лайками
         Pin pin = pinQueryService.getPinWithLikesAndComments(id);
@@ -227,6 +212,30 @@ public class PinController {
         comment.setPin(pin);
         comment.setUser(user);
         comment.setCreatedAt(LocalDateTime.now());
+        // Обработка тегов в комментарии
+        Set<Tag> commentTags = new HashSet<>();
+        Pattern tagPattern = Pattern.compile("#(\\w+)");
+        Matcher tagMatcher = tagPattern.matcher(comment.getText());
+        while (tagMatcher.find()) {
+            String tagName = tagMatcher.group(1);
+            tagRepository.findByNameIgnoreCase(tagName)
+                .ifPresentOrElse(commentTags::add,
+                    () -> commentTags.add(tagRepository.save(new Tag(tagName))));
+        }
+        comment.setTags(commentTags);
+        // Обработка упоминаний в комментарии
+        Set<User> commentMentions = new HashSet<>();
+        Pattern mentionPattern = Pattern.compile("@(\\w+)");
+        Matcher mentionMatcher = mentionPattern.matcher(comment.getText());
+        while (mentionMatcher.find()) {
+            String usernameMention = mentionMatcher.group(1);
+            userRepository.findByUsername(usernameMention).ifPresent(mentionedUser -> {
+                commentMentions.add(mentionedUser);
+                // уведомление об упоминании
+                notificationService.createMentionNotification(user, comment, mentionedUser);
+            });
+        }
+        comment.setMentions(commentMentions);
 
         // Сохраняем комментарий и обновляем пин
         commentRepository.save(comment);
@@ -248,13 +257,20 @@ public class PinController {
         return ResponseEntity.ok(response);
     }
 
-
     @GetMapping("/{id}/comments")
-    public ResponseEntity<?> getPinComments(@PathVariable Long id) {
-        // Загружаем пин с комментариями и лайками
+    public ResponseEntity<?> getPinComments(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        // Загружаем пин
         Pin pin = pinQueryService.getPinWithLikesAndComments(id);
-
-        List<CommentResponse> comments = pin.getComments().stream()
+        // Создаём pageable
+        org.springframework.data.domain.Pageable pageable = paginationService.createPageable(page, size, "createdAt", "desc");
+        // Получаем страницу комментариев
+        org.springframework.data.domain.Page<com.example.server.UsPinterest.entity.Comment> commentPage =
+                commentRepository.findByPin(pin, pageable);
+        // Маппинг комментариев в DTO
+        java.util.List<CommentResponse> commentResponses = commentPage.getContent().stream()
                 .map(comment -> {
                     CommentResponse cr = new CommentResponse();
                     cr.setId(comment.getId());
@@ -273,26 +289,39 @@ public class PinController {
                     }
                     return cr;
                 }).collect(Collectors.toList());
-
-        HateoasResponse<List<CommentResponse>> response = new HateoasResponse<>(comments);
-        response.addSelfLink("/api/pins/" + id + "/comments");
+        // Формируем PageResponse
+        com.example.server.UsPinterest.dto.PageResponse<CommentResponse> pageResponse =
+                new com.example.server.UsPinterest.dto.PageResponse<>(
+                        commentResponses,
+                        commentPage.getNumber(),
+                        commentPage.getSize(),
+                        commentPage.getTotalElements(),
+                        commentPage.getTotalPages(),
+                        commentPage.isLast()
+                );
+        // Формируем HATEOAS-ответ
+        HateoasResponse<com.example.server.UsPinterest.dto.PageResponse<CommentResponse>> response =
+                new HateoasResponse<>(pageResponse);
+        response.addSelfLink("/api/pins/" + id + "/comments?page=" + page + "&size=" + size);
         response.addLink("pin", "/api/pins/detail/" + id, "GET");
         response.addLink("add-comment", "/api/pins/" + id + "/comments", "POST");
-
         return ResponseEntity.ok(response);
     }
-
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> uploadImages(
-            @RequestParam("file") MultipartFile[] files,
-            @RequestParam(value = "text", defaultValue = "") String text,
-            @RequestParam(value = "title", defaultValue = "") String title,
-            @RequestParam(value = "description", defaultValue = "") String description,
+            @Valid @ModelAttribute UploadRequest uploadRequest,
             Authentication authentication) {
 
-        logger.info("uploadImages called: filesCount={}, text={}, title={}, description={}", files.length, text, title, description);
+        MultipartFile[] files = uploadRequest.getFile();
+        String text = uploadRequest.getText();
+        String title = uploadRequest.getTitle();
+        String description = uploadRequest.getDescription();
+        Double rating = uploadRequest.getRating();
+
+        logger.info("uploadImages called: filesCount={}, text={}, title={}, description={}, rating={}",
+                files.length, text, title, description, rating);
 
         if (!bucket.tryConsume(1)) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
@@ -324,14 +353,20 @@ public class PinController {
                 String baseName = filename != null && filename.contains(".")
                         ? filename.substring(0, filename.lastIndexOf("."))
                         : filename;
-                FileStorageService.ImageInfo fullhdInfo = fileStorageService.storeFullhdFile(fileItem, baseName);
-                FileStorageService.ImageInfo thumbnailInfo = fileStorageService.storeThumbnailFile(fileItem, baseName);
+                // Асинхронная генерация вариантов изображений
+                java.util.concurrent.CompletableFuture<FileStorageService.ImageInfo> fullhdFuture =
+                        fileStorageService.storeFullhdFileAsync(fileItem, baseName);
+                java.util.concurrent.CompletableFuture<FileStorageService.ImageInfo> thumbnailFuture =
+                        fileStorageService.storeThumbnailFileAsync(fileItem, baseName);
+                FileStorageService.ImageInfo fullhdInfo = fullhdFuture.join();
+                FileStorageService.ImageInfo thumbnailInfo = thumbnailFuture.join();
 
                 Pin pin = new Pin();
                 String pinTitle = (title != null && !title.isEmpty()) ? title : (text != null ? text : "");
                 pin.setTitle(pinTitle);
                 pin.setImageUrl(imageUrl);
                 pin.setDescription(description);
+                pin.setRating(rating);
                 pin.setUser(user);
                 pin.setCreatedAt(LocalDateTime.now());
                 pinQueryService.calculateImageDimensions(pin);
@@ -409,6 +444,115 @@ public class PinController {
             @RequestParam(defaultValue = "desc") String sortDirection) {
         CursorPageResponse<PinThumbnailResponse, String> page = pinQueryService.getPinsThumbnailCursor(cursor, size, sortDirection);
         HateoasResponse<CursorPageResponse<PinThumbnailResponse, String>> response = hateoasUtil.buildCursorPageResponse(page, cursor, size);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping(value = "/{pinId}/pictures", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<?> uploadPicturesToPin(
+            @PathVariable Long pinId,
+            @RequestParam("files") MultipartFile[] files,
+            Authentication authentication) {
+        if (files == null || files.length == 0) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Файлы не выбраны"));
+        }
+        if (files.length > 5) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Можно загрузить до 5 фотографий"));
+        }
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageResponse("Пользователь не авторизован"));
+        }
+        Pin pin = pinRepository.findById(pinId)
+                .orElseThrow(() -> new ResourceNotFoundException("Пин не найден с id: " + pinId));
+        if (!pin.getUser().getId().equals(currentUser.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new MessageResponse("У вас нет прав на добавление фотографий к этому пину"));
+        }
+        List<PictureResponse> pictureResponses = new ArrayList<>();
+        try {
+            for (MultipartFile file : files) {
+                if (file.isEmpty()) {
+                    return ResponseEntity.badRequest().body(new MessageResponse("Файл не выбран"));
+                }
+                String contentType = file.getContentType();
+                if (contentType == null || !contentType.startsWith("image/")) {
+                    return ResponseEntity.badRequest().body(new MessageResponse("Файл должен быть изображением"));
+                }
+                String imageUrl = fileStorageService.storeFile(file);
+                String filename = fileStorageService.getFilenameFromUrl(imageUrl);
+                String baseName = filename != null && filename.contains(".")
+                        ? filename.substring(0, filename.lastIndexOf('.'))
+                        : filename;
+                java.util.concurrent.CompletableFuture<FileStorageService.ImageInfo> fullhdFuture =
+                        fileStorageService.storeFullhdFileAsync(file, baseName);
+                java.util.concurrent.CompletableFuture<FileStorageService.ImageInfo> thumbnailFuture =
+                        fileStorageService.storeThumbnailFileAsync(file, baseName);
+                FileStorageService.ImageInfo fullhdInfo = fullhdFuture.join();
+                FileStorageService.ImageInfo thumbnailInfo = thumbnailFuture.join();
+                Picture picture = new Picture();
+                picture.setImageUrl(imageUrl);
+                picture.setFullhdImageUrl(fullhdInfo.getUrl());
+                picture.setFullhdWidth(fullhdInfo.getWidth());
+                picture.setFullhdHeight(fullhdInfo.getHeight());
+                picture.setThumbnailImageUrl(thumbnailInfo.getUrl());
+                picture.setThumbnailWidth(thumbnailInfo.getWidth());
+                picture.setThumbnailHeight(thumbnailInfo.getHeight());
+                try {
+                    Path path = fileStorageService.getFileStoragePath().resolve(fileStorageService.getFilenameFromUrl(imageUrl)).normalize();
+                    BufferedImage img = ImageIO.read(path.toFile());
+                    if (img != null) {
+                        picture.setImageWidth(img.getWidth());
+                        picture.setImageHeight(img.getHeight());
+                    }
+                } catch (Exception e) {
+                    logger.warn("Не удалось получить размеры изображения: {}", e.getMessage());
+                }
+                picture.setPin(pin);
+                Picture saved = pictureRepository.save(picture);
+                PictureResponse resp = new PictureResponse();
+                resp.setId(saved.getId());
+                resp.setImageUrl(fileStorageService.updateImageUrl(saved.getImageUrl()));
+                resp.setFullhdImageUrl(fileStorageService.updateImageUrl(saved.getFullhdImageUrl()));
+                resp.setThumbnailImageUrl(fileStorageService.updateImageUrl(saved.getThumbnailImageUrl()));
+                resp.setImageWidth(saved.getImageWidth());
+                resp.setImageHeight(saved.getImageHeight());
+                resp.setFullhdWidth(saved.getFullhdWidth());
+                resp.setFullhdHeight(saved.getFullhdHeight());
+                resp.setThumbnailWidth(saved.getThumbnailWidth());
+                resp.setThumbnailHeight(saved.getThumbnailHeight());
+                pictureResponses.add(resp);
+            }
+            HateoasResponse<List<PictureResponse>> response = new HateoasResponse<>(pictureResponses);
+            response.addSelfLink("/api/pins/" + pinId + "/pictures");
+            response.addLink("pin", "/api/pins/detail/" + pinId, "GET");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Ошибка при загрузке фотографий к пину {}: {}", pinId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResponse("Ошибка при загрузке фотографий: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/{pinId}/pictures")
+    public ResponseEntity<?> getPicturesByPinId(@PathVariable Long pinId) {
+        List<Picture> pics = pictureRepository.findByPinId(pinId);
+        List<PictureResponse> responses = pics.stream().map(saved -> {
+            PictureResponse pr = new PictureResponse();
+            pr.setId(saved.getId());
+            pr.setImageUrl(fileStorageService.updateImageUrl(saved.getImageUrl()));
+            pr.setFullhdImageUrl(fileStorageService.updateImageUrl(saved.getFullhdImageUrl()));
+            pr.setThumbnailImageUrl(fileStorageService.updateImageUrl(saved.getThumbnailImageUrl()));
+            pr.setImageWidth(saved.getImageWidth());
+            pr.setImageHeight(saved.getImageHeight());
+            pr.setFullhdWidth(saved.getFullhdWidth());
+            pr.setFullhdHeight(saved.getFullhdHeight());
+            pr.setThumbnailWidth(saved.getThumbnailWidth());
+            pr.setThumbnailHeight(saved.getThumbnailHeight());
+            return pr;
+        }).collect(Collectors.toList());
+        HateoasResponse<List<PictureResponse>> response = new HateoasResponse<>(responses);
+        response.addSelfLink("/api/pins/" + pinId + "/pictures");
+        response.addLink("pin", "/api/pins/detail/" + pinId, "GET");
         return ResponseEntity.ok(response);
     }
 }

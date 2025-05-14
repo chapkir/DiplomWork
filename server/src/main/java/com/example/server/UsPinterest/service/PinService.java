@@ -14,15 +14,14 @@ import com.example.server.UsPinterest.model.User;
 import com.example.server.UsPinterest.repository.LikeRepository;
 import com.example.server.UsPinterest.repository.PinRepository;
 import com.example.server.UsPinterest.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.micrometer.core.annotation.Timed;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -57,46 +56,37 @@ import com.example.server.UsPinterest.dto.mapper.PinStructMapper;
 import com.example.server.UsPinterest.dto.mapper.PinFullHdStructMapper;
 import com.example.server.UsPinterest.dto.mapper.PinThumbnailStructMapper;
 import org.springframework.context.ApplicationEventPublisher;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @Transactional
 @Timed(value = "pins.service", description = "Metrics for PinService methods")
+@RequiredArgsConstructor
 public class PinService {
     private static final int DEFAULT_PAGE_SIZE = 20;
     private static final Logger logger = LoggerFactory.getLogger(PinService.class);
 
-    @Autowired
-    private PinRepository pinRepository;
+    private final PinRepository pinRepository;
 
-    @Autowired
-    private BoardService boardService;
+    private final BoardService boardService;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private LikeRepository likeRepository;
+    private final LikeRepository likeRepository;
 
-    @Autowired
-    private FileStorageService fileStorageService;
+    private final FileStorageService fileStorageService;
 
-    @Autowired
-    private CommentRepository commentRepository;
+    private final CommentRepository commentRepository;
 
-    @Autowired
-    private PaginationService paginationService;
+    private final PaginationService paginationService;
 
-    @Autowired
-    private PinStructMapper pinStructMapper;
+    private final PinStructMapper pinStructMapper;
 
-    @Autowired
-    private PinFullHdStructMapper pinFullHdStructMapper;
+    private final PinFullHdStructMapper pinFullHdStructMapper;
 
-    @Autowired
-    private PinThumbnailStructMapper pinThumbnailStructMapper;
+    private final PinThumbnailStructMapper pinThumbnailStructMapper;
 
-    @Autowired
-    private ApplicationEventPublisher eventPublisher;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Cacheable(value = "pins", key = "#id")
     public Optional<Pin> getPinById(Long id) {

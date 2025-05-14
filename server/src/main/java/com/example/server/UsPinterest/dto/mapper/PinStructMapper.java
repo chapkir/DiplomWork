@@ -16,8 +16,10 @@ public interface PinStructMapper {
     @Mapping(target = "username", source = "pin.user.username")
     @Mapping(target = "userProfileImageUrl", source = "pin.user.profileImageUrl")
     @Mapping(target = "rating", source = "pin.rating")
+    @Mapping(target = "tags", ignore = true)
     PinResponse toDto(Pin pin);
 
+    @Mapping(target = "tags", ignore = true)
     Pin toEntity(PinRequest request);
 
     // updateEntity can be implemented manually or via default method later

@@ -10,10 +10,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.transaction.annotation.Transactional;
 import io.micrometer.core.annotation.Timed;
+import lombok.RequiredArgsConstructor;
 
 import com.example.server.UsPinterest.service.PinService;
 import com.example.server.UsPinterest.dto.PageResponse;
@@ -32,26 +32,18 @@ import java.util.stream.Collectors;
 
 @RestController
 @Timed(value = "test.controller", description = "Metrics for TestController endpoints")
+@RequiredArgsConstructor
 @RequestMapping("/api")
 @CrossOrigin(origins = {"http://localhost:5500", "http://127.0.0.1:5500"})
 public class TestController {
 
     private static final Logger logger = LoggerFactory.getLogger(TestController.class);
 
-    @Autowired
-    private PinService pinService;
-
-    @Autowired
-    private PinRepository pinRepository;
-
-    @Autowired
-    private CacheManager cacheManager;
-
-    @Autowired
-    private CommentRepository commentRepository;
-
-    @Autowired
-    private LikeRepository likeRepository;
+    private final PinService pinService;
+    private final PinRepository pinRepository;
+    private final CacheManager cacheManager;
+    private final CommentRepository commentRepository;
+    private final LikeRepository likeRepository;
 
     @GetMapping("/test")
     public ResponseEntity<Map<String, Object>> test() {

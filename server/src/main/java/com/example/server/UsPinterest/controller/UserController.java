@@ -1,24 +1,31 @@
 package com.example.server.UsPinterest.controller;
 
 import com.example.server.UsPinterest.dto.RegisterRequest;
+import com.example.server.UsPinterest.dto.ChangePasswordRequest;
 import com.example.server.UsPinterest.model.User;
 import com.example.server.UsPinterest.service.UserService;
+import com.example.server.UsPinterest.dto.MessageResponse;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.http.HttpStatus;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.RequestBody;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/users")
 @CrossOrigin(origins = "*")
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
     @PostMapping("/register")
     public ResponseEntity<RegisterRequest> register(@RequestBody RegisterRequest request) {
@@ -53,5 +60,33 @@ public class UserController {
     public ResponseEntity<Map<String, Boolean>> existsUsername(@PathVariable String username) {
         boolean exists = userService.existsByUsernameIgnoreCase(username);
         return ResponseEntity.ok(Collections.singletonMap("exists", exists));
+    }
+
+    @DeleteMapping("/me")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<?> deleteAccount() {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new MessageResponse("Пользователь не авторизован"));
+        }
+        userService.deleteUser(currentUser.getId());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/me/password")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new MessageResponse("Пользователь не авторизован"));
+        }
+        try {
+            userService.changePassword(currentUser.getId(), request.getOldPassword(), request.getNewPassword());
+            return ResponseEntity.ok(new MessageResponse("Пароль успешно изменен"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+        }
     }
 }

@@ -3,14 +3,14 @@ package com.example.server.UsPinterest.service;
 import com.example.server.UsPinterest.config.RabbitMQConfig;
 import com.example.server.UsPinterest.dto.NotificationEvent;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class NotificationPublisher {
 
-    @Autowired
-    private RabbitTemplate rabbitTemplate;
+    private final RabbitTemplate rabbitTemplate;
 
     public void publishLikeNotification(Long senderId, Long pinId) {
         NotificationEvent event = new NotificationEvent(NotificationEvent.Type.LIKE, senderId, pinId, null);

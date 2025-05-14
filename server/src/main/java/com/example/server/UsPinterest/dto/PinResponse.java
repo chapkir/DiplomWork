@@ -27,6 +27,7 @@ public class PinResponse {
     private Integer thumbnailWidth;
     private Integer thumbnailHeight;
     private Double rating;
+    private List<String> tags;
 
     public Long getId() {
         return id;
@@ -210,5 +211,13 @@ public class PinResponse {
 
     public void setRating(Double rating) {
         this.rating = rating;
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
     }
 }

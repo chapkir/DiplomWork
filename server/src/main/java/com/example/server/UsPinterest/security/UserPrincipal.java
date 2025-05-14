@@ -13,11 +13,13 @@ public class UserPrincipal implements UserDetails {
     private final Long id;
     private final String username;
     private final String password;
+    private final boolean enabled;
 
     public UserPrincipal(User user) {
         this.id = user.getId();
         this.username = user.getUsername();
         this.password = user.getPassword();
+        this.enabled = user.isEnabled();
     }
 
     public Long getId() {
@@ -57,6 +59,6 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return enabled;
     }
 } 

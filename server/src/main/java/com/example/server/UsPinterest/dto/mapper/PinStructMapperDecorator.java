@@ -6,6 +6,9 @@ import com.example.server.UsPinterest.model.Pin;
 import com.example.server.UsPinterest.repository.CommentRepository;
 import com.example.server.UsPinterest.repository.LikeRepository;
 import com.example.server.UsPinterest.service.FileStorageService;
+import com.example.server.UsPinterest.model.Tag;
+import java.util.stream.Collectors;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -40,6 +43,13 @@ public abstract class PinStructMapperDecorator implements PinStructMapper {
         // Aspect ratio
         Integer w = pin.getImageWidth(), h = pin.getImageHeight();
         dto.setAspectRatio(w != null && h != null && h > 0 ? w.doubleValue() / h : 1.0);
+        // Tags
+        if (pin.getTags() != null) {
+            List<String> tagNames = pin.getTags().stream()
+                .map(Tag::getName)
+                .collect(Collectors.toList());
+            dto.setTags(tagNames);
+        }
         return dto;
     }
 

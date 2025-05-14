@@ -7,19 +7,20 @@ import com.example.server.UsPinterest.model.Post;
 import com.example.server.UsPinterest.model.User;
 import com.example.server.UsPinterest.repository.LikeRepository;
 import com.example.server.UsPinterest.repository.UserRepository;
+import com.example.server.UsPinterest.repository.VerificationTokenRepository;
 import com.example.server.UsPinterest.security.JwtTokenUtil;
 import com.example.server.UsPinterest.exception.ResourceNotFoundException;
 import com.example.server.UsPinterest.service.FileStorageService;
+import com.example.server.UsPinterest.model.VerificationToken;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -34,21 +35,12 @@ import org.slf4j.LoggerFactory;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private JwtTokenUtil jwtTokenUtil;
-
-    @Autowired
-    private CustomUserDetailsService userDetailsService;
-
-    @Autowired
-    private FileStorageService fileStorageService;
-
-    @Autowired
-    private LikeRepository likeRepository;
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenUtil jwtTokenUtil;
+    private final CustomUserDetailsService userDetailsService;
+    private final FileStorageService fileStorageService;
+    private final LikeRepository likeRepository;
+    private final VerificationTokenRepository verificationTokenRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
@@ -79,6 +71,9 @@ public class UserService {
             );
         } catch (BadCredentialsException e) {
             throw new RuntimeException("Неверное имя пользователя или пароль");
+        } catch (DisabledException e) {
+            // Пользователь не подтвердил email, но выдаем токен
+            logger.warn("Пользователь {} не подтвердил email, выдаем токен: {}", username, e.getMessage());
         }
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
@@ -245,5 +240,43 @@ public class UserService {
 
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
+    }
+
+    @Transactional
+    public void deleteUser(Long userId) {
+        userRepository.deleteById(userId);
+    }
+
+    @Transactional
+    @CacheEvict(value = "users", key = "#userId")
+    public void changePassword(Long userId, String oldPassword, String newPassword) {
+        User user = getUserById(userId);
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new RuntimeException("Старый пароль неверен");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public String createVerificationToken(User user) {
+        String token = java.util.UUID.randomUUID().toString();
+        java.time.LocalDateTime expiry = java.time.LocalDateTime.now().plusDays(1);
+        VerificationToken verificationToken = new VerificationToken(token, user, expiry);
+        verificationTokenRepository.save(verificationToken);
+        return token;
+    }
+
+    @Transactional
+    public void confirmEmail(String token) {
+        VerificationToken vToken = verificationTokenRepository.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Неверный токен подтверждения"));
+        if (vToken.getExpiryDate().isBefore(java.time.LocalDateTime.now())) {
+            throw new RuntimeException("Срок действия токена истек");
+        }
+        User user = vToken.getUser();
+        user.setEnabled(true);
+        userRepository.save(user);
+        verificationTokenRepository.delete(vToken);
     }
 }

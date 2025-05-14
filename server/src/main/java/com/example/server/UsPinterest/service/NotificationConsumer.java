@@ -7,22 +7,20 @@ import com.example.server.UsPinterest.model.User;
 import com.example.server.UsPinterest.repository.PinRepository;
 import com.example.server.UsPinterest.repository.UserRepository;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class NotificationConsumer {
 
-    @Autowired
-    private NotificationService notificationService;
+    private final NotificationService notificationService;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private PinRepository pinRepository;
+    private final PinRepository pinRepository;
 
     @RabbitListener(queues = RabbitMQConfig.QUEUE)
     public void handleNotificationEvent(NotificationEvent event) {

@@ -134,6 +134,9 @@ class SessionManager @Inject constructor(@ApplicationContext context: Context) {
         authToken = accessToken
         this.refreshToken = refreshToken
         tokenExpiration = decodeJwtPayload(accessToken)?.exp?.times(1000)
+        val claims = decodeJwtPayload(accessToken)
+        username = claims?.username
+        userId = claims?.sub
         Log.d(TAG, "Токены обновлены через saveTokens")
     }
 }

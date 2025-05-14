@@ -61,11 +61,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers("/actuator/**").permitAll();
                     auth.requestMatchers("/api/auth/**").permitAll();
-                    auth.requestMatchers("/api/piner/**").permitAll();
-                    auth.requestMatchers("/api/pins/all").permitAll();
                     auth.requestMatchers("/api/category/**").permitAll();
-                    auth.requestMatchers("/api/piner/uploadImage/**").permitAll();
-                    auth.requestMatchers("/api/pins/uploadImage/**").permitAll();
                     auth.requestMatchers("/api/files/**").permitAll();
                     auth.requestMatchers("/api/users/exists/**").permitAll();
                     auth.requestMatchers("/api/locations/**").permitAll();
@@ -79,9 +75,11 @@ public class SecurityConfig {
                     auth.requestMatchers("/uploads/**").permitAll();
                     auth.requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll();
                     auth.requestMatchers(HttpMethod.GET, "/api/profile/**").permitAll();
+                    auth.requestMatchers(HttpMethod.GET, "/api/pins/**").permitAll();
                     auth.anyRequest().authenticated(); // Требуем аутентификацию для всех остальных запросов
                 })
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

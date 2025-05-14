@@ -11,6 +11,46 @@ const pinSkeletonCount = 6; // Увеличено количество скел�
 let postNextCursor = null;
 const postPageSize = 12; // Увеличено количество показываемых постов
 
+// Кэширование DOM элементов
+const DOM = {
+    loader: document.getElementById('global-loader'),
+    loaderText: document.querySelector('.loader-text'),
+    feed: document.getElementById('feed'),
+    postsFeed: document.getElementById('posts-feed'),
+    profileContent: document.getElementById('profile-content'),
+    loadMorePins: document.getElementById('load-more-pins'),
+    loadMorePosts: document.getElementById('load-more-posts')
+};
+
+// Состояние приложения
+let state = {
+    token: localStorage.getItem('token'),
+    pinNextCursor: null,
+    postNextCursor: null,
+    isAuthenticated: false
+};
+
+// Утилиты для работы с API
+const API = {
+    async fetch(url, options = {}) {
+        const defaultOptions = {
+            headers: {
+                'Authorization': state.token ? `Bearer ${state.token}` : '',
+                'Content-Type': 'application/json'
+            }
+        };
+        
+        try {
+            const response = await fetch(url, { ...defaultOptions, ...options });
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return await response.json();
+        } catch (error) {
+            console.error('API Error:', error);
+            throw error;
+        }
+    }
+};
+
 function authHeaders() {
   return token ? { 'Authorization': 'Bearer ' + token } : {};
 }
@@ -33,21 +73,12 @@ function showView(viewId) {
 
 // Модифицированная функция для управления глобальным лоадером, добавляю анимацию текста
 function showLoader(message = 'Загрузка') {
-  const loader = document.getElementById('global-loader');
-  const loaderText = loader ? loader.querySelector('.loader-text') : null;
-
-  if (loaderText) {
-    loaderText.textContent = message;
-  }
-
-  if (loader) {
-    loader.style.display = 'flex';
-  }
+  if (DOM.loaderText) DOM.loaderText.textContent = message;
+  if (DOM.loader) DOM.loader.style.display = 'flex';
 }
 
 function hideLoader() {
-  const loader = document.getElementById('global-loader');
-  if (loader) loader.style.display = 'none';
+  if (DOM.loader) DOM.loader.style.display = 'none';
 }
 
 // Функция для скрытия всех элементов интерфейса кроме формы авторизации
@@ -488,460 +519,196 @@ async function loadFeed(append = false) {
   }
 }
 
-// Загрузка постов с постраничной пагинацией и обработкой ошибок
-async function loadPosts(append = false) {
-  console.log('Loading posts, append:', append);
-  showLoader('Загружаем посты...');
-  const container = document.getElementById('posts-feed');
-  if (!container) {
-    console.error('Posts container not found');
-    hideLoader();
-    return;
-  }
-
-  const btn = document.getElementById('load-more-posts');
-  if (!append) {
-    container.innerHTML = '';
-    if (btn) btn.style.display = 'none';
-    postNextCursor = null;
-  }
-
-  // Показываем скелетоны во время загрузки
-  for (let i = 0; i < postPageSize; i++) container.appendChild(createSkeletonCard());
-
-  try {
-    // Cursor-based pagination для постов
-    let url = `/api/posts/cursor?size=${postPageSize}`;
-    if (postNextCursor) url += `&cursor=${encodeURIComponent(postNextCursor)}`;
-    console.log('Fetching posts from URL:', url);
-    const res = await fetch(url, {
-      headers: authHeaders(),
-      signal: AbortSignal.timeout(15000)
-    });
-
-    if (!res.ok) {
-      console.error('Ошибка HTTP при загрузке постов:', res.status);
-
-      // Отображаем сообщение об ошибке в соответствии со статусом
-      let errorMessage = `Не удалось загрузить посты: ${res.status}`;
-
-      if (res.status === 500) {
-        errorMessage = 'Внутренняя ошибка сервера. Пожалуйста, попробуйте позже.';
-      } else if (res.status === 401) {
-        errorMessage = 'Необходима авторизация для просмотра контента.';
-      } else if (res.status === 404) {
-        errorMessage = 'Посты не найдены. Попробуйте позже.';
-      }
-
-      if (!append) {
-        container.innerHTML = `
-          <div class="error-container">
-            <div class="error-icon">
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#FF5F40" stroke-width="2"/>
-                <path d="M12 8V12" stroke="#FF5F40" stroke-width="2" stroke-linecap="round"/>
-                <circle cx="12" cy="16" r="1" fill="#FF5F40"/>
-              </svg>
-            </div>
-            <p class='error'>${errorMessage}</p>
-            <button class="btn btn-primary retry-btn" onclick="loadPosts(false)">Повторить</button>
-          </div>
-        `;
-      }
-      hideLoader();
-      return;
-    }
-
-    const json = await res.json();
-    console.log('Posts API response:', json);
-
-    // Удалить все skeleton
-    const skeletons = container.querySelectorAll('.card.skeleton');
-    skeletons.forEach(el => el.remove());
-
-    // Получаем посты из ответа API и обновляем курсор
-    const posts = json.content || [];
-    postNextCursor = json.nextCursor;
-
-    // Если не append и есть старый контент - очистить контейнер
-    if (!append) container.innerHTML = '';
-
-    if (posts.length === 0) {
-      container.innerHTML = `
-        <div class="empty-message">
-          <div class="empty-icon">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#FF5F40" stroke-width="2"/>
-              <path d="M8 15C8 15 9 17 12 17C15 17 16 15 16 15" stroke="#FF5F40" stroke-width="2" stroke-linecap="round"/>
-              <circle cx="9" cy="10" r="1" fill="#FF5F40"/>
-              <circle cx="15" cy="10" r="1" fill="#FF5F40"/>
-            </svg>
-          </div>
-          <p>Посты не найдены</p>
-        </div>
-      `;
-      hideLoader();
-      return;
-    }
-
-    // Создаем карточки для каждого поста, предпочитая WebP формат
-    posts.forEach((post, index) => {
-      // Предпочитаем WebP формат изображения, используя все доступные URL
-      const imgSrc = post.thumbnailImageUrl || post.fullhdImageUrl || post.imageUrl || '';
-
-      // Создаем карточку с изображением и текстом поста
-      const card = createCard(imgSrc, post.title || 'Без названия', post.username || 'Автор');
-
-      // Добавляем дополнительную информацию к карточке
-      const contentDiv = card.querySelector('.card-content');
-      if (contentDiv && post.text) {
-        const descDiv = document.createElement('div');
-        descDiv.className = 'card-description';
-        descDiv.textContent = post.text.length > 100 ? post.text.substring(0, 100) + '...' : post.text;
-        contentDiv.appendChild(descDiv);
-      }
-
-      // Сохраняем ID поста для возможности открытия деталей
-      card.dataset.id = post.id;
-      card.classList.add('fade-in');
-      card.classList.add('post-card');
-
-      // Добавляем тень и эффект при наведении
-      card.style.animationDelay = `${0.1 * (index % 12)}s`;
-
-      // Добавляем событие при клике
-      card.addEventListener('click', () => {
-        // TODO: Показывать детали поста
-        console.log('Открытие деталей поста:', post.id);
-      });
-
-      container.appendChild(card);
-    });
-
-    // Показываем кнопку Load More, если есть следующая страница
-    if (btn) {
-      btn.style.display = json.hasNext ? 'block' : 'none';
-      btn.innerText = 'Загрузить ещё';
-    }
-
-    hideLoader();
-  } catch (e) {
-    console.error('Ошибка в обработке постов', e);
-    container.innerHTML = `
-      <div class="error-container">
-        <div class="error-icon">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#FF5F40" stroke-width="2"/>
-            <path d="M12 8V12" stroke="#FF5F40" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="12" cy="16" r="1" fill="#FF5F40"/>
-          </svg>
-        </div>
-        <p class='error'>Произошла ошибка при загрузке постов: ${e.message || 'Неизвестная ошибка'}</p>
-        <button class="btn btn-primary retry-btn" onclick="loadPosts(false)">Повторить</button>
-      </div>
-    `;
-    hideLoader();
-  }
-}
-
-// Загрузка профиля с улучшенным интерфейсом
-async function loadProfile() {
-  console.log('Loading profile');
-  showLoader('Загружаем профиль...');
-  const content = document.getElementById('profile-content');
-
-  if (!content) {
-    console.error('Profile content container not found');
-    hideLoader();
-    return;
-  }
-
-  content.innerHTML = '';
-
-  if (!token) {
-    // Если пользователь не авторизован, показываем сообщение
-    content.innerHTML = `
-      <div class="empty-message">
-        <div class="empty-icon">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#FF5F40" stroke-width="2"/>
-            <path d="M8 12H16" stroke="#FF5F40" stroke-width="2" stroke-linecap="round"/>
-            <path d="M12 8V16" stroke="#FF5F40" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </div>
-        <h3>Необходимо войти</h3>
-        <p>Для просмотра профиля необходимо авторизоваться</p>
-        <button class="btn btn-primary show-login-link">Войти</button>
-      </div>`;
-
-    const loginBtn = content.querySelector('.show-login-link');
-    if (loginBtn) {
-      loginBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        showView('login-view');
-      });
-    }
-    hideLoader();
-    return;
-  }
-
-  try {
-    const resUser = await fetch('/api/auth/me', { headers: authHeaders() });
-
-    if (!resUser.ok) {
-      console.error('Ошибка при загрузке профиля:', resUser.status);
-      content.innerHTML = `
-        <div class="error-container">
-          <div class="error-icon">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#FF5F40" stroke-width="2"/>
-              <path d="M12 8V12" stroke="#FF5F40" stroke-width="2" stroke-linecap="round"/>
-              <circle cx="12" cy="16" r="1" fill="#FF5F40"/>
-            </svg>
-          </div>
-          <p class='error'>Ошибка авторизации. Попробуйте войти снова.</p>
-          <button class="btn btn-primary retry-btn" onclick="showView('login-view')">Войти</button>
-        </div>`;
-      hideLoader();
-      return;
-    }
-
-    const user = await resUser.json();
-    console.log('User profile data:', user);
-
-    // Создаем header профиля с улучшенным дизайном
-    const header = document.createElement('div');
-    header.className = 'profile-header';
-    header.innerHTML = `
-      <div class="profile-avatar">
-        <img src="${user.profileImageUrl || '/img/avatar-placeholder.png'}" alt="${user.username || 'User'}">
-      </div>
-      <div class="profile-info">
-        <h1>${user.username || 'Пользователь'}</h1>
-        <p>${user.email || ''}</p>
-
-        <div class="profile-stats">
-          <div class="stat-item">
-            <div class="stat-number">0</div>
-            <div class="stat-label">Подписчики</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number">0</div>
-            <div class="stat-label">Подписки</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number" id="posts-count">0</div>
-            <div class="stat-label">Публикации</div>
-          </div>
-        </div>
-      </div>
-    `;
-    content.appendChild(header);
-
-    // Загружаем посты пользователя
-    try {
-      showLoader('Загружаем публикации...');
-      const resPosts = await fetch(`/api/posts/user/${user.id}`, { headers: authHeaders() });
-
-      if (!resPosts.ok) {
-        console.error('Ошибка при загрузке постов пользователя:', resPosts.status);
-        const sectionTitle = document.createElement('h3');
-        sectionTitle.className = 'section-title';
-        sectionTitle.textContent = 'Мои публикации';
-        content.appendChild(sectionTitle);
-
-        const errorMsg = document.createElement('div');
-        errorMsg.className = 'error-container';
-        errorMsg.innerHTML = `
-          <div class="error-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#FF5F40" stroke-width="2"/>
-              <path d="M12 8V12" stroke="#FF5F40" stroke-width="2" stroke-linecap="round"/>
-              <circle cx="12" cy="16" r="1" fill="#FF5F40"/>
-            </svg>
-          </div>
-          <p class='error'>Не удалось загрузить публикации</p>
-          <button class="btn btn-primary retry-btn" onclick="loadProfile()">Повторить</button>
-        `;
-        content.appendChild(errorMsg);
-        hideLoader();
-        return;
-      }
-
-      const posts = await resPosts.json();
-      console.log('User posts:', posts);
-
-      // Обновляем счетчик публикаций
-      const postsCount = document.getElementById('posts-count');
-      if (postsCount) {
-        postsCount.textContent = posts ? posts.length : 0;
-      }
-
-      const gridHeader = document.createElement('h3');
-      gridHeader.className = 'section-title';
-      gridHeader.textContent = 'Мои публикации';
-      content.appendChild(gridHeader);
-
-      if (!posts || posts.length === 0) {
-        const emptyMessage = document.createElement('div');
-        emptyMessage.className = 'empty-message';
-        emptyMessage.innerHTML = `
-          <div class="empty-icon">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#FF5F40" stroke-width="2"/>
-              <path d="M8 15C8 15 9 17 12 17C15 17 16 15 16 15" stroke="#FF5F40" stroke-width="2" stroke-linecap="round"/>
-              <circle cx="9" cy="10" r="1" fill="#FF5F40"/>
-              <circle cx="15" cy="10" r="1" fill="#FF5F40"/>
-            </svg>
-          </div>
-          <p>У вас пока нет публикаций</p>
-          <a href="#" class="btn btn-primary" onclick="showView('post-view')">Создать пост</a>
-        `;
-        content.appendChild(emptyMessage);
-      } else {
-        const grid = document.createElement('div');
-        grid.className = 'masonry-grid';
-
-        posts.forEach((post, index) => {
-          // Предпочитаем WebP формат изображения, используя все доступные URL
-          const imgSrc = post.thumbnailImageUrl || post.fullhdImageUrl || post.imageUrl || '';
-
-          const card = createCard(imgSrc, post.title || post.text || 'Без названия', user.username);
-          card.style.animationDelay = `${0.1 * (index % 12)}s`;
-          card.classList.add('fade-in');
-          card.classList.add('post-card');
-
-          // Добавляем описание, если есть текст
-          const contentDiv = card.querySelector('.card-content');
-          if (contentDiv && post.text && post.text.length > 0) {
-            const descDiv = document.createElement('div');
-            descDiv.className = 'card-description';
-            descDiv.textContent = post.text.length > 100 ? post.text.substring(0, 100) + '...' : post.text;
-            contentDiv.appendChild(descDiv);
-          }
-
-          grid.appendChild(card);
-        });
-        content.appendChild(grid);
-      }
-    } catch (e) {
-      console.error('Ошибка загрузки постов пользователя', e);
-      const errorMsg = document.createElement('div');
-      errorMsg.className = 'error-container';
-      errorMsg.innerHTML = `
-        <div class="error-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#FF5F40" stroke-width="2"/>
-            <path d="M12 8V12" stroke="#FF5F40" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="12" cy="16" r="1" fill="#FF5F40"/>
-          </svg>
-        </div>
-        <p class='error'>Произошла ошибка: ${e.message || 'Ошибка загрузки данных'}</p>
-      `;
-      content.appendChild(errorMsg);
-    }
-
-    hideLoader();
-  } catch (e) {
-    console.error('Ошибка загрузки профиля', e);
-    hideLoader();
-
-    content.innerHTML = `
-      <div class="error-container">
-        <div class="error-icon">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#FF5F40" stroke-width="2"/>
-            <path d="M12 8V12" stroke="#FF5F40" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="12" cy="16" r="1" fill="#FF5F40"/>
-          </svg>
-        </div>
-        <p class='error'>Ошибка загрузки профиля: ${e.message || 'Неизвестная ошибка'}</p>
-        <button class="btn btn-primary retry-btn" onclick="loadProfile()">Повторить</button>
-      </div>`;
-  }
-}
-
-// Создание карточки с изображением и текстом
+// Оптимизированная функция создания карточки
 function createCard(img, title, subtitle) {
-  const card = document.createElement('div');
-  card.className = 'card';
+    const template = document.createElement('template');
+    template.innerHTML = `
+        <div class="card">
+            <div class="card-image-wrapper">
+                <div class="card-image-skeleton"></div>
+                <img class="card-image" loading="lazy" alt="${title || 'Image'}" src="${img || '/img/image-placeholder.png'}">
+            </div>
+            <div class="card-content">
+                ${title ? `<h3 class="card-title">${title}</h3>` : ''}
+                ${subtitle ? `<p class="card-subtitle">${subtitle}</p>` : ''}
+            </div>
+        </div>
+    `.trim();
+    
+    return template.content.firstElementChild;
+}
 
-  // Обертка для изображения с эффектом загрузки
-  const imageWrapper = document.createElement('div');
-  imageWrapper.className = 'card-image-wrapper';
+// Оптимизированная функция загрузки изображений
+function loadImage(img) {
+    return new Promise((resolve, reject) => {
+        if (img.complete) {
+            resolve(img);
+        } else {
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+        }
+    });
+}
 
-  // Создаем миниатюру (скелетон) для изображения
-  const imageSkeleton = document.createElement('div');
-  imageSkeleton.className = 'card-image-skeleton';
-  imageWrapper.appendChild(imageSkeleton);
+// Оптимизированная функция загрузки постов
+async function loadPosts(append = false) {
+    if (!append) {
+        DOM.postsFeed.innerHTML = '';
+        state.postNextCursor = null;
+        if (DOM.loadMorePosts) DOM.loadMorePosts.style.display = 'none';
+    }
 
-  // Создаем изображение с отложенной загрузкой и обработкой ошибок
-  if (img) {
-    const image = document.createElement('img');
-    // Добавляем обработчики событий
-    image.onload = function() {
-      // Скрываем skeleton и показываем загруженное изображение с анимацией
-      imageSkeleton.style.opacity = '0';
-      image.classList.add('loaded');
+    showLoader('Загружаем посты...');
+    
+    try {
+        const url = `/api/posts/cursor?size=${PAGINATION.POST_PAGE_SIZE}${state.postNextCursor ? `&cursor=${encodeURIComponent(state.postNextCursor)}` : ''}`;
+        const data = await API.fetch(url);
+        
+        if (!append) DOM.postsFeed.innerHTML = '';
+        
+        if (!data.content || data.content.length === 0) {
+            DOM.postsFeed.innerHTML = createEmptyMessage('Посты не найдены');
+            return;
+        }
 
-      // Обновляем соотношение сторон, если нужно
-      const aspectRatio = image.naturalHeight / image.naturalWidth;
-      if (aspectRatio > 1.5) {
-        // Для вертикальных изображений
-        image.style.objectPosition = 'center top';
-      } else if (aspectRatio < 0.6) {
-        // Для очень широких изображений
-        image.style.objectPosition = 'center center';
-      }
-    };
+        const fragment = document.createDocumentFragment();
+        data.content.forEach((post, index) => {
+            const card = createCard(
+                post.thumbnailImageUrl || post.fullhdImageUrl || post.imageUrl,
+                post.title || 'Без названия',
+                post.username
+            );
+            card.style.animationDelay = `${0.1 * (index % 12)}s`;
+            card.classList.add('fade-in', 'post-card');
+            fragment.appendChild(card);
+        });
 
-    image.onerror = function() {
-      // Показываем плейсхолдер при ошибке загрузки
-      image.src = '/img/image-placeholder.png';
-      imageSkeleton.style.opacity = '0';
-      image.classList.add('loaded');
-    };
+        DOM.postsFeed.appendChild(fragment);
+        state.postNextCursor = data.nextCursor;
+        
+        if (DOM.loadMorePosts) {
+            DOM.loadMorePosts.style.display = data.hasNext ? 'block' : 'none';
+        }
+    } catch (error) {
+        DOM.postsFeed.innerHTML = createErrorMessage(error.message);
+    } finally {
+        hideLoader();
+    }
+}
 
-    // Устанавливаем базовые атрибуты и стили
-    image.loading = 'lazy'; // Используем нативную ленивую загрузку
-    image.className = 'card-image';
-    image.alt = title || 'Image';
-    image.src = img; // Устанавливаем src в последнюю очередь
+// Оптимизированная функция загрузки профиля
+async function loadProfile() {
+    if (!state.token) {
+        DOM.profileContent.innerHTML = createAuthRequiredMessage();
+        return;
+    }
 
-    imageWrapper.appendChild(image);
-  } else {
-    // Если изображение отсутствует, добавляем плейсхолдер
-    const placeholderImg = document.createElement('img');
-    placeholderImg.src = '/img/image-placeholder.png';
-    placeholderImg.alt = 'No image';
-    placeholderImg.className = 'card-image loaded';
-    imageWrapper.appendChild(placeholderImg);
-    imageSkeleton.style.opacity = '0';
-  }
+    showLoader('Загружаем профиль...');
+    
+    try {
+        const user = await API.fetch('/api/auth/me');
+        const posts = await API.fetch(`/api/posts/user/${user.id}`);
+        
+        DOM.profileContent.innerHTML = `
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <img src="${user.profileImageUrl || '/img/avatar-placeholder.png'}" alt="${user.username}">
+                </div>
+                <div class="profile-info">
+                    <h1>${user.username}</h1>
+                    <p>${user.email || ''}</p>
+                    <div class="profile-stats">
+                        <div class="stat-item">
+                            <div class="stat-number">0</div>
+                            <div class="stat-label">Подписчики</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">0</div>
+                            <div class="stat-label">Подписки</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">${posts.length || 0}</div>
+                            <div class="stat-label">Публикации</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
 
-  card.appendChild(imageWrapper);
+        if (posts.length > 0) {
+            const grid = document.createElement('div');
+            grid.className = 'masonry-grid';
+            
+            const fragment = document.createDocumentFragment();
+            posts.forEach((post, index) => {
+                const card = createCard(
+                    post.thumbnailImageUrl || post.fullhdImageUrl || post.imageUrl,
+                    post.title || post.text || 'Без названия',
+                    user.username
+                );
+                card.style.animationDelay = `${0.1 * (index % 12)}s`;
+                card.classList.add('fade-in', 'post-card');
+                fragment.appendChild(card);
+            });
+            
+            grid.appendChild(fragment);
+            DOM.profileContent.appendChild(grid);
+        } else {
+            DOM.profileContent.appendChild(createEmptyMessage('У вас пока нет публикаций'));
+        }
+    } catch (error) {
+        DOM.profileContent.innerHTML = createErrorMessage(error.message);
+    } finally {
+        hideLoader();
+    }
+}
 
-  // Добавляем содержимое карточки
-  const content = document.createElement('div');
-  content.className = 'card-content';
+// Вспомогательные функции для создания сообщений
+function createEmptyMessage(text) {
+    return `
+        <div class="empty-message">
+            <div class="empty-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#FF5F40" stroke-width="2"/>
+                    <path d="M8 15C8 15 9 17 12 17C15 17 16 15 16 15" stroke="#FF5F40" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="9" cy="10" r="1" fill="#FF5F40"/>
+                    <circle cx="15" cy="10" r="1" fill="#FF5F40"/>
+                </svg>
+            </div>
+            <p>${text}</p>
+        </div>
+    `;
+}
 
-  // Добавляем заголовок, если он есть
-  if (title) {
-    const titleEl = document.createElement('h3');
-    titleEl.className = 'card-title';
-    titleEl.textContent = title;
-    content.appendChild(titleEl);
-  }
+function createErrorMessage(message) {
+    return `
+        <div class="error-container">
+            <div class="error-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#FF5F40" stroke-width="2"/>
+                    <path d="M12 8V12" stroke="#FF5F40" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="12" cy="16" r="1" fill="#FF5F40"/>
+                </svg>
+            </div>
+            <p class='error'>${message}</p>
+            <button class="btn btn-primary retry-btn" onclick="window.location.reload()">Повторить</button>
+        </div>
+    `;
+}
 
-  // Добавляем подзаголовок, если он есть
-  if (subtitle) {
-    const subtitleEl = document.createElement('p');
-    subtitleEl.className = 'card-subtitle';
-    subtitleEl.textContent = subtitle;
-    content.appendChild(subtitleEl);
-  }
-
-  card.appendChild(content);
-
-  return card;
+function createAuthRequiredMessage() {
+    return `
+        <div class="empty-message">
+            <div class="empty-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#FF5F40" stroke-width="2"/>
+                    <path d="M8 12H16" stroke="#FF5F40" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M12 8V16" stroke="#FF5F40" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <h3>Необходимо войти</h3>
+            <p>Для просмотра профиля необходимо авторизоваться</p>
+            <button class="btn btn-primary show-login-link">Войти</button>
+        </div>
+    `;
 }

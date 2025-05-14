@@ -14,5 +14,8 @@ public interface UserStructMapper {
     @Mapping(target = "profileImageUrl", source = "user.profileImageUrl")
     @Mapping(target = "bio", source = "user.bio")
     @Mapping(target = "registrationDate", source = "user.registrationDate")
+    @Mapping(target = "pins", ignore = true)
+    @Mapping(target = "posts", ignore = true)
+    @Mapping(target = "boards", ignore = true)
     ProfileResponse toProfileDto(User user);
 }
