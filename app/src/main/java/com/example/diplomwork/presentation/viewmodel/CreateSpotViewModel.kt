@@ -44,7 +44,7 @@ class CreateSpotViewModel @Inject constructor(
 
     private val _createSpotData = MutableStateFlow(CreateSpotData(
         title = _spotName,
-        geo = "$_latitude,$_longitude",
+        geo = "$_latitude, $_longitude",
         address = _spotAddress
     ))
     val createSpotData: StateFlow<CreateSpotData> = _createSpotData

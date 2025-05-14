@@ -93,14 +93,14 @@ fun AppNavigation(navController: NavHostController) {
                 Login::class.simpleName -> BgDefault
                 Register::class.simpleName -> BgDefault
                 Spots::class.simpleName -> Color.Black
-                CreateContentScreenData::class.simpleName -> Color.Black
-                Gallery::class.simpleName -> Color.Black
+                CreateSpotScreenData::class.simpleName -> Color.Black
+                GalleryScreenData::class.simpleName -> Color.Black
                 else -> BgDefault
             },
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = if (sessionManager.isLoggedIn()) Spots else Login,
+            startDestination = if (sessionManager.isLoggedIn()) Spots else Map,
             modifier = Modifier.padding(paddingValues)
         ) {
             composable<Pictures> {
@@ -201,23 +201,6 @@ fun AppNavigation(navController: NavHostController) {
                 )
             }
 
-            composable<Map> {
-                MapScreen(
-                    onLocationSelected = { spotName, spotAddress, latitude, longitude ->
-                        navController.navigate(
-                            CreateContentScreenData(
-                                spotName,
-                                spotAddress,
-                                latitude,
-                                longitude,
-                                emptyList()
-                            )
-                        )
-                    },
-                    onBack = { navController.popBackStack() },
-                )
-            }
-
             composable<Search> {
                 SearchScreen()
             }
@@ -284,26 +267,49 @@ fun AppNavigation(navController: NavHostController) {
                     onBack = { navController.popBackStack() }
                 )
             }
-            composable<Gallery> {
-                GalleryScreen(
-                    onImageSelected = { selectedImages ->
-                        //navController.navigate(
-                            //CreateContentScreenData(selectedImages)
-                        //)
+
+            composable<Map> {
+                MapScreen(
+                    onLocationSelected = { spotName, spotAddress, latitude, longitude ->
+                        val data = GalleryScreenData(
+                            spotName = spotName,
+                            spotAddress = spotAddress,
+                            latitude = latitude,
+                            longitude = longitude
+                        )
+                        navController.navigate(data)
                     },
-                    onClose = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
                 )
             }
 
-            composable<CreateContentScreenData> { backStackEntry ->
-                val createContentScreenData = backStackEntry.toRoute<CreateContentScreenData>()
+            composable<GalleryScreenData> { backStackEntry ->
+                val galleryData = backStackEntry.toRoute<GalleryScreenData>()
+
+                GalleryScreen(
+                    onImageSelected = { selectedImages ->
+                        val createSpotData = CreateSpotScreenData(
+                            spotName = galleryData.spotName,
+                            spotAddress = galleryData.spotAddress,
+                            latitude = galleryData.latitude,
+                            longitude = galleryData.longitude,
+                            imageUrls = selectedImages
+                        )
+                        navController.navigate(createSpotData)
+                    },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable<CreateSpotScreenData> { backStackEntry ->
+                val createSpotScreenData = backStackEntry.toRoute<CreateSpotScreenData>()
                 CreateContentScreen(
-                    createContentScreenData = createContentScreenData,
+                    createContentScreenData = createSpotScreenData,
                     onContentAdded = {
                         navController.popBackStack()
                         navController.popBackStack()
                     },
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
                 )
             }
         }
