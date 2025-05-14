@@ -11,33 +11,31 @@ import com.example.server.UsPinterest.repository.BoardRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import lombok.RequiredArgsConstructor;
+
 
 @Service
+@RequiredArgsConstructor
 public class BoardService {
     private static final Logger logger = LoggerFactory.getLogger(BoardService.class);
 
-    @Autowired
-    private BoardRepository boardRepository;
+    private final BoardRepository boardRepository;
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
-    @Autowired
-    private BoardStructMapper boardStructMapper;
+    private final BoardStructMapper boardStructMapper;
 
-    @Autowired
-    private PinStructMapper pinStructMapper;
+    private final PinStructMapper pinStructMapper;
 
 
     @Transactional

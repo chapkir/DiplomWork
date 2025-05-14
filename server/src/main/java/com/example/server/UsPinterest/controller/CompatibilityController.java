@@ -10,13 +10,13 @@ import com.example.server.UsPinterest.service.UserService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -24,18 +24,14 @@ import java.util.stream.Collectors;
 import java.util.Optional;
 
 @RestController
+@RequiredArgsConstructor
 public class CompatibilityController {
 
     private static final Logger logger = LoggerFactory.getLogger(CompatibilityController.class);
 
-    @Autowired
-    private PinService pinService;
-
-    @Autowired
-    private PinRepository pinRepository;
-
-    @Autowired
-    private UserService userService;
+    private final PinService pinService;
+    private final PinRepository pinRepository;
+    private final UserService userService;
 
     @GetMapping("/api/pins/all")
     @Transactional(readOnly = true)

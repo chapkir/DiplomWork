@@ -1,6 +1,7 @@
 package com.example.server.UsPinterest.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class CommentResponse {
     private Long id;
@@ -9,6 +10,8 @@ public class CommentResponse {
     private LocalDateTime createdAt;
     private String userProfileImageUrl;
     private Long userId;
+    private List<String> tags;
+    private List<String> mentions;
 
     public CommentResponse() {}
 
@@ -66,5 +69,21 @@ public class CommentResponse {
 
     public void setUserId(Long userId) {
         this.userId = userId;
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
+    }
+
+    public List<String> getMentions() {
+        return mentions;
+    }
+
+    public void setMentions(List<String> mentions) {
+        this.mentions = mentions;
     }
 }

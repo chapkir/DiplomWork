@@ -11,40 +11,42 @@ import com.example.server.UsPinterest.service.FileStorageService;
 import com.example.server.UsPinterest.repository.FollowRepository;
 import com.example.server.UsPinterest.model.Follow;
 import com.example.server.UsPinterest.model.Post;
+import com.example.server.UsPinterest.service.SseService;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class NotificationService {
 
-    @Autowired
-    private NotificationRepository notificationRepository;
+    private final NotificationRepository notificationRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private PinRepository pinRepository;
+    private final PinRepository pinRepository;
 
-    @Autowired
-    private FollowRepository followRepository;
+    private final FollowRepository followRepository;
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
-    @Autowired
-    private FileStorageService fileStorageService;
+    private final FileStorageService fileStorageService;
+
+    private final SimpMessagingTemplate messagingTemplate;
+
+    private final SseService sseService;
 
     // Создать уведомление о подписке
     public void createFollowNotification(User sender, User recipient) {
@@ -57,7 +59,8 @@ public class NotificationService {
         notification.setRecipient(recipient);
         notification.setSender(sender);
         notification.setCreatedAt(LocalDateTime.now());
-        notificationRepository.save(notification);
+        Notification savedNotification = notificationRepository.save(notification);
+        sendWebSocketNotification(savedNotification);
     }
 
     // Создать уведомления о новом посте для подписчиков
@@ -75,7 +78,8 @@ public class NotificationService {
             notification.setSender(sender);
             notification.setPost(post);
             notification.setCreatedAt(LocalDateTime.now());
-            notificationRepository.save(notification);
+            Notification savedNotification = notificationRepository.save(notification);
+            sendWebSocketNotification(savedNotification);
         }
     }
 
@@ -92,8 +96,8 @@ public class NotificationService {
         notification.setSender(sender);
         notification.setPin(pin);
         notification.setCreatedAt(LocalDateTime.now());
-
-        notificationRepository.save(notification);
+        Notification savedNotification = notificationRepository.save(notification);
+        sendWebSocketNotification(savedNotification);
     }
 
     // Создать уведомление о комментарии
@@ -110,8 +114,8 @@ public class NotificationService {
         notification.setSender(sender);
         notification.setPin(pin);
         notification.setCreatedAt(LocalDateTime.now());
-
-        notificationRepository.save(notification);
+        Notification savedNotification = notificationRepository.save(notification);
+        sendWebSocketNotification(savedNotification);
     }
 
     // Создать уведомление о лайке поста
@@ -126,7 +130,8 @@ public class NotificationService {
         notification.setSender(sender);
         notification.setPost(post);
         notification.setCreatedAt(LocalDateTime.now());
-        notificationRepository.save(notification);
+        Notification savedNotification = notificationRepository.save(notification);
+        sendWebSocketNotification(savedNotification);
     }
 
     // Создать уведомление о комментарии к посту
@@ -142,7 +147,30 @@ public class NotificationService {
         notification.setSender(sender);
         notification.setPost(post);
         notification.setCreatedAt(LocalDateTime.now());
-        notificationRepository.save(notification);
+        Notification savedNotification = notificationRepository.save(notification);
+        sendWebSocketNotification(savedNotification);
+    }
+
+    // Создать уведомление об упоминании в комментарии
+    public void createMentionNotification(User sender, com.example.server.UsPinterest.entity.Comment comment, User recipient) {
+        if (recipient.getId().equals(sender.getId())) {
+            return;
+        }
+        Notification notification = new Notification();
+        notification.setType(Notification.NotificationType.MENTION);
+        String text = comment.getText();
+        String snippet = text.length() > 50 ? text.substring(0, 50) + "..." : text;
+        notification.setMessage("отметил(а) вас в комментарии: " + snippet);
+        notification.setRecipient(recipient);
+        notification.setSender(sender);
+        if (comment.getPin() != null) {
+            notification.setPin(comment.getPin());
+        } else if (comment.getPost() != null) {
+            notification.setPost(comment.getPost());
+        }
+        notification.setCreatedAt(LocalDateTime.now());
+        Notification savedNotification = notificationRepository.save(notification);
+        sendWebSocketNotification(savedNotification);
     }
 
     public List<NotificationResponse> getUserNotifications(int page, int size) {
@@ -261,5 +289,15 @@ public class NotificationService {
         }
 
         return response;
+    }
+
+    // Отправка уведомления через WebSocket
+    private void sendWebSocketNotification(Notification notification) {
+        NotificationResponse response = convertToNotificationResponse(notification);
+        messagingTemplate.convertAndSendToUser(
+                notification.getRecipient().getUsername(),
+                "/queue/notifications",
+                response);
+        sseService.sendEvent(notification.getRecipient().getId(), response);
     }
 }

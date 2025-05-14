@@ -28,14 +28,16 @@ import com.drew.metadata.exif.ExifIFD0Directory;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.io.ByteArrayInputStream;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import com.example.server.UsPinterest.service.ImageProcessor;
+import org.springframework.scheduling.annotation.Async;
+import java.util.concurrent.CompletableFuture;
 
 @Service
+@RequiredArgsConstructor
 public class FileStorageService {
 
-    @Autowired
-    private ImageProcessor imageProcessor;
+    private final ImageProcessor imageProcessor;
 
     private static final Logger logger = LoggerFactory.getLogger(FileStorageService.class);
 
@@ -289,6 +291,24 @@ public class FileStorageService {
     }
 
     /**
+     * Асинхронная генерация FullHD варианта изображения
+     */
+    @Async("imageProcessingExecutor")
+    public CompletableFuture<ImageInfo> storeFullhdFileAsync(MultipartFile file, String customFilename) throws IOException {
+        ImageInfo info = storeFullhdFile(file, customFilename);
+        return CompletableFuture.completedFuture(info);
+    }
+
+    /**
+     * Асинхронная генерация миниатюрного варианта изображения
+     */
+    @Async("imageProcessingExecutor")
+    public CompletableFuture<ImageInfo> storeThumbnailFileAsync(MultipartFile file, String customFilename) throws IOException {
+        ImageInfo info = storeThumbnailFile(file, customFilename);
+        return CompletableFuture.completedFuture(info);
+    }
+
+    /**
      * Класс-холдер для информации о сохранённом изображении
      */
     public static class ImageInfo {
@@ -333,5 +353,21 @@ public class FileStorageService {
             logger.warn("Не удалось применить EXIF ориентацию: {}", e.getMessage());
         }
         return image;
+    }
+
+    /**
+     * Удаляет физический файл по его URL, если он находится в локальном хранилище
+     */
+    public void deleteStoredFile(String fileUrl) {
+        if (fileUrl == null || fileUrl.isEmpty()) return;
+        String filename = getFilenameFromUrl(fileUrl);
+        if (filename == null) return;
+        try {
+            Path filePath = fileStorageLocation.resolve(filename).normalize();
+            Files.deleteIfExists(filePath);
+            logger.info("Deleted file from storage: {}", filePath);
+        } catch (Exception e) {
+            logger.warn("Failed to delete file {}: {}", fileUrl, e.getMessage());
+        }
     }
 }

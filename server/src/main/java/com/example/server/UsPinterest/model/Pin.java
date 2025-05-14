@@ -3,6 +3,7 @@ package com.example.server.UsPinterest.model;
 import com.example.server.UsPinterest.entity.Comment;
 import com.example.server.UsPinterest.entity.Like;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.example.server.UsPinterest.model.Tag;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -14,6 +15,9 @@ import jakarta.persistence.*;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.CascadeType;
 
 @Entity
 @Table(name = "pins", indexes = {
@@ -49,6 +53,12 @@ public class Pin {
 
     @OneToMany(mappedBy = "pin", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<Comment> comments = new HashSet<>();
+
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(name = "pin_tags",
+               joinColumns = @JoinColumn(name = "pin_id"),
+               inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    private Set<Tag> tags = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "user_id")
@@ -89,6 +99,9 @@ public class Pin {
     @Column(name = "thumbnail_height")
     private Integer thumbnailHeight;
 
+    @OneToMany(mappedBy = "pin", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Picture> pictures = new ArrayList<>();
+
     public Pin() {}
 
     public Pin(String imageUrl, String description) {
@@ -105,6 +118,13 @@ public class Pin {
         this.comments = comments;
     }
 
+    public Set<Tag> getTags() {
+        return tags;
+    }
+
+    public void setTags(Set<Tag> tags) {
+        this.tags = tags;
+    }
 
     public Long getId() {
         return id;
@@ -227,4 +247,12 @@ public class Pin {
 
     public Integer getThumbnailHeight() { return thumbnailHeight; }
     public void setThumbnailHeight(Integer thumbnailHeight) { this.thumbnailHeight = thumbnailHeight; }
+
+    public List<Picture> getPictures() {
+        return pictures;
+    }
+
+    public void setPictures(List<Picture> pictures) {
+        this.pictures = pictures;
+    }
 } 

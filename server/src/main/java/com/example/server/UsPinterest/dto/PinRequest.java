@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.DecimalMax;
 import com.example.server.UsPinterest.validation.Step;
+import java.util.List;
 
 public class PinRequest {
 
@@ -22,6 +23,8 @@ public class PinRequest {
     @DecimalMax(value = "5.0", message = "Rating must be at most 5.0")
     @Step(value = 0.5, message = "Rating must be in increments of 0.5")
     private Double rating;
+
+    private List<String> tags;
 
     public PinRequest() {}
 
@@ -60,5 +63,13 @@ public class PinRequest {
 
     public void setRating(Double rating) {
         this.rating = rating;
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
     }
 } 

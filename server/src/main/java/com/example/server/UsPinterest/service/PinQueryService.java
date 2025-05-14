@@ -10,8 +10,6 @@ import com.example.server.UsPinterest.model.Pin;
 import com.example.server.UsPinterest.model.User;
 import com.example.server.UsPinterest.repository.CommentRepository;
 import com.example.server.UsPinterest.repository.PinRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.PageRequest;
@@ -20,40 +18,35 @@ import com.example.server.UsPinterest.dto.mapper.PinStructMapper;
 import com.example.server.UsPinterest.dto.mapper.PinFullHdStructMapper;
 import com.example.server.UsPinterest.dto.mapper.PinThumbnailStructMapper;
 import com.example.server.UsPinterest.service.PinService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class PinQueryService {
 
     private static final int DEFAULT_PAGE_SIZE = 20;
 
-    @Autowired
-    private PinRepository pinRepository;
+    private final PinRepository pinRepository;
 
-    @Autowired
-    private CommentRepository commentRepository;
+    private final CommentRepository commentRepository;
 
-    @Autowired
-    private PaginationService paginationService;
+    private final PaginationService paginationService;
 
-    @Autowired
-    private FileStorageService fileStorageService;
+    private final FileStorageService fileStorageService;
 
-    @Autowired
-    private PinStructMapper pinStructMapper;
+    private final PinStructMapper pinStructMapper;
 
-    @Autowired
-    private PinFullHdStructMapper pinFullHdStructMapper;
+    private final PinFullHdStructMapper pinFullHdStructMapper;
 
-    @Autowired
-    private PinThumbnailStructMapper pinThumbnailStructMapper;
+    private final PinThumbnailStructMapper pinThumbnailStructMapper;
 
-    @Autowired
-    private PinService pinService;
+    private final PinService pinService;
 
     @Cacheable(value = "pins", key = "#id")
     public Optional<Pin> getPinById(Long id) {

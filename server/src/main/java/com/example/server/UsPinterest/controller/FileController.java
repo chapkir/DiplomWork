@@ -3,7 +3,6 @@ package com.example.server.UsPinterest.controller;
 import com.example.server.UsPinterest.service.FileStorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -12,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -25,14 +25,14 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/files")
 @CrossOrigin(origins = "*")
 public class FileController {
 
     private static final Logger logger = LoggerFactory.getLogger(FileController.class);
 
-    @Autowired
-    private FileStorageService fileStorageService;
+    private final FileStorageService fileStorageService;
 
     @Value("${file.upload-dir}")
     private String uploadDir;

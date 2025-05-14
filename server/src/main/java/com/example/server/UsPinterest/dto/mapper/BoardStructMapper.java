@@ -16,7 +16,8 @@ public interface BoardStructMapper {
     @Mapping(target = "userId", source = "board.user.id")
     @Mapping(target = "username", source = "board.user.username")
     @Mapping(target = "pinsCount", expression = "java(board.getPins() != null ? board.getPins().size() : 0)")
-        // Skip mapping the list of pins here; handle in service based on includePins flag
+    @Mapping(target = "pins", ignore = true)
+    // Skip mapping the list of pins here; handle in service based on includePins flag
     BoardResponse toDto(Board board);
 
     // Map BoardRequest to Board entity; user and pins must be set manually

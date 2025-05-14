@@ -3,21 +3,21 @@ package com.example.server.UsPinterest.controller;
 import com.example.server.UsPinterest.dto.NotificationResponse;
 import com.example.server.UsPinterest.service.NotificationService;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/notifications")
 @CrossOrigin(origins = "*")
 public class NotificationController {
 
-    @Autowired
-    private NotificationService notificationService;
+    private final NotificationService notificationService;
 
     @GetMapping
     public ResponseEntity<List<NotificationResponse>> getNotifications(

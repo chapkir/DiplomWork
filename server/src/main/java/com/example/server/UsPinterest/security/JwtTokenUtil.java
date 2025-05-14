@@ -30,7 +30,6 @@ public class JwtTokenUtil {
     }
 
     public String generateToken(UserDetails userDetails) {
-        Map<String, Object> claims = new HashMap<>();
         String subject;
         String username;
         if (userDetails instanceof UserPrincipal) {
@@ -41,10 +40,10 @@ public class JwtTokenUtil {
             subject = userDetails.getUsername();
             username = userDetails.getUsername();
         }
-        claims.put("username", username);
         return Jwts.builder()
-                .setClaims(claims)
                 .setSubject(subject)
+                .claim("username", username)
+                .claim("userId", Long.parseLong(subject))
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
                 .signWith(getSignKey())

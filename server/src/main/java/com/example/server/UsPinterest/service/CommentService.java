@@ -11,31 +11,31 @@ import com.example.server.UsPinterest.repository.UserRepository;
 import com.example.server.UsPinterest.service.NotificationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
+import com.example.server.UsPinterest.model.Tag;
+import com.example.server.UsPinterest.repository.TagRepository;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class CommentService {
     private static final Logger logger = LoggerFactory.getLogger(CommentService.class);
 
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
-    @Autowired
-    private NotificationService notificationService;
-
-    @Autowired
-    public CommentService(CommentRepository commentRepository, PostRepository postRepository, UserRepository userRepository) {
-        this.commentRepository = commentRepository;
-        this.postRepository = postRepository;
-        this.userRepository = userRepository;
-    }
+    private final NotificationService notificationService;
+    private final TagRepository tagRepository;
 
     @Transactional
     public CommentResponse addCommentToPost(Long postId, CommentRequest commentRequest, Long userId) {
@@ -50,6 +50,29 @@ public class CommentService {
         comment.setUser(user);
         comment.setPost(post);
         comment.setCreatedAt(LocalDateTime.now());
+        // Обработка тегов в комментарии
+        Set<Tag> commentTags = new HashSet<>();
+        Pattern tagPattern = Pattern.compile("#(\\w+)");
+        Matcher tagMatcher = tagPattern.matcher(comment.getText());
+        while (tagMatcher.find()) {
+            String tagName = tagMatcher.group(1);
+            Tag tag = tagRepository.findByNameIgnoreCase(tagName)
+                .orElseGet(() -> tagRepository.save(new Tag(tagName)));
+            commentTags.add(tag);
+        }
+        comment.setTags(commentTags);
+        // Обработка упоминаний в комментарии
+        Set<User> commentMentions = new HashSet<>();
+        Pattern mentionPattern = Pattern.compile("@(\\w+)");
+        Matcher mentionMatcher = mentionPattern.matcher(comment.getText());
+        while (mentionMatcher.find()) {
+            String usernameMention = mentionMatcher.group(1);
+            userRepository.findByUsername(usernameMention).ifPresent(mentionedUser -> {
+                commentMentions.add(mentionedUser);
+                notificationService.createMentionNotification(user, comment, mentionedUser);
+            });
+        }
+        comment.setMentions(commentMentions);
 
         Comment savedComment = commentRepository.save(comment);
         logger.info("Комментарий создан: {} для поста: {} пользователем: {}",

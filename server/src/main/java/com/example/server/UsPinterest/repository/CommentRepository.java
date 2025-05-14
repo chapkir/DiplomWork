@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -18,4 +20,5 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     long countByPinId(@Param("pinId") Long pinId);
     @Query("SELECT COUNT(c) FROM Comment c WHERE c.post.id = :postId")
     long countByPostId(@Param("postId") Long postId);
+    Page<Comment> findByPin(com.example.server.UsPinterest.model.Pin pin, Pageable pageable);
 }

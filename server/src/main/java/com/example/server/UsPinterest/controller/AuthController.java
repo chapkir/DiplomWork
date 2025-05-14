@@ -9,13 +9,13 @@ import com.example.server.UsPinterest.model.RefreshToken;
 import com.example.server.UsPinterest.model.User;
 import com.example.server.UsPinterest.security.JwtTokenUtil;
 import com.example.server.UsPinterest.security.UserPrincipal;
+import com.example.server.UsPinterest.service.EmailService;
 import com.example.server.UsPinterest.service.RefreshTokenService;
 import com.example.server.UsPinterest.service.UserService;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,52 +24,49 @@ import java.util.Optional;
 import jakarta.validation.Valid;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Counter;
+import lombok.RequiredArgsConstructor;
 
 @CrossOrigin(origins = "*")
 @RestController
 @Timed(value = "auth.controller", description = "Metrics for AuthController endpoints")
+@RequiredArgsConstructor
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+    private final EmailService emailService;
 
-    @Autowired
-    private RefreshTokenService refreshTokenService;
+    private final RefreshTokenService refreshTokenService;
 
-    @Autowired
-    private JwtTokenUtil jwtTokenUtil;
+    private final JwtTokenUtil jwtTokenUtil;
 
-    @Autowired
-    private Counter authLoginCounter;
+    private final Counter authLoginCounter;
 
-    @Autowired
-    private Counter authRegisterCounter;
+    private final Counter authRegisterCounter;
 
     @PostMapping("/register")
-    public ResponseEntity<RegisterRequest> register(@RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest) {
         authRegisterCounter.increment();
         User savedUser = userService.registerUser(registerRequest);
-
-        RegisterRequest responseDto = new RegisterRequest();
-        responseDto.setUsername(savedUser.getUsername());
-        responseDto.setEmail(savedUser.getEmail());
-
-        return ResponseEntity.ok(responseDto);
+        String token = userService.createVerificationToken(savedUser);
+        // Отправляем email с ссылкой подтверждения
+        emailService.sendVerificationEmail(savedUser.getEmail(), token);
+        // Формируем ответ с токеном
+        Map<String, Object> response = new HashMap<>();
+        response.put("username", savedUser.getUsername());
+        response.put("email", savedUser.getEmail());
+        response.put("verificationToken", token);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<TokenRefreshResponse> login(@Valid @RequestBody LoginRequest request) {
         authLoginCounter.increment();
-        String token = userService.loginUser(request.getUsername(), request.getPassword());
+        String accessToken = userService.loginUser(request.getUsername(), request.getPassword());
         User user = userService.getUserWithCollectionsByUsername(request.getUsername());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("token", token);
-        response.put("refreshToken", refreshToken.getToken());
-        response.put("tokenType", "Bearer");
-
+        TokenRefreshResponse response = new TokenRefreshResponse(accessToken, refreshToken.getToken());
         return ResponseEntity.ok(response);
     }
 
@@ -135,6 +132,14 @@ public class AuthController {
         response.put("bio", currentUser.getBio());
         response.put("registrationDate", currentUser.getRegistrationDate());
 
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/confirm")
+    public ResponseEntity<?> confirmEmail(@RequestParam("token") String token) {
+        userService.confirmEmail(token);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Email успешно подтвержден");
         return ResponseEntity.ok(response);
     }
 }

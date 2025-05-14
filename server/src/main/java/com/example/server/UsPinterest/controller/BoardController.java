@@ -9,31 +9,27 @@ import com.example.server.UsPinterest.model.User;
 import io.github.bucket4j.Bucket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/api/boards")
 @Validated
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class BoardController {
     private static final Logger logger = LoggerFactory.getLogger(BoardController.class);
 
-    @Autowired
-    private BoardService boardService;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private Bucket bucket;
+    private final BoardService boardService;
+    private final UserService userService;
+    private final Bucket bucket;
 
     @PostMapping
     public ResponseEntity<BoardResponse> createBoard(@Valid @RequestBody BoardRequest boardRequest) {

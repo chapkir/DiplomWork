@@ -10,5 +10,7 @@ import com.example.server.UsPinterest.entity.Comment;
 public interface CommentStructMapper {
 
     @Mapping(target = "userProfileImageUrl", source = "comment.user.profileImageUrl")
+    @Mapping(target = "tags", ignore = true)
+    @Mapping(target = "mentions", ignore = true)
     CommentResponse toDto(Comment comment);
 }

@@ -4,7 +4,14 @@ import com.example.server.UsPinterest.model.Photo;
 import com.example.server.UsPinterest.model.Pin;
 import com.example.server.UsPinterest.model.Post;
 import com.example.server.UsPinterest.model.User;
+import com.example.server.UsPinterest.model.Tag;
 import jakarta.persistence.*;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.CascadeType;
+import java.util.HashSet;
+import java.util.Set;
 import java.time.LocalDateTime;
 
 @Entity
@@ -34,6 +41,18 @@ public class Comment {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "photo_id")
     private Photo photo;
+
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(name = "comment_tags",
+               joinColumns = @JoinColumn(name = "comment_id"),
+               inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    private Set<Tag> tags = new HashSet<>();
+
+    @ManyToMany
+    @JoinTable(name = "comment_mentions",
+               joinColumns = @JoinColumn(name = "comment_id"),
+               inverseJoinColumns = @JoinColumn(name = "mentioned_user_id"))
+    private Set<User> mentions = new HashSet<>();
 
     // Конструкторы
     public Comment() {
@@ -118,5 +137,21 @@ public class Comment {
 
     public void setPhoto(Photo photo) {
         this.photo = photo;
+    }
+
+    public Set<Tag> getTags() {
+        return tags;
+    }
+
+    public void setTags(Set<Tag> tags) {
+        this.tags = tags;
+    }
+
+    public Set<User> getMentions() {
+        return mentions;
+    }
+
+    public void setMentions(Set<User> mentions) {
+        this.mentions = mentions;
     }
 } 

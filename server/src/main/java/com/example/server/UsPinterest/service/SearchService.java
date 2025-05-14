@@ -10,42 +10,45 @@ import com.example.server.UsPinterest.model.User;
 import com.example.server.UsPinterest.repository.PinRepository;
 import com.example.server.UsPinterest.repository.UserRepository;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
+import java.util.Collections;
+import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class SearchService {
 
-    @Autowired
-    private PinRepository pinRepository;
+    private final PinRepository pinRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private PaginationService paginationService;
+    private final PaginationService paginationService;
 
-    @Autowired
-    private PinStructMapper pinStructMapper;
+    private final PinStructMapper pinStructMapper;
 
-    @Autowired
-    private UserStructMapper userStructMapper;
+    private final UserStructMapper userStructMapper;
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "search", key = "'pins_' + #keyword + '_' + #page + '_' + #size + '_' + #sortBy + '_' + #sortDirection")
-    public PageResponse<PinResponse> searchPins(String keyword, int page, int size,
+    @Cacheable(value = "search", key = "'pins_' + #keyword + '_' + #tags + '_' + #page + '_' + #size + '_' + #sortBy + '_' + #sortDirection")
+    public PageResponse<PinResponse> searchPins(String keyword, List<String> tags, int page, int size,
                                                 String sortBy, String sortDirection) {
         String searchKeyword = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : "";
 
         Pageable pageable = paginationService.createPageable(page, size, sortBy, sortDirection);
-        Page<Pin> pinsPage = pinRepository.findByDescriptionContainingIgnoreCase(searchKeyword, pageable);
+        List<String> searchTags = (tags != null && !tags.isEmpty()) ? tags : Collections.emptyList();
+        Page<Pin> pinsPage;
+        if (!searchTags.isEmpty()) {
+            pinsPage = pinRepository.searchByDescriptionOrTags(searchKeyword, searchTags, pageable);
+        } else {
+            pinsPage = pinRepository.findByDescriptionContainingIgnoreCase(searchKeyword, pageable);
+        }
 
         return paginationService.createPageResponse(pinsPage, pin -> pinStructMapper.toDto(pin));
     }
