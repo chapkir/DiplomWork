@@ -7,6 +7,8 @@ plugins {
     
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.plugin.serialization)
+
+    alias(libs.plugins.aboutLibraries)
 }
 
 android {
@@ -54,6 +56,7 @@ android {
         }
     }
     buildToolsVersion = "35.0.1"
+
 }
 
 dependencies {
@@ -95,6 +98,8 @@ dependencies {
 
     implementation (libs.maps.mobile.yandex)
     implementation (libs.play.services.location)
+
+    implementation(libs.aboutlibraries.compose.m3)
 
     implementation(libs.kotlinx.metadata.jvm)
 

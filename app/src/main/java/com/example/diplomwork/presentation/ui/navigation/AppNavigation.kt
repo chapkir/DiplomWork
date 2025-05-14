@@ -1,6 +1,5 @@
 package com.example.diplomwork.presentation.ui.navigation
 
-import android.net.Uri
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
@@ -11,7 +10,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -33,10 +31,10 @@ import com.example.diplomwork.presentation.ui.screens.profile_screen.ProfileScre
 import com.example.diplomwork.presentation.ui.screens.registration_screen.RegisterScreen
 import com.example.diplomwork.presentation.ui.screens.search_screen.SearchScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.EditProfileScreen
+import com.example.diplomwork.presentation.ui.screens.settings_screens.LicensesScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.SettingsScreen
 import com.example.diplomwork.presentation.ui.screens.spots_screen.SpotsScreen
 import com.example.diplomwork.presentation.ui.theme.BgDefault
-import com.example.diplomwork.presentation.viewmodel.GalleryViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,7 +53,8 @@ fun AppNavigation(navController: NavHostController) {
             Gallery::class.simpleName,
             CreateContentScreenData::class.simpleName,
             EditProfile::class.simpleName,
-            Map::class.simpleName
+            Map::class.simpleName,
+            Licenses::class.simpleName
         )
 
     val showBottomBar = currentRoute.let { route ->
@@ -92,7 +91,7 @@ fun AppNavigation(navController: NavHostController) {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = if (sessionManager.isLoggedIn()) Spots else Login,
+            startDestination = if (sessionManager.isLoggedIn()) Settings else Login,
             modifier = Modifier.padding(paddingValues)
         ) {
             composable<Pictures> {
@@ -195,7 +194,7 @@ fun AppNavigation(navController: NavHostController) {
 
             composable<Map> {
                 MapScreen(
-                    onLocationSelected = { _, _, _, _ ->  },
+                    onLocationSelected = { _, _, _, _ -> },
                     onBack = { navController.popBackStack() },
                 )
             }
@@ -232,6 +231,17 @@ fun AppNavigation(navController: NavHostController) {
                         }
                     },
                     onHelpCenterClick = {},
+                    onLicensesClick = {
+                        navController.navigate(Licenses) {
+                            popUpTo(Licenses) { inclusive = false }
+                        }
+                    }
+                )
+            }
+
+            composable<Licenses> {
+                LicensesScreen(
+                    onBack = { navController.popBackStack() },
                 )
             }
 

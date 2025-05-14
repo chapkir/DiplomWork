@@ -36,6 +36,7 @@ fun SettingsScreen(
     onPrivacyClick: () -> Unit,
     onLogoutClick: () -> Unit,
     onHelpCenterClick: () -> Unit,
+    onLicensesClick: () -> Unit
 ) {
     val uriHandler = LocalUriHandler.current
 
@@ -87,6 +88,16 @@ fun SettingsScreen(
             SettingItem(
                 title = "Пользовательское соглашение",
                 onClick = { uriHandler.openUri("http://chapkir.ru/privacy.html") }
+            )
+
+            SettingItem(
+                title = "Сведения",
+                onClick = { onLicensesClick() }
+            )
+
+            SettingItem(
+                title = "Условия использования отдельных сервисов Яндекс Карт",
+                onClick = { uriHandler.openUri("https://yandex.ru/legal/maps_api/") }
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))

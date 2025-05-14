@@ -52,6 +52,9 @@ object ViewPost : Screen
 object Gallery : Screen
 
 @Serializable
+object Licenses : Screen
+
+@Serializable
 data class PictureDetailScreenData(
     val pictureId: Long
 ) : Screen
