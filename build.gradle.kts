@@ -9,5 +9,5 @@ plugins {
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.plugin.serialization) apply false
 
-    alias(libs.plugins.aboutLibraries) apply false
+    id("com.mikepenz.aboutlibraries.plugin") version "12.1.2" apply false
 }

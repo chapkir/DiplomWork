@@ -71,23 +71,29 @@ fun SettingsScreen(
 
         HorizontalDivider()
 
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+        Column {
             SettingItem("Редактировать профиль", onEditProfileClick)
             SettingItem("Управление аккаунтом", onAccountManagementClick)
             SettingItem("Приватность", onPrivacyClick)
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-            SettingItem("Справочный центр", onHelpCenterClick)
+            SettingItem(
+                title = "Справочный центр",
+                onClick = onHelpCenterClick,
+                actionIcon = R.drawable.ic_arrow_up_right
+            )
 
             SettingItem(
                 title = "Политика конфиденциальности",
-                onClick = { uriHandler.openUri("http://chapkir.ru/privacy.html") }
+                onClick = { uriHandler.openUri("http://chapkir.ru/privacy.html") },
+                actionIcon = R.drawable.ic_arrow_up_right
             )
 
             SettingItem(
                 title = "Пользовательское соглашение",
-                onClick = { uriHandler.openUri("http://chapkir.ru/privacy.html") }
+                onClick = { uriHandler.openUri("http://chapkir.ru/privacy.html") },
+                actionIcon = R.drawable.ic_arrow_up_right
             )
 
             SettingItem(
@@ -95,36 +101,9 @@ fun SettingsScreen(
                 onClick = { onLicensesClick() }
             )
 
-            SettingItem(
-                title = "Условия использования отдельных сервисов Яндекс Карт",
-                onClick = { uriHandler.openUri("https://yandex.ru/legal/maps_api/") }
-            )
-
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             SettingItem("Выйти из аккаунта", onLogoutClick, isLogoutButton = true)
         }
     }
-}
-
-@Composable
-fun SettingItem(
-    title: String,
-    onClick: () -> Unit,
-    isLogoutButton: Boolean = false
-) {
-    Text(
-        text = title,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() },
-                onClick = onClick
-            )
-            .padding(vertical = 14.dp),
-        color = if (isLogoutButton) Color.Red else Color.LightGray,
-        fontSize = 18.sp,
-        fontWeight = FontWeight.Bold,
-    )
 }

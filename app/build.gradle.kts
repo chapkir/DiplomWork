@@ -8,7 +8,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.plugin.serialization)
 
-    alias(libs.plugins.aboutLibraries)
+    id("com.mikepenz.aboutlibraries.plugin")
 }
 
 android {
