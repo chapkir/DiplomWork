@@ -59,6 +59,7 @@ import com.example.diplomwork.presentation.ui.components.CustomVisualTransformat
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.presentation.ui.theme.BgDefault
 import com.example.diplomwork.presentation.ui.theme.ButtonPrimary
+import com.example.diplomwork.presentation.ui.theme.TextPrimary
 import com.example.diplomwork.presentation.viewmodel.LoginViewModel
 
 @Composable
@@ -101,6 +102,7 @@ fun LoginScreen(
                 fontSize = 60.sp,
                 fontWeight = FontWeight.Bold,
             )
+
             Spacer(modifier = Modifier.height(50.dp))
 
             LoginTextField(
@@ -135,7 +137,7 @@ fun LoginScreen(
                 shape = RoundedCornerShape(15.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = ButtonPrimary.copy(alpha = 0.96f),
-                    contentColor = Color.White,
+                    contentColor = TextPrimary,
                     disabledContainerColor = Color.Gray,
                     disabledContentColor = Color.White
                 )
@@ -212,7 +214,7 @@ fun LoginTextField(
         modifier = modifier,
         textStyle = TextStyle(
             fontSize = if (isPassword && !passwordVisible) 20.sp else 17.sp,
-            color = Color.White
+            color = TextPrimary
         ),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Color.White,
@@ -221,7 +223,7 @@ fun LoginTextField(
             unfocusedLabelColor = Color.Gray,
             focusedLeadingIconColor = Color.White,
             unfocusedLeadingIconColor = Color.Gray,
-            focusedTextColor = Color.White,
+            focusedTextColor = TextPrimary,
             unfocusedTextColor = Color.Gray,
             cursorColor = Color.White,
             focusedTrailingIconColor = Color.Gray,

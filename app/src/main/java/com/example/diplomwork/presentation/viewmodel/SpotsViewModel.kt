@@ -1,17 +1,22 @@
 package com.example.diplomwork.presentation.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.cachedIn
 import androidx.paging.map
-import com.example.diplomwork.auth.SessionManager
+import com.example.diplomwork.data.model.LocationResponse
+import com.example.diplomwork.data.repos.LocationRepository
 import com.example.diplomwork.data.repos.PictureRepository
 import com.example.diplomwork.domain.usecase.DeletePictureUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -76,13 +81,22 @@ import javax.inject.Inject
 //}
 
 @HiltViewModel
-class PicturesViewModel @Inject constructor(
+class SpotsViewModel @Inject constructor(
     private val pictureRepository: PictureRepository,
-    private val sessionManager: SessionManager,
+    private val locationRepository: LocationRepository,
     private val deletePictureUseCase: DeletePictureUseCase
 ) : ViewModel() {
 
-    private val currentUsername = sessionManager.username
+    private val currentUsername = pictureRepository.getCurrentUsername()
+
+    private val _spotLocations = MutableStateFlow<Map<Long, LocationResponse>>(emptyMap())
+    val spotLocations: StateFlow<Map<Long, LocationResponse>> = _spotLocations
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
+    private val _deleteStatus = MutableSharedFlow<String>(replay = 0)
+    val deleteStatus: SharedFlow<String> = _deleteStatus.asSharedFlow()
 
     val picturesPagingFlow = pictureRepository.getPagingPictures()
         .map { pagingData ->
@@ -93,9 +107,6 @@ class PicturesViewModel @Inject constructor(
             }
         }
         .cachedIn(viewModelScope)
-
-    private val _deleteStatus = MutableSharedFlow<String>(replay = 0)
-    val deleteStatus: SharedFlow<String> = _deleteStatus.asSharedFlow()
 
     fun deletePicture(pictureId: Long) {
         viewModelScope.launch {
@@ -111,4 +122,19 @@ class PicturesViewModel @Inject constructor(
         }
     }
 
+    fun loadLocationsForVisibleSpots(visibleIds: Set<Long>) {
+        viewModelScope.launch {
+            visibleIds.forEach { spotId ->
+                if (!_spotLocations.value.containsKey(spotId)) {
+                    try {
+                        val location = locationRepository.getSpotLocation(spotId)
+                        _spotLocations.update { it + (spotId to location) }
+                    } catch (e: Exception) {
+                        Log.e("SpotsViewModel", "Ошибка загрузки локации spotId=$spotId", e)
+                    }
+                }
+            }
+        }
+    }
 }
+

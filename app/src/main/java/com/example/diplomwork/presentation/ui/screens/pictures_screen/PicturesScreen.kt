@@ -27,15 +27,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.diplomwork.data.model.PictureResponse
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.presentation.ui.components.PictureCard
-import com.example.diplomwork.presentation.viewmodel.PicturesViewModel
+import com.example.diplomwork.presentation.viewmodel.SpotsViewModel
 
 //@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 //@Composable
@@ -197,16 +195,16 @@ import com.example.diplomwork.presentation.viewmodel.PicturesViewModel
 
 @Composable
 fun PicturesScreen(
-    picturesViewModel: PicturesViewModel = hiltViewModel(),
+    spotsViewModel: SpotsViewModel = hiltViewModel(),
     onImageClick: (Long) -> Unit,
     onProfileClick: (Long, String) -> Unit
 ) {
-    val pagingPictures = picturesViewModel.picturesPagingFlow.collectAsLazyPagingItems()
+    val pagingPictures = spotsViewModel.picturesPagingFlow.collectAsLazyPagingItems()
 
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        picturesViewModel.deleteStatus.collect { message ->
+        spotsViewModel.deleteStatus.collect { message ->
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
     }
@@ -216,7 +214,7 @@ fun PicturesScreen(
             modifier = Modifier.fillMaxSize(),
             onImageClick = { picture -> onImageClick(picture.id) },
             onProfileClick = onProfileClick,
-            onPictureDelete = { id -> picturesViewModel.deletePicture(id) },
+            onPictureDelete = { id -> spotsViewModel.deletePicture(id) },
             pictures = pagingPictures
         )
     }

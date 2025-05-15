@@ -7,6 +7,7 @@ data class PictureResponse(
 
     val description: String,
     val title: String,
+    val rating: Double,
 
     val likesCount: Int,
     val commentsCount: Int,

@@ -6,11 +6,12 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.diplomwork.auth.SessionManager
+import com.example.diplomwork.data.model.LocationResponse
 import com.example.diplomwork.data.model.PictureResponse
 import com.example.diplomwork.data.model.PostResponse
 import com.example.diplomwork.data.model.ProfileResponse
 import com.example.diplomwork.data.repos.FollowRepository
+import com.example.diplomwork.data.repos.LocationRepository
 import com.example.diplomwork.data.repos.ProfileRepository
 import com.example.diplomwork.util.ImageUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,6 +27,7 @@ import javax.inject.Inject
 class ProfileViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val profileRepository: ProfileRepository,
+    private val locationRepository: LocationRepository,
     private val followRepository: FollowRepository,
 ) : ViewModel() {
 
@@ -38,6 +40,9 @@ class ProfileViewModel @Inject constructor(
 
     private val _profilePictures = MutableStateFlow<List<PictureResponse>>(emptyList())
     val profilePictures: StateFlow<List<PictureResponse>> = _profilePictures
+
+    private val _spotLocations = MutableStateFlow<Map<Long, LocationResponse>>(emptyMap())
+    val spotLocations: StateFlow<Map<Long, LocationResponse>> = _spotLocations
 
     private val _profilePosts = MutableStateFlow<List<PostResponse>>(emptyList())
     val profilePosts: StateFlow<List<PostResponse>> = _profilePosts
@@ -71,7 +76,7 @@ class ProfileViewModel @Inject constructor(
 
 
     init {
-        if(_username == currentUsername) loadProfile()
+        if (_username == currentUsername) loadProfile()
         else loadProfile(userId = _userId)
     }
 
@@ -95,12 +100,29 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun loadProfilePictures(){
+    fun loadProfilePictures() {
         if (_profilePictures.value.isNotEmpty()) return
-        _isLoadingPictures.value = true
+
         viewModelScope.launch {
+            _isLoadingPictures.value = true
             try {
-                    _profilePictures.value = profileRepository.getOwnProfilePictures()
+                val pictures = profileRepository.getOwnProfilePictures()
+                _profilePictures.value = pictures
+
+                val pictureIds = pictures.map { it.id }
+
+                val locations = mutableMapOf<Long, LocationResponse>()
+                for (id in pictureIds) {
+                    try {
+                        val location = locationRepository.getSpotLocation(id)
+                        locations[id] = location
+                    } catch (e: Exception) {
+                        Log.e("ProfileViewModel", "Ошибка при загрузке локации для id=$id: ${e.message}")
+                    }
+                }
+
+                _spotLocations.value = locations
+
             } catch (e: Exception) {
                 Log.e("ProfileViewModel", "Ошибка при загрузке картинок профиля: ${e.message}")
                 _error.value = "Ошибка при загрузке картинок пользователя"
@@ -110,7 +132,7 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun loadProfilePosts(){
+    private fun loadProfilePosts() {
         if (_profilePosts.value.isNotEmpty()) return
         _isLoadingPosts.value = true
         viewModelScope.launch {
@@ -195,13 +217,13 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun subscribe(followerId: Long, followingId: Long){
+    fun subscribe(followerId: Long, followingId: Long) {
         viewModelScope.launch {
             val subscribe = followRepository.subscribe(followerId, followingId)
         }
     }
 
-    fun unsubscribe(followerId: Long, followingId: Long){
+    fun unsubscribe(followerId: Long, followingId: Long) {
         viewModelScope.launch {
             val unsubscribe = followRepository.unsubscribe(followerId, followingId)
         }

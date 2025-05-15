@@ -57,7 +57,6 @@ import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.launch
-import kotlin.random.Random
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,14 +66,16 @@ fun SpotsCard(
     title: String,
     description: String,
     userId: Long,
-    geo: String = "Локация не указана",
+    latitude: Double,
+    longitude: Double,
+    rating: Double,
     aspectRatio: Float,
     userProfileImageUrl: String?,
     id: Long,
     isCurrentUserOwner: Boolean = false,
     onSpotClick: () -> Unit,
-    onProfileClick: (Long, String) -> Unit = {_, _-> },
-    onSpotDelete: (Long) -> Unit = {_ -> },
+    onProfileClick: (Long, String) -> Unit = { _, _ -> },
+    onSpotDelete: (Long) -> Unit = { _ -> },
     screenName: String = ""
 ) {
 
@@ -169,14 +170,14 @@ fun SpotsCard(
                     ImagesPager(
                         imageUrls = imageUrl,
                         modifier = Modifier
-                            .padding(end = 10.dp)
+                            .padding(start = 7.dp)
                             .weight(0.55f)
                     )
                     PlaceInfo(
-                        rating = Random.nextInt(1, 6),
+                        rating = rating.toInt(),
                         title = title,
                         description = description,
-                        geo = geo,
+                        geo = "$latitude, $longitude",
                         modifier = Modifier
                             .fillMaxHeight()
                             .padding(start = 10.dp, end = 15.dp)
@@ -191,9 +192,9 @@ fun SpotsCard(
         MenuBottomSheet(
             onDismiss = { closeMenuSheet() },
             onDelete = { openConfirmDeleteSheet() },
-            onReportSpot = {  }, // TODO
-            onDownloadPicture = {  }, // TODO
-            onHideSpot = {  }, // TODO
+            onReportSpot = { }, // TODO
+            onDownloadPicture = { }, // TODO
+            onHideSpot = { }, // TODO
             sheetState = menuSheetState,
             isOwnContent = isCurrentUserOwner
         )

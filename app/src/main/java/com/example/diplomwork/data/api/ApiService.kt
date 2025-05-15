@@ -6,6 +6,7 @@ import com.example.diplomwork.data.model.CommentRequest
 import com.example.diplomwork.data.model.CommentResponse
 import com.example.diplomwork.data.model.EditProfileRequest
 import com.example.diplomwork.data.model.LocationRequest
+import com.example.diplomwork.data.model.LocationResponse
 import com.example.diplomwork.data.model.LoginRequest
 import com.example.diplomwork.data.model.LoginResponse
 import com.example.diplomwork.data.model.NotificationResponse
@@ -136,8 +137,8 @@ interface ApiService {
         @Body spot: LocationRequest
     ): Response<Unit>
 
-    @GET("api/pictures/{pictureId}")
-    suspend fun getLocationBySpot(@Path("pictureId") pictureId: Long): UserExistsResponse
+    @GET("api/locations/pictures/{pictureId}")
+    suspend fun getSpotLocation(@Path("pictureId") pictureId: Long): LocationResponse
 
     @GET("api/users/exists/{username}")
     suspend fun checkUsernameExists(@Path("username") username: String): UserExistsResponse

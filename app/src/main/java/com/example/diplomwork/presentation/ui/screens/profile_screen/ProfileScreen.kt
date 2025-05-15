@@ -14,10 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -38,8 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.paging.LoadState
+import com.example.diplomwork.data.model.LocationResponse
 import com.example.diplomwork.data.model.PictureResponse
 import com.example.diplomwork.data.model.PostResponse
 import com.example.diplomwork.presentation.ui.components.CustomTabPager
@@ -47,7 +44,6 @@ import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForElemen
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.presentation.ui.components.PictureCard
 import com.example.diplomwork.presentation.ui.components.SpotsCard
-import com.example.diplomwork.presentation.ui.screens.pictures_screen.ErrorRetryBlock
 import com.example.diplomwork.presentation.viewmodel.ProfileViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.rememberPagerState
@@ -63,6 +59,7 @@ fun ProfileScreen(
 ) {
     val context = LocalContext.current
     val profileData by profileViewModel.profileData.collectAsState()
+    val spotLocation by profileViewModel.spotLocations.collectAsState()
     val profilePictures by profileViewModel.profilePictures.collectAsState()
     val profilePosts by profileViewModel.profilePosts.collectAsState()
     val likedPictures by profileViewModel.likedPictures.collectAsState()
@@ -119,11 +116,11 @@ fun ProfileScreen(
                 modifier = Modifier.align(Alignment.TopCenter),
                 isRefreshing =
                     when (pagerState.currentPage) {
-                    //0 -> isLoadingPosts
-                    0 -> isLoadingPictures
-                    1 -> isLoadingLiked
-                    else -> isLoading
-                },
+                        //0 -> isLoadingPosts
+                        0 -> isLoadingPictures
+                        1 -> isLoadingLiked
+                        else -> isLoading
+                    },
                 containerColor = Color.Gray,
                 color = Color.White,
                 state = stateRefresh
@@ -165,8 +162,19 @@ fun ProfileScreen(
                     ) { page ->
                         when (page) {
                             //0 -> PostsGrid(profilePosts, isLoadingPosts)
-                            0 -> PicturesGrid(profilePictures, onImageClick, isLoadingPictures)
-                            1 -> PicturesGrid(likedPictures, onImageClick, isLoadingLiked)
+                            0 -> PicturesGrid(
+                                profilePictures,
+                                spotLocation,
+                                onImageClick,
+                                isLoadingPictures
+                            )
+
+                            1 -> PicturesGrid(
+                                likedPictures,
+                                spotLocation,
+                                onImageClick,
+                                isLoadingLiked
+                            )
                         }
                     }
                 }
@@ -196,6 +204,7 @@ private fun ErrorScreen(error: String?, onRetry: () -> Unit) {
 @Composable
 private fun PicturesGrid(
     spots: List<PictureResponse>,
+    spotLocation: Map<Long, LocationResponse>,
     onPictureClick: (Long) -> Unit,
     isLoading: Boolean
 ) {
@@ -207,12 +216,17 @@ private fun PicturesGrid(
     ) {
         items(spots.size) { index ->
             spots[index].let { spot ->
+                val location = spotLocation[spot.id]
+
                 SpotsCard(
                     imageUrl = spot.fullhdImageUrl,
                     username = spot.username,
                     title = spot.title,
                     description = spot.description,
                     userId = spot.userId,
+                    latitude = location?.latitude ?: 0.0,
+                    longitude = location?.longitude ?: 0.0,
+                    rating = spot.rating,
                     aspectRatio = spot.aspectRatio ?: 1f,
                     userProfileImageUrl = spot.userProfileImageUrl,
                     id = spot.id,

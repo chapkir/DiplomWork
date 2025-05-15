@@ -22,7 +22,6 @@ class PictureDetailScreenViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val pictureRepository: PictureRepository,
     private val commentRepository: CommentRepository,
-    private val sessionManager: SessionManager,
     private val deletePictureUseCase: DeletePictureUseCase
 ) : ViewModel() {
 
@@ -43,7 +42,7 @@ class PictureDetailScreenViewModel @Inject constructor(
             val pictureResult = safeApiCall { pictureRepository.getPicture(_pictureId) }
 
             pictureResult.getOrNull()?.let { picture ->
-                val currentUserUsername = sessionManager.username
+                val currentUserUsername = pictureRepository.getCurrentUsername()
                 val isOwner = currentUserUsername == picture.username
 
                 _uiState.value = _uiState.value.copy(

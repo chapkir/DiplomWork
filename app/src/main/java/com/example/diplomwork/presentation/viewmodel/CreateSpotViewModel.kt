@@ -40,7 +40,7 @@ class CreateSpotViewModel @Inject constructor(
         val description: String = "",
         val geo: String = "",
         val address: String = "",
-        val rating: String = "0"
+        val rating: String = "1"
     )
 
     private val _createSpotData = MutableStateFlow(CreateSpotData(
