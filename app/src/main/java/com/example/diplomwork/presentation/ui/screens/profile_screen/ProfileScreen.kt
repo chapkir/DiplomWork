@@ -60,6 +60,7 @@ fun ProfileScreen(
 ) {
     val context = LocalContext.current
     val profileData by profileViewModel.profileData.collectAsState()
+    val followersCount by profileViewModel.followersCount.collectAsState()
     val spotLocation by profileViewModel.spotLocations.collectAsState()
     val followState by profileViewModel.followState.collectAsState()
     val profilePictures by profileViewModel.profilePictures.collectAsState()
@@ -143,7 +144,7 @@ fun ProfileScreen(
                         firstName = profileData?.firstName ?: "Неизвестный",
                         picturesCount = profileData?.pinsCount ?: 0,
                         followingCount = profileData?.followingCount ?: 0,
-                        followersCount = profileData?.followersCount ?: 0,
+                        followersCount = followersCount,
                         avatarUrl = profileData?.profileImageUrl,
                         isUploading = isUploading,
                         onAvatarClick = { pickImageLauncher.launch("image/*") },

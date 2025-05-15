@@ -164,6 +164,12 @@ interface ApiService {
         @Path("followingId") followingId: Long
     ): Response<Unit>
 
+    @GET("api/follows/{followerId}/following/{followingId}")
+    suspend fun checkFollowing(
+        @Path("followerId") followerId: Long,
+        @Path("followingId") followingId: Long
+    ): Response<Boolean>
+
     @GET("api/notifications")
     suspend fun getNotifications(): List<NotificationResponse>
 

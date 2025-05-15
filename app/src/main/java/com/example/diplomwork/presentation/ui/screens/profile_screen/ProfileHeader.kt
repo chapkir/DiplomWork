@@ -201,7 +201,7 @@ fun ProfileHeader(
                 is FollowState.Loading -> {
                     Button(
                         modifier = Modifier.fillMaxWidth(0.5f),
-                        onClick = { onSubscribe(userId) },
+                        onClick = { },
                         colors = ButtonColors(
                             containerColor = Color.Gray,
                             contentColor = Color.White,
@@ -217,9 +217,10 @@ fun ProfileHeader(
 
                     Button(
                         modifier = Modifier.fillMaxWidth(0.5f),
-                        onClick = { onSubscribe(userId) },
+                        onClick = { if(isSubscribed) onUnsubscribe(userId) else onSubscribe(userId) },
                         colors = ButtonColors(
-                            containerColor = Color.Red.copy(alpha = 0.9f),
+                            containerColor =
+                                if (isSubscribed) Color.Gray else Color.Red.copy(alpha = 0.9f),
                             contentColor = Color.White,
                             disabledContainerColor = Color.Gray,
                             disabledContentColor = Color.White

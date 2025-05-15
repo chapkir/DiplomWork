@@ -18,6 +18,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -39,6 +40,9 @@ class ProfileViewModel @Inject constructor(
 
     private val _profileData = MutableStateFlow<ProfileResponse?>(null)
     val profileData: StateFlow<ProfileResponse?> = _profileData
+
+    private val _followersCount = MutableStateFlow(0)
+    val followersCount: StateFlow<Int> = _followersCount
 
     private val _profilePictures = MutableStateFlow<List<PictureResponse>>(emptyList())
     val profilePictures: StateFlow<List<PictureResponse>> = _profilePictures
@@ -79,6 +83,8 @@ class ProfileViewModel @Inject constructor(
     private val _isOwnProfile = MutableStateFlow(false)
     val isOwnProfile: StateFlow<Boolean> = _isOwnProfile
 
+    private val _isSubscribed = MutableStateFlow(false)
+
 
     init {
         if (_username == ownUsername) loadProfile()
@@ -90,7 +96,11 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 if (userId != null) {
-                    _profileData.value = profileRepository.getProfileById(userId)
+                    val profile = profileRepository.getProfileById(userId)
+                    _profileData.value = profile
+                    _isOwnProfile.value = false
+                    _followersCount.value = profile.followersCount
+                    checkIfSubscribed(userId)
                 } else {
                     _profileData.value = profileRepository.getOwnProfile()
                     _isOwnProfile.value = true
@@ -152,7 +162,6 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    // Загружаем лайкнутые пины
     fun loadLikedPictures() {
         if (_likedPictures.value.isNotEmpty()) return
         _isLoadingLiked.value = true
@@ -178,7 +187,6 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    // Загрузка аватара на сервер
     fun uploadAvatarToServer(uri: Uri, context: Context) {
         _isUploading.value = true
         viewModelScope.launch {
@@ -213,11 +221,27 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    // Проверка авторизации
     fun checkAuth(onNavigateToLogin: () -> Unit) {
         viewModelScope.launch {
             if (!profileRepository.isLoggedIn()) {
                 onNavigateToLogin()
+            }
+        }
+    }
+
+    private fun checkIfSubscribed(followingId: Long) {
+        viewModelScope.launch {
+            _followState.value = FollowState.Loading
+            try {
+                val response = followRepository.checkFollowing(ownUserId, followingId)
+                if (response.isSuccessful) {
+                    _isSubscribed.value = response.body() ?: false
+                    _followState.value = FollowState.Success(isSubscribed = _isSubscribed.value)
+                } else {
+                    _followState.value = FollowState.Error("Ошибка при проверке подписки: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                _followState.value = FollowState.Error("Ошибка сети: ${e.localizedMessage}")
             }
         }
     }
@@ -233,7 +257,9 @@ class ProfileViewModel @Inject constructor(
             try {
                 val response = followRepository.subscribe(ownUserId, followingId)
                 if (response.isSuccessful) {
+                    _isSubscribed.value = true
                     _followState.value = FollowState.Success(isSubscribed = true)
+                    incrementFollowers()
                 } else {
                     _followState.value = FollowState.Error("Ошибка подписки: ${response.code()}")
                 }
@@ -254,7 +280,9 @@ class ProfileViewModel @Inject constructor(
             try {
                 val response = followRepository.unsubscribe(ownUserId, followingId)
                 if (response.isSuccessful) {
+                    _isSubscribed.value = false
                     _followState.value = FollowState.Success(isSubscribed = false)
+                    decrementFollowers()
                 } else {
                     _followState.value = FollowState.Error("Ошибка отписки: ${response.code()}")
                 }
@@ -263,6 +291,7 @@ class ProfileViewModel @Inject constructor(
             }
         }
     }
+
 
     fun refreshPosts() {
         _profilePosts.value = emptyList()
@@ -278,6 +307,11 @@ class ProfileViewModel @Inject constructor(
         _likedPictures.value = emptyList()
         loadLikedPictures()
     }
+
+    private fun incrementFollowers() { _followersCount.update { it + 1 } }
+
+    private fun decrementFollowers() { _followersCount.update { (it - 1).coerceAtLeast(0) } }
+
 }
 
 sealed class FollowState {

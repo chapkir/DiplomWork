@@ -17,4 +17,8 @@ class FollowRepository @Inject constructor(
     suspend fun unsubscribe(followerId: Long, followingId: Long): Response<Unit> {
         return apiService.unsubscribe(followerId, followingId)
     }
+
+    suspend fun checkFollowing(followerId: Long, followingId: Long): Response<Boolean> {
+        return apiService.checkFollowing(followerId, followingId)
+    }
 }
