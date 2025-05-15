@@ -10,4 +10,5 @@ plugins {
     alias(libs.plugins.plugin.serialization) apply false
 
     id("com.mikepenz.aboutlibraries.plugin") version "12.1.2" apply false
+    id("com.google.gms.google-services") version "4.4.2" apply false
 }

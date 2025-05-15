@@ -48,7 +48,7 @@ Thumbs.db
 *.pem
 *.p12
 .env
-/google-services.json
+/app/google-services.json
 /firebase/
 
 

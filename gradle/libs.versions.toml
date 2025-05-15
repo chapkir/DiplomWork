@@ -6,11 +6,12 @@ bucket4jCore = "7.6.0"
 caffeine = "3.1.8"
 converterGson = "2.11.0"
 
+firebaseBom = "33.13.0"
 foundationLayout = "1.8.1"
-hiltAndroid = "2.51.1"
-hiltNavigationCompose = "1.2.0"
+hiltAndroid = "2.54"
+hiltNavigationCompose = "1.3.0-alpha01"
 kspPlugin = "2.1.0-1.0.29"
-hiltPlugin = "2.51.1"
+hiltPlugin = "2.56.2"
 
 httpmime = "4.5.14"
 jjwtJackson = "0.11.5"
@@ -61,6 +62,9 @@ androidx-foundation-layout = { module = "androidx.compose.foundation:foundation-
 androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "pagingRuntime" }
 androidx-paging-runtime = { module = "androidx.paging:paging-runtime", version.ref = "pagingRuntime" }
 androidx-ui-util = { module = "androidx.compose.ui:ui-util", version.ref = "uiUtil" }
+firebase-analytics = { module = "com.google.firebase:firebase-analytics-ktx" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-messaging = { module = "com.google.firebase:firebase-messaging-ktx"}
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serializationKotlin" }
 accompanist-systemuicontroller = "com.google.accompanist:accompanist-systemuicontroller:0.36.0"
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

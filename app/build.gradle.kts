@@ -9,6 +9,8 @@ plugins {
     alias(libs.plugins.plugin.serialization)
 
     id("com.mikepenz.aboutlibraries.plugin")
+
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -83,6 +85,10 @@ dependencies {
     implementation (libs.androidx.material)
     implementation (libs.androidx.ui.util)
     implementation (libs.androidx.foundation.layout)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.messaging)
 
     implementation(libs.hilt.navigation.compose)
     implementation(libs.hilt.android)
