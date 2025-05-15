@@ -14,6 +14,7 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -77,7 +78,7 @@ fun ProfileHeader(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_stats),
                         contentDescription = "Stats",
-                        tint = Color.White
+                        tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             } else {
@@ -90,7 +91,7 @@ fun ProfileHeader(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_arrow_left),
                         contentDescription = "OnBack",
-                        tint = Color.White
+                        tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }
@@ -106,7 +107,7 @@ fun ProfileHeader(
                 Icon(
                     painter = painterResource(id = R.drawable.ic_settings),
                     contentDescription = "Settings",
-                    tint = Color.White
+                    tint = MaterialTheme.colorScheme.onPrimary
                 )
             }
         }
@@ -131,7 +132,7 @@ fun ProfileHeader(
                     text = firstName,
                     fontSize = 23.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSecondary,
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(2.dp))

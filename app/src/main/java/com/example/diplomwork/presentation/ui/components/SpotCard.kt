@@ -23,6 +23,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -99,7 +100,7 @@ fun SpotsCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .graphicsLayer { clip = true }
-                .background(BgElevated)
+                .background(MaterialTheme.colorScheme.surface)
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth()
@@ -141,7 +142,7 @@ fun SpotsCard(
                                 text = username,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onPrimary,
                                 textAlign = TextAlign.Center
                             )
                         }
@@ -156,7 +157,7 @@ fun SpotsCard(
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_menu_dots_vertical),
                                 contentDescription = "Menu",
-                                tint = Color.White
+                                tint = MaterialTheme.colorScheme.onPrimary
                             )
                         }
                     }
@@ -314,7 +315,8 @@ fun PlaceInfo(
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
+            color = MaterialTheme.colorScheme.onPrimary
         )
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -338,7 +340,8 @@ fun PlaceInfo(
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
             maxLines = 4,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
+            color = MaterialTheme.colorScheme.onPrimary
         )
     }
 }

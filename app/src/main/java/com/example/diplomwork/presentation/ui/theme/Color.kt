@@ -42,3 +42,33 @@ val DividerDark = Color(0x22FFFFFF)  // Разделители на тёмном
 val SuccessColor = Color(0xFF2ECC71)  // Зеленый цвет для успеха
 val WarningColor = Color(0xFFF39C12)  // Оранжевый для предупреждений
 val ErrorColor = Color(0xFFFF2E2A)  // Красный для ошибок
+
+
+// Фоновые цвета (светлая тема)
+val LightBgDefault = Color(0xFFFFFFFF)        // Основной фон
+val LightBgProfile = Color(0xFFF3F3F3)         // Фон профиля
+val LightBgElevated = Color(0xFFF8F8F8)        // Поверхности, карточки
+val LightBgOverlay = Color(0x99000000)         // Оверлеи (чёрный с прозрачностью)
+
+// Текстовые цвета (светлая тема)
+val LightTextPrimary = Color(0xFF222222)       // Основной текст
+val LightTextSecondary = Color(0xFF555555)     // Второстепенный текст
+val LightTextDisabled = Color(0xFF999999)      // Отключённый текст
+
+// Кнопки и акценты (светлая тема)
+val LightButtonPrimary = Color(0xFFD5523B)          // Основная кнопка (не меняется)
+val LightButtonSecondary = Color(0xFFE0E0E0)   // Второстепенная кнопка
+val LightButtonDestructive = Color(0xFFE74C3C) // Красная кнопка (опасные действия)
+
+// Иконки (светлая тема)
+val LightIconPrimary = Color(0xFF333333)       // Основные иконки
+val LightIconSecondary = Color(0xFF777777)     // Второстепенные иконки
+
+// Бордеры и разделители (светлая тема)
+val LightBorderLight = Color(0x33000000)       // Светлый бордер
+val LightDividerDark = Color(0x11000000)       // Разделитель на светлом фоне
+
+// Цвета для статусов (общие)
+val LightSuccessColor = Color(0xFF27AE60)      // Успешное действие
+val LightWarningColor = Color(0xFFF39C12)      // Предупреждение
+val LightErrorColor = Color(0xFFFF2E2A)         // Ошибка

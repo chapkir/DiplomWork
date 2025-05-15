@@ -2,6 +2,7 @@ package com.example.diplomwork.presentation.ui.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -100,7 +101,7 @@ fun AppNavigation(navController: NavHostController) {
                 Spots::class.simpleName -> Color.Black
                 CreateSpotScreenData::class.simpleName -> Color.Black
                 GalleryScreenData::class.simpleName -> Color.Black
-                else -> BgDefault
+                else -> MaterialTheme.colorScheme.background
             },
     ) { paddingValues ->
         NavHost(

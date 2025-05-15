@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -88,7 +89,9 @@ fun CustomTabPager(
                     ) {
                         Text(
                             text = title,
-                            color = if (pagerState.currentPage == index) Color.White else Color.Gray,
+                            color =
+                                if (pagerState.currentPage == index) MaterialTheme.colorScheme.onPrimary
+                                else MaterialTheme.colorScheme.onSecondary,
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
                         )
@@ -111,7 +114,7 @@ fun CustomTabPager(
                         }
                         .width(60.dp) // Ширина полоски
                         .height(3.dp)
-                        .background(Color.White, RoundedCornerShape(1.dp)),
+                        .background(MaterialTheme.colorScheme.onPrimary, RoundedCornerShape(1.dp)),
                 )
             }
         }

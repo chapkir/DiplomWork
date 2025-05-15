@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            DiplomWorkTheme {
+            DiplomWorkTheme(dynamicColor = false) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     val navController = rememberNavController()
                     AppNavigation(navController = navController)
