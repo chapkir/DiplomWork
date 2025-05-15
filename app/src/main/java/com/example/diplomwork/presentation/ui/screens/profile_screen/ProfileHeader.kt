@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -27,8 +28,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.diplomwork.R
+import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.presentation.ui.screens.profile_screen.profile_components.Avatar
 import com.example.diplomwork.presentation.ui.screens.profile_screen.profile_components.StatCard
+import com.example.diplomwork.presentation.viewmodel.FollowState
 
 @Composable
 fun ProfileHeader(
@@ -42,6 +45,7 @@ fun ProfileHeader(
     isUploading: Boolean = false,
     onAvatarClick: () -> Unit,
     onSettingsClick: () -> Unit,
+    followState: FollowState,
     onSubscribe: (Long) -> Unit,
     onUnsubscribe: (Long) -> Unit,
     onBack: () -> Unit,
@@ -193,23 +197,70 @@ fun ProfileHeader(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Button(
-                    modifier = Modifier.fillMaxWidth(0.5f),
-                    onClick = { onSubscribe(userId) },
-                    colors = ButtonColors(
-                        containerColor = Color.Red.copy(alpha = 0.9f),
-                        contentColor = Color.White,
-                        disabledContainerColor = Color.Gray,
-                        disabledContentColor = Color.White
-                    )
-                ) {
+            when (followState) {
+                is FollowState.Loading -> {
+                    Button(
+                        modifier = Modifier.fillMaxWidth(0.5f),
+                        onClick = { onSubscribe(userId) },
+                        colors = ButtonColors(
+                            containerColor = Color.Gray,
+                            contentColor = Color.White,
+                            disabledContainerColor = Color.Gray,
+                            disabledContentColor = Color.White
+                        )
+                    ) {
+                        LoadingSpinnerForElement()
+                    }
+                }
+                is FollowState.Success -> {
+                    val isSubscribed = followState.isSubscribed
+
+                    Button(
+                        modifier = Modifier.fillMaxWidth(0.5f),
+                        onClick = { onSubscribe(userId) },
+                        colors = ButtonColors(
+                            containerColor = Color.Red.copy(alpha = 0.9f),
+                            contentColor = Color.White,
+                            disabledContainerColor = Color.Gray,
+                            disabledContentColor = Color.White
+                        )
+                    ) {
+                        Text(
+                            text = if (isSubscribed) "Отписаться" else "Подписаться",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
+
+                is FollowState.Error -> {
                     Text(
-                        text = "Подписаться",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        textAlign = TextAlign.Center,
+                        text = "Ошибка, попробуйте позже",
+                        color = Color.Red
                     )
                 }
+
+                FollowState.Idle -> {
+                    Button(
+                        modifier = Modifier.fillMaxWidth(0.5f),
+                        onClick = { onSubscribe(userId) },
+                        colors = ButtonColors(
+                            containerColor = Color.Red.copy(alpha = 0.9f),
+                            contentColor = Color.White,
+                            disabledContainerColor = Color.Gray,
+                            disabledContentColor = Color.White
+                        )
+                    ) {
+                        Text(
+                            text = "Подписаться",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
+            }
             }
             Spacer(modifier = Modifier.height(9.dp))
         }

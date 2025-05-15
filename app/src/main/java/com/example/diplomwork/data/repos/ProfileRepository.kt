@@ -41,8 +41,12 @@ class ProfileRepository @Inject constructor(
         return apiService.editProfile(editProfileRequest)
     }
 
-    fun getCurrentUsername(): String {
+    fun getOwnUsername(): String {
         return sessionManager.username ?: ""
+    }
+
+    fun getOwnUserId(): Long {
+        return sessionManager.userId ?: 0L
     }
 
     fun isLoggedIn(): Boolean {

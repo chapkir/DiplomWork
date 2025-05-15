@@ -46,11 +46,13 @@ class SessionManager @Inject constructor(@ApplicationContext context: Context) {
             prefs.edit() { putString(KEY_SERVER_URL, value) }
         }
 
-    var userId: String?
-        get() = prefs.getString(KEY_USERID, null)
+    var userId: Long?
+        get() = prefs.getString(KEY_USERID, null)?.toLongOrNull()
         set(value) {
-            prefs.edit() { putString(KEY_USERID, value) }
-            Log.d(TAG, "Сохранен userID - $userId")
+            prefs.edit {
+                putString(KEY_USERID, value?.toString())
+            }
+            Log.d(TAG, "Сохранен userID - $value")
         }
 
     var username: String?
@@ -142,7 +144,7 @@ class SessionManager @Inject constructor(@ApplicationContext context: Context) {
 }
 
 data class JwtClaims(
-    val sub: String? = null,
+    val sub: Long? = null,
     val exp: Long? = null,
     val iat: Long? = null,
     val username: String? = null

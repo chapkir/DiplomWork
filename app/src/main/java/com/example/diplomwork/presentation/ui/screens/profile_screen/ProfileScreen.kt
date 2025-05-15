@@ -61,6 +61,7 @@ fun ProfileScreen(
     val context = LocalContext.current
     val profileData by profileViewModel.profileData.collectAsState()
     val spotLocation by profileViewModel.spotLocations.collectAsState()
+    val followState by profileViewModel.followState.collectAsState()
     val profilePictures by profileViewModel.profilePictures.collectAsState()
     val profilePosts by profileViewModel.profilePosts.collectAsState()
     val likedPictures by profileViewModel.likedPictures.collectAsState()
@@ -147,8 +148,9 @@ fun ProfileScreen(
                         isUploading = isUploading,
                         onAvatarClick = { pickImageLauncher.launch("image/*") },
                         onSettingsClick = onSettingsClick,
-                        onSubscribe = { profileViewModel.subscribe(1, 1) },
-                        onUnsubscribe = {},
+                        followState = followState,
+                        onSubscribe = { userId -> profileViewModel.subscribe(userId) },
+                        onUnsubscribe = { userId -> profileViewModel.unsubscribe(userId) },
                         onBack = onBack,
                         avatarUpdateKey = avatarUpdateCounter,
                         isOwnProfile = isOwnProfile,

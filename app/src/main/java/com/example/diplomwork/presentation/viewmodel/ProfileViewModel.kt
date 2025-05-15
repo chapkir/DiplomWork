@@ -17,6 +17,7 @@ import com.example.diplomwork.util.ImageUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -33,7 +34,8 @@ class ProfileViewModel @Inject constructor(
 
     private val _userId: Long? = savedStateHandle["userId"]
     private val _username: String = savedStateHandle["username"] ?: ""
-    private val currentUsername = profileRepository.getCurrentUsername()
+    private val ownUsername = profileRepository.getOwnUsername()
+    private val ownUserId = profileRepository.getOwnUserId()
 
     private val _profileData = MutableStateFlow<ProfileResponse?>(null)
     val profileData: StateFlow<ProfileResponse?> = _profileData
@@ -46,6 +48,9 @@ class ProfileViewModel @Inject constructor(
 
     private val _profilePosts = MutableStateFlow<List<PostResponse>>(emptyList())
     val profilePosts: StateFlow<List<PostResponse>> = _profilePosts
+
+    private val _followState = MutableStateFlow<FollowState>(FollowState.Idle)
+    val followState: StateFlow<FollowState> = _followState.asStateFlow()
 
     private val _likedPictures = MutableStateFlow<List<PictureResponse>>(emptyList())
     val likedPictures: StateFlow<List<PictureResponse>> = _likedPictures
@@ -76,7 +81,7 @@ class ProfileViewModel @Inject constructor(
 
 
     init {
-        if (_username == currentUsername) loadProfile()
+        if (_username == ownUsername) loadProfile()
         else loadProfile(userId = _userId)
     }
 
@@ -217,15 +222,45 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun subscribe(followerId: Long, followingId: Long) {
+    fun subscribe(followingId: Long) {
+        if (ownUserId == 0L) {
+            _followState.value = FollowState.Error("ID текущего пользователя не найден")
+            return
+        }
+
         viewModelScope.launch {
-            val subscribe = followRepository.subscribe(followerId, followingId)
+            _followState.value = FollowState.Loading
+            try {
+                val response = followRepository.subscribe(ownUserId, followingId)
+                if (response.isSuccessful) {
+                    _followState.value = FollowState.Success(isSubscribed = true)
+                } else {
+                    _followState.value = FollowState.Error("Ошибка подписки: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                _followState.value = FollowState.Error("Ошибка сети: ${e.localizedMessage}")
+            }
         }
     }
 
-    fun unsubscribe(followerId: Long, followingId: Long) {
+    fun unsubscribe(followingId: Long) {
+        if (ownUserId == 0L) {
+            _followState.value = FollowState.Error("ID текущего пользователя не найден")
+            return
+        }
+
         viewModelScope.launch {
-            val unsubscribe = followRepository.unsubscribe(followerId, followingId)
+            _followState.value = FollowState.Loading
+            try {
+                val response = followRepository.unsubscribe(ownUserId, followingId)
+                if (response.isSuccessful) {
+                    _followState.value = FollowState.Success(isSubscribed = false)
+                } else {
+                    _followState.value = FollowState.Error("Ошибка отписки: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                _followState.value = FollowState.Error("Ошибка сети: ${e.localizedMessage}")
+            }
         }
     }
 
@@ -243,4 +278,11 @@ class ProfileViewModel @Inject constructor(
         _likedPictures.value = emptyList()
         loadLikedPictures()
     }
+}
+
+sealed class FollowState {
+    object Idle : FollowState()
+    object Loading : FollowState()
+    data class Success(val isSubscribed: Boolean) : FollowState()
+    data class Error(val message: String) : FollowState()
 }

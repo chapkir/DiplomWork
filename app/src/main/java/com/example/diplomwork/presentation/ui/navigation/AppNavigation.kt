@@ -223,46 +223,6 @@ fun AppNavigation(navController: NavHostController) {
 
             settingsNavGraph(navController)
 
-//            composable<Settings> {
-//                SettingsScreen(
-//                    onBack = { navController.popBackStack() },
-//                    onEditProfileClick = {
-//                        navController.navigate(EditProfile) {
-//                            popUpTo(EditProfile)
-//                        }
-//                    },
-//                    onAccountManagementClick = {
-//                        navController.navigate(ManagementAccount) {
-//                            popUpTo(ManagementAccount) { inclusive = false }
-//                        }
-//                    },
-//                    onPrivacyClick = { showFunInDevSnackbar() }, // TODO
-//                    onLogoutClick = {
-//                        navController.navigate(Login) {
-//                            popUpTo(Login) { inclusive = true }
-//                        }
-//                    },
-//                    onHelpCenterClick = { showFunInDevSnackbar() }, // TODO
-//                    onLicensesClick = {
-//                        navController.navigate(Licenses) {
-//                            popUpTo(Licenses) { inclusive = false }
-//                        }
-//                    }
-//                )
-//            }
-//
-//            composable<Licenses> {
-//                LicensesScreen(
-//                    onBack = { navController.popBackStack() },
-//                )
-//            }
-//
-//            composable<ManagementAccount> {
-//                ManagementAccount(
-//                    onBack = { navController.popBackStack() },
-//                )
-//            }
-
             composable<Register> {
                 RegisterScreen(
                     onCompleteRegistration = {
