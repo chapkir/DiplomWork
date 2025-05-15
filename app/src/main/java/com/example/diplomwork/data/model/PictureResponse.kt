@@ -3,7 +3,6 @@ package com.example.diplomwork.data.model
 data class PictureResponse(
 
     val id: Long,
-    val imageUrl: String,
 
     val description: String,
     val title: String,
@@ -18,11 +17,8 @@ data class PictureResponse(
     val userProfileImageUrl: String?,
     val isLikedByCurrentUser: Boolean = false,
 
-    val imageWidth: Float?,
-    val imageHeight: Float?,
     val aspectRatio: Float?,
 
-    val fullhdImageUrl: String,
     val thumbnailImageUrl: String,
 )
 

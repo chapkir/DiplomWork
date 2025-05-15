@@ -7,16 +7,21 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -34,9 +39,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.diplomwork.R
 import com.example.diplomwork.data.model.LocationResponse
 import com.example.diplomwork.data.model.PictureResponse
 import com.example.diplomwork.data.model.PostResponse
@@ -45,7 +53,6 @@ import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForElemen
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.presentation.ui.components.PictureCard
 import com.example.diplomwork.presentation.ui.components.SpotsCard
-import com.example.diplomwork.presentation.ui.theme.BgDefault
 import com.example.diplomwork.presentation.viewmodel.ProfileViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.rememberPagerState
@@ -56,7 +63,6 @@ fun ProfileScreen(
     onSettingsClick: () -> Unit,
     onBack: () -> Unit,
     onImageClick: (Long) -> Unit,
-    onMapOpen: () -> Unit = {},
     profileViewModel: ProfileViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -135,6 +141,56 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
         ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 14.dp, start = 7.dp, end = 7.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                if (isOwnProfile) {
+                    IconButton(
+                        onClick = { },
+                        modifier = Modifier
+                            .padding(start = 15.dp)
+                            .size(23.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_stats),
+                            contentDescription = "Stats",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                } else {
+                    IconButton(
+                        onClick = { onBack() },
+                        modifier = Modifier
+                            .padding(start = 10.dp)
+                            .size(35.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_arrow_left),
+                            contentDescription = "OnBack",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                }
+                IconButton(
+                    onClick = {
+                        if (isOwnProfile) onSettingsClick()
+                        else return@IconButton
+                    },
+                    modifier = Modifier
+                        .padding(end = 15.dp)
+                        .size(23.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_settings),
+                        contentDescription = "Settings",
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+            }
             when {
                 isLoading -> LoadingSpinnerForScreen()
                 error != null -> ErrorScreen(error) { profileViewModel.loadLikedPictures() }
@@ -149,14 +205,11 @@ fun ProfileScreen(
                         avatarUrl = profileData?.profileImageUrl,
                         isUploading = isUploading,
                         onAvatarClick = { pickImageLauncher.launch("image/*") },
-                        onSettingsClick = onSettingsClick,
                         followState = followState,
                         onSubscribe = { userId -> profileViewModel.subscribe(userId) },
                         onUnsubscribe = { userId -> profileViewModel.unsubscribe(userId) },
-                        onBack = onBack,
                         avatarUpdateKey = avatarUpdateCounter,
                         isOwnProfile = isOwnProfile,
-                        onMapOpen = onMapOpen
                     )
 
                     CustomTabPager(
@@ -168,17 +221,20 @@ fun ProfileScreen(
                         when (page) {
                             //0 -> PostsGrid(profilePosts, isLoadingPosts)
                             0 -> PicturesGrid(
-                                profilePictures,
-                                spotLocation,
-                                onImageClick,
-                                isLoadingPictures
+                                spots = profilePictures,
+                                spotLocation = spotLocation,
+                                onPictureClick = onImageClick,
+                                isLoading = isLoadingPictures,
+                                emptyMessage = "Нет добавленных мест"
                             )
 
                             1 -> PicturesGrid(
-                                likedPictures,
-                                spotLocation,
-                                onImageClick,
-                                isLoadingLiked
+                                spots = likedPictures,
+                                spotLocation = spotLocation,
+                                onPictureClick = onImageClick,
+                                isLoading = isLoadingLiked,
+                                emptyMessage = "Нет лайкнутых мест"
+
                             )
                         }
                     }
@@ -211,35 +267,50 @@ private fun PicturesGrid(
     spots: List<PictureResponse>,
     spotLocation: Map<Long, LocationResponse>,
     onPictureClick: (Long) -> Unit,
-    isLoading: Boolean
+    isLoading: Boolean,
+    emptyMessage: String
 ) {
-    LazyColumn(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = 5.dp)
-            .background(MaterialTheme.colorScheme.background),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+            .background(MaterialTheme.colorScheme.background)
     ) {
-        items(spots.size) { index ->
-            spots[index].let { spot ->
-                val location = spotLocation[spot.id]
-
-                SpotsCard(
-                    imageUrl = spot.fullhdImageUrl,
-                    username = spot.username,
-                    title = spot.title,
-                    description = spot.description,
-                    userId = spot.userId,
-                    latitude = location?.latitude ?: 0.0,
-                    longitude = location?.longitude ?: 0.0,
-                    rating = spot.rating,
-                    aspectRatio = spot.aspectRatio ?: 1f,
-                    userProfileImageUrl = spot.userProfileImageUrl,
-                    id = spot.id,
-                    isCurrentUserOwner = spot.isCurrentUserOwner,
-                    onSpotClick = { onPictureClick(spot.id) },
-                    screenName = "Profile"
-                )
+        if (spots.isEmpty() && !isLoading) {
+            Text(
+                text = emptyMessage,
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.align(Alignment.Center)
+            )
+        } else {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 5.dp)
+            ) {
+                items(spots.size) { index ->
+                    spots[index].let { spot ->
+                        val location = spotLocation[spot.id]
+                        SpotsCard(
+                            imageUrl = spot.thumbnailImageUrl,
+                            username = spot.username,
+                            title = spot.title,
+                            description = spot.description,
+                            userId = spot.userId,
+                            latitude = location?.latitude ?: 0.0,
+                            longitude = location?.longitude ?: 0.0,
+                            rating = spot.rating,
+                            aspectRatio = spot.aspectRatio ?: 1f,
+                            userProfileImageUrl = spot.userProfileImageUrl,
+                            id = spot.id,
+                            isCurrentUserOwner = spot.isCurrentUserOwner,
+                            onSpotClick = { onPictureClick(spot.id) },
+                            screenName = "Profile"
+                        )
+                    }
+                }
             }
         }
     }

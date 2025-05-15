@@ -45,72 +45,20 @@ fun ProfileHeader(
     avatarUrl: String?,
     isUploading: Boolean = false,
     onAvatarClick: () -> Unit,
-    onSettingsClick: () -> Unit,
     followState: FollowState,
     onSubscribe: (Long) -> Unit,
     onUnsubscribe: (Long) -> Unit,
-    onBack: () -> Unit,
     avatarUpdateKey: Int,
     isOwnProfile: Boolean = false,
-    onMapOpen: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(7.dp),
+            .padding(start = 7.dp, end = 7.dp, bottom = 7.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Топ бар
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 7.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            if (isOwnProfile) {
-                IconButton(
-                    onClick = { onMapOpen() },
-                    modifier = Modifier
-                        .padding(start = 15.dp)
-                        .size(23.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_stats),
-                        contentDescription = "Stats",
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-            } else {
-                IconButton(
-                    onClick = { onBack() },
-                    modifier = Modifier
-                        .padding(start = 10.dp)
-                        .size(35.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_arrow_left),
-                        contentDescription = "OnBack",
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-            }
-            IconButton(
-                onClick = {
-                    if (isOwnProfile) onSettingsClick()
-                    else return@IconButton
-                },
-                modifier = Modifier
-                    .padding(end = 15.dp)
-                    .size(23.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_settings),
-                    contentDescription = "Settings",
-                    tint = MaterialTheme.colorScheme.onPrimary
-                )
-            }
-        }
+
         Spacer(modifier = Modifier.height(21.dp))
         // Аватарка, юзернейм
         Row(

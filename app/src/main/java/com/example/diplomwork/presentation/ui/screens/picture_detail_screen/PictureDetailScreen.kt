@@ -86,7 +86,7 @@ fun PictureDetailScreen(
         } else {
             item {
                 ImageView(
-                    imageRes = uiState.picture?.fullhdImageUrl ?: "",
+                    imageRes = uiState.picture?.thumbnailImageUrl ?: "",
                     aspectRatio = uiState.aspectRatio
                 )
             }

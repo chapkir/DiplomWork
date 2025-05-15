@@ -107,7 +107,7 @@ fun AppNavigation(navController: NavHostController) {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = if (sessionManager.isLoggedIn()) Spots else Login,
+            startDestination = if (sessionManager.isLoggedIn()) OwnProfile else Login,
             modifier = Modifier.padding(paddingValues)
         ) {
             composable<Pictures> {
@@ -156,9 +156,6 @@ fun AppNavigation(navController: NavHostController) {
                     onBack = { navController.popBackStack() },
                     onImageClick = { pictureId ->
                         navController.navigate(PictureDetailScreenData(pictureId))
-                    },
-                    onMapOpen = {
-                        navController.navigate(Map)
                     }
                 )
             }

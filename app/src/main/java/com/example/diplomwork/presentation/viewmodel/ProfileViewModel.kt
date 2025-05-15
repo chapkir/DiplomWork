@@ -78,7 +78,7 @@ class ProfileViewModel @Inject constructor(
     private val _avatarUpdateCounter = MutableStateFlow(0)
     val avatarUpdateCounter: StateFlow<Int> = _avatarUpdateCounter
 
-    private val _isOwnProfile = MutableStateFlow(false)
+    private val _isOwnProfile = MutableStateFlow(true)
     val isOwnProfile: StateFlow<Boolean> = _isOwnProfile
 
     private val _isSubscribed = MutableStateFlow(false)
@@ -102,9 +102,7 @@ class ProfileViewModel @Inject constructor(
                     _followersCount.value = profile.followersCount
                     checkIfSubscribed(_userId)
                 }
-                Log.d("ProfileViewModel", "Загружен профиль: ${_profileData.value?.username}")
             } catch (e: Exception) {
-                Log.e("ProfileViewModel", "Ошибка при загрузке профиля: ${e.message}")
                 _error.value = "Ошибка при загрузке профиля"
             } finally {
                 _isLoading.value = false
@@ -135,15 +133,14 @@ class ProfileViewModel @Inject constructor(
                         val location = locationRepository.getSpotLocation(id)
                         locations[id] = location
                     } catch (e: Exception) {
-                        Log.e("ProfileViewModel", "Ошибка при загрузке локации для id=$id: ${e.message}")
+                        _error.value = "Ошибка при загрузке мест"
                     }
                 }
 
                 _spotLocations.value = locations
 
             } catch (e: Exception) {
-                Log.e("ProfileViewModel", "Ошибка при загрузке картинок профиля: ${e.message}")
-                _error.value = "Ошибка при загрузке картинок пользователя"
+                _error.value = "Ошибка при загрузке мест"
             } finally {
                 _isLoadingPictures.value = false
             }
@@ -157,8 +154,7 @@ class ProfileViewModel @Inject constructor(
             try {
                 _profilePosts.value = profileRepository.getOwnProfilePosts()
             } catch (e: Exception) {
-                Log.e("ProfileViewModel", "Ошибка при загрузке картинок профиля: ${e.message}")
-                _error.value = "Ошибка при загрузке картинок пользователя"
+                _error.value = "Ошибка при загрузке постов пользователя"
             } finally {
                 _isLoadingPosts.value = false
             }
@@ -180,11 +176,10 @@ class ProfileViewModel @Inject constructor(
                     _likedPictures.value = result.getOrNull() ?: emptyList()
 
                 } else {
-                    _error.value = "Ошибка при загрузке лайкнутых пинов"
+                    _error.value = "Ошибка при загрузке лайкнутых мест"
                 }
             } catch (e: Exception) {
-                Log.e("ProfileViewModel", "Ошибка при загрузке лайкнутых пинов: ${e.message}")
-                _error.value = "Ошибка при загрузке лайкнутых пинов"
+                _error.value = "Ошибка при загрузке лайкнутых мест"
             } finally {
                 _isLoadingLiked.value = false
             }

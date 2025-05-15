@@ -106,7 +106,7 @@ fun SpotsScreen(
                             }
 
                             SpotsCard(
-                                imageUrl = spot.fullhdImageUrl,
+                                imageUrl = spot.thumbnailImageUrl,
                                 username = spot.username,
                                 title = spot.title,
                                 description = spot.description,

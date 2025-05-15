@@ -273,7 +273,7 @@ fun PagingContentGrid(
                         items(pictures.itemCount) { index ->
                             pictures[index]?.let { picture ->
                                 PictureCard(
-                                    imageUrl = picture.fullhdImageUrl,
+                                    imageUrl = picture.thumbnailImageUrl,
                                     username = picture.username,
                                     userId = picture.userId,
                                     aspectRatio = picture.aspectRatio ?: 1f,
