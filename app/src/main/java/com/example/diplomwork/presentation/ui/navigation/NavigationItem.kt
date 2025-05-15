@@ -59,9 +59,13 @@ data class PictureDetailScreenData(
 ) : Screen
 
 @Serializable
+data class SpotDetailScreenData(
+    val pictureId: Long
+) : Screen
+
+@Serializable
 data class GalleryScreenData(
     val spotName: String? = null,
-    val spotAddress: String? = null,
     val latitude: Double? = null,
     val longitude: Double? = null
 ) : Screen
@@ -69,7 +73,6 @@ data class GalleryScreenData(
 @Serializable
 data class CreateSpotScreenData(
     val spotName: String? = null,
-    val spotAddress: String? = null,
     val latitude: Double? = null,
     val longitude: Double? = null,
     val imageUrls: List<String> = emptyList(),

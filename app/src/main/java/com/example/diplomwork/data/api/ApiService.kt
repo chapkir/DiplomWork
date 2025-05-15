@@ -37,6 +37,9 @@ interface ApiService {
     @GET("api/pins/all")
     suspend fun getPictures(): List<PictureResponse>
 
+    @GET("api/spot/pictures")
+    suspend fun getSpotPictures(): List<PictureResponse>
+
     @GET("api/posts")
     suspend fun getPosts(): List<PostResponse>
 

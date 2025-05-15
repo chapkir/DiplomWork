@@ -31,7 +31,6 @@ class CreateSpotViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _spotName: String = savedStateHandle.get<String>("spotName") ?: ""
-    private val _spotAddress: String = savedStateHandle.get<String>("spotAddress") ?: ""
     private val _latitude: Double = savedStateHandle.get<Double>("latitude") ?: 0.0
     private val _longitude: Double = savedStateHandle.get<Double>("longitude") ?: 0.0
 
@@ -39,14 +38,13 @@ class CreateSpotViewModel @Inject constructor(
         val title: String = "",
         val description: String = "",
         val geo: String = "",
-        val address: String = "",
+        val spotName: String = "",
         val rating: String = "1"
     )
 
     private val _createSpotData = MutableStateFlow(CreateSpotData(
-        title = _spotName,
         geo = "$_latitude, $_longitude",
-        address = _spotAddress
+        spotName = _spotName
     ))
     val createSpotData: StateFlow<CreateSpotData> = _createSpotData
 
@@ -99,7 +97,7 @@ class CreateSpotViewModel @Inject constructor(
                         pictureId = pictureId,
                         latitude = _latitude,
                         longitude = _longitude,
-                        address = _spotAddress
+                        placeName = _spotName
                     )
 
                     val locationResponse = locationRepository.addLocation(locationRequest)

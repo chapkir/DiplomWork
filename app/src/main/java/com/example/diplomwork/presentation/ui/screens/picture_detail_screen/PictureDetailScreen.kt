@@ -29,13 +29,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowInsetsCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
 import com.example.diplomwork.presentation.system_settings.systemInsetHeight
+import com.example.diplomwork.presentation.ui.components.GeoText
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
+import com.example.diplomwork.presentation.ui.components.RatingBar
 import com.example.diplomwork.presentation.ui.components.bottom_sheets.CommentItem
 import com.example.diplomwork.presentation.ui.components.bottom_sheets.CommentsBottomSheet
 import com.example.diplomwork.presentation.ui.components.bottom_sheets.ConfirmDeleteBottomSheet
@@ -194,6 +198,5 @@ fun PictureDetailScreen(
             onDelete = { viewModel.deletePicture() },
             sheetState = confirmDeleteSheetState,
         )
-
     }
 }

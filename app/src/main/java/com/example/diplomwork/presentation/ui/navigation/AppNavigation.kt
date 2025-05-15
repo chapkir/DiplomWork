@@ -41,6 +41,7 @@ import com.example.diplomwork.presentation.ui.screens.settings_screens.EditProfi
 import com.example.diplomwork.presentation.ui.screens.settings_screens.LicensesScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.ManagementAccount
 import com.example.diplomwork.presentation.ui.screens.settings_screens.SettingsScreen
+import com.example.diplomwork.presentation.ui.screens.spot_detail_screen.SpotDetailScreen
 import com.example.diplomwork.presentation.ui.screens.spots_screen.SpotsScreen
 import com.example.diplomwork.presentation.ui.theme.BgDefault
 import com.example.diplomwork.presentation.viewmodel.SettingsViewModel
@@ -172,8 +173,8 @@ fun AppNavigation(navController: NavHostController) {
                 )
             }
 
-            composable<PictureDetailScreenData> {
-                PictureDetailScreen(
+            composable<SpotDetailScreenData> {
+                SpotDetailScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onProfileClick = { userId, username ->
                         navController.navigate(
@@ -186,7 +187,7 @@ fun AppNavigation(navController: NavHostController) {
             composable<Spots> {
                 SpotsScreen(
                     onImageClick = { pictureId ->
-                        navController.navigate(PictureDetailScreenData(pictureId))
+                        navController.navigate(SpotDetailScreenData(pictureId))
                     },
                     onProfileClick = { userId, username ->
                         navController.navigate(
@@ -240,7 +241,6 @@ fun AppNavigation(navController: NavHostController) {
                     onLocationSelected = { spotName, spotAddress, latitude, longitude ->
                         val data = GalleryScreenData(
                             spotName = spotName,
-                            spotAddress = spotAddress,
                             latitude = latitude,
                             longitude = longitude
                         )
@@ -257,7 +257,6 @@ fun AppNavigation(navController: NavHostController) {
                     onImageSelected = { selectedImages ->
                         val createSpotData = CreateSpotScreenData(
                             spotName = galleryData.spotName,
-                            spotAddress = galleryData.spotAddress,
                             latitude = galleryData.latitude,
                             longitude = galleryData.longitude,
                             imageUrls = selectedImages

@@ -1,6 +1,5 @@
 package com.example.diplomwork.presentation.ui.screens.create_content_screens
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,7 +34,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -207,13 +205,15 @@ fun CreateSpotScreen(
             AddContentTextField(
                 label = "Координаты",
                 value = createSpotData.geo,
-                onValueChange = { viewModel.updateCreateContentData { copy(geo = it) } }
+                onValueChange = { viewModel.updateCreateContentData { copy(geo = it) } },
+                readOnly = true
             )
 
             AddContentTextField(
-                label = "Адрес (необязательно)",
-                value = createSpotData.address,
-                onValueChange = { viewModel.updateCreateContentData { copy(address = it) } }
+                label = "Название места",
+                value = createSpotData.spotName,
+                onValueChange = { viewModel.updateCreateContentData { copy(spotName = it) } },
+                readOnly = true
             )
 
             AddContentTextField(
@@ -277,7 +277,6 @@ private fun AddContentTextField(
     isError: Boolean = false,
     readOnly: Boolean = false,
 ) {
-    val coroutineScope = rememberCoroutineScope()
 
     OutlinedTextField(
         value = value,

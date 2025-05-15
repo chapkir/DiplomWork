@@ -1,5 +1,8 @@
 package com.example.diplomwork.presentation.ui.components
 
+import android.content.Intent
+import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -41,6 +44,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -58,6 +62,9 @@ import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.launch
+import androidx.core.net.toUri
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -179,7 +186,9 @@ fun SpotsCard(
                         rating = rating.toInt(),
                         title = title,
                         description = description,
-                        geo = "$latitude, $longitude",
+                        geo = "$latitude,$longitude",
+                        latitude = latitude,
+                        longitude = longitude,
                         modifier = Modifier
                             .fillMaxHeight()
                             .padding(start = 15.dp, end = 10.dp)
@@ -300,11 +309,13 @@ fun ImagesPager(
 }
 
 @Composable
-fun PlaceInfo(
+private fun PlaceInfo(
     rating: Int,
     title: String,
     description: String,
     geo: String,
+    latitude: Double,
+    longitude: Double,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -325,12 +336,7 @@ fun PlaceInfo(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Геотег
-        Text(
-            text = geo,
-            fontSize = 12.sp,
-            color = Color.Gray
-        )
+        GeoText(latitude, longitude)
 
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -359,4 +365,40 @@ fun RatingBar(rating: Int) {
             )
         }
     }
+}
+
+@Composable
+fun GeoText(latitude: Double, longitude: Double, placeName: String? = "Елагин парк") {
+    val context = LocalContext.current
+    val geo = "$latitude,$longitude"
+
+    Text(
+        text = if (placeName.isNullOrBlank()) geo else "$placeName ($geo)",
+        fontSize = 12.sp,
+        color = Color.Gray,
+        textDecoration = TextDecoration.Underline,
+        modifier = Modifier.clickable {
+            try {
+                val encodedPlaceName = placeName?.replace(" ", "+") ?: ""
+
+                val mapUri = if (encodedPlaceName.isNotBlank()) {
+                    "https://yandex.ru/maps/?pt=$longitude,$latitude,pm2blm&z=16&l=map&text=$encodedPlaceName"
+                } else {
+                    "https://yandex.ru/maps/?pt=$longitude,$latitude,pm2blm&z=16&l=map"
+                }
+
+                val intent = Intent(Intent.ACTION_VIEW, mapUri.toUri())
+
+                val chooser = Intent.createChooser(intent, "Выберите приложение для открытия карты")
+
+                if (intent.resolveActivity(context.packageManager) != null) {
+                    context.startActivity(chooser)
+                } else {
+                    Log.d("GeoText", "No app found to handle URI")
+                }
+            } catch (e: Exception) {
+                Log.e("GeoText", "Error creating intent: ${e.message}")
+            }
+        }
+    )
 }

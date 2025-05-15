@@ -4,7 +4,7 @@ data class LocationRequest (
     val pictureId: Long,
     val latitude: Double,
     val longitude: Double,
-    val address: String
+    val placeName: String
 )
 
 data class LocationResponse (
@@ -13,6 +13,6 @@ data class LocationResponse (
     val latitude: Double,
     val longitude: Double,
     val address: String,
-    val nameplace: String,
+    val placeName: String,
     val createdAt: String
 )
