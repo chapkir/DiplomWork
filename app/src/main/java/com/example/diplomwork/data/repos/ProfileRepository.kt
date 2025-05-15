@@ -29,6 +29,10 @@ class ProfileRepository @Inject constructor(
         return apiService.getOwnProfilePictures()
     }
 
+    suspend fun getOtherProfilePictures(userId: Long): List<PictureResponse> {
+        return apiService.getOtherProfilePictures(userId)
+    }
+
     suspend fun getOwnProfilePosts(): List<PostResponse> {
         return apiService.getOwnProfilePosts()
     }
@@ -53,9 +57,18 @@ class ProfileRepository @Inject constructor(
         return sessionManager.isLoggedIn()
     }
 
-    suspend fun getLikedPictures(): Result<List<PictureResponse>> {
+    suspend fun getOwnLikedPictures(): Result<List<PictureResponse>> {
         return try {
-            val response = apiService.getLikedPictures()
+            val response = apiService.getOwnLikedPictures()
+            Result.success(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getOtherLikedPictures(userId: Long): Result<List<PictureResponse>> {
+        return try {
+            val response = apiService.getOtherLikedPictures(userId)
             Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)

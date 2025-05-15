@@ -41,10 +41,10 @@ fun ActionBar(
     commentsCount: Int,
     profileImageUrl: String?,
     username: String,
-    userId: Long?,
+    userId: Long,
     onLikeClick: () -> Unit,
     onCommentClick: () -> Unit,
-    onProfileClick: (Long?, String) -> Unit
+    onProfileClick: (Long, String) -> Unit
 ) {
     Column(
         modifier = Modifier

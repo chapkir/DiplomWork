@@ -71,6 +71,15 @@ interface ApiService {
     @GET("api/profile/pictures")
     suspend fun getOwnProfilePictures(): List<PictureResponse>
 
+    @GET("api/profile/{userId}/pictures")
+    suspend fun getOtherProfilePictures(@Path("userId") userId: Long?): List<PictureResponse>
+
+    @GET("api/profile/liked-pins")
+    suspend fun getOwnLikedPictures(): List<PictureResponse>
+
+    @GET("api/profile/likesPictures/{userId}")
+    suspend fun getOtherLikedPictures(@Path("userId") userId: Long?): List<PictureResponse>
+
     @GET("api/profile/posts")
     suspend fun getOwnProfilePosts(): List<PostResponse>
 
@@ -97,9 +106,6 @@ interface ApiService {
         @Path("pictureId") pictureId: Long,
         @Body comment: CommentRequest
     ): CommentResponse
-
-    @GET("api/profile/liked-pins")
-    suspend fun getLikedPictures(): List<PictureResponse>
 
     @Multipart
     @POST("api/pins/upload")

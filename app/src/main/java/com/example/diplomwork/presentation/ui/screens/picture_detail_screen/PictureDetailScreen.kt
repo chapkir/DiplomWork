@@ -47,7 +47,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun PictureDetailScreen(
     onNavigateBack: () -> Unit,
-    onProfileClick: (Long?, String) -> Unit,
+    onProfileClick: (Long, String) -> Unit,
     viewModel: PictureDetailScreenViewModel = hiltViewModel()
 ) {
 

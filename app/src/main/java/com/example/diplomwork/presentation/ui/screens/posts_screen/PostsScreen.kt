@@ -74,7 +74,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostsScreen(
-    onProfileClick: (Long?, String) -> Unit,
+    onProfileClick: (Long, String) -> Unit,
     onBack: () -> Unit,
     viewModel: PostsViewModel = hiltViewModel()
 ) {
@@ -186,7 +186,7 @@ fun PostCard(
     onLikeClick: () -> Unit,
     onBack: () -> Unit,
     onCommentClick: () -> Unit,
-    onProfileClick: (Long?, String) -> Unit,
+    onProfileClick: (Long, String) -> Unit,
     onDeletePost: (Long) -> Unit
 ) {
 

@@ -77,6 +77,6 @@ data class CreateSpotScreenData(
 
 @Serializable
 data class OtherProfileScreenData(
-    val userId: Long?,
+    val userId: Long,
     val username: String
 ) : Screen

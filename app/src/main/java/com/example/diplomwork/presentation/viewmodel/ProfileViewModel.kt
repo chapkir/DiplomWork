@@ -33,9 +33,7 @@ class ProfileViewModel @Inject constructor(
     private val followRepository: FollowRepository,
 ) : ViewModel() {
 
-    private val _userId: Long? = savedStateHandle["userId"]
-    private val _username: String = savedStateHandle["username"] ?: ""
-    private val ownUsername = profileRepository.getOwnUsername()
+    private val _userId: Long = savedStateHandle["userId"] ?: 0L
     private val ownUserId = profileRepository.getOwnUserId()
 
     private val _profileData = MutableStateFlow<ProfileResponse?>(null)
@@ -87,23 +85,22 @@ class ProfileViewModel @Inject constructor(
 
 
     init {
-        if (_username == ownUsername) loadProfile()
-        else loadProfile(userId = _userId)
+        loadProfile()
     }
 
-    private fun loadProfile(userId: Long? = null) {
+    private fun loadProfile() {
         _isLoading.value = true
         viewModelScope.launch {
             try {
-                if (userId != null) {
-                    val profile = profileRepository.getProfileById(userId)
+                if (_userId == ownUserId || _userId == 0L) {
+                    _profileData.value = profileRepository.getOwnProfile()
+                    _isOwnProfile.value = true
+                } else {
+                    val profile = profileRepository.getProfileById(_userId)
                     _profileData.value = profile
                     _isOwnProfile.value = false
                     _followersCount.value = profile.followersCount
-                    checkIfSubscribed(userId)
-                } else {
-                    _profileData.value = profileRepository.getOwnProfile()
-                    _isOwnProfile.value = true
+                    checkIfSubscribed(_userId)
                 }
                 Log.d("ProfileViewModel", "Загружен профиль: ${_profileData.value?.username}")
             } catch (e: Exception) {
@@ -121,7 +118,13 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoadingPictures.value = true
             try {
-                val pictures = profileRepository.getOwnProfilePictures()
+
+                val pictures = if (_userId == ownUserId || _userId == 0L) {
+                    profileRepository.getOwnProfilePictures()
+                } else {
+                    profileRepository.getOtherProfilePictures(_userId)
+                }
+
                 _profilePictures.value = pictures
 
                 val pictureIds = pictures.map { it.id }
@@ -167,14 +170,15 @@ class ProfileViewModel @Inject constructor(
         _isLoadingLiked.value = true
         viewModelScope.launch {
             try {
-                val result = profileRepository.getLikedPictures()
+                val result = if (_userId == ownUserId || _userId == 0L) {
+                    profileRepository.getOwnLikedPictures()
+                } else {
+                    profileRepository.getOtherLikedPictures(_userId)
+                }
 
                 if (result.isSuccess) {
                     _likedPictures.value = result.getOrNull() ?: emptyList()
-                    Log.d(
-                        "ProfileViewModel",
-                        "Загружено ${_likedPictures.value.size} лайкнутых пинов"
-                    )
+
                 } else {
                     _error.value = "Ошибка при загрузке лайкнутых пинов"
                 }
@@ -229,16 +233,18 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    private fun checkIfSubscribed(followingId: Long) {
+    private fun checkIfSubscribed(followingId: Long? = 0L) {
         viewModelScope.launch {
             _followState.value = FollowState.Loading
             try {
-                val response = followRepository.checkFollowing(ownUserId, followingId)
-                if (response.isSuccessful) {
-                    _isSubscribed.value = response.body() ?: false
-                    _followState.value = FollowState.Success(isSubscribed = _isSubscribed.value)
-                } else {
-                    _followState.value = FollowState.Error("Ошибка при проверке подписки: ${response.code()}")
+                val response = followingId?.let { followRepository.checkFollowing(ownUserId, it) }
+                if (response != null) {
+                    if (response.isSuccessful) {
+                        _isSubscribed.value = response.body() ?: false
+                        _followState.value = FollowState.Success(isSubscribed = _isSubscribed.value)
+                    } else {
+                        _followState.value = FollowState.Error("Ошибка при проверке подписки: ${response.code()}")
+                    }
                 }
             } catch (e: Exception) {
                 _followState.value = FollowState.Error("Ошибка сети: ${e.localizedMessage}")
