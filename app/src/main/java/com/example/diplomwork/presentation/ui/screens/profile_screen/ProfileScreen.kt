@@ -44,6 +44,7 @@ import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForElemen
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.presentation.ui.components.PictureCard
 import com.example.diplomwork.presentation.ui.components.SpotsCard
+import com.example.diplomwork.presentation.ui.theme.BgDefault
 import com.example.diplomwork.presentation.viewmodel.ProfileViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.rememberPagerState
@@ -211,7 +212,8 @@ private fun PicturesGrid(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black),
+            .padding(top = 5.dp)
+            .background(BgDefault),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         items(spots.size) { index ->

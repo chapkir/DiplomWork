@@ -76,7 +76,7 @@ fun SpotsCard(
     onSpotClick: () -> Unit,
     onProfileClick: (Long, String) -> Unit = { _, _ -> },
     onSpotDelete: (Long) -> Unit = { _ -> },
-    screenName: String = ""
+    screenName: String
 ) {
 
     val coroutineScope = rememberCoroutineScope()
@@ -104,7 +104,7 @@ fun SpotsCard(
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                if (screenName == "") {
+                if (screenName == "Spots") {
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(
                         modifier = Modifier
@@ -164,13 +164,14 @@ fun SpotsCard(
                     HorizontalDivider(thickness = 2.dp, color = DividerDark)
                     Spacer(modifier = Modifier.height(12.dp))
                 }
+                else Spacer(modifier = Modifier.height(16.dp))
                 Row(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     ImagesPager(
                         imageUrls = imageUrl,
                         modifier = Modifier
-                            .padding(start = 7.dp)
+                            .padding(start = 10.dp)
                             .weight(0.55f)
                     )
                     PlaceInfo(
@@ -180,7 +181,7 @@ fun SpotsCard(
                         geo = "$latitude, $longitude",
                         modifier = Modifier
                             .fillMaxHeight()
-                            .padding(start = 10.dp, end = 15.dp)
+                            .padding(start = 15.dp, end = 10.dp)
                             .weight(0.8f)
                     )
                 }

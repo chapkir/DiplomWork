@@ -121,6 +121,7 @@ fun SpotsScreen(
                                 onSpotClick = { onImageClick(spot.id) },
                                 onProfileClick = onProfileClick,
                                 onSpotDelete = { id -> spotsViewModel.deletePicture(id) },
+                                screenName = "Spots"
                             )
                         }
                     }

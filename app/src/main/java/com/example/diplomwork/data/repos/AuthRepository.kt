@@ -39,6 +39,10 @@ class AuthRepository @Inject constructor(
         return apiService.logout()
     }
 
+    suspend fun deleteAccount(): Response<Unit>{
+        return apiService.deleteAccount()
+    }
+
     // Регистрация пользователя
     suspend fun register(registerRequest: RegisterRequest): RegisterResponse {
         return apiService.register(registerRequest)

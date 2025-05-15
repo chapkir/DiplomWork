@@ -1,5 +1,6 @@
 package com.example.diplomwork.presentation.ui.screens.settings_screens
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,20 +15,37 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
+import com.example.diplomwork.presentation.viewmodel.SettingsViewModel
 
 @Composable
 fun ManagementAccount(
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    viewModel: SettingsViewModel = hiltViewModel()
 ) {
+
+    val isDeleting by viewModel.isDeleting.collectAsState()
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.deleteResult.collect { message ->
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            // можно также здесь сделать навигацию назад, если нужно
+        }
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -105,7 +123,7 @@ fun ManagementAccount(
 
             SettingItem(
                 title = "Удаление данных и аккаунта",
-                onClick = { }
+                onClick = { viewModel.deleteAccount() }
             )
             Text(
                 text = "Безвозвратное удаление данных и всего, что связано с аккаунтом",
