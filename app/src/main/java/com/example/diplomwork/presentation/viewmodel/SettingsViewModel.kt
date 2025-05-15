@@ -16,11 +16,30 @@ class SettingsViewModel @Inject constructor(
     private val authRepository: AuthRepository,
 ) : ViewModel() {
 
+    private val _isLogout = MutableStateFlow<Result<String>?>(null)
+    val isLogout: StateFlow<Result<String>?> = _isLogout
+
     private val _isDeleting = MutableStateFlow(false)
     val isDeleting: StateFlow<Boolean> = _isDeleting
 
     private val _deleteResult = MutableSharedFlow<String>()
     val deleteResult: SharedFlow<String> = _deleteResult
+
+    fun logout() {
+        viewModelScope.launch {
+            try {
+                val response = authRepository.logout()
+                if (response.isSuccessful) {
+                    val message = response.body()?.get("message") ?: "Выход выполнен"
+                    _isLogout.value = Result.success(message)
+                } else {
+                    _isLogout.value = Result.failure(Exception("Ошибка выхода: ${response.code()}"))
+                }
+            } catch (e: Exception) {
+                _isLogout.value = Result.failure(e)
+            }
+        }
+    }
 
     fun deleteAccount() {
         viewModelScope.launch {

@@ -34,7 +34,7 @@ import com.example.diplomwork.presentation.viewmodel.SettingsViewModel
 @Composable
 fun ManagementAccount(
     onBack: () -> Unit,
-    viewModel: SettingsViewModel = hiltViewModel()
+    viewModel: SettingsViewModel
 ) {
 
     val isDeleting by viewModel.isDeleting.collectAsState()

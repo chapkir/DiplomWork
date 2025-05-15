@@ -1,5 +1,6 @@
 package com.example.diplomwork.data.repos
 
+import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.data.api.ApiService
 import com.example.diplomwork.data.model.LoginRequest
 import com.example.diplomwork.data.model.LoginResponse
@@ -16,7 +17,8 @@ import javax.inject.Inject
 
 @ActivityScoped
 class AuthRepository @Inject constructor(
-    private val apiService: ApiService
+    private val apiService: ApiService,
+    private val sessionManager: SessionManager
 ) {
 
     // Логин
@@ -36,7 +38,11 @@ class AuthRepository @Inject constructor(
 
     // Логаут
     suspend fun logout(): Response<Map<String, String>> {
-        return apiService.logout()
+        val response = apiService.logout()
+        if (response.isSuccessful) {
+            sessionManager.clearSession()
+        }
+        return response
     }
 
     suspend fun deleteAccount(): Response<Unit>{

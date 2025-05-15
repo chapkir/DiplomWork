@@ -26,7 +26,8 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun provideAuthRepository(apiService: ApiService) = AuthRepository(apiService)
+    fun provideAuthRepository(apiService: ApiService, sessionManager: SessionManager) =
+        AuthRepository(apiService, sessionManager)
 
     @Provides
     @Singleton

@@ -11,10 +11,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.navigation
 import androidx.navigation.toRoute
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.presentation.ui.components.CustomSnackbarHost
@@ -38,6 +42,7 @@ import com.example.diplomwork.presentation.ui.screens.settings_screens.Managemen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.SettingsScreen
 import com.example.diplomwork.presentation.ui.screens.spots_screen.SpotsScreen
 import com.example.diplomwork.presentation.ui.theme.BgDefault
+import com.example.diplomwork.presentation.viewmodel.SettingsViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -216,46 +221,47 @@ fun AppNavigation(navController: NavHostController) {
                 )
             }
 
-            composable<Settings> {
-                SettingsScreen(
-                    onBack = { navController.popBackStack() },
-                    onEditProfileClick = {
-                        navController.navigate(EditProfile) {
-                            popUpTo(EditProfile)
-                        }
-                    },
-                    onAccountManagementClick = {
-                        navController.navigate(ManagementAccount) {
-                            popUpTo(ManagementAccount) { inclusive = false }
-                        }
-                    },
-                    onPrivacyClick = { showFunInDevSnackbar() }, // TODO
-                    onLogoutClick = {
-                        sessionManager.clearSession()
-                        navController.navigate(Login) {
-                            popUpTo(Login) { inclusive = true }
-                        }
-                    },
-                    onHelpCenterClick = { showFunInDevSnackbar() }, // TODO
-                    onLicensesClick = {
-                        navController.navigate(Licenses) {
-                            popUpTo(Licenses) { inclusive = false }
-                        }
-                    }
-                )
-            }
+            settingsNavGraph(navController)
 
-            composable<Licenses> {
-                LicensesScreen(
-                    onBack = { navController.popBackStack() },
-                )
-            }
-
-            composable<ManagementAccount> {
-                ManagementAccount(
-                    onBack = { navController.popBackStack() },
-                )
-            }
+//            composable<Settings> {
+//                SettingsScreen(
+//                    onBack = { navController.popBackStack() },
+//                    onEditProfileClick = {
+//                        navController.navigate(EditProfile) {
+//                            popUpTo(EditProfile)
+//                        }
+//                    },
+//                    onAccountManagementClick = {
+//                        navController.navigate(ManagementAccount) {
+//                            popUpTo(ManagementAccount) { inclusive = false }
+//                        }
+//                    },
+//                    onPrivacyClick = { showFunInDevSnackbar() }, // TODO
+//                    onLogoutClick = {
+//                        navController.navigate(Login) {
+//                            popUpTo(Login) { inclusive = true }
+//                        }
+//                    },
+//                    onHelpCenterClick = { showFunInDevSnackbar() }, // TODO
+//                    onLicensesClick = {
+//                        navController.navigate(Licenses) {
+//                            popUpTo(Licenses) { inclusive = false }
+//                        }
+//                    }
+//                )
+//            }
+//
+//            composable<Licenses> {
+//                LicensesScreen(
+//                    onBack = { navController.popBackStack() },
+//                )
+//            }
+//
+//            composable<ManagementAccount> {
+//                ManagementAccount(
+//                    onBack = { navController.popBackStack() },
+//                )
+//            }
 
             composable<Register> {
                 RegisterScreen(
@@ -325,6 +331,70 @@ fun AppNavigation(navController: NavHostController) {
                     coroutineScope.launch { whatCreateSheetState.hide() }
                 },
                 sheetState = whatCreateSheetState
+            )
+        }
+    }
+}
+
+fun NavGraphBuilder.settingsNavGraph(navController: NavController) {
+    navigation(
+        startDestination = "settings",
+        route = "settings_root"
+    ) {
+        composable<Settings> { backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry("settings_root")
+            }
+            val viewModel: SettingsViewModel = hiltViewModel(parentEntry)
+
+            SettingsScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() },
+                onEditProfileClick = {
+                    navController.navigate(EditProfile) {
+                        popUpTo(EditProfile)
+                    }
+                },
+                onAccountManagementClick = {
+                    navController.navigate(ManagementAccount) {
+                        popUpTo(ManagementAccount) { inclusive = false }
+                    }
+                },
+                onPrivacyClick = { }, // TODO
+                onLogoutClick = {
+                    navController.navigate(Login) {
+                        popUpTo(Login) { inclusive = true }
+                    }
+                },
+                onHelpCenterClick = { }, // TODO
+                onLicensesClick = {
+                    navController.navigate(Licenses) {
+                        popUpTo(Licenses) { inclusive = false }
+                    }
+                }
+            )
+        }
+
+        composable<Licenses> {backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry("settings_root")
+            }
+            val viewModel: SettingsViewModel = hiltViewModel(parentEntry)
+
+            LicensesScreen(
+                onBack = { navController.popBackStack() },
+            )
+        }
+
+        composable<ManagementAccount> {backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry("settings_root")
+            }
+            val viewModel: SettingsViewModel = hiltViewModel(parentEntry)
+
+            ManagementAccount(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() },
             )
         }
     }
