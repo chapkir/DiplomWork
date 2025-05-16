@@ -3,7 +3,7 @@ package com.example.diplomwork.data.repos
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
-import com.example.diplomwork.data.model.PictureResponse
+import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.api.ApiService
 import retrofit2.Response
 import javax.inject.Inject
@@ -19,12 +19,12 @@ class PictureRepository @Inject constructor(
 ) {
 
     // Получение всех картинок
-    suspend fun getPictures(): List<PictureResponse> {
-        return apiService.getPictures()
+    suspend fun getPictures(): List<SpotResponse> {
+        return apiService.getSpot()
     }
 
     // Получение одной картинки по ID
-    suspend fun getPicture(id: Long): PictureResponse {
+    suspend fun getPicture(id: Long): SpotResponse {
         return apiService.getPicture(id)
     }
 
@@ -39,7 +39,7 @@ class PictureRepository @Inject constructor(
     }
 
     //Поиск картинки
-    suspend fun searchPictures(query: String, page: Int, size: Int): List<PictureResponse> {
+    suspend fun searchPictures(query: String, page: Int, size: Int): List<SpotResponse> {
         return apiService.searchPictures(query, page, size).data.content
     }
 
@@ -60,7 +60,7 @@ class PictureRepository @Inject constructor(
         return sessionManager.username ?: ""
     }
 
-    fun getPagingPictures(): Flow<PagingData<PictureResponse>> {
+    fun getPagingPictures(): Flow<PagingData<SpotResponse>> {
         return Pager(
             config = PagingConfig(
                 pageSize = 20,

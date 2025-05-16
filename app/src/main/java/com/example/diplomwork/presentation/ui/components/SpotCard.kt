@@ -30,8 +30,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -63,6 +67,7 @@ import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
+import coil.compose.AsyncImagePainter
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -230,17 +235,45 @@ fun ImagesPager(
     modifier: Modifier
 ) {
     val pagerState = rememberPagerState()
+    var isLoading by remember { mutableStateOf(true) }
+    var isError by remember { mutableStateOf(false) }
+    var retryCount by remember { mutableIntStateOf(0) }
+
+    var displayUrl = imageUrls
+
+    // Формируем список изображений
+//    val images = remember(firstPicture, additionalPictures) {
+//        buildList {
+//            firstPicture?.let { add(it) }
+//            addAll(additionalPictures)
+//        }
+//    }
+
+    // Добавим "заглушку", если доп. картинки ещё не загружены
+//    val displayImages = remember(imageUrls) {
+//        if (imageUrls.size == 1 && additionalPictures.isEmpty()) {
+//            images + listOf<String?>(null) // заглушка
+//        } else {
+//            images
+//        }
+//    }
 
     Column(
         modifier = modifier
     ) {
         HorizontalPager(
-            count = 5,
+            count = 5, //displayImages.size,
             state = pagerState,
             modifier = Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(12.dp)),
         ) { page ->
+
+            // Если пользователь долистал до заглушки и не загружали — вызываем загрузку
+//            if (displayImages[page] == null && additionalPictures.isEmpty()) {
+//                onLoadMore()
+//            }
+
             Card(
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(5.dp),
@@ -270,19 +303,32 @@ fun ImagesPager(
 
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
-                            .data(imageUrls) // TODO Когда несколько картинок imageUrls[page]
+                            .data(displayUrl) // TODO Когда несколько картинок imageUrls[page]
                             .crossfade(300)
                             .diskCachePolicy(CachePolicy.ENABLED)
                             .memoryCachePolicy(CachePolicy.ENABLED)
                             .build(),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
-//                            onState = { state ->
-//                                isLoading = state is AsyncImagePainter.State.Loading
-//                                if (state is AsyncImagePainter.State.Error) {
-//                                    isError = true
-//                                }
-//                            },
+                        onState = { state ->
+                            isLoading = state is AsyncImagePainter.State.Loading
+
+                            if (state is AsyncImagePainter.State.Error) {
+                                isError = true
+                                val exception = state.result.throwable
+
+                                Log.e(
+                                    "SpotCard",
+                                    "Ошибка загрузки изображения: $displayUrl",
+                                    exception
+                                )
+
+                                if (retryCount < 2) {
+                                    retryCount++
+                                    displayUrl = "${imageUrls}?cache_bust=${System.currentTimeMillis()}"
+                                }
+                            }
+                        },
                         modifier = Modifier
                             .matchParentSize()
                             .clip(RoundedCornerShape(12.dp))

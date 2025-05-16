@@ -7,7 +7,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.diplomwork.data.model.LocationResponse
-import com.example.diplomwork.data.model.PictureResponse
+import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.model.PostResponse
 import com.example.diplomwork.data.model.ProfileResponse
 import com.example.diplomwork.data.repos.FollowRepository
@@ -42,8 +42,8 @@ class ProfileViewModel @Inject constructor(
     private val _followersCount = MutableStateFlow(0)
     val followersCount: StateFlow<Int> = _followersCount
 
-    private val _profilePictures = MutableStateFlow<List<PictureResponse>>(emptyList())
-    val profilePictures: StateFlow<List<PictureResponse>> = _profilePictures
+    private val _profilePictures = MutableStateFlow<List<SpotResponse>>(emptyList())
+    val profilePictures: StateFlow<List<SpotResponse>> = _profilePictures
 
     private val _spotLocations = MutableStateFlow<Map<Long, LocationResponse>>(emptyMap())
     val spotLocations: StateFlow<Map<Long, LocationResponse>> = _spotLocations
@@ -54,8 +54,8 @@ class ProfileViewModel @Inject constructor(
     private val _followState = MutableStateFlow<FollowState>(FollowState.Idle)
     val followState: StateFlow<FollowState> = _followState.asStateFlow()
 
-    private val _likedPictures = MutableStateFlow<List<PictureResponse>>(emptyList())
-    val likedPictures: StateFlow<List<PictureResponse>> = _likedPictures
+    private val _likedPictures = MutableStateFlow<List<SpotResponse>>(emptyList())
+    val likedPictures: StateFlow<List<SpotResponse>> = _likedPictures
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading

@@ -31,7 +31,6 @@ import com.example.diplomwork.presentation.ui.screens.gallery_screen.GalleryScre
 import com.example.diplomwork.presentation.ui.screens.login_screen.LoginScreen
 import com.example.diplomwork.presentation.ui.screens.map_screen.MapScreen
 import com.example.diplomwork.presentation.ui.screens.notification_screen.NotificationScreen
-import com.example.diplomwork.presentation.ui.screens.picture_detail_screen.PictureDetailScreen
 import com.example.diplomwork.presentation.ui.screens.pictures_screen.PicturesScreen
 import com.example.diplomwork.presentation.ui.screens.posts_screen.PostsScreen
 import com.example.diplomwork.presentation.ui.screens.profile_screen.ProfileScreen
@@ -107,7 +106,7 @@ fun AppNavigation(navController: NavHostController) {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = if (sessionManager.isLoggedIn()) OwnProfile else Login,
+            startDestination = if (sessionManager.isLoggedIn()) Spots else Login,
             modifier = Modifier.padding(paddingValues)
         ) {
             composable<Pictures> {
@@ -332,7 +331,7 @@ fun NavGraphBuilder.settingsNavGraph(navController: NavController) {
             )
         }
 
-        composable<Licenses> {backStackEntry ->
+        composable<Licenses> { backStackEntry ->
             val parentEntry = remember(backStackEntry) {
                 navController.getBackStackEntry("settings_root")
             }
@@ -343,7 +342,7 @@ fun NavGraphBuilder.settingsNavGraph(navController: NavController) {
             )
         }
 
-        composable<ManagementAccount> {backStackEntry ->
+        composable<ManagementAccount> { backStackEntry ->
             val parentEntry = remember(backStackEntry) {
                 navController.getBackStackEntry("settings_root")
             }

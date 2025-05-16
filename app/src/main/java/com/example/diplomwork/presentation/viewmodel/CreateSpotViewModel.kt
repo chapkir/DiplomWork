@@ -8,6 +8,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.diplomwork.data.model.LocationRequest
+import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.repos.LocationRepository
 import com.example.diplomwork.data.repos.UploadRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -90,8 +91,8 @@ class CreateSpotViewModel @Inject constructor(
                 )
 
                 if (response.isSuccessful) {
-                    val pictureList = response.body()?.data ?: emptyList()
-                    val pictureId = pictureList.firstOrNull()?.id ?: 0L
+                    val pictureList = response.body()?.data!!
+                    val pictureId = pictureList.id ?: 0L
 
                     val locationRequest = LocationRequest(
                         pictureId = pictureId,

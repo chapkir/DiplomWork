@@ -4,10 +4,9 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.data.model.CommentRequest
 import com.example.diplomwork.data.model.CommentResponse
-import com.example.diplomwork.data.model.PictureResponse
+import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.repos.CommentRepository
 import com.example.diplomwork.data.repos.PictureRepository
 import com.example.diplomwork.domain.usecase.DeletePictureUseCase
@@ -147,7 +146,7 @@ class PictureDetailScreenViewModel @Inject constructor(
 
 data class PictureDetailUiState(
     val isLoading: Boolean = false,
-    val picture: PictureResponse? = null,
+    val picture: SpotResponse? = null,
     val pictureUsername: String = "",
     val rating: Double = 1.0,
     val pictureUserId: Long = 0L,

@@ -2,20 +2,20 @@ package com.example.diplomwork.data.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.example.diplomwork.data.model.PictureResponse
+import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.api.ApiService
 
 class PictureFactoryPaging(
     private val apiService: ApiService
-) : PagingSource<Int, PictureResponse>() {
+) : PagingSource<Int, SpotResponse>() {
 
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, PictureResponse> {
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, SpotResponse> {
         return try {
             val page = params.key ?: 0
             val pageSize = params.loadSize
 
             // Запрос к серверу (без пагинации)
-            val response = apiService.getPictures()
+            val response = apiService.getSpot()
             val allPictures = response.shuffled()
 
             val fromIndex = page * pageSize
@@ -42,7 +42,7 @@ class PictureFactoryPaging(
         }
     }
 
-    override fun getRefreshKey(state: PagingState<Int, PictureResponse>): Int? {
+    override fun getRefreshKey(state: PagingState<Int, SpotResponse>): Int? {
         return null
     }
 }

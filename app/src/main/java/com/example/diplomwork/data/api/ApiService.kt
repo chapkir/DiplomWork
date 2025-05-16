@@ -11,7 +11,7 @@ import com.example.diplomwork.data.model.LoginRequest
 import com.example.diplomwork.data.model.LoginResponse
 import com.example.diplomwork.data.model.NotificationResponse
 import com.example.diplomwork.data.model.PageResponse
-import com.example.diplomwork.data.model.PictureResponse
+import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.model.PostResponse
 import com.example.diplomwork.data.model.ProfileResponse
 import com.example.diplomwork.data.model.RegisterRequest
@@ -34,17 +34,17 @@ import retrofit2.http.Query
 
 
 interface ApiService {
-    @GET("api/pins/all")
-    suspend fun getPictures(): List<PictureResponse>
+    @GET("api/spots/all")
+    suspend fun getSpot(): List<SpotResponse>
 
     @GET("api/spot/pictures")
-    suspend fun getSpotPictures(): List<PictureResponse>
+    suspend fun getSpotPictures(): List<SpotResponse>
 
     @GET("api/posts")
     suspend fun getPosts(): List<PostResponse>
 
     @GET("api/pins/{id}")
-    suspend fun getPicture(@Path("id") id: Long): PictureResponse
+    suspend fun getPicture(@Path("id") id: Long): SpotResponse
 
     @DELETE("api/pins/{id}")
     suspend fun deletePicture(@Path("id") id: Long): Response<Unit>
@@ -54,7 +54,7 @@ interface ApiService {
         @Query("query") query: String,
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 20
-    ): ApiResponse<PageResponse<PictureResponse>>
+    ): ApiResponse<PageResponse<SpotResponse>>
 
     @POST("api/auth/login")
     suspend fun login(@Body loginRequest: LoginRequest): Response<LoginResponse>
@@ -72,16 +72,16 @@ interface ApiService {
     suspend fun getOwnProfile(): ProfileResponse
 
     @GET("api/profile/pictures")
-    suspend fun getOwnProfilePictures(): List<PictureResponse>
+    suspend fun getOwnProfilePictures(): List<SpotResponse>
 
     @GET("api/profile/{userId}/pictures")
-    suspend fun getOtherProfilePictures(@Path("userId") userId: Long?): List<PictureResponse>
+    suspend fun getOtherProfilePictures(@Path("userId") userId: Long?): List<SpotResponse>
 
     @GET("api/profile/liked-pins")
-    suspend fun getOwnLikedPictures(): List<PictureResponse>
+    suspend fun getOwnLikedPictures(): List<SpotResponse>
 
     @GET("api/profile/likesPictures/{userId}")
-    suspend fun getOtherLikedPictures(@Path("userId") userId: Long?): List<PictureResponse>
+    suspend fun getOtherLikedPictures(@Path("userId") userId: Long?): List<SpotResponse>
 
     @GET("api/profile/posts")
     suspend fun getOwnProfilePosts(): List<PostResponse>
@@ -117,7 +117,7 @@ interface ApiService {
         @Part("title") title: RequestBody,
         @Part("description") description: RequestBody,
         @Part("rating") rating: RequestBody
-    ): Response<ApiResponseWrapper<List<PictureResponse>>>
+    ): Response<ApiResponseWrapper<SpotResponse>>
 
     @Multipart
     @POST("api/posts/with-image")
