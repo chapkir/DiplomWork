@@ -1,6 +1,8 @@
 package com.example.server.UsPinterest.dto;
 
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 public class LocationResponse {
     private Long id;
@@ -8,8 +10,9 @@ public class LocationResponse {
     private Long pictureId;
     private Double latitude;
     private Double longitude;
-    private String address;
-    private String nameplace;
+    @JsonInclude(JsonInclude.Include.ALWAYS)
+    @JsonProperty("placeName")
+    private String placeName;
     private LocalDateTime createdAt;
 
     public Long getId() {
@@ -52,20 +55,13 @@ public class LocationResponse {
         this.longitude = longitude;
     }
 
-    public String getAddress() {
-        return address;
+    @JsonProperty("placeName")
+    public String getPlaceName() {
+        return placeName;
     }
 
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public String getNameplace() {
-        return nameplace;
-    }
-
-    public void setNameplace(String nameplace) {
-        this.nameplace = nameplace;
+    public void setPlaceName(String placeName) {
+        this.placeName = placeName;
     }
 
     public LocalDateTime getCreatedAt() {

@@ -34,7 +34,7 @@ public class CompatibilityController {
     private final PinRepository pinRepository;
     private final UserService userService;
 
-    @GetMapping("/api/pins/all")
+    @GetMapping("/api/pins/compat/all")
     @Transactional(readOnly = true)
     public ResponseEntity<List<PinResponse>> redirectToPinsJsonAll() {
         logger.info("Предоставление списка пинов в формате массива JSON для Kotlin-клиента");

@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import com.example.server.UsPinterest.repository.PictureRepository;
 
 @Component
 public abstract class PinStructMapperDecorator implements PinStructMapper {
@@ -19,6 +20,9 @@ public abstract class PinStructMapperDecorator implements PinStructMapper {
 
     @Autowired
     private FileStorageService fileStorageService;
+
+    @Autowired
+    private PictureRepository pictureRepository;
 
     @Autowired
     private CommentRepository commentRepository;
@@ -50,6 +54,28 @@ public abstract class PinStructMapperDecorator implements PinStructMapper {
                 .collect(Collectors.toList());
             dto.setTags(tagNames);
         }
+        // Profile image
+        if (dto.getUserProfileImageUrl() != null && !dto.getUserProfileImageUrl().isEmpty()) {
+            dto.setUserProfileImageUrl(fileStorageService.updateImageUrl(dto.getUserProfileImageUrl()));
+        }
+        // Images: заполняем агрегированные поля из сущности Picture
+        pictureRepository.findByPinId(pin.getId()).ifPresent(picture -> {
+            if (picture.getImageUrl() != null) {
+                dto.setImageUrl(fileStorageService.updateImageUrl(picture.getImageUrl()));
+            }
+            dto.setImageWidth(picture.getImageWidth());
+            dto.setImageHeight(picture.getImageHeight());
+            if (picture.getFullhdImageUrl() != null) {
+                dto.setFullhdImageUrl(fileStorageService.updateImageUrl(picture.getFullhdImageUrl()));
+            }
+            dto.setFullhdWidth(picture.getFullhdWidth());
+            dto.setFullhdHeight(picture.getFullhdHeight());
+            if (picture.getThumbnailImageUrl() != null) {
+                dto.setThumbnailImageUrl(fileStorageService.updateImageUrl(picture.getThumbnailImageUrl()));
+            }
+            dto.setThumbnailWidth(picture.getThumbnailWidth());
+            dto.setThumbnailHeight(picture.getThumbnailHeight());
+        });
         return dto;
     }
 

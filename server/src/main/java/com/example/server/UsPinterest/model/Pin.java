@@ -99,8 +99,8 @@ public class Pin {
     @Column(name = "thumbnail_height")
     private Integer thumbnailHeight;
 
-    @OneToMany(mappedBy = "pin", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<Picture> pictures = new ArrayList<>();
+    @OneToOne(mappedBy = "pin", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Picture pictures;
 
     public Pin() {}
 
@@ -248,11 +248,11 @@ public class Pin {
     public Integer getThumbnailHeight() { return thumbnailHeight; }
     public void setThumbnailHeight(Integer thumbnailHeight) { this.thumbnailHeight = thumbnailHeight; }
 
-    public List<Picture> getPictures() {
+    public Picture getPictures() {
         return pictures;
     }
 
-    public void setPictures(List<Picture> pictures) {
+    public void setPictures(Picture pictures) {
         this.pictures = pictures;
     }
 } 

@@ -35,9 +35,9 @@ public class GeocodingService {
             headers.set("User-Agent", "DiplomWorkApp/1.0");
             HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
 
-            ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.GET, requestEntity, String.class);
+            ResponseEntity<JsonNode> response = restTemplate.exchange(uri, HttpMethod.GET, requestEntity, JsonNode.class);
             if (response.getStatusCode().is2xxSuccessful()) {
-                JsonNode root = objectMapper.readTree(response.getBody());
+                JsonNode root = response.getBody();
                 if (root.has("display_name")) {
                     return root.get("display_name").asText();
                 }

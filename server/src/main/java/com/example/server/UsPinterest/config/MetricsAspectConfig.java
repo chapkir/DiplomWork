@@ -4,17 +4,13 @@ import io.micrometer.core.aop.TimedAspect;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.server.UsPinterest.repository.PinRepository;
 import io.micrometer.core.instrument.Gauge;
-import com.example.server.UsPinterest.service.PinService;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 
 @Configuration
 public class MetricsAspectConfig {
-
-    @Autowired
-    private PinService pinService;
 
     @Bean
     public TimedAspect timedAspect(MeterRegistry registry) {
@@ -22,8 +18,8 @@ public class MetricsAspectConfig {
     }
 
     @Bean
-    public Gauge pinsCountGauge(MeterRegistry registry) {
-        return Gauge.builder("pins_count", pinService, PinService::count)
+    public Gauge pinsCountGauge(MeterRegistry registry, PinRepository pinRepository) {
+        return Gauge.builder("pins_count", pinRepository, PinRepository::count)
                 .description("Total number of pins")
                 .register(registry);
     }

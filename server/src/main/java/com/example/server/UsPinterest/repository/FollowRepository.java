@@ -38,4 +38,12 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
     @Transactional
     @Query(value = "INSERT INTO follows (follower_id, following_id, created_at) VALUES (:followerId, :followingId, :createdAt)", nativeQuery = true)
     void createFollowManually(@Param("followerId") Long followerId, @Param("followingId") Long followingId, @Param("createdAt") LocalDateTime createdAt);
+
+    @Modifying
+    @Transactional
+    int deleteByFollowerId(Long followerId);
+
+    @Modifying
+    @Transactional
+    int deleteByFollowingId(Long followingId);
 }

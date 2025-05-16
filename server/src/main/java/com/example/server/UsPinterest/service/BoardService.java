@@ -22,6 +22,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 
 
 @Service
@@ -31,7 +33,9 @@ public class BoardService {
 
     private final BoardRepository boardRepository;
 
-    private final UserService userService;
+    @Lazy
+    @Autowired
+    private UserService userService;
 
     private final BoardStructMapper boardStructMapper;
 

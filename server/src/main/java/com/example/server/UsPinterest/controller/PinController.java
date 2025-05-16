@@ -61,6 +61,7 @@ import com.example.server.UsPinterest.dto.UploadRequest;
 import com.example.server.UsPinterest.model.Picture;
 import com.example.server.UsPinterest.repository.PictureRepository;
 import com.example.server.UsPinterest.dto.PictureResponse;
+import com.example.server.UsPinterest.dto.PinThumbnailBasicResponse;
 
 @RestController
 @RequiredArgsConstructor
@@ -104,7 +105,7 @@ public class PinController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping({"/{id}", "/detail/{id}"})
+    @GetMapping("/detail/{id}")
     public ResponseEntity<?> getPinById(@PathVariable Long id, Authentication authentication) {
         // Используем сервис для получения пина с комментариями и лайками
         Pin pin = pinQueryService.getPinWithLikesAndComments(id);
@@ -336,56 +337,97 @@ public class PinController {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
 
-        List<PinResponse> pinResponses = new ArrayList<>();
-
         try {
-            for (MultipartFile fileItem : files) {
-                if (fileItem.isEmpty()) {
+            // Сначала создаём Pin без полей изображений
+            Pin pin = new Pin();
+            String pinTitle = (title != null && !title.isEmpty()) ? title : (text != null ? text : "");
+            pin.setTitle(pinTitle);
+            pin.setDescription(description);
+            pin.setRating(rating);
+            pin.setUser(user);
+            pin.setCreatedAt(LocalDateTime.now());
+            Pin savedPin = pinRepository.save(pin);
+
+            // Сохраняем все загруженные файлы в сущность Picture
+            Picture picture = new Picture();
+            picture.setPin(savedPin);
+            for (int i = 0; i < files.length; i++) {
+                MultipartFile file = files[i];
+                if (file.isEmpty()) {
                     return ResponseEntity.badRequest().body(new MessageResponse("Файл не выбран"));
                 }
-                String contentTypeItem = fileItem.getContentType();
+                String contentTypeItem = file.getContentType();
                 if (contentTypeItem == null || !contentTypeItem.startsWith("image/")) {
                     return ResponseEntity.badRequest().body(new MessageResponse("Файл должен быть изображением"));
                 }
-
-                String imageUrl = fileStorageService.storeFile(fileItem);
-                String filename = fileStorageService.getFilenameFromUrl(imageUrl);
-                String baseName = filename != null && filename.contains(".")
-                        ? filename.substring(0, filename.lastIndexOf("."))
-                        : filename;
-                // Асинхронная генерация вариантов изображений
-                java.util.concurrent.CompletableFuture<FileStorageService.ImageInfo> fullhdFuture =
-                        fileStorageService.storeFullhdFileAsync(fileItem, baseName);
-                java.util.concurrent.CompletableFuture<FileStorageService.ImageInfo> thumbnailFuture =
-                        fileStorageService.storeThumbnailFileAsync(fileItem, baseName);
-                FileStorageService.ImageInfo fullhdInfo = fullhdFuture.join();
-                FileStorageService.ImageInfo thumbnailInfo = thumbnailFuture.join();
-
-                Pin pin = new Pin();
-                String pinTitle = (title != null && !title.isEmpty()) ? title : (text != null ? text : "");
-                pin.setTitle(pinTitle);
-                pin.setImageUrl(imageUrl);
-                pin.setDescription(description);
-                pin.setRating(rating);
-                pin.setUser(user);
-                pin.setCreatedAt(LocalDateTime.now());
-                pinQueryService.calculateImageDimensions(pin);
-                pin.setFullhdImageUrl(fullhdInfo.getUrl());
-                pin.setFullhdWidth(fullhdInfo.getWidth());
-                pin.setFullhdHeight(fullhdInfo.getHeight());
-                pin.setThumbnailImageUrl(thumbnailInfo.getUrl());
-                pin.setThumbnailWidth(thumbnailInfo.getWidth());
-                pin.setThumbnailHeight(thumbnailInfo.getHeight());
-
-                Pin savedPin = pinRepository.save(pin);
-                PinResponse pinResponse = pinQueryService.convertToPinResponse(savedPin, user);
-                pinResponses.add(pinResponse);
+                String imageUrl = fileStorageService.storeFile(file);
+                // Вычисляем размеры оригинального изображения
+                BufferedImage origImg = ImageIO.read(file.getInputStream());
+                int origWidth = origImg.getWidth();
+                int origHeight = origImg.getHeight();
+                FileStorageService.ImageInfo fullhdInfo = fileStorageService.storeFullhdFileAsync(file, fileStorageService.getFilenameFromUrl(imageUrl)).join();
+                FileStorageService.ImageInfo thumbnailInfo = fileStorageService.storeThumbnailFileAsync(file, fileStorageService.getFilenameFromUrl(imageUrl)).join();
+                // Устанавливаем агрегированные поля только для первого файла
+                if (i == 0) {
+                    picture.setImageUrl(imageUrl);
+                    picture.setImageWidth(origWidth);
+                    picture.setImageHeight(origHeight);
+                    picture.setFullhdImageUrl(fullhdInfo.getUrl());
+                    picture.setFullhdWidth(fullhdInfo.getWidth());
+                    picture.setFullhdHeight(fullhdInfo.getHeight());
+                    picture.setThumbnailImageUrl(thumbnailInfo.getUrl());
+                    picture.setThumbnailWidth(thumbnailInfo.getWidth());
+                    picture.setThumbnailHeight(thumbnailInfo.getHeight());
+                }
+                switch (i) {
+                    case 0:
+                        picture.setImageUrl1(imageUrl);
+                        picture.setFullhdImageUrl1(fullhdInfo.getUrl());
+                        picture.setThumbnailImageUrl1(thumbnailInfo.getUrl());
+                        break;
+                    case 1:
+                        picture.setImageUrl2(imageUrl);
+                        picture.setFullhdImageUrl2(fullhdInfo.getUrl());
+                        picture.setThumbnailImageUrl2(thumbnailInfo.getUrl());
+                        break;
+                    case 2:
+                        picture.setImageUrl3(imageUrl);
+                        picture.setFullhdImageUrl3(fullhdInfo.getUrl());
+                        picture.setThumbnailImageUrl3(thumbnailInfo.getUrl());
+                        break;
+                    case 3:
+                        picture.setImageUrl4(imageUrl);
+                        picture.setFullhdImageUrl4(fullhdInfo.getUrl());
+                        picture.setThumbnailImageUrl4(thumbnailInfo.getUrl());
+                        break;
+                    case 4:
+                        picture.setImageUrl5(imageUrl);
+                        picture.setFullhdImageUrl5(fullhdInfo.getUrl());
+                        picture.setThumbnailImageUrl5(thumbnailInfo.getUrl());
+                        break;
+                }
             }
+            Picture saved = pictureRepository.save(picture);
 
-            HateoasResponse<List<PinResponse>> response = new HateoasResponse<>(pinResponses);
-            response.addSelfLink("/api/pins/upload");
-            response.addLink("all-pins", "/api/pins", "GET");
+            PictureResponse resp = new PictureResponse();
+            resp.setImage1(saved.getImageUrl1());
+            resp.setImage2(saved.getImageUrl2());
+            resp.setImage3(saved.getImageUrl3());
+            resp.setImage4(saved.getImageUrl4());
+            resp.setImage5(saved.getImageUrl5());
+            resp.setFullhd1(saved.getFullhdImageUrl1());
+            resp.setFullhd2(saved.getFullhdImageUrl2());
+            resp.setFullhd3(saved.getFullhdImageUrl3());
+            resp.setFullhd4(saved.getFullhdImageUrl4());
+            resp.setFullhd5(saved.getFullhdImageUrl5());
+            resp.setThumb1(saved.getThumbnailImageUrl1());
+            resp.setThumb2(saved.getThumbnailImageUrl2());
+            resp.setThumb3(saved.getThumbnailImageUrl3());
+            resp.setThumb4(saved.getThumbnailImageUrl4());
+            resp.setThumb5(saved.getThumbnailImageUrl5());
 
+            HateoasResponse<PictureResponse> response = new HateoasResponse<>(resp);
+            response.addSelfLink("/api/pins/" + savedPin.getId() + "/pictures");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("Ошибка при обработке загрузки изображений: {}", e.getMessage(), e);
@@ -468,63 +510,57 @@ public class PinController {
         if (!pin.getUser().getId().equals(currentUser.getId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new MessageResponse("У вас нет прав на добавление фотографий к этому пину"));
         }
-        List<PictureResponse> pictureResponses = new ArrayList<>();
+        // Создаем одну запись с up to 5 изображениями
         try {
-            for (MultipartFile file : files) {
-                if (file.isEmpty()) {
-                    return ResponseEntity.badRequest().body(new MessageResponse("Файл не выбран"));
-                }
-                String contentType = file.getContentType();
-                if (contentType == null || !contentType.startsWith("image/")) {
-                    return ResponseEntity.badRequest().body(new MessageResponse("Файл должен быть изображением"));
-                }
+            Picture picture = new Picture();
+            picture.setPin(pin);
+            for (int i = 0; i < files.length; i++) {
+                MultipartFile file = files[i];
                 String imageUrl = fileStorageService.storeFile(file);
-                String filename = fileStorageService.getFilenameFromUrl(imageUrl);
-                String baseName = filename != null && filename.contains(".")
-                        ? filename.substring(0, filename.lastIndexOf('.'))
-                        : filename;
-                java.util.concurrent.CompletableFuture<FileStorageService.ImageInfo> fullhdFuture =
-                        fileStorageService.storeFullhdFileAsync(file, baseName);
-                java.util.concurrent.CompletableFuture<FileStorageService.ImageInfo> thumbnailFuture =
-                        fileStorageService.storeThumbnailFileAsync(file, baseName);
-                FileStorageService.ImageInfo fullhdInfo = fullhdFuture.join();
-                FileStorageService.ImageInfo thumbnailInfo = thumbnailFuture.join();
-                Picture picture = new Picture();
-                picture.setImageUrl(imageUrl);
-                picture.setFullhdImageUrl(fullhdInfo.getUrl());
-                picture.setFullhdWidth(fullhdInfo.getWidth());
-                picture.setFullhdHeight(fullhdInfo.getHeight());
-                picture.setThumbnailImageUrl(thumbnailInfo.getUrl());
-                picture.setThumbnailWidth(thumbnailInfo.getWidth());
-                picture.setThumbnailHeight(thumbnailInfo.getHeight());
-                try {
-                    Path path = fileStorageService.getFileStoragePath().resolve(fileStorageService.getFilenameFromUrl(imageUrl)).normalize();
-                    BufferedImage img = ImageIO.read(path.toFile());
-                    if (img != null) {
-                        picture.setImageWidth(img.getWidth());
-                        picture.setImageHeight(img.getHeight());
-                    }
-                } catch (Exception e) {
-                    logger.warn("Не удалось получить размеры изображения: {}", e.getMessage());
+                FileStorageService.ImageInfo fullhdInfo = fileStorageService.storeFullhdFileAsync(file, fileStorageService.getFilenameFromUrl(imageUrl)).join();
+                FileStorageService.ImageInfo thumbnailInfo = fileStorageService.storeThumbnailFileAsync(file, fileStorageService.getFilenameFromUrl(imageUrl)).join();
+                switch (i) {
+                    case 0:
+                        picture.setImageUrl1(imageUrl);
+                        picture.setFullhdImageUrl1(fullhdInfo.getUrl());
+                        picture.setThumbnailImageUrl1(thumbnailInfo.getUrl()); break;
+                    case 1:
+                        picture.setImageUrl2(imageUrl);
+                        picture.setFullhdImageUrl2(fullhdInfo.getUrl());
+                        picture.setThumbnailImageUrl2(thumbnailInfo.getUrl()); break;
+                    case 2:
+                        picture.setImageUrl3(imageUrl);
+                        picture.setFullhdImageUrl3(fullhdInfo.getUrl());
+                        picture.setThumbnailImageUrl3(thumbnailInfo.getUrl()); break;
+                    case 3:
+                        picture.setImageUrl4(imageUrl);
+                        picture.setFullhdImageUrl4(fullhdInfo.getUrl());
+                        picture.setThumbnailImageUrl4(thumbnailInfo.getUrl()); break;
+                    case 4:
+                        picture.setImageUrl5(imageUrl);
+                        picture.setFullhdImageUrl5(fullhdInfo.getUrl());
+                        picture.setThumbnailImageUrl5(thumbnailInfo.getUrl()); break;
                 }
-                picture.setPin(pin);
-                Picture saved = pictureRepository.save(picture);
-                PictureResponse resp = new PictureResponse();
-                resp.setId(saved.getId());
-                resp.setImageUrl(fileStorageService.updateImageUrl(saved.getImageUrl()));
-                resp.setFullhdImageUrl(fileStorageService.updateImageUrl(saved.getFullhdImageUrl()));
-                resp.setThumbnailImageUrl(fileStorageService.updateImageUrl(saved.getThumbnailImageUrl()));
-                resp.setImageWidth(saved.getImageWidth());
-                resp.setImageHeight(saved.getImageHeight());
-                resp.setFullhdWidth(saved.getFullhdWidth());
-                resp.setFullhdHeight(saved.getFullhdHeight());
-                resp.setThumbnailWidth(saved.getThumbnailWidth());
-                resp.setThumbnailHeight(saved.getThumbnailHeight());
-                pictureResponses.add(resp);
             }
-            HateoasResponse<List<PictureResponse>> response = new HateoasResponse<>(pictureResponses);
+            Picture saved = pictureRepository.save(picture);
+            PictureResponse resp = new PictureResponse();
+            resp.setImage1(saved.getImageUrl1());
+            resp.setImage2(saved.getImageUrl2());
+            resp.setImage3(saved.getImageUrl3());
+            resp.setImage4(saved.getImageUrl4());
+            resp.setImage5(saved.getImageUrl5());
+            resp.setFullhd1(saved.getFullhdImageUrl1());
+            resp.setFullhd2(saved.getFullhdImageUrl2());
+            resp.setFullhd3(saved.getFullhdImageUrl3());
+            resp.setFullhd4(saved.getFullhdImageUrl4());
+            resp.setFullhd5(saved.getFullhdImageUrl5());
+            resp.setThumb1(saved.getThumbnailImageUrl1());
+            resp.setThumb2(saved.getThumbnailImageUrl2());
+            resp.setThumb3(saved.getThumbnailImageUrl3());
+            resp.setThumb4(saved.getThumbnailImageUrl4());
+            resp.setThumb5(saved.getThumbnailImageUrl5());
+            HateoasResponse<PictureResponse> response = new HateoasResponse<>(resp);
             response.addSelfLink("/api/pins/" + pinId + "/pictures");
-            response.addLink("pin", "/api/pins/detail/" + pinId, "GET");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("Ошибка при загрузке фотографий к пину {}: {}", pinId, e.getMessage(), e);
@@ -533,26 +569,45 @@ public class PinController {
         }
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<PinResponse>> getAllPinsWithThumbnail() {
+        // Возвращаем основные данные по всем пинам
+        var currentUser = userService.getCurrentUser();
+        List<PinResponse> dtos = pinRepository.findAll().stream()
+                .map(pin -> {
+                    PinResponse dto = pinQueryService.convertToPinResponse(pin, currentUser);
+                    // Применяем первую миниатюру из таблицы pictures
+                    pictureRepository.findByPinId(pin.getId()).ifPresent(pic -> {
+                        String thumb1 = pic.getThumbnailImageUrl1();
+                        if (thumb1 != null && !thumb1.isEmpty()) {
+                            dto.setThumbnailImageUrl(fileStorageService.updateImageUrl(thumb1));
+                        }
+                    });
+                    return dto;
+                }).collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
     @GetMapping("/{pinId}/pictures")
-    public ResponseEntity<?> getPicturesByPinId(@PathVariable Long pinId) {
-        List<Picture> pics = pictureRepository.findByPinId(pinId);
-        List<PictureResponse> responses = pics.stream().map(saved -> {
-            PictureResponse pr = new PictureResponse();
-            pr.setId(saved.getId());
-            pr.setImageUrl(fileStorageService.updateImageUrl(saved.getImageUrl()));
-            pr.setFullhdImageUrl(fileStorageService.updateImageUrl(saved.getFullhdImageUrl()));
-            pr.setThumbnailImageUrl(fileStorageService.updateImageUrl(saved.getThumbnailImageUrl()));
-            pr.setImageWidth(saved.getImageWidth());
-            pr.setImageHeight(saved.getImageHeight());
-            pr.setFullhdWidth(saved.getFullhdWidth());
-            pr.setFullhdHeight(saved.getFullhdHeight());
-            pr.setThumbnailWidth(saved.getThumbnailWidth());
-            pr.setThumbnailHeight(saved.getThumbnailHeight());
-            return pr;
-        }).collect(Collectors.toList());
-        HateoasResponse<List<PictureResponse>> response = new HateoasResponse<>(responses);
-        response.addSelfLink("/api/pins/" + pinId + "/pictures");
-        response.addLink("pin", "/api/pins/detail/" + pinId, "GET");
-        return ResponseEntity.ok(response);
+    public ResponseEntity<List<String>> getPicturesByPinId(@PathVariable Long pinId) {
+        Picture picture = pictureRepository.findByPinId(pinId)
+                .orElseThrow(() -> new ResourceNotFoundException("Картинки не найдены для пина " + pinId));
+        List<String> thumbnails = new ArrayList<>();
+        if (picture.getThumbnailImageUrl1() != null) {
+            thumbnails.add(fileStorageService.updateImageUrl(picture.getThumbnailImageUrl1()));
+        }
+        if (picture.getThumbnailImageUrl2() != null) {
+            thumbnails.add(fileStorageService.updateImageUrl(picture.getThumbnailImageUrl2()));
+        }
+        if (picture.getThumbnailImageUrl3() != null) {
+            thumbnails.add(fileStorageService.updateImageUrl(picture.getThumbnailImageUrl3()));
+        }
+        if (picture.getThumbnailImageUrl4() != null) {
+            thumbnails.add(fileStorageService.updateImageUrl(picture.getThumbnailImageUrl4()));
+        }
+        if (picture.getThumbnailImageUrl5() != null) {
+            thumbnails.add(fileStorageService.updateImageUrl(picture.getThumbnailImageUrl5()));
+        }
+        return ResponseEntity.ok(thumbnails);
     }
 }

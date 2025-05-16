@@ -12,6 +12,13 @@ import com.example.server.UsPinterest.security.JwtTokenUtil;
 import com.example.server.UsPinterest.exception.ResourceNotFoundException;
 import com.example.server.UsPinterest.service.FileStorageService;
 import com.example.server.UsPinterest.model.VerificationToken;
+import com.example.server.UsPinterest.repository.PinRepository;
+import com.example.server.UsPinterest.model.Pin;
+import org.springframework.context.annotation.Lazy;
+import com.example.server.UsPinterest.service.PinCrudService;
+import com.example.server.UsPinterest.repository.RefreshTokenRepository;
+import com.example.server.UsPinterest.repository.FollowRepository;
+import com.example.server.UsPinterest.repository.NotificationRepository;
 
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -24,6 +31,7 @@ import org.springframework.cache.annotation.CacheEvict;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
@@ -41,6 +49,12 @@ public class UserService {
     private final FileStorageService fileStorageService;
     private final LikeRepository likeRepository;
     private final VerificationTokenRepository verificationTokenRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final PinRepository pinRepository;
+    @Lazy
+    private final PinCrudService pinCrudService;
+    private final FollowRepository followRepository;
+    private final NotificationRepository notificationRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
@@ -244,7 +258,28 @@ public class UserService {
 
     @Transactional
     public void deleteUser(Long userId) {
-        userRepository.deleteById(userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден с id: " + userId));
+        // Удаляем подписки, где пользователь является подписчиком или тем, на кого подписываются
+        followRepository.deleteByFollowerId(userId);
+        followRepository.deleteByFollowingId(userId);
+        // Удаляем уведомления, связанные с пользователем как получателем или отправителем
+        notificationRepository.deleteByRecipient(user);
+        notificationRepository.deleteBySender(user);
+        // Удаляем refresh токены
+        refreshTokenRepository.deleteByUser(user);
+        // Удаляем токены подтверждения
+        List<VerificationToken> tokens = verificationTokenRepository.findByUser(user);
+        if (tokens != null && !tokens.isEmpty()) {
+            verificationTokenRepository.deleteAll(tokens);
+        }
+        // Удаляем все пины пользователя с очисткой файлов
+        List<Pin> pins = pinRepository.findByUserId(userId);
+        for (Pin p : pins) {
+            pinCrudService.deletePin(p.getId());
+        }
+        // Удаляем самого пользователя
+        userRepository.delete(user);
     }
 
     @Transactional

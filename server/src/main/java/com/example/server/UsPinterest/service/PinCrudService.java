@@ -16,6 +16,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
+import com.example.server.UsPinterest.service.BoardService;
+import org.springframework.context.annotation.Lazy;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -31,11 +33,13 @@ import java.util.Set;
 public class PinCrudService {
 
     private final PinRepository pinRepository;
+    @Lazy
     private final BoardService boardService;
     private final UserRepository userRepository;
     private final LikeRepository likeRepository;
     private final FileStorageService fileStorageService;
     private final ApplicationEventPublisher eventPublisher;
+    @Lazy
     private final PinService pinService;
     private final TagRepository tagRepository;
 

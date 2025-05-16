@@ -1,11 +1,14 @@
 package com.example.server.UsPinterest.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class LocationRequest {
     private Long postId;
     private Long pictureId;
     private Double latitude;
     private Double longitude;
-    private String address;
+    @JsonProperty("namePlace")
+    private String placeName;
 
     // Getters and setters
     public Long getPostId() {
@@ -40,11 +43,11 @@ public class LocationRequest {
         this.longitude = longitude;
     }
 
-    public String getAddress() {
-        return address;
+    public String getPlaceName() {
+        return placeName;
     }
 
-    public void setAddress(String address) {
-        this.address = address;
+    public void setPlaceName(String placeName) {
+        this.placeName = placeName;
     }
 }

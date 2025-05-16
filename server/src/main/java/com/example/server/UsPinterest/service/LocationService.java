@@ -48,9 +48,7 @@ public class LocationService {
         }
         location.setLatitude(request.getLatitude());
         location.setLongitude(request.getLongitude());
-        String placeName = geocodingService.getPlaceName(request.getLatitude(), request.getLongitude());
-        location.setNameplace(placeName);
-        location.setAddress(request.getAddress());
+        location.setNameplace(request.getPlaceName());
         Location saved = locationRepository.save(location);
         return toDto(saved);
     }
@@ -80,8 +78,7 @@ public class LocationService {
         }
         dto.setLatitude(location.getLatitude());
         dto.setLongitude(location.getLongitude());
-        dto.setAddress(location.getAddress());
-        dto.setNameplace(location.getNameplace());
+        dto.setPlaceName(location.getNameplace());
         dto.setCreatedAt(location.getCreatedAt());
         return dto;
     }
