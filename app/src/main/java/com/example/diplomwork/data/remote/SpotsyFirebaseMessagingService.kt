@@ -1,6 +1,7 @@
 package com.example.diplomwork.data.remote
 
 import android.util.Log
+import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.data.repos.FirebaseTokenRepository
 import com.example.diplomwork.presentation.utils.NotificationHelper
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -12,10 +13,13 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class SpotsyFirebaseMessagingService : FirebaseMessagingService() {
+class SpotsyFirebaseMessagingService() : FirebaseMessagingService() {
 
     @Inject
     lateinit var repository: FirebaseTokenRepository
+
+    @Inject
+    lateinit var sessionManager: SessionManager
 
     override fun onCreate() {
         super.onCreate()
@@ -45,13 +49,22 @@ class SpotsyFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     override fun onNewToken(token: String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                //repository.sendToken(token)
-                Log.e("FCM", "Токен отправлен")
-            } catch (e: Exception) {
-                Log.e("FCM", "Ошибка при отправке токена", e)
+        super.onNewToken(token)
+
+        sessionManager.savePendingFcmToken(token)
+
+        if (sessionManager.isLoggedIn()) {
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    repository.sendFcmToken(token)
+                    sessionManager.clearPendingFcmToken()
+                    Log.d("FCM", "FCM токен отправлен сразу, пользователь авторизован")
+                } catch (e: Exception) {
+                    Log.e("FCM", "Ошибка при отправке FCM токена", e)
+                }
             }
+        } else {
+            Log.d("FCM", "Токен сохранён, но пользователь не авторизован")
         }
     }
 }

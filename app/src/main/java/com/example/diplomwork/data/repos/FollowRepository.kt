@@ -1,24 +1,24 @@
 package com.example.diplomwork.data.repos
 
-import com.example.diplomwork.data.api.ApiService
+import com.example.diplomwork.data.api.FollowApi
 import retrofit2.Response
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class FollowRepository @Inject constructor(
-    private val apiService: ApiService
+    private val api: FollowApi
 ) {
 
     suspend fun subscribe(followerId: Long, followingId: Long): Response<Unit> {
-        return apiService.subscribe(followerId, followingId)
+        return api.subscribe(followerId, followingId)
     }
 
     suspend fun unsubscribe(followerId: Long, followingId: Long): Response<Unit> {
-        return apiService.unsubscribe(followerId, followingId)
+        return api.unsubscribe(followerId, followingId)
     }
 
     suspend fun checkFollowing(followerId: Long, followingId: Long): Response<Boolean> {
-        return apiService.checkFollowing(followerId, followingId)
+        return api.checkFollowing(followerId, followingId)
     }
 }

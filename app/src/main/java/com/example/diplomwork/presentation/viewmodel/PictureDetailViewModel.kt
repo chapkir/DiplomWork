@@ -7,8 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.diplomwork.data.model.CommentRequest
 import com.example.diplomwork.data.model.CommentResponse
 import com.example.diplomwork.data.model.SpotResponse
-import com.example.diplomwork.data.repos.CommentRepository
-import com.example.diplomwork.data.repos.PictureRepository
+import com.example.diplomwork.data.repos.SpotRepository
 import com.example.diplomwork.domain.usecase.DeletePictureUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,8 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class PictureDetailScreenViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val pictureRepository: PictureRepository,
-    private val commentRepository: CommentRepository,
+    private val spotRepository: SpotRepository,
     private val deletePictureUseCase: DeletePictureUseCase
 ) : ViewModel() {
 
@@ -38,10 +36,10 @@ class PictureDetailScreenViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            val pictureResult = safeApiCall { pictureRepository.getPicture(_pictureId) }
+            val pictureResult = safeApiCall { spotRepository.getPicture(_pictureId) }
 
             pictureResult.getOrNull()?.let { picture ->
-                val currentUserUsername = pictureRepository.getCurrentUsername()
+                val currentUserUsername = spotRepository.getCurrentUsername()
                 val isOwner = currentUserUsername == picture.username
 
                 _uiState.value = _uiState.value.copy(
@@ -66,7 +64,7 @@ class PictureDetailScreenViewModel @Inject constructor(
     private fun loadCommentsForPicture() {
         viewModelScope.launch {
             try {
-                val commentsResult = safeApiCall { commentRepository.getPictureComments(_pictureId) }
+                val commentsResult = safeApiCall { spotRepository.getSpotComments(_pictureId) }
                 _uiState.value = _uiState.value.copy(
                     comments = commentsResult.getOrNull() ?: emptyList(),
                 )
@@ -97,9 +95,9 @@ class PictureDetailScreenViewModel @Inject constructor(
             )
 
             val result = if (wasLiked) {
-                safeApiCall { pictureRepository.unlikePicture(_pictureId) }
+                safeApiCall { spotRepository.unlikePicture(_pictureId) }
             } else {
-                safeApiCall { pictureRepository.likePicture(_pictureId) }
+                safeApiCall { spotRepository.likePicture(_pictureId) }
             }
 
             if (result.isFailure) {
@@ -119,11 +117,11 @@ class PictureDetailScreenViewModel @Inject constructor(
 
             val result = safeApiCall {
                 val commentRequest = CommentRequest(text = commentText)
-                commentRepository.addPictureComment(_pictureId, commentRequest)
+                spotRepository.addSpotComment(_pictureId, commentRequest)
             }
 
             if (result.isSuccess) {
-                val updatedComments = commentRepository.getPictureComments(_pictureId)
+                val updatedComments = spotRepository.getSpotComments(_pictureId)
                 _uiState.value = _uiState.value.copy(comments = updatedComments)
             } else {
                 Log.e(

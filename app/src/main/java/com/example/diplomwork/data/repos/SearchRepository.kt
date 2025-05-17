@@ -4,16 +4,17 @@ import com.example.diplomwork.data.model.ApiResponse
 import com.example.diplomwork.data.model.PageResponse
 import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.api.ApiService
+import com.example.diplomwork.data.api.SpotApi
 import dagger.hilt.android.scopes.ActivityScoped
 import javax.inject.Inject
 
 @ActivityScoped
 class SearchRepository @Inject constructor(
-    private val apiService: ApiService
+    private val api: SpotApi
 ) {
 
     // Поиск картинок
     suspend fun searchPictures(query: String, page: Int, size: Int): ApiResponse<PageResponse<SpotResponse>> {
-        return apiService.searchPictures(query, page, size)
+        return api.searchSpots(query, page, size)
     }
 }

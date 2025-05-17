@@ -7,7 +7,6 @@ import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.data.model.CommentRequest
 import com.example.diplomwork.data.model.CommentResponse
 import com.example.diplomwork.data.model.PostResponse
-import com.example.diplomwork.data.repos.CommentRepository
 import com.example.diplomwork.data.repos.PostRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -22,7 +21,6 @@ import javax.inject.Inject
 @HiltViewModel
 class PostsViewModel @Inject constructor(
     private val postRepository: PostRepository,
-    private val commentRepository: CommentRepository,
     private val sessionManager: SessionManager
 ) : ViewModel() {
 
@@ -101,7 +99,7 @@ class PostsViewModel @Inject constructor(
     fun loadCommentsForPost(postId: Long) {
         viewModelScope.launch {
             try {
-                val postComments = commentRepository.getPostComments(postId)
+                val postComments = postRepository.getPostComments(postId)
                 _comments.update { it.toMutableMap().apply { put(postId, postComments) } }
             } catch (e: Exception) {
                 Log.e("PostsViewModel", "Ошибка загрузки комментариев: ${e.message}")
@@ -113,8 +111,8 @@ class PostsViewModel @Inject constructor(
         if (commentText.isBlank()) return
         viewModelScope.launch {
             try {
-                commentRepository.addPostComment(postId, CommentRequest(text = commentText))
-                val updatedComments = commentRepository.getPostComments(postId)
+                postRepository.addPostComment(postId, CommentRequest(text = commentText))
+                val updatedComments = postRepository.getPostComments(postId)
                 _comments.update { it.toMutableMap().apply { put(postId, updatedComments) } }
             } catch (e: Exception) {
                 Log.e("PostsViewModel", "Ошибка при добавлении комментария: ${e.message}")

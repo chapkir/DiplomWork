@@ -4,9 +4,10 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.api.ApiService
+import com.example.diplomwork.data.api.SpotApi
 
 class PictureFactoryPaging(
-    private val apiService: ApiService
+    private val api: SpotApi
 ) : PagingSource<Int, SpotResponse>() {
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, SpotResponse> {
@@ -15,7 +16,7 @@ class PictureFactoryPaging(
             val pageSize = params.loadSize
 
             // Запрос к серверу (без пагинации)
-            val response = apiService.getSpot()
+            val response = api.getSpot()
             val allPictures = response.shuffled()
 
             val fromIndex = page * pageSize

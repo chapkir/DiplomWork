@@ -2,16 +2,12 @@ package com.example.diplomwork.presentation.viewmodel
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.diplomwork.data.model.LocationResponse
-import com.example.diplomwork.data.model.SpotResponse
-import com.example.diplomwork.data.model.PostResponse
 import com.example.diplomwork.data.model.ProfileResponse
+import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.repos.FollowRepository
-import com.example.diplomwork.data.repos.LocationRepository
 import com.example.diplomwork.data.repos.ProfileRepository
 import com.example.diplomwork.util.ImageUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,7 +25,6 @@ import javax.inject.Inject
 class ProfileViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val profileRepository: ProfileRepository,
-    private val locationRepository: LocationRepository,
     private val followRepository: FollowRepository,
 ) : ViewModel() {
 
@@ -45,12 +40,6 @@ class ProfileViewModel @Inject constructor(
     private val _profilePictures = MutableStateFlow<List<SpotResponse>>(emptyList())
     val profilePictures: StateFlow<List<SpotResponse>> = _profilePictures
 
-    private val _spotLocations = MutableStateFlow<Map<Long, LocationResponse>>(emptyMap())
-    val spotLocations: StateFlow<Map<Long, LocationResponse>> = _spotLocations
-
-    private val _profilePosts = MutableStateFlow<List<PostResponse>>(emptyList())
-    val profilePosts: StateFlow<List<PostResponse>> = _profilePosts
-
     private val _followState = MutableStateFlow<FollowState>(FollowState.Idle)
     val followState: StateFlow<FollowState> = _followState.asStateFlow()
 
@@ -59,9 +48,6 @@ class ProfileViewModel @Inject constructor(
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading
-
-    private val _isLoadingPosts = MutableStateFlow(true)
-    val isLoadingPosts: StateFlow<Boolean> = _isLoadingPosts
 
     private val _isLoadingPictures = MutableStateFlow(true)
     val isLoadingPictures: StateFlow<Boolean> = _isLoadingPictures
@@ -72,8 +58,8 @@ class ProfileViewModel @Inject constructor(
     private val _isUploading = MutableStateFlow(false)
     val isUploading: StateFlow<Boolean> = _isUploading
 
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error
+    private val _error = MutableStateFlow(Errors())
+    val error: StateFlow<Errors> = _error
 
     private val _avatarUpdateCounter = MutableStateFlow(0)
     val avatarUpdateCounter: StateFlow<Int> = _avatarUpdateCounter
@@ -103,7 +89,7 @@ class ProfileViewModel @Inject constructor(
                     checkIfSubscribed(_userId)
                 }
             } catch (e: Exception) {
-                _error.value = "Ошибка при загрузке профиля"
+                _error.value = _error.value.copy(errorLoadProfile = "Ошибка при загрузке профиля")
             } finally {
                 _isLoading.value = false
             }
@@ -125,38 +111,10 @@ class ProfileViewModel @Inject constructor(
 
                 _profilePictures.value = pictures
 
-                val pictureIds = pictures.map { it.id }
-
-                val locations = mutableMapOf<Long, LocationResponse>()
-                for (id in pictureIds) {
-                    try {
-                        val location = locationRepository.getSpotLocation(id)
-                        locations[id] = location
-                    } catch (e: Exception) {
-                        _error.value = "Ошибка при загрузке мест"
-                    }
-                }
-
-                _spotLocations.value = locations
-
             } catch (e: Exception) {
-                _error.value = "Ошибка при загрузке мест"
+                _error.value = _error.value.copy(errorLoadSpots = "Ошибка при загрузке мест")
             } finally {
                 _isLoadingPictures.value = false
-            }
-        }
-    }
-
-    private fun loadProfilePosts() {
-        if (_profilePosts.value.isNotEmpty()) return
-        _isLoadingPosts.value = true
-        viewModelScope.launch {
-            try {
-                _profilePosts.value = profileRepository.getOwnProfilePosts()
-            } catch (e: Exception) {
-                _error.value = "Ошибка при загрузке постов пользователя"
-            } finally {
-                _isLoadingPosts.value = false
             }
         }
     }
@@ -176,10 +134,13 @@ class ProfileViewModel @Inject constructor(
                     _likedPictures.value = result.getOrNull() ?: emptyList()
 
                 } else {
-                    _error.value = "Ошибка при загрузке лайкнутых мест"
+                    _error.value = _error.value.copy(
+                        errorLoadLikes = "Ошибка при загрузке лайкнутых мест"
+                    )
                 }
             } catch (e: Exception) {
-                _error.value = "Ошибка при загрузке лайкнутых мест"
+                _error.value =
+                    _error.value.copy(errorLoadLikes = "Ошибка при загрузке лайкнутых мест")
             } finally {
                 _isLoadingLiked.value = false
             }
@@ -206,14 +167,19 @@ class ProfileViewModel @Inject constructor(
                         loadProfile()  // Загружаем обновленный профиль
                     } else {
                         val errorMessage = response.errorBody()?.string() ?: "Неизвестная ошибка"
-                        _error.value = "Ошибка при загрузке аватара: $errorMessage"
+                        _error.value = _error.value.copy(
+                            errorUploadAvatar = "Ошибка при загрузке аватара: $errorMessage"
+                        )
                     }
                 } else {
-                    _error.value = "Не удалось подготовить изображение"
+                    _error.value = _error.value.copy(
+                        errorUploadAvatar = "Не удалось подготовить изображение"
+                    )
                 }
             } catch (e: Exception) {
-                Log.e("ProfileViewModel", "Ошибка при загрузке аватара: ${e.message}")
-                _error.value = "Ошибка при загрузке аватара"
+                _error.value = _error.value.copy(
+                    errorUploadAvatar = "Ошибка при загрузке аватара"
+                )
             } finally {
                 _isUploading.value = false
             }
@@ -238,7 +204,8 @@ class ProfileViewModel @Inject constructor(
                         _isSubscribed.value = response.body() ?: false
                         _followState.value = FollowState.Success(isSubscribed = _isSubscribed.value)
                     } else {
-                        _followState.value = FollowState.Error("Ошибка при проверке подписки: ${response.code()}")
+                        _followState.value =
+                            FollowState.Error("Ошибка при проверке подписки: ${response.code()}")
                     }
                 }
             } catch (e: Exception) {
@@ -293,12 +260,6 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-
-    fun refreshPosts() {
-        _profilePosts.value = emptyList()
-        loadProfilePosts()
-    }
-
     fun refreshPictures() {
         _profilePictures.value = emptyList()
         loadProfilePictures()
@@ -309,15 +270,26 @@ class ProfileViewModel @Inject constructor(
         loadLikedPictures()
     }
 
-    private fun incrementFollowers() { _followersCount.update { it + 1 } }
+    private fun incrementFollowers() {
+        _followersCount.update { it + 1 }
+    }
 
-    private fun decrementFollowers() { _followersCount.update { (it - 1).coerceAtLeast(0) } }
+    private fun decrementFollowers() {
+        _followersCount.update { (it - 1).coerceAtLeast(0) }
+    }
 
 }
 
 sealed class FollowState {
-    object Idle : FollowState()
-    object Loading : FollowState()
+    data object Idle : FollowState()
+    data object Loading : FollowState()
     data class Success(val isSubscribed: Boolean) : FollowState()
     data class Error(val message: String) : FollowState()
 }
+
+data class Errors(
+    val errorLoadProfile: String? = null,
+    val errorLoadSpots: String? = null,
+    val errorLoadLikes: String? = null,
+    val errorUploadAvatar: String? = null
+)

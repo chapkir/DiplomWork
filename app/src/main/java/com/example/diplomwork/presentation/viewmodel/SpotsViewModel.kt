@@ -7,7 +7,7 @@ import androidx.paging.cachedIn
 import androidx.paging.map
 import com.example.diplomwork.data.model.LocationResponse
 import com.example.diplomwork.data.repos.LocationRepository
-import com.example.diplomwork.data.repos.PictureRepository
+import com.example.diplomwork.data.repos.SpotRepository
 import com.example.diplomwork.domain.usecase.DeletePictureUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -49,7 +49,7 @@ import javax.inject.Inject
 //
 //            try {
 //                val result = if (searchQuery.isNotEmpty()) {
-//                    pictureRepository.searchPictures(searchQuery, page = if (isRefreshing) 0 else currentPage, size = pageSize)
+//                    pictureRepository.searchSpots(searchQuery, page = if (isRefreshing) 0 else currentPage, size = pageSize)
 //                } else {
 //                    pictureRepository.getPictures()
 //                }
@@ -82,12 +82,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SpotsViewModel @Inject constructor(
-    private val pictureRepository: PictureRepository,
+    private val spotRepository: SpotRepository,
     private val locationRepository: LocationRepository,
     private val deletePictureUseCase: DeletePictureUseCase
 ) : ViewModel() {
 
-    private val currentUsername = pictureRepository.getCurrentUsername()
+    private val currentUsername = spotRepository.getCurrentUsername()
 
     private val _spotLocations = MutableStateFlow<Map<Long, LocationResponse>>(emptyMap())
     val spotLocations: StateFlow<Map<Long, LocationResponse>> = _spotLocations
@@ -98,7 +98,7 @@ class SpotsViewModel @Inject constructor(
     private val _deleteStatus = MutableSharedFlow<String>(replay = 0)
     val deleteStatus: SharedFlow<String> = _deleteStatus.asSharedFlow()
 
-    val picturesPagingFlow = pictureRepository.getPagingPictures()
+    val picturesPagingFlow = spotRepository.getPagingPictures()
         .map { pagingData ->
             pagingData.map { picture ->
                 picture.copy(

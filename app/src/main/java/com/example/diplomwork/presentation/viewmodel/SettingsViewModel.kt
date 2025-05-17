@@ -3,6 +3,7 @@ package com.example.diplomwork.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.diplomwork.data.repos.AuthRepository
+import com.example.diplomwork.data.repos.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,6 +14,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
+    private val userRepository: UserRepository,
     private val authRepository: AuthRepository,
 ) : ViewModel() {
 
@@ -45,7 +47,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _isDeleting.value = true
             try {
-                val response = authRepository.deleteAccount()
+                val response = userRepository.deleteAccount()
                 if (response.isSuccessful) {
                     _deleteResult.emit("Аккаунт успешно удалён")
 

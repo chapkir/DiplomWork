@@ -20,6 +20,10 @@ data class SpotResponse(
     val aspectRatio: Float?,
 
     val thumbnailImageUrl: String,
+
+    val latitude: Double?,
+    val longitude: Double?,
+    val placeName: String?
 )
 
 

@@ -7,6 +7,14 @@ import coil.memory.MemoryCache
 import coil.request.CachePolicy
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.data.api.ApiService
+import com.example.diplomwork.data.api.AuthApi
+import com.example.diplomwork.data.api.FollowApi
+import com.example.diplomwork.data.api.LocationApi
+import com.example.diplomwork.data.api.NotificationApi
+import com.example.diplomwork.data.api.PostApi
+import com.example.diplomwork.data.api.ProfileApi
+import com.example.diplomwork.data.api.SpotApi
+import com.example.diplomwork.data.api.UserApi
 import com.example.diplomwork.data.interceptors.AuthInterceptor
 import com.example.diplomwork.data.interceptors.CorsInterceptor
 import com.example.diplomwork.data.interceptors.LoggingInterceptor
@@ -68,10 +76,30 @@ object AppModule {
     }
 
     @Provides
-    @Singleton
-    fun provideApiService(retrofit: Retrofit): ApiService {
-        return retrofit.create(ApiService::class.java)
-    }
+    fun provideAuthApi(retrofit: Retrofit): AuthApi = retrofit.create(AuthApi::class.java)
+
+    @Provides
+    fun provideProfileApi(retrofit: Retrofit): ProfileApi = retrofit.create(ProfileApi::class.java)
+
+    @Provides
+    fun provideSpotApi(retrofit: Retrofit): SpotApi = retrofit.create(SpotApi::class.java)
+
+    @Provides
+    fun providePostApi(retrofit: Retrofit): PostApi = retrofit.create(PostApi::class.java)
+
+    @Provides
+    fun provideFollowApi(retrofit: Retrofit): FollowApi = retrofit.create(FollowApi::class.java)
+
+    @Provides
+    fun provideLocationApi(retrofit: Retrofit): LocationApi =
+        retrofit.create(LocationApi::class.java)
+
+    @Provides
+    fun provideUserApi(retrofit: Retrofit): UserApi = retrofit.create(UserApi::class.java)
+
+    @Provides
+    fun provideNotificationApi(retrofit: Retrofit): NotificationApi =
+        retrofit.create(NotificationApi::class.java)
 
     @Provides
     @Singleton

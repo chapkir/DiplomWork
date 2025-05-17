@@ -19,13 +19,14 @@ class SessionManager @Inject constructor(@ApplicationContext context: Context) {
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
     companion object {
-        private const val PREF_NAME = "app_session"
+        private const val PREF_NAME = "spotsy_session"
         private const val KEY_TOKEN = "auth_token"
         private const val KEY_REFRESH_TOKEN = "refresh_token"
         private const val KEY_EXPIRATION = "token_expiration"
         private const val KEY_SERVER_URL = "server_url"
         private const val KEY_USERNAME = "username"
         private const val KEY_USERID = "userId"
+        private const val KEY_PENDING_FCM_TOKEN = "pending_fcm_token"
 
         private const val TAG = "SessionManager"
         private const val DEFAULT_SERVER_URL = AppConstants.BASE_URL
@@ -140,6 +141,18 @@ class SessionManager @Inject constructor(@ApplicationContext context: Context) {
         username = claims?.username
         userId = claims?.sub
         Log.d(TAG, "Токены обновлены через saveTokens")
+    }
+
+    fun savePendingFcmToken(token: String) {
+        prefs.edit() { putString(KEY_PENDING_FCM_TOKEN, token) }
+    }
+
+    fun getPendingFcmToken(): String? {
+        return prefs.getString(KEY_PENDING_FCM_TOKEN, null)
+    }
+
+    fun clearPendingFcmToken() {
+        prefs.edit() { remove(KEY_PENDING_FCM_TOKEN) }
     }
 }
 

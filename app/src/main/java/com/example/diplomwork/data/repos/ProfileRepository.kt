@@ -5,6 +5,7 @@ import com.example.diplomwork.data.model.EditProfileRequest
 import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.model.ProfileResponse
 import com.example.diplomwork.data.api.ApiService
+import com.example.diplomwork.data.api.ProfileApi
 import com.example.diplomwork.data.model.PostResponse
 import dagger.hilt.android.scopes.ActivityScoped
 import okhttp3.MultipartBody
@@ -13,36 +14,36 @@ import javax.inject.Inject
 
 @ActivityScoped
 class ProfileRepository @Inject constructor(
-    private val apiService: ApiService,
+    private val api: ProfileApi,
     private val sessionManager: SessionManager
 ) {
 
     suspend fun getOwnProfile(): ProfileResponse {
-        return apiService.getOwnProfile()
+        return api.getOwnProfile()
     }
 
     suspend fun getProfileById(userId: Long?): ProfileResponse {
-        return apiService.getProfileById(userId)
+        return api.getProfileById(userId)
     }
 
     suspend fun getOwnProfilePictures(): List<SpotResponse> {
-        return apiService.getOwnProfilePictures()
+        return api.getOwnProfilePictures()
     }
 
     suspend fun getOtherProfilePictures(userId: Long): List<SpotResponse> {
-        return apiService.getOtherProfilePictures(userId)
+        return api.getOtherProfilePictures(userId)
     }
 
     suspend fun getOwnProfilePosts(): List<PostResponse> {
-        return apiService.getOwnProfilePosts()
+        return api.getOwnProfilePosts()
     }
 
     suspend fun uploadProfileImage(image: MultipartBody.Part): Response<Map<String, String>> {
-        return apiService.uploadProfileImage(image)
+        return api.uploadProfileImage(image)
     }
 
     suspend fun editProfile(editProfileRequest: EditProfileRequest) {
-        return apiService.editProfile(editProfileRequest)
+        return api.editProfile(editProfileRequest)
     }
 
     fun getOwnUsername(): String {
@@ -59,7 +60,7 @@ class ProfileRepository @Inject constructor(
 
     suspend fun getOwnLikedPictures(): Result<List<SpotResponse>> {
         return try {
-            val response = apiService.getOwnLikedPictures()
+            val response = api.getOwnLikedPictures()
             Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)
@@ -68,7 +69,7 @@ class ProfileRepository @Inject constructor(
 
     suspend fun getOtherLikedPictures(userId: Long): Result<List<SpotResponse>> {
         return try {
-            val response = apiService.getOtherLikedPictures(userId)
+            val response = api.getOtherLikedPictures(userId)
             Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)

@@ -3,14 +3,12 @@ package com.example.diplomwork.presentation.viewmodel
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
-import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.diplomwork.data.model.LocationRequest
-import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.repos.LocationRepository
-import com.example.diplomwork.data.repos.UploadRepository
+import com.example.diplomwork.data.repos.SpotRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,7 +23,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CreateSpotViewModel @Inject constructor(
-    private val uploadRepository: UploadRepository,
+    private val spotRepository: SpotRepository,
     private val locationRepository: LocationRepository,
     @ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle,
@@ -43,10 +41,12 @@ class CreateSpotViewModel @Inject constructor(
         val rating: String = "1"
     )
 
-    private val _createSpotData = MutableStateFlow(CreateSpotData(
-        geo = "$_latitude, $_longitude",
-        spotName = _spotName
-    ))
+    private val _createSpotData = MutableStateFlow(
+        CreateSpotData(
+            geo = "$_latitude, $_longitude",
+            spotName = _spotName
+        )
+    )
     val createSpotData: StateFlow<CreateSpotData> = _createSpotData
 
     private val _isLoading = MutableStateFlow(false)
@@ -83,7 +83,7 @@ class CreateSpotViewModel @Inject constructor(
                 val ratingBody = _createSpotData.value.rating
                     .toRequestBody("text/plain".toMediaTypeOrNull())
 
-                val response = uploadRepository.uploadSpot(
+                val response = spotRepository.uploadSpot(
                     files = parts,
                     title = titleBody,
                     description = descriptionBody,

@@ -15,9 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -45,13 +42,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
-import com.example.diplomwork.data.model.LocationResponse
 import com.example.diplomwork.data.model.SpotResponse
-import com.example.diplomwork.data.model.PostResponse
 import com.example.diplomwork.presentation.ui.components.CustomTabPager
-import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
-import com.example.diplomwork.presentation.ui.components.PictureCard
 import com.example.diplomwork.presentation.ui.components.SpotsCard
 import com.example.diplomwork.presentation.viewmodel.ProfileViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
@@ -68,14 +61,11 @@ fun ProfileScreen(
     val context = LocalContext.current
     val profileData by profileViewModel.profileData.collectAsState()
     val followersCount by profileViewModel.followersCount.collectAsState()
-    val spotLocation by profileViewModel.spotLocations.collectAsState()
     val followState by profileViewModel.followState.collectAsState()
     val profilePictures by profileViewModel.profilePictures.collectAsState()
-    val profilePosts by profileViewModel.profilePosts.collectAsState()
     val likedPictures by profileViewModel.likedPictures.collectAsState()
     val isLoading by profileViewModel.isLoading.collectAsState()
 
-    val isLoadingPosts by profileViewModel.isLoadingPosts.collectAsState()
     val isLoadingPictures by profileViewModel.isLoadingPictures.collectAsState()
     val isLoadingLiked by profileViewModel.isLoadingLiked.collectAsState()
 
@@ -94,7 +84,6 @@ fun ProfileScreen(
 
     LaunchedEffect(pagerState.currentPage) {
         when (pagerState.currentPage) {
-            //0 -> profileViewModel.loadProfilePosts()
             0 -> profileViewModel.loadProfilePictures()
             1 -> profileViewModel.loadLikedPictures()
         }
@@ -107,7 +96,6 @@ fun ProfileScreen(
     PullToRefreshBox(
         isRefreshing =
             when (pagerState.currentPage) {
-                //0 -> isLoadingPosts
                 0 -> isLoadingPictures
                 1 -> isLoadingLiked
                 else -> isLoading
@@ -115,7 +103,6 @@ fun ProfileScreen(
         onRefresh = {
             isRefreshing = true
             when (pagerState.currentPage) {
-                //0 -> profileViewModel.refreshPosts()
                 0 -> profileViewModel.refreshPictures()
                 1 -> profileViewModel.refreshLikesPictures()
             }
@@ -126,7 +113,6 @@ fun ProfileScreen(
                 modifier = Modifier.align(Alignment.TopCenter),
                 isRefreshing =
                     when (pagerState.currentPage) {
-                        //0 -> isLoadingPosts
                         0 -> isLoadingPictures
                         1 -> isLoadingLiked
                         else -> isLoading
@@ -193,7 +179,12 @@ fun ProfileScreen(
             }
             when {
                 isLoading -> LoadingSpinnerForScreen()
-                error != null -> ErrorScreen(error) { profileViewModel.loadLikedPictures() }
+
+                error.errorLoadProfile != null ->
+                    ErrorScreen(error.errorLoadProfile) {
+                        profileViewModel.loadLikedPictures()
+                    }
+
                 profileData != null -> {
                     ProfileHeader(
                         userId = profileData?.id ?: 0L,
@@ -219,22 +210,20 @@ fun ProfileScreen(
                         lineOffset = 2.25
                     ) { page ->
                         when (page) {
-                            //0 -> PostsGrid(profilePosts, isLoadingPosts)
                             0 -> PicturesGrid(
                                 spots = profilePictures,
-                                spotLocation = spotLocation,
                                 onPictureClick = onImageClick,
                                 isLoading = isLoadingPictures,
-                                emptyMessage = "Нет добавленных мест"
+                                emptyMessage = "Нет добавленных мест",
+                                isError = error.errorLoadSpots
                             )
 
                             1 -> PicturesGrid(
                                 spots = likedPictures,
-                                spotLocation = spotLocation,
                                 onPictureClick = onImageClick,
                                 isLoading = isLoadingLiked,
-                                emptyMessage = "Нет лайкнутых мест"
-
+                                emptyMessage = "Нет лайкнутых мест",
+                                isError = error.errorLoadLikes
                             )
                         }
                     }
@@ -252,8 +241,8 @@ private fun ErrorScreen(error: String?, onRetry: () -> Unit) {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Ошибка загрузки: $error",
-                color = Color.White,
+                text = error ?: "Ошибка загрузки",
+                color = MaterialTheme.colorScheme.error,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -265,79 +254,65 @@ private fun ErrorScreen(error: String?, onRetry: () -> Unit) {
 @Composable
 private fun PicturesGrid(
     spots: List<SpotResponse>,
-    spotLocation: Map<Long, LocationResponse>,
     onPictureClick: (Long) -> Unit,
     isLoading: Boolean,
-    emptyMessage: String
+    emptyMessage: String,
+    isError: String? = null
 ) {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        if (spots.isEmpty() && !isLoading) {
-            Text(
-                text = emptyMessage,
-                fontSize = 16.sp,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.align(Alignment.Center)
-            )
-        } else {
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = 5.dp)
-            ) {
-                items(spots.size) { index ->
-                    spots[index].let { spot ->
-                        val location = spotLocation[spot.id]
-                        SpotsCard(
-                            imageUrl = spot.thumbnailImageUrl,
-                            username = spot.username,
-                            title = spot.title,
-                            description = spot.description,
-                            userId = spot.userId,
-                            latitude = location?.latitude ?: 0.0,
-                            longitude = location?.longitude ?: 0.0,
-                            rating = spot.rating,
-                            aspectRatio = spot.aspectRatio ?: 1f,
-                            userProfileImageUrl = spot.userProfileImageUrl,
-                            id = spot.id,
-                            isCurrentUserOwner = spot.isCurrentUserOwner,
-                            onSpotClick = { onPictureClick(spot.id) },
-                            screenName = "Profile"
-                        )
+        when {
+            (spots.isEmpty() && !isLoading) -> {
+                Text(
+                    text = emptyMessage,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
+            (isError != null) -> {
+                Text(
+                    text = isError,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
+            else -> {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = 5.dp)
+                ) {
+                    items(spots.size) { index ->
+                        spots[index].let { spot ->
+                            SpotsCard(
+                                imageUrl = spot.thumbnailImageUrl,
+                                username = spot.username,
+                                title = spot.title,
+                                description = spot.description,
+                                userId = spot.userId,
+                                latitude = spot.latitude ?: 0.0,
+                                longitude = spot.longitude ?: 0.0,
+                                rating = spot.rating,
+                                aspectRatio = spot.aspectRatio ?: 1f,
+                                userProfileImageUrl = spot.userProfileImageUrl,
+                                id = spot.id,
+                                isCurrentUserOwner = spot.isCurrentUserOwner,
+                                onSpotClick = { onPictureClick(spot.id) },
+                                screenName = "Profile"
+                            )
+                        }
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun PostsGrid(
-    posts: List<PostResponse>,
-    isLoading: Boolean
-) {
-    LazyVerticalStaggeredGrid(
-        columns = StaggeredGridCells.Fixed(3),
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        itemsIndexed(items = posts, key = { _, post -> post.id }) { _, post ->
-            if (isLoading) LoadingSpinnerForElement()
-            else
-                PictureCard(
-                    imageUrl = post.imageUrl!!,
-                    username = post.username,
-                    userProfileImageUrl = post.userAvatar,
-                    id = post.id,
-                    aspectRatio = 1f,
-                    onPictureClick = { },
-                    contentPadding = 3,
-                    screenName = "Profile"
-                )
         }
     }
 }

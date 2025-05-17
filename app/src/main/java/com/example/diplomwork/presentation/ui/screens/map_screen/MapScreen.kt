@@ -78,7 +78,7 @@ private fun hideKeyboard(context: Context) {
 @Composable
 fun MapScreen(
     viewModel: MapViewModel = hiltViewModel(),
-    onLocationSelected: (String?, String?, Double, Double) -> Unit,
+    onLocationSelected: (String?, Double, Double) -> Unit,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -130,13 +130,23 @@ fun MapScreen(
 
                 // 📌 Маркер найденного места
                 searchResultPoint?.let {
-                    val icon = getResizedImageProvider(context, R.drawable.ic_marker_png, 64, 64)
+                    val icon = getResizedImageProvider(
+                        context,
+                        R.drawable.ic_marker_png,
+                        76,
+                        76,
+                    )
                     view.map.mapObjects.addPlacemark(it).setIcon(icon)
                 }
 
                 // 📍 Маркер текущей геопозиции пользователя
                 userLocation?.let {
-                    val icon = getResizedImageProvider(context, R.drawable.ic_navigation_png, 76, 76)
+                    val icon = getResizedImageProvider(
+                        context,
+                        R.drawable.ic_navigation_png,
+                        76,
+                        76,
+                    )
                     view.map.mapObjects.addPlacemark(it).setIcon(icon)
                 }
             },
@@ -275,7 +285,6 @@ fun MapScreen(
                         onClick = {
                             onLocationSelected(
                                 searchResultName,
-                                searchResultAddress,
                                 it.latitude,
                                 it.longitude
                             )

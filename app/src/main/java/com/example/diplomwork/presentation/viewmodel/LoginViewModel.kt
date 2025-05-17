@@ -16,8 +16,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val authRepository: AuthRepository,
-    private val sessionManager: SessionManager
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _username = MutableStateFlow("")
@@ -48,11 +47,9 @@ class LoginViewModel @Inject constructor(
             _loginSuccess.value = null
 
             try {
-                val response = authRepository.login(
+                authRepository.login(
                     LoginRequest(_username.value, _password.value)
                 )
-
-                sessionManager.saveAuthData(response.token, response.refreshToken)
 
                 _loginSuccess.value = true
             } catch (e: Exception) {
@@ -62,9 +59,7 @@ class LoginViewModel @Inject constructor(
                         500 -> "Неверный логин или пароль"
                         else -> "Ошибка ${e.code()}: ${e.message()}"
                     }
-
                     is IOException -> "Ошибка внутреннего сервера"
-
                     else -> "Неизвестная ошибка: ${e.localizedMessage}"
                 }
 

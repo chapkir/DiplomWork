@@ -66,19 +66,13 @@ fun AppNavigation(navController: NavHostController) {
         )
 
     val showBottomBar = currentRoute.let { route ->
-        visibleScreens.any() { it != null && route.startsWith(it) }
+        visibleScreens.any { it != null && route.startsWith(it) }
     }
 
     val coroutineScope = rememberCoroutineScope()
 
     val whatCreateSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val openSheet = { coroutineScope.launch { whatCreateSheetState.show() } }
-
-    fun showFunInDevSnackbar() {
-        coroutineScope.launch {
-            snackbarHostState.showSnackbar("Упс. Извините, функция находится в разработке.")
-        }
-    }
 
     Scaffold(
         topBar = { GetTopBars(currentRoute = currentRoute) },
@@ -234,7 +228,7 @@ fun AppNavigation(navController: NavHostController) {
 
             composable<Map> {
                 MapScreen(
-                    onLocationSelected = { spotName, spotAddress, latitude, longitude ->
+                    onLocationSelected = { spotName, latitude, longitude ->
                         val data = GalleryScreenData(
                             spotName = spotName,
                             latitude = latitude,
@@ -331,12 +325,7 @@ fun NavGraphBuilder.settingsNavGraph(navController: NavController) {
             )
         }
 
-        composable<Licenses> { backStackEntry ->
-            val parentEntry = remember(backStackEntry) {
-                navController.getBackStackEntry("settings_root")
-            }
-            val viewModel: SettingsViewModel = hiltViewModel(parentEntry)
-
+        composable<Licenses> {
             LicensesScreen(
                 onBack = { navController.popBackStack() },
             )
