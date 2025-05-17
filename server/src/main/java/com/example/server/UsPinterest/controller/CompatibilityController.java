@@ -7,6 +7,9 @@ import com.example.server.UsPinterest.model.User;
 import com.example.server.UsPinterest.repository.PinRepository;
 import com.example.server.UsPinterest.service.PinService;
 import com.example.server.UsPinterest.service.UserService;
+import com.example.server.UsPinterest.repository.PictureRepository;
+import com.example.server.UsPinterest.service.FileStorageService;
+import com.example.server.UsPinterest.model.Picture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +36,8 @@ public class CompatibilityController {
     private final PinService pinService;
     private final PinRepository pinRepository;
     private final UserService userService;
+    private final PictureRepository pictureRepository;
+    private final FileStorageService fileStorageService;
 
     @GetMapping("/api/pins/compat/all")
     @Transactional(readOnly = true)
@@ -70,6 +75,16 @@ public class CompatibilityController {
             Pin pin = pinService.getPinWithLikesAndComments(id);
 
             PinResponse pinResponse = pinService.convertToPinResponse(pin, currentUser);
+            // Добавляем список FullHD изображений из таблицы Picture
+            pictureRepository.findByPinId(id).ifPresent(pic -> {
+                List<String> fullhdImages = new ArrayList<>();
+                if (pic.getFullhdImageUrl1() != null) fullhdImages.add(fileStorageService.updateImageUrl(pic.getFullhdImageUrl1()));
+                if (pic.getFullhdImageUrl2() != null) fullhdImages.add(fileStorageService.updateImageUrl(pic.getFullhdImageUrl2()));
+                if (pic.getFullhdImageUrl3() != null) fullhdImages.add(fileStorageService.updateImageUrl(pic.getFullhdImageUrl3()));
+                if (pic.getFullhdImageUrl4() != null) fullhdImages.add(fileStorageService.updateImageUrl(pic.getFullhdImageUrl4()));
+                if (pic.getFullhdImageUrl5() != null) fullhdImages.add(fileStorageService.updateImageUrl(pic.getFullhdImageUrl5()));
+                pinResponse.setFullhdImages(fullhdImages);
+            });
             return ResponseEntity.ok(pinResponse);
 
         } catch (ResourceNotFoundException e) {

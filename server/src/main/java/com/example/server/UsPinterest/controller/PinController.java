@@ -107,7 +107,7 @@ public class PinController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping({"/detail/{id}", "{id}"})
+    @GetMapping("/detail/{id}")
     public ResponseEntity<?> getPinById(@PathVariable Long id, Authentication authentication) {
         // Используем сервис для получения пина с комментариями и лайками
         Pin pin = pinQueryService.getPinWithLikesAndComments(id);

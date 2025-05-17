@@ -15,6 +15,8 @@ import com.example.server.UsPinterest.repository.UserRepository;
 import com.example.server.UsPinterest.repository.LikeRepository;
 import com.example.server.UsPinterest.repository.PostRepository;
 import com.example.server.UsPinterest.repository.FollowRepository;
+import com.example.server.UsPinterest.repository.LocationRepository;
+import com.example.server.UsPinterest.model.Location;
 import com.example.server.UsPinterest.service.BoardService;
 import com.example.server.UsPinterest.service.PinService;
 import com.example.server.UsPinterest.service.UserService;
@@ -56,6 +58,7 @@ public class ProfileController {
     private final PinService pinService;
     private final UserRepository userRepository;
     private final PinRepository pinRepository;
+    private final LocationRepository locationRepository;
     private final LikeRepository likeRepository;
     private final PostRepository postRepository;
     private final FollowRepository followRepository;
@@ -179,6 +182,15 @@ public class ProfileController {
                 if (thumb1 != null && !thumb1.isEmpty()) {
                     dto.setThumbnailImageUrl(fileStorageService.updateImageUrl(thumb1));
                 }
+            }
+            // Добавляем локацию из таблицы locations
+            List<Location> locations = locationRepository.findByPinId(pin.getId());
+            if (!locations.isEmpty()) {
+                Location loc = locations.get(0);
+                dto.setLatitude(loc.getLatitude());
+                dto.setLongitude(loc.getLongitude());
+                dto.setAddress(loc.getAddress());
+                dto.setPlaceName(loc.getNameplace());
             }
             return dto;
         }).collect(Collectors.toList());

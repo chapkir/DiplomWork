@@ -552,8 +552,14 @@ function loadImage(img) {
 
 // Оптимизированная функция загрузки постов
 async function loadPosts(append = false) {
+    const container = DOM.postsFeed;
+    if (!container) {
+        console.error('Posts container not found');
+        hideLoader();
+        return;
+    }
     if (!append) {
-        DOM.postsFeed.innerHTML = '';
+        container.innerHTML = '';
         state.postNextCursor = null;
         if (DOM.loadMorePosts) DOM.loadMorePosts.style.display = 'none';
     }
@@ -564,10 +570,10 @@ async function loadPosts(append = false) {
         const url = `/api/posts/cursor?size=${PAGINATION.POST_PAGE_SIZE}${state.postNextCursor ? `&cursor=${encodeURIComponent(state.postNextCursor)}` : ''}`;
         const data = await API.fetch(url);
         
-        if (!append) DOM.postsFeed.innerHTML = '';
+        if (!append) container.innerHTML = '';
         
         if (!data.content || data.content.length === 0) {
-            DOM.postsFeed.innerHTML = createEmptyMessage('Посты не найдены');
+            container.innerHTML = createEmptyMessage('Посты не найдены');
             return;
         }
 
@@ -583,14 +589,14 @@ async function loadPosts(append = false) {
             fragment.appendChild(card);
         });
 
-        DOM.postsFeed.appendChild(fragment);
+        container.appendChild(fragment);
         state.postNextCursor = data.nextCursor;
         
         if (DOM.loadMorePosts) {
             DOM.loadMorePosts.style.display = data.hasNext ? 'block' : 'none';
         }
     } catch (error) {
-        DOM.postsFeed.innerHTML = createErrorMessage(error.message);
+        container.innerHTML = createErrorMessage(error.message);
     } finally {
         hideLoader();
     }

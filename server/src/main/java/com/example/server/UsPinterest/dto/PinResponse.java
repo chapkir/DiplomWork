@@ -33,7 +33,7 @@ public class PinResponse {
     private Double latitude;
     private Double longitude;
     private String address;
-    @JsonProperty("placeName")
+    @JsonProperty("namePlace")
     private String placeName;
     // Список FullHD изображений, связанных с пином
     private java.util.List<String> fullhdImages;

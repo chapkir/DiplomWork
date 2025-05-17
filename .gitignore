@@ -64,3 +64,6 @@ Thumbs.db
 
 # Добавляю сервисный аккаунт Firebase
 /server/src/main/resources/spotsy-chapkir-firebase-adminsdk-fbsvc-80eaac74b9.json
+
+# Добавляю сервисный аккаунт Firebase
+/server/src/main/resources/spotsy-chapkir-firebase-adminsdk-fbsvc-80eaac74b9.json
