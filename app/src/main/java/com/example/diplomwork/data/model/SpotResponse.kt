@@ -1,6 +1,6 @@
 package com.example.diplomwork.data.model
 
-data class PictureResponse(
+data class SpotResponse(
 
     val id: Long,
 

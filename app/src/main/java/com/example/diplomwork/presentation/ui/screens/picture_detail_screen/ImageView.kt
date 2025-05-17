@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -24,11 +23,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForElement
 
@@ -46,7 +45,7 @@ fun ImageView(
     var displayUrl = imageRes
 
     Card(
-        shape = RoundedCornerShape(30.dp),
+        shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(15.dp),
         modifier = Modifier.padding(start = 7.dp, end = 7.dp)
     ) {
@@ -54,7 +53,7 @@ fun ImageView(
             modifier = Modifier
                 .aspectRatio(aspectRatio)
                 .graphicsLayer { clip = true }
-                .clip(RoundedCornerShape(30.dp))
+                .clip(RoundedCornerShape(16.dp))
         ) {
 
             Box(
@@ -71,7 +70,12 @@ fun ImageView(
                     .blur(50.dp)
             )
             AsyncImage(
-                model = ImageRequest.Builder(context).data(displayUrl).crossfade(true).build(),
+                model = ImageRequest.Builder(context)
+                    .data(displayUrl)
+                    .crossfade(true)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .build(),
                 contentDescription = null,
                 onState = { state ->
                     isLoading = state is AsyncImagePainter.State.Loading

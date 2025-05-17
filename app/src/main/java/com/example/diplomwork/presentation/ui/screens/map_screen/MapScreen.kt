@@ -90,8 +90,6 @@ fun MapScreen(
     val searchResultName by viewModel.searchResultName.collectAsState()
     val searchResultAddress by viewModel.searchResultAddress.collectAsState()
 
-
-    // Инициализация MapKit
     DisposableEffect(Unit) {
         MapKitFactory.initialize(context)
         val observer = LifecycleEventObserver { _, event ->
@@ -120,99 +118,121 @@ fun MapScreen(
             update = { view ->
                 view.map.mapObjects.clear()
 
-                val center = searchResultPoint ?: Point(59.938784, 30.314997)
-                view.map.move(CameraPosition(center, 9.5f, 0f, 0f))
+                val cameraPosition = if (searchResultPoint != null) {
+                    // 🔍 Если был поиск — приблизить и наклонить
+                    CameraPosition(searchResultPoint!!, 15f, 0f, 60f)
+                } else {
+                    // 🏙 Изначально — вид на центр Петербурга, вид сверху
+                    CameraPosition(Point(59.938784, 30.314997), 10f, 0f, 0f)
+                }
 
+                view.map.move(cameraPosition)
+
+                // 📌 Маркер найденного места
                 searchResultPoint?.let {
                     val icon = getResizedImageProvider(context, R.drawable.ic_marker_png, 64, 64)
                     view.map.mapObjects.addPlacemark(it).setIcon(icon)
                 }
 
+                // 📍 Маркер текущей геопозиции пользователя
                 userLocation?.let {
-                    val icon =
-                        getResizedImageProvider(context, R.drawable.ic_navigation_png, 76, 76)
+                    val icon = getResizedImageProvider(context, R.drawable.ic_navigation_png, 76, 76)
                     view.map.mapObjects.addPlacemark(it).setIcon(icon)
                 }
             },
             modifier = Modifier.fillMaxSize()
         )
 
-        Row(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { viewModel.updateSearchQuery(it) },
-                leadingIcon = {
-                    IconButton(
-                        onClick = { onBack() },
-                        modifier = Modifier
-                            .size(36.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_arrow_left),
-                            contentDescription = "OnBack",
-                            tint = Color.White
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 17.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { viewModel.updateSearchQuery(it) },
+                    leadingIcon = {
+                        IconButton(
+                            onClick = { onBack() },
+                            modifier = Modifier
+                                .size(36.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_arrow_left),
+                                contentDescription = "OnBack",
+                                tint = Color.White
+                            )
+                        }
+                    },
+                    placeholder = {
+                        Text(
+                            text = "Введите адрес или название",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Normal
                         )
-                    }
-                },
-                placeholder = {
-                    Text(
-                        text = "Введите адрес или название",
+                    },
+                    trailingIcon = {
+                        IconButton(
+                            onClick = {
+                                hideKeyboard(context)
+                                viewModel.searchPlace()
+                            },
+                            modifier = Modifier.padding(end = 5.dp),
+                            colors = IconButtonDefaults.iconButtonColors(
+                                contentColor = Color.White
+                            )
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_search),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(20.dp)
+                            )
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(0.95f),
+                    textStyle = TextStyle(
                         fontSize = 16.sp,
-                        fontWeight = FontWeight.Normal
-                    )
-                },
-                trailingIcon = {
-                    IconButton(
-                        onClick = {
+                        fontWeight = FontWeight.Normal,
+                        color = Color.White
+                    ),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = BgElevated.copy(alpha = 0.85f),
+                        unfocusedContainerColor = BgElevated.copy(alpha = 0.85f),
+                        focusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent,
+                        errorBorderColor = ErrorColor,
+                        focusedPlaceholderColor = Color.White,
+                        unfocusedPlaceholderColor = Color.White,
+                        errorLabelColor = ErrorColor,
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        cursorColor = Color.White,
+                    ),
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(
+                        onSearch = {
                             hideKeyboard(context)
                             viewModel.searchPlace()
-                        },
-                        modifier = Modifier.padding(end = 5.dp),
-                        colors = IconButtonDefaults.iconButtonColors(
-                            contentColor = Color.White
-                        )
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_search),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(20.dp)
-                        )
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(0.95f),
-                textStyle = TextStyle(
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = Color.White
-                ),
-                shape = RoundedCornerShape(18.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = BgElevated.copy(alpha = 0.85f),
-                    unfocusedContainerColor = BgElevated.copy(alpha = 0.85f),
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent,
-                    errorBorderColor = ErrorColor,
-                    focusedPlaceholderColor = Color.White,
-                    unfocusedPlaceholderColor = Color.White,
-                    errorLabelColor = ErrorColor,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    cursorColor = Color.White,
-                ),
-                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(
-                    onSearch = {
-                        hideKeyboard(context)
-                        viewModel.searchPlace()
-                    }
+                        }
+                    )
                 )
+            }
+            Text(
+                text = "Чтобы отобразить карту коснитесь экрана",
+                modifier = Modifier.padding(horizontal = 12.dp),
+                color = BgElevated.copy(alpha = 0.85f),
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp
             )
         }
 

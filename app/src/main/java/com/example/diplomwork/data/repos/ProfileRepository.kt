@@ -2,7 +2,7 @@ package com.example.diplomwork.data.repos
 
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.data.model.EditProfileRequest
-import com.example.diplomwork.data.model.PictureResponse
+import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.model.ProfileResponse
 import com.example.diplomwork.data.api.ApiService
 import com.example.diplomwork.data.model.PostResponse
@@ -25,11 +25,11 @@ class ProfileRepository @Inject constructor(
         return apiService.getProfileById(userId)
     }
 
-    suspend fun getOwnProfilePictures(): List<PictureResponse> {
+    suspend fun getOwnProfilePictures(): List<SpotResponse> {
         return apiService.getOwnProfilePictures()
     }
 
-    suspend fun getOtherProfilePictures(userId: Long): List<PictureResponse> {
+    suspend fun getOtherProfilePictures(userId: Long): List<SpotResponse> {
         return apiService.getOtherProfilePictures(userId)
     }
 
@@ -57,7 +57,7 @@ class ProfileRepository @Inject constructor(
         return sessionManager.isLoggedIn()
     }
 
-    suspend fun getOwnLikedPictures(): Result<List<PictureResponse>> {
+    suspend fun getOwnLikedPictures(): Result<List<SpotResponse>> {
         return try {
             val response = apiService.getOwnLikedPictures()
             Result.success(response)
@@ -66,7 +66,7 @@ class ProfileRepository @Inject constructor(
         }
     }
 
-    suspend fun getOtherLikedPictures(userId: Long): Result<List<PictureResponse>> {
+    suspend fun getOtherLikedPictures(userId: Long): Result<List<SpotResponse>> {
         return try {
             val response = apiService.getOtherLikedPictures(userId)
             Result.success(response)

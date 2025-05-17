@@ -30,7 +30,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.example.diplomwork.data.model.PictureResponse
+import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.presentation.ui.components.PictureCard
 import com.example.diplomwork.presentation.viewmodel.SpotsViewModel
@@ -224,10 +224,10 @@ fun PicturesScreen(
 @Composable
 fun PagingContentGrid(
     modifier: Modifier = Modifier,
-    onImageClick: (PictureResponse) -> Unit,
+    onImageClick: (SpotResponse) -> Unit,
     onProfileClick: (Long, String) -> Unit,
     onPictureDelete: (Long) -> Unit,
-    pictures: LazyPagingItems<PictureResponse>
+    pictures: LazyPagingItems<SpotResponse>
 ) {
     val loadState = pictures.loadState
     val isRefreshing = loadState.refresh is LoadState.Loading

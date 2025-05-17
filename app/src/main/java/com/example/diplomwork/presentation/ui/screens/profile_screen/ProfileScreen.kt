@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
 import com.example.diplomwork.data.model.LocationResponse
-import com.example.diplomwork.data.model.PictureResponse
+import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.model.PostResponse
 import com.example.diplomwork.presentation.ui.components.CustomTabPager
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForElement
@@ -264,7 +264,7 @@ private fun ErrorScreen(error: String?, onRetry: () -> Unit) {
 
 @Composable
 private fun PicturesGrid(
-    spots: List<PictureResponse>,
+    spots: List<SpotResponse>,
     spotLocation: Map<Long, LocationResponse>,
     onPictureClick: (Long) -> Unit,
     isLoading: Boolean,

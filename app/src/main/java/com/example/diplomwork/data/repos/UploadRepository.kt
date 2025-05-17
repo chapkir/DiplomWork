@@ -2,7 +2,7 @@ package com.example.diplomwork.data.repos
 
 import com.example.diplomwork.data.api.ApiService
 import com.example.diplomwork.data.model.ApiResponseWrapper
-import com.example.diplomwork.data.model.PictureResponse
+import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.model.PostResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -20,7 +20,7 @@ class UploadRepository @Inject constructor(
         title: RequestBody,
         description: RequestBody,
         rating: RequestBody,
-    ): Response<ApiResponseWrapper<List<PictureResponse>>> {
+    ): Response<ApiResponseWrapper<SpotResponse>> {
         return apiService.uploadSpot(
             files = files,
             title = title,
