@@ -90,6 +90,7 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0")
     implementation("org.springframework.boot:spring-boot-starter-websocket")
     implementation("org.springframework.boot:spring-boot-starter-mail")
+    implementation("com.google.firebase:firebase-admin:9.1.1")
 }
 
 tasks.test {

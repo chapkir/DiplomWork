@@ -7,7 +7,7 @@ public class LocationRequest {
     private Long pictureId;
     private Double latitude;
     private Double longitude;
-    @JsonProperty("namePlace")
+    @JsonProperty("placeName")
     private String placeName;
 
     // Getters and setters

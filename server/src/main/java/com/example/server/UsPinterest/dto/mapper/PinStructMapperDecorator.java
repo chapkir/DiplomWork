@@ -12,6 +12,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import com.example.server.UsPinterest.repository.PictureRepository;
+import com.example.server.UsPinterest.repository.LocationRepository;
 
 @Component
 public abstract class PinStructMapperDecorator implements PinStructMapper {
@@ -29,6 +30,9 @@ public abstract class PinStructMapperDecorator implements PinStructMapper {
 
     @Autowired
     private LikeRepository likeRepository;
+
+    @Autowired
+    private LocationRepository locationRepository;
 
     public PinStructMapperDecorator(PinStructMapper delegate) {
         this.delegate = delegate;
@@ -75,6 +79,21 @@ public abstract class PinStructMapperDecorator implements PinStructMapper {
             }
             dto.setThumbnailWidth(picture.getThumbnailWidth());
             dto.setThumbnailHeight(picture.getThumbnailHeight());
+            // Количество картинок для места
+            int count = 0;
+            if (picture.getImageUrl1() != null) count++;
+            if (picture.getImageUrl2() != null) count++;
+            if (picture.getImageUrl3() != null) count++;
+            if (picture.getImageUrl4() != null) count++;
+            if (picture.getImageUrl5() != null) count++;
+            dto.setPicturesCount(count);
+        });
+        // Локация: координаты и подробности места
+        locationRepository.findByPinId(pin.getId()).stream().findFirst().ifPresent(loc -> {
+            dto.setLatitude(loc.getLatitude());
+            dto.setLongitude(loc.getLongitude());
+            dto.setAddress(loc.getAddress());
+            dto.setPlaceName(loc.getNameplace());
         });
         return dto;
     }

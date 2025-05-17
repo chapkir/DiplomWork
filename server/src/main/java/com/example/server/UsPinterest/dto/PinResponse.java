@@ -2,6 +2,7 @@ package com.example.server.UsPinterest.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class PinResponse {
     private Long id;
@@ -28,6 +29,14 @@ public class PinResponse {
     private Integer thumbnailHeight;
     private Double rating;
     private List<String> tags;
+    private int picturesCount;
+    private Double latitude;
+    private Double longitude;
+    private String address;
+    @JsonProperty("placeName")
+    private String placeName;
+    // Список FullHD изображений, связанных с пином
+    private java.util.List<String> fullhdImages;
 
     public Long getId() {
         return id;
@@ -219,5 +228,53 @@ public class PinResponse {
 
     public void setTags(List<String> tags) {
         this.tags = tags;
+    }
+
+    public int getPicturesCount() {
+        return picturesCount;
+    }
+
+    public void setPicturesCount(int picturesCount) {
+        this.picturesCount = picturesCount;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getPlaceName() {
+        return placeName;
+    }
+
+    public void setPlaceName(String placeName) {
+        this.placeName = placeName;
+    }
+
+    public java.util.List<String> getFullhdImages() {
+        return fullhdImages;
+    }
+
+    public void setFullhdImages(java.util.List<String> fullhdImages) {
+        this.fullhdImages = fullhdImages;
     }
 }

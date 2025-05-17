@@ -26,9 +26,12 @@ public class LocationController {
     }
 
     @GetMapping("/posts/{postId}")
-    public ResponseEntity<List<LocationResponse>> getLocationsByPost(@PathVariable Long postId) {
+    public ResponseEntity<LocationResponse> getLocationByPost(@PathVariable Long postId) {
         List<LocationResponse> locations = locationService.getLocationsByPost(postId);
-        return ResponseEntity.ok(locations);
+        if (locations.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(locations.get(0));
     }
 
     @GetMapping("/pictures/{pictureId}")

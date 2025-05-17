@@ -62,10 +62,11 @@ import com.example.server.UsPinterest.model.Picture;
 import com.example.server.UsPinterest.repository.PictureRepository;
 import com.example.server.UsPinterest.dto.PictureResponse;
 import com.example.server.UsPinterest.dto.PinThumbnailBasicResponse;
+import com.example.server.UsPinterest.service.NotificationSender;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/pins")
+@RequestMapping({"/api/pins", "/api/spots", "/api/spot"})
 public class PinController {
 
     private static final Logger logger = LoggerFactory.getLogger(PinController.class);
@@ -85,6 +86,7 @@ public class PinController {
     private final HateoasUtil hateoasUtil;
     private final TagRepository tagRepository;
     private final PictureRepository pictureRepository;
+    private final NotificationSender notificationSender;
 
     @GetMapping({""})
     public ResponseEntity<?> getAllPins(
@@ -105,7 +107,7 @@ public class PinController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/detail/{id}")
+    @GetMapping({"/detail/{id}", "{id}"})
     public ResponseEntity<?> getPinById(@PathVariable Long id, Authentication authentication) {
         // Используем сервис для получения пина с комментариями и лайками
         Pin pin = pinQueryService.getPinWithLikesAndComments(id);
@@ -114,6 +116,16 @@ public class PinController {
         User currentUser = username != null ? userRepository.findByUsername(username).orElse(null) : null;
 
         PinResponse pinResponse = pinQueryService.convertToPinResponse(pin, currentUser);
+        // Добавляем список FullHD изображений из таблицы Picture
+        pictureRepository.findByPinId(id).ifPresent(pic -> {
+            java.util.List<String> fullhdImages = new java.util.ArrayList<>();
+            if (pic.getFullhdImageUrl1() != null) fullhdImages.add(fileStorageService.updateImageUrl(pic.getFullhdImageUrl1()));
+            if (pic.getFullhdImageUrl2() != null) fullhdImages.add(fileStorageService.updateImageUrl(pic.getFullhdImageUrl2()));
+            if (pic.getFullhdImageUrl3() != null) fullhdImages.add(fileStorageService.updateImageUrl(pic.getFullhdImageUrl3()));
+            if (pic.getFullhdImageUrl4() != null) fullhdImages.add(fileStorageService.updateImageUrl(pic.getFullhdImageUrl4()));
+            if (pic.getFullhdImageUrl5() != null) fullhdImages.add(fileStorageService.updateImageUrl(pic.getFullhdImageUrl5()));
+            pinResponse.setFullhdImages(fullhdImages);
+        });
         HateoasResponse<PinResponse> response = hateoasUtil.buildPinDetailResponse(pinResponse);
         return ResponseEntity.ok(response);
     }
@@ -161,6 +173,12 @@ public class PinController {
 
         // Публикуем событие для асинхронной отправки уведомления
         notificationPublisher.publishLikeNotification(user.getId(), pin.getId());
+        // Отправляем push-уведомление
+        notificationSender.sendNotification(
+            pin.getUser(),
+            "Новый лайк", 
+            String.format("%s лайкнул ваш пин '%s'", user.getUsername(), pin.getTitle())
+        );
 
         HateoasResponse<Void> response = new HateoasResponse<>(null);
         response.addSelfLink("/api/pins/" + id + "/like");
@@ -247,6 +265,12 @@ public class PinController {
 
         // Публикуем уведомление
         notificationPublisher.publishCommentNotification(user.getId(), pin.getId(), commentRequest.getText());
+        // Отправляем push-уведомление
+        notificationSender.sendNotification(
+            pin.getUser(),
+            "Новый комментарий",
+            String.format("%s прокомментировал ваш пин: %s", user.getUsername(), commentRequest.getText())
+        );
 
         // Формируем ответ
         PinResponse pinResponse = pinQueryService.convertToPinResponse(pin, user);
@@ -425,6 +449,7 @@ public class PinController {
             resp.setThumb3(saved.getThumbnailImageUrl3());
             resp.setThumb4(saved.getThumbnailImageUrl4());
             resp.setThumb5(saved.getThumbnailImageUrl5());
+            resp.setId(saved.getId());
 
             HateoasResponse<PictureResponse> response = new HateoasResponse<>(resp);
             response.addSelfLink("/api/pins/" + savedPin.getId() + "/pictures");
@@ -559,6 +584,7 @@ public class PinController {
             resp.setThumb3(saved.getThumbnailImageUrl3());
             resp.setThumb4(saved.getThumbnailImageUrl4());
             resp.setThumb5(saved.getThumbnailImageUrl5());
+            resp.setId(saved.getId());
             HateoasResponse<PictureResponse> response = new HateoasResponse<>(resp);
             response.addSelfLink("/api/pins/" + pinId + "/pictures");
             return ResponseEntity.ok(response);

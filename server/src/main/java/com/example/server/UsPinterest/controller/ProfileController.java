@@ -9,6 +9,7 @@ import com.example.server.UsPinterest.exception.ResourceNotFoundException;
 import com.example.server.UsPinterest.model.Pin;
 import com.example.server.UsPinterest.model.Post;
 import com.example.server.UsPinterest.model.User;
+import com.example.server.UsPinterest.model.Picture;
 import com.example.server.UsPinterest.repository.PinRepository;
 import com.example.server.UsPinterest.repository.UserRepository;
 import com.example.server.UsPinterest.repository.LikeRepository;
@@ -133,7 +134,7 @@ public class ProfileController {
         }
     }
 
-    @GetMapping("/liked-pins")
+    @GetMapping({"/liked-pins", "/liked-pictures"})
     @Transactional(readOnly = true)
     public ResponseEntity<?> getLikedPins(Authentication authentication) {
         try {
@@ -161,6 +162,27 @@ public class ProfileController {
             return ResponseEntity.status(500)
                     .body("Ошибка при получении лайкнутых пинов: " + e.getMessage());
         }
+    }
+
+    @GetMapping({"/spots", "/pictures"})
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<PinResponse>> getOwnProfileSpots() {
+        User currentUser = userService.getCurrentUser();
+        List<Pin> userPins = pinRepository.findByUserOrderByCreatedAtDesc(currentUser);
+        List<PinResponse> pinResponses = userPins.stream().map(pin -> {
+            // Базовое преобразование пина в DTO
+            PinResponse dto = pinService.convertToPinResponse(pin, currentUser);
+            // Применяем первую миниатюру из связанной сущности Picture
+            Picture picture = pin.getPictures();
+            if (picture != null) {
+                String thumb1 = picture.getThumbnailImageUrl1();
+                if (thumb1 != null && !thumb1.isEmpty()) {
+                    dto.setThumbnailImageUrl(fileStorageService.updateImageUrl(thumb1));
+                }
+            }
+            return dto;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(pinResponses);
     }
 
     @GetMapping("/{userId}")
@@ -254,17 +276,6 @@ public class ProfileController {
         }
     }
 
-    @GetMapping("/pictures")
-    @Transactional(readOnly = true)
-    public ResponseEntity<List<PinResponse>> getOwnProfilePictures() {
-        User currentUser = userService.getCurrentUser();
-        List<Pin> userPins = pinRepository.findByUserOrderByCreatedAtDesc(currentUser);
-        List<PinResponse> pinResponses = userPins.stream()
-                .map(pin -> pinService.convertToPinResponse(pin, currentUser))
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(pinResponses);
-    }
-
     @GetMapping("/posts")
     @Transactional(readOnly = true)
     public ResponseEntity<List<PostResponse>> getOwnProfilePosts() {
@@ -309,6 +320,17 @@ public class ProfileController {
         List<Like> likes = likeRepository.findByUserOrderByIdDesc(targetUser);
         List<PinResponse> pinResponses = likes.stream()
                 .map(like -> pinService.convertToPinResponse(like.getPin(), null))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(pinResponses);
+    }
+
+    @GetMapping("/{userId}/spots")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<PinResponse>> getUserProfileSpots(@PathVariable Long userId) {
+        User targetUser = userService.getUserWithCollections(userId);
+        List<Pin> userPins = pinRepository.findByUserOrderByCreatedAtDesc(targetUser);
+        List<PinResponse> pinResponses = userPins.stream()
+                .map(pin -> pinService.convertToPinResponse(pin, targetUser))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(pinResponses);
     }

@@ -3,6 +3,9 @@ package com.example.server.UsPinterest.controller;
 import com.example.server.UsPinterest.dto.FollowResponse;
 import com.example.server.UsPinterest.exception.FollowException;
 import com.example.server.UsPinterest.service.FollowService;
+import com.example.server.UsPinterest.service.UserService;
+import com.example.server.UsPinterest.service.NotificationSender;
+import com.example.server.UsPinterest.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +20,13 @@ import java.util.Collections;
 public class FollowController {
 
     private final FollowService followService;
+    private final UserService userService;
+    private final NotificationSender notificationSender;
 
-    public FollowController(FollowService followService) {
+    public FollowController(FollowService followService, UserService userService, NotificationSender notificationSender) {
         this.followService = followService;
+        this.userService = userService;
+        this.notificationSender = notificationSender;
     }
 
     @PostMapping("/{followerId}/following/{followingId}")
@@ -28,6 +35,13 @@ public class FollowController {
             @PathVariable Long followingId) {
         try {
             FollowResponse followResponse = followService.follow(followerId, followingId);
+            User follower = userService.getUserById(followerId);
+            User following = userService.getUserById(followingId);
+            notificationSender.sendNotification(
+                following,
+                "Новая подписка",
+                String.format("%s подписался на вас", follower.getUsername())
+            );
             return ResponseEntity.ok(followResponse);
         } catch (FollowException | DataIntegrityViolationException e) {
             return ResponseEntity.badRequest()
