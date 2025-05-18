@@ -37,6 +37,7 @@ import com.example.diplomwork.presentation.ui.screens.profile_screen.ProfileScre
 import com.example.diplomwork.presentation.ui.screens.registration_screen.RegisterScreen
 import com.example.diplomwork.presentation.ui.screens.search_screen.SearchScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.EditProfileScreen
+import com.example.diplomwork.presentation.ui.screens.settings_screens.FeedbackScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.LicensesScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.ManagementAccount
 import com.example.diplomwork.presentation.ui.screens.settings_screens.SettingsScreen
@@ -317,6 +318,11 @@ fun NavGraphBuilder.settingsNavGraph(navController: NavController) {
                         popUpTo(Login) { inclusive = true }
                     }
                 },
+                onFeedbackClick = {
+                    navController.navigate("feedback") {
+                        popUpTo(Licenses) { inclusive = false }
+                    }
+                },
                 onHelpCenterClick = { }, // TODO
                 onLicensesClick = {
                     navController.navigate(Licenses) {
@@ -328,6 +334,18 @@ fun NavGraphBuilder.settingsNavGraph(navController: NavController) {
 
         composable<Licenses> {
             LicensesScreen(
+                onBack = { navController.popBackStack() },
+            )
+        }
+
+        composable("feedback") { backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry("settings_root")
+            }
+            val viewModel: SettingsViewModel = hiltViewModel(parentEntry)
+
+            FeedbackScreen(
+                viewModel = viewModel,
                 onBack = { navController.popBackStack() },
             )
         }

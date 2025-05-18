@@ -50,34 +50,7 @@ fun ManagementAccount(
         modifier = Modifier
             .fillMaxSize()
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(80.dp)
-        ) {
-            IconButton(
-                onClick = onBack,
-                modifier = Modifier
-                    .padding(start = 22.dp)
-                    .size(32.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_arrow_left),
-                    contentDescription = "OnBack",
-                    tint = Color.White
-                )
-            }
-            Spacer(modifier = Modifier.width(22.dp))
-            Text(
-                text = "Управление аккаунтом",
-                color = Color.White,
-                fontSize = 21.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-        }
-        HorizontalDivider()
+        SettingsHeader(onBack = onBack, title = "Управление аккаунтом")
 
         Text(
             text = "Ваш аккаунт",

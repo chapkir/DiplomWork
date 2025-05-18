@@ -19,6 +19,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -80,35 +81,8 @@ fun EditProfileScreen(
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(80.dp)
-        ) {
-            IconButton(
-                onClick = onBack,
-                modifier = Modifier
-                    .padding(start = 15.dp)
-                    .size(32.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_arrow_left),
-                    contentDescription = "OnBack",
-                    tint = Color.White
-                )
-            }
-            Spacer(modifier = Modifier.width(15.dp))
-            Text(
-                text = "Редактировать профиль",
-                color = Color.White,
-                fontSize = 21.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-        }
+        SettingsHeader(onBack = onBack, title = "Редактирование профиля")
 
-        HorizontalDivider()
         Spacer(modifier = Modifier.height(25.dp))
 
         Text(
@@ -174,12 +148,19 @@ fun EditProfileScreen(
             },
             enabled = !isLoading,
             shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
         ) {
             if (isLoading) {
                 LoadingSpinnerForElement()
             } else {
-                Text("Сохранить", color = Color.Black)
+                Text(
+                    text = "Сохранить",
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
 

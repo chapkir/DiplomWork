@@ -1,5 +1,6 @@
 package com.example.diplomwork.presentation.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.diplomwork.data.repos.AuthRepository
@@ -18,8 +19,17 @@ class SettingsViewModel @Inject constructor(
     private val authRepository: AuthRepository,
 ) : ViewModel() {
 
+    data class FeedbackData(
+        val whatLiked: String? = null,
+        val whatDisliked: String? = null,
+        val recommendations: String? = null,
+    )
+
     private val _isLogout = MutableStateFlow<Result<String>?>(null)
     val isLogout: StateFlow<Result<String>?> = _isLogout
+
+    private val _feedbackData = MutableStateFlow(FeedbackData())
+    val feedbackData: StateFlow<FeedbackData> = _feedbackData
 
     private val _isDeleting = MutableStateFlow(false)
     val isDeleting: StateFlow<Boolean> = _isDeleting
@@ -61,4 +71,26 @@ class SettingsViewModel @Inject constructor(
             }
         }
     }
+
+    fun updateWhatLiked(value: String) {
+        _feedbackData.value = _feedbackData.value.copy(whatLiked = value)
+    }
+
+    fun updateWhatDisliked(value: String) {
+        _feedbackData.value = _feedbackData.value.copy(whatDisliked = value)
+    }
+
+    fun updateRecommendations(value: String) {
+        _feedbackData.value = _feedbackData.value.copy(recommendations = value)
+    }
+
+    fun sendFeedback() {
+        Log.i(
+            "Feedback",
+            "Плюсы: ${_feedbackData.value.whatLiked}" +
+                    "Минусы: ${_feedbackData.value.whatDisliked}" +
+                    "Рекомендации: ${_feedbackData.value.recommendations}"
+        )
+    }
+
 }
