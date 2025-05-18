@@ -95,6 +95,7 @@ fun AppNavigation(navController: NavHostController) {
                 Spots::class.simpleName -> Color.Black
                 CreateSpotScreenData::class.simpleName -> Color.Black
                 GalleryScreenData::class.simpleName -> Color.Black
+                SpotDetailScreenData::class.simpleName -> Color.Black
                 else -> MaterialTheme.colorScheme.background
             },
     ) { paddingValues ->

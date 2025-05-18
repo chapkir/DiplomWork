@@ -6,7 +6,6 @@ import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
 import com.example.diplomwork.auth.SessionManager
-import com.example.diplomwork.data.api.ApiService
 import com.example.diplomwork.data.api.AuthApi
 import com.example.diplomwork.data.api.FollowApi
 import com.example.diplomwork.data.api.LocationApi

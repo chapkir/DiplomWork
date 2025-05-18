@@ -29,22 +29,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowInsetsCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
 import com.example.diplomwork.presentation.system_settings.systemInsetHeight
-import com.example.diplomwork.presentation.ui.components.GeoText
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
-import com.example.diplomwork.presentation.ui.components.RatingBar
 import com.example.diplomwork.presentation.ui.components.bottom_sheets.CommentItem
 import com.example.diplomwork.presentation.ui.components.bottom_sheets.CommentsBottomSheet
 import com.example.diplomwork.presentation.ui.components.bottom_sheets.ConfirmDeleteBottomSheet
 import com.example.diplomwork.presentation.ui.theme.IconPrimary
-import com.example.diplomwork.presentation.viewmodel.PictureDetailScreenViewModel
+import com.example.diplomwork.presentation.viewmodel.SpotDetailScreenViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,7 +48,7 @@ import kotlinx.coroutines.launch
 fun PictureDetailScreen(
     onNavigateBack: () -> Unit,
     onProfileClick: (Long, String) -> Unit,
-    viewModel: PictureDetailScreenViewModel = hiltViewModel()
+    viewModel: SpotDetailScreenViewModel = hiltViewModel()
 ) {
 
     val coroutineScope = rememberCoroutineScope()
@@ -86,8 +82,8 @@ fun PictureDetailScreen(
         } else {
             item {
                 ImageView(
-                    imageRes = uiState.picture?.thumbnailImageUrl ?: "",
-                    aspectRatio = uiState.aspectRatio
+                    imageRes = uiState.fullhdImages[1],
+                    aspectRatio = 0.75f
                 )
             }
 

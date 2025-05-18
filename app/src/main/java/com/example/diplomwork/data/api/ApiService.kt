@@ -4,6 +4,7 @@ import com.example.diplomwork.data.model.ApiResponse
 import com.example.diplomwork.data.model.ApiResponseWrapper
 import com.example.diplomwork.data.model.CommentRequest
 import com.example.diplomwork.data.model.CommentResponse
+import com.example.diplomwork.data.model.CommentResponseWrapper
 import com.example.diplomwork.data.model.EditProfileRequest
 import com.example.diplomwork.data.model.FcmTokenRequest
 import com.example.diplomwork.data.model.LocationRequest
@@ -17,6 +18,7 @@ import com.example.diplomwork.data.model.PostResponse
 import com.example.diplomwork.data.model.ProfileResponse
 import com.example.diplomwork.data.model.RegisterRequest
 import com.example.diplomwork.data.model.RegisterResponse
+import com.example.diplomwork.data.model.SpotDetailResponse
 import com.example.diplomwork.data.model.TokenRefreshRequest
 import com.example.diplomwork.data.model.TokenRefreshResponse
 import com.example.diplomwork.data.model.UserExistsResponse
@@ -32,158 +34,6 @@ import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
-
-
-interface ApiService {
-    @GET("api/spots/all")
-    suspend fun getSpot(): List<SpotResponse>
-
-    @GET("api/spot/pictures")
-    suspend fun getSpotPictures(): List<SpotResponse>
-
-    @GET("api/posts")
-    suspend fun getPosts(): List<PostResponse>
-
-    @GET("api/pins/{id}")
-    suspend fun getPicture(@Path("id") id: Long): SpotResponse
-
-    @DELETE("api/pins/{id}")
-    suspend fun deletePicture(@Path("id") id: Long): Response<Unit>
-
-    @GET("api/search/pins")
-    suspend fun searchPictures(
-        @Query("query") query: String,
-        @Query("page") page: Int = 0,
-        @Query("size") size: Int = 20
-    ): ApiResponse<PageResponse<SpotResponse>>
-
-    @POST("api/auth/login")
-    suspend fun login(@Body loginRequest: LoginRequest): Response<LoginResponse>
-
-    @DELETE("api/users/me")
-    suspend fun deleteAccount(): Response<Unit>
-
-    @POST("api/auth/refresh")
-    suspend fun refreshToken(@Body request: TokenRefreshRequest): TokenRefreshResponse
-
-    @POST("api/auth/logout")
-    suspend fun logout(): Response<Map<String, String>>
-
-    @GET("api/profile")
-    suspend fun getOwnProfile(): ProfileResponse
-
-    @GET("api/profile/pictures")
-    suspend fun getOwnProfilePictures(): List<SpotResponse>
-
-    @GET("api/profile/{userId}/pictures")
-    suspend fun getOtherProfilePictures(@Path("userId") userId: Long?): List<SpotResponse>
-
-    @GET("api/profile/liked-pins")
-    suspend fun getOwnLikedPictures(): List<SpotResponse>
-
-    @GET("api/profile/likesPictures/{userId}")
-    suspend fun getOtherLikedPictures(@Path("userId") userId: Long?): List<SpotResponse>
-
-    @GET("api/profile/posts")
-    suspend fun getOwnProfilePosts(): List<PostResponse>
-
-    @GET("api/profile/{userId}")
-    suspend fun getProfileById(@Path("userId") userId: Long?): ProfileResponse
-
-    @PUT("api/profile/edit")
-    suspend fun editProfile(@Body editProfileRequest: EditProfileRequest)
-
-    @POST("api/auth/register")
-    suspend fun register(@Body registerRequest: RegisterRequest): RegisterResponse
-
-    @POST("api/pins/{pictureId}/likes")
-    suspend fun likePicture(@Path("pictureId") pictureId: Long): Response<Unit>
-
-    @DELETE("api/pins/{pictureId}/likes")
-    suspend fun unlikePicture(@Path("pictureId") pictureId: Long): Response<Unit>
-
-    @GET("api/pins/{pictureId}/comments")
-    suspend fun getPictureComments(@Path("pictureId") pictureId: Long): ApiResponse<List<CommentResponse>>
-
-    @POST("api/pins/{pictureId}/comments")
-    suspend fun addPictureComment(
-        @Path("pictureId") pictureId: Long,
-        @Body comment: CommentRequest
-    ): CommentResponse
-
-    @Multipart
-    @POST("api/pins/upload")
-    suspend fun uploadSpot(
-        @Part files: List<MultipartBody.Part>,
-        @Part("title") title: RequestBody,
-        @Part("description") description: RequestBody,
-        @Part("rating") rating: RequestBody
-    ): Response<ApiResponseWrapper<SpotResponse>>
-
-    @Multipart
-    @POST("api/posts/with-image")
-    suspend fun uploadPost(
-        @Part file: MultipartBody.Part,
-        @Part("text") text: RequestBody
-    ): Response<PostResponse>
-
-    @DELETE("api/posts/{postId}")
-    suspend fun deletePost(@Path("postId") postId: Long): Response<Unit>
-
-    @POST("api/posts/{postId}/like")
-    suspend fun likePost(@Path("postId") postId: Long): Response<Unit>
-
-    @DELETE("api/posts/{postId}/like")
-    suspend fun unlikePost(@Path("postId") postId: Long): Response<Unit>
-
-    @GET("api/posts/{postId}/comments")
-    suspend fun getPostComments(@Path("postId") postId: Long): List<CommentResponse>
-
-    @POST("api/posts/{postId}/comments")
-    suspend fun addPostComment(
-        @Path("postId") postId: Long,
-        @Body comment: CommentRequest
-    ): CommentResponse
-
-    @POST("api/locations")
-    suspend fun addLocation(
-        @Body spot: LocationRequest
-    ): Response<Unit>
-
-    @GET("api/locations/pictures/{pictureId}")
-    suspend fun getSpotLocation(@Path("pictureId") pictureId: Long): LocationResponse
-
-    @GET("api/users/exists/{username}")
-    suspend fun checkUsernameExists(@Path("username") username: String): UserExistsResponse
-
-    @Multipart
-    @POST("api/profile/image")
-    suspend fun uploadProfileImage(
-        @Part file: MultipartBody.Part
-    ): Response<Map<String, String>>
-
-    @POST("api/follows/{followerId}/following/{followingId}")
-    suspend fun subscribe(
-        @Path("followerId") followerId: Long,
-        @Path("followingId") followingId: Long
-    ): Response<Unit>
-
-    @DELETE("api/follows/{followerId}/following/{followingId}")
-    suspend fun unsubscribe(
-        @Path("followerId") followerId: Long,
-        @Path("followingId") followingId: Long
-    ): Response<Unit>
-
-    @GET("api/follows/{followerId}/following/{followingId}")
-    suspend fun checkFollowing(
-        @Path("followerId") followerId: Long,
-        @Path("followingId") followingId: Long
-    ): Response<Boolean>
-
-    @GET("api/notifications")
-    suspend fun getNotifications(): List<NotificationResponse>
-
-}
 
 interface AuthApi {
     @POST("api/auth/login")
@@ -201,6 +51,8 @@ interface AuthApi {
     @GET("api/users/exists/{username}")
     suspend fun checkUsernameExists(@Path("username") username: String): UserExistsResponse
 }
+
+
 
 interface ProfileApi {
     @GET("api/profile")
@@ -232,6 +84,8 @@ interface ProfileApi {
     suspend fun getOwnProfilePosts(): List<PostResponse>
 }
 
+
+
 interface SpotApi {
     @GET("api/spots/all")
     suspend fun getSpot(): List<SpotResponse>
@@ -240,7 +94,7 @@ interface SpotApi {
     suspend fun getSpotPictures(): List<SpotResponse>
 
     @GET("api/pins/{id}")
-    suspend fun getSpot(@Path("id") id: Long): SpotResponse
+    suspend fun getSpot(@Path("id") id: Long): SpotDetailResponse
 
     @DELETE("api/pins/{id}")
     suspend fun deleteSpot(@Path("id") id: Long): Response<Unit>
@@ -268,7 +122,7 @@ interface SpotApi {
     suspend fun unlikeSpot(@Path("pictureId") pictureId: Long): Response<Unit>
 
     @GET("api/pins/{pictureId}/comments")
-    suspend fun getSpotComments(@Path("pictureId") pictureId: Long): ApiResponse<List<CommentResponse>>
+    suspend fun getSpotComments(@Path("pictureId") pictureId: Long): CommentResponseWrapper
 
     @POST("api/pins/{pictureId}/comments")
     suspend fun addSpotComment(
@@ -276,6 +130,8 @@ interface SpotApi {
         @Body comment: CommentRequest
     ): CommentResponse
 }
+
+
 
 interface FollowApi {
     @POST("api/follows/{followerId}/following/{followingId}")
@@ -305,6 +161,8 @@ interface LocationApi {
     suspend fun getSpotLocation(@Path("pictureId") pictureId: Long): LocationResponse
 }
 
+
+
 interface UserApi {
     @DELETE("api/users/me")
     suspend fun deleteAccount(): Response<Unit>
@@ -317,6 +175,8 @@ interface NotificationApi {
     @POST("api/fcm/token")
     suspend fun sendFcmToken(@Body request: FcmTokenRequest): Response<Unit>
 }
+
+
 
 interface PostApi {
     @GET("api/posts")

@@ -45,7 +45,7 @@ import com.example.diplomwork.R
 import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.presentation.ui.components.CustomTabPager
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
-import com.example.diplomwork.presentation.ui.components.SpotsCard
+import com.example.diplomwork.presentation.ui.components.spot_card.SpotsCard
 import com.example.diplomwork.presentation.viewmodel.ProfileViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.rememberPagerState

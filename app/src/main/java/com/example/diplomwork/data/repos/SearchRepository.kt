@@ -1,10 +1,9 @@
 package com.example.diplomwork.data.repos
 
+import com.example.diplomwork.data.api.SpotApi
 import com.example.diplomwork.data.model.ApiResponse
 import com.example.diplomwork.data.model.PageResponse
 import com.example.diplomwork.data.model.SpotResponse
-import com.example.diplomwork.data.api.ApiService
-import com.example.diplomwork.data.api.SpotApi
 import dagger.hilt.android.scopes.ActivityScoped
 import javax.inject.Inject
 
@@ -14,7 +13,11 @@ class SearchRepository @Inject constructor(
 ) {
 
     // Поиск картинок
-    suspend fun searchPictures(query: String, page: Int, size: Int): ApiResponse<PageResponse<SpotResponse>> {
+    suspend fun searchPictures(
+        query: String,
+        page: Int,
+        size: Int
+    ): ApiResponse<PageResponse<SpotResponse>> {
         return api.searchSpots(query, page, size)
     }
 }

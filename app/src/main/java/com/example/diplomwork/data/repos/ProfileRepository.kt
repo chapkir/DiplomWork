@@ -1,12 +1,11 @@
 package com.example.diplomwork.data.repos
 
 import com.example.diplomwork.auth.SessionManager
-import com.example.diplomwork.data.model.EditProfileRequest
-import com.example.diplomwork.data.model.SpotResponse
-import com.example.diplomwork.data.model.ProfileResponse
-import com.example.diplomwork.data.api.ApiService
 import com.example.diplomwork.data.api.ProfileApi
+import com.example.diplomwork.data.model.EditProfileRequest
 import com.example.diplomwork.data.model.PostResponse
+import com.example.diplomwork.data.model.ProfileResponse
+import com.example.diplomwork.data.model.SpotResponse
 import dagger.hilt.android.scopes.ActivityScoped
 import okhttp3.MultipartBody
 import retrofit2.Response

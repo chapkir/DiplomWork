@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.diplomwork.data.model.CommentRequest
 import com.example.diplomwork.data.model.CommentResponse
+import com.example.diplomwork.data.model.SpotDetailResponse
 import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.repos.SpotRepository
 import com.example.diplomwork.domain.usecase.DeletePictureUseCase
@@ -16,7 +17,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class PictureDetailScreenViewModel @Inject constructor(
+class SpotDetailScreenViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val spotRepository: SpotRepository,
     private val deletePictureUseCase: DeletePictureUseCase
@@ -24,19 +25,19 @@ class PictureDetailScreenViewModel @Inject constructor(
 
     private val _pictureId: Long = savedStateHandle.get<Long>("pictureId") ?: 0L
 
-    private val _uiState = MutableStateFlow(PictureDetailUiState())
-    val uiState: StateFlow<PictureDetailUiState> = _uiState
+    private val _uiState = MutableStateFlow(SpotDetailUiState())
+    val uiState: StateFlow<SpotDetailUiState> = _uiState
 
     init {
-        loadPictureData()
+        loadSpotData()
         loadCommentsForPicture()
     }
 
-    private fun loadPictureData() {
+    private fun loadSpotData() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            val pictureResult = safeApiCall { spotRepository.getPicture(_pictureId) }
+            val pictureResult = safeApiCall { spotRepository.getSpot(_pictureId) }
 
             pictureResult.getOrNull()?.let { picture ->
                 val currentUserUsername = spotRepository.getCurrentUsername()
@@ -54,7 +55,8 @@ class PictureDetailScreenViewModel @Inject constructor(
                     commentsCount = picture.commentsCount,
                     isLiked = picture.isLikedByCurrentUser,
                     isCurrentUserOwner = isOwner,
-                    aspectRatio = picture.aspectRatio ?: 1f,
+                    picturesCount = picture.picturesCount,
+                    fullhdImages = picture.fullhdImages,
                     isLoading = false
                 )
             }
@@ -142,9 +144,9 @@ class PictureDetailScreenViewModel @Inject constructor(
     }
 }
 
-data class PictureDetailUiState(
+data class SpotDetailUiState(
     val isLoading: Boolean = false,
-    val picture: SpotResponse? = null,
+    val picture: SpotDetailResponse? = null,
     val pictureUsername: String = "",
     val rating: Double = 1.0,
     val pictureUserId: Long = 0L,
@@ -157,5 +159,6 @@ data class PictureDetailUiState(
     val comments: List<CommentResponse> = emptyList(),
     val deleteStatus: String = "",
     val isCurrentUserOwner: Boolean = false,
-    val aspectRatio: Float = 1f,
+    val picturesCount: Int = 1,
+    val fullhdImages: List<String> = emptyList()
 )

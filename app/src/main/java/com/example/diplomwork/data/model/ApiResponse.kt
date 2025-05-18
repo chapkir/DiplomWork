@@ -34,3 +34,9 @@ data class PageResponse<T>(
     val first: Boolean,
     val last: Boolean
 )
+
+data class CommentResponseWrapper(
+    val data: CommentPageData,
+    val links: List<Link>,
+    val meta: Meta
+)

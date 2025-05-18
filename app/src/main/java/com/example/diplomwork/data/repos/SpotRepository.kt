@@ -8,6 +8,7 @@ import com.example.diplomwork.data.api.SpotApi
 import com.example.diplomwork.data.model.ApiResponseWrapper
 import com.example.diplomwork.data.model.CommentRequest
 import com.example.diplomwork.data.model.CommentResponse
+import com.example.diplomwork.data.model.SpotDetailResponse
 import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.paging.PictureFactoryPaging
 import kotlinx.coroutines.flow.Flow
@@ -29,7 +30,7 @@ class SpotRepository @Inject constructor(
     }
 
     // Получение одной картинки по ID
-    suspend fun getPicture(id: Long): SpotResponse {
+    suspend fun getSpot(id: Long): SpotDetailResponse {
         return api.getSpot(id)
     }
 
@@ -93,7 +94,7 @@ class SpotRepository @Inject constructor(
     suspend fun getSpotComments(pictureId: Long): List<CommentResponse> {
         return try {
             val response = api.getSpotComments(pictureId)
-            response.data ?: emptyList()
+            response.data.content
         } catch (e: Exception) {
             emptyList()
         }

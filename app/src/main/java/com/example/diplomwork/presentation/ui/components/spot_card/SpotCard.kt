@@ -1,7 +1,6 @@
-package com.example.diplomwork.presentation.ui.components
+package com.example.diplomwork.presentation.ui.components.spot_card
 
 import android.content.Intent
-import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -58,7 +57,6 @@ import coil.request.ImageRequest
 import com.example.diplomwork.R
 import com.example.diplomwork.presentation.ui.components.bottom_sheets.ConfirmDeleteBottomSheet
 import com.example.diplomwork.presentation.ui.components.bottom_sheets.MenuBottomSheet
-import com.example.diplomwork.presentation.ui.theme.BgElevated
 import com.example.diplomwork.presentation.ui.theme.ButtonPrimary
 import com.example.diplomwork.presentation.ui.theme.DividerDark
 import com.google.accompanist.pager.ExperimentalPagerApi
@@ -68,8 +66,6 @@ import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
 import coil.compose.AsyncImagePainter
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -230,7 +226,7 @@ fun SpotsCard(
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun ImagesPager(
+private fun ImagesPager(
     imageUrls: String,
     modifier: Modifier
 ) {

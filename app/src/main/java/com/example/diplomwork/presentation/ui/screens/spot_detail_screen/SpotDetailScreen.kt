@@ -3,6 +3,7 @@ package com.example.diplomwork.presentation.ui.screens.spot_detail_screen
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,18 +33,22 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -52,20 +58,30 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import androidx.core.net.toUri
+import androidx.core.view.WindowInsetsCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import com.example.diplomwork.R
-import com.example.diplomwork.presentation.ui.components.GeoText
+import com.example.diplomwork.presentation.system_settings.systemInsetHeight
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
-import com.example.diplomwork.presentation.ui.components.RatingBar
+import com.example.diplomwork.presentation.ui.components.bottom_sheets.CommentItem
 import com.example.diplomwork.presentation.ui.components.bottom_sheets.CommentsBottomSheet
 import com.example.diplomwork.presentation.ui.components.bottom_sheets.ConfirmDeleteBottomSheet
 import com.example.diplomwork.presentation.ui.components.bottom_sheets.MenuBottomSheet
+import com.example.diplomwork.presentation.ui.components.spot_card.GeoText
+import com.example.diplomwork.presentation.ui.components.spot_card.RatingBar
 import com.example.diplomwork.presentation.ui.screens.map_screen.getResizedImageProvider
-import com.example.diplomwork.presentation.ui.screens.picture_detail_screen.ImageView
 import com.example.diplomwork.presentation.ui.theme.IconPrimary
-import com.example.diplomwork.presentation.viewmodel.PictureDetailScreenViewModel
+import com.example.diplomwork.presentation.viewmodel.SpotDetailScreenViewModel
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.HorizontalPagerIndicator
+import com.google.accompanist.pager.rememberPagerState
 import com.yandex.mapkit.MapKitFactory
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.CameraPosition
@@ -77,7 +93,7 @@ import kotlinx.coroutines.launch
 fun SpotDetailScreen(
     onNavigateBack: () -> Unit,
     onProfileClick: (Long, String) -> Unit,
-    viewModel: PictureDetailScreenViewModel = hiltViewModel()
+    viewModel: SpotDetailScreenViewModel = hiltViewModel()
 ) {
     val coroutineScope = rememberCoroutineScope()
     val commentSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -106,14 +122,11 @@ fun SpotDetailScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black)
+                .background(MaterialTheme.colorScheme.background)
                 .imePadding()
         ) {
             item {
-                ImageView(
-                    imageRes = uiState.picture?.thumbnailImageUrl ?: "",
-                    aspectRatio = 0.75f, //uiState.aspectRatio
-                )
+                ImagesPager(imageUrls = uiState.fullhdImages)
             }
             item {
                 Spacer(modifier = Modifier.height(12.dp))
@@ -137,9 +150,9 @@ fun SpotDetailScreen(
             }
             item {
                 PlaceInfo(
-                    rating = 4, //uiState.rating.toInt(),
-                    title = "Елагин остров",//uiState.pictureTitle,
-                    description = "Очень зеленое и свежее место, люблю гулять там с детьми, кормить белок и нюхать траву. А еще люблю чешские трдельники там!!!",//uiState.pictureDescription,
+                    rating = uiState.rating.toInt(),
+                    title = uiState.pictureTitle,
+                    description = uiState.pictureDescription,
                     geo = "нет",
                     latitude = 43.534534,
                     longitude = 32.534534,
@@ -164,7 +177,7 @@ fun SpotDetailScreen(
             modifier = Modifier
                 .padding(
                     top = 10.dp,
-                    start = 16.dp
+                    start = 10.dp
                 )
                 .size(43.dp)
                 .clip(CircleShape)
@@ -181,7 +194,7 @@ fun SpotDetailScreen(
             modifier = Modifier
                 .padding(
                     top = 10.dp,
-                    end = 16.dp
+                    end = 10.dp
                 )
                 .size(43.dp)
                 .clip(CircleShape)
@@ -225,6 +238,92 @@ fun SpotDetailScreen(
             onDismiss = { closeCommentSheet() },
             onAddComment = { commentText -> viewModel.addComment(commentText) },
             sheetState = commentSheetState
+        )
+    }
+}
+
+@OptIn(ExperimentalPagerApi::class)
+@Composable
+private fun ImagesPager(
+    imageUrls: List<String>
+) {
+    val pagerState = rememberPagerState()
+    var isLoading by remember { mutableStateOf(true) }
+    var isError by remember { mutableStateOf(false) }
+
+    Box {
+        HorizontalPager(
+            count = imageUrls.size,
+            state = pagerState,
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(12.dp)),
+        ) { page ->
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(5.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(0.75f)
+                        .graphicsLayer { clip = true }
+                ) {
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        Color(0xFFFFA292),
+                                        Color(0xFFD5523B),
+                                    )
+                                ),
+                            )
+                            .blur(50.dp),
+                    )
+
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(imageUrls[page])
+                            .crossfade(300)
+                            .diskCachePolicy(CachePolicy.ENABLED)
+                            .memoryCachePolicy(CachePolicy.ENABLED)
+                            .build(),
+                        contentDescription = null,
+                        onState = { state ->
+                            isLoading = state is AsyncImagePainter.State.Loading
+
+                            if (state is AsyncImagePainter.State.Error) {
+                                isError = true
+                                val exception = state.result.throwable
+
+                                Log.e(
+                                    "SpotCard",
+                                    "Ошибка загрузки изображения: ${imageUrls[page]}",
+                                    exception
+                                )
+                            }
+                        },
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clip(RoundedCornerShape(12.dp))
+                    )
+                }
+            }
+        }
+        HorizontalPagerIndicator(
+            pagerState = pagerState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 10.dp),
+            activeColor = Color.White,
+            inactiveColor = Color.White.copy(alpha = 0.8f),
+            indicatorWidth = 8.dp,
+            spacing = 6.dp
         )
     }
 }

@@ -2,9 +2,8 @@ package com.example.diplomwork.data.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.example.diplomwork.data.model.SpotResponse
-import com.example.diplomwork.data.api.ApiService
 import com.example.diplomwork.data.api.SpotApi
+import com.example.diplomwork.data.model.SpotResponse
 
 class PictureFactoryPaging(
     private val api: SpotApi
