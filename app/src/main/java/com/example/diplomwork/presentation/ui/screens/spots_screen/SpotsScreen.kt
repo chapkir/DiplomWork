@@ -106,6 +106,7 @@ fun SpotsScreen(
                                 imageUrl = spot.thumbnailImageUrl,
                                 username = spot.username,
                                 title = spot.title,
+                                placeName = spot.namePlace ?: "",
                                 description = spot.description,
                                 userId = spot.userId,
                                 latitude = location?.latitude ?: 0.0,

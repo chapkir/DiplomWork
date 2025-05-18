@@ -104,7 +104,7 @@ fun AppNavigation(navController: NavHostController) {
             composable<Pictures> {
                 PicturesScreen(
                     onImageClick = { pictureId ->
-                        navController.navigate(PictureDetailScreenData(pictureId))
+                        navController.navigate(SpotDetailScreenData(pictureId))
                     },
                     onProfileClick = { userId, username ->
                         navController.navigate(
@@ -132,7 +132,7 @@ fun AppNavigation(navController: NavHostController) {
                     },
                     onBack = { navController.popBackStack() },
                     onImageClick = { pictureId ->
-                        navController.navigate(PictureDetailScreenData(pictureId))
+                        navController.navigate(SpotDetailScreenData(pictureId))
                     }
                 )
             }
@@ -146,7 +146,7 @@ fun AppNavigation(navController: NavHostController) {
                     },
                     onBack = { navController.popBackStack() },
                     onImageClick = { pictureId ->
-                        navController.navigate(PictureDetailScreenData(pictureId))
+                        navController.navigate(SpotDetailScreenData(pictureId))
                     }
                 )
             }
@@ -206,7 +206,7 @@ fun AppNavigation(navController: NavHostController) {
                         navController.navigate(OtherProfileScreenData(userId, username))
                     },
                     onNotificationContent = { pictureId ->
-                        navController.navigate(PictureDetailScreenData(pictureId!!))
+                        navController.navigate(SpotDetailScreenData(pictureId!!))
                     }
                 )
             }

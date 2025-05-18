@@ -297,6 +297,7 @@ private fun PicturesGrid(
                                 imageUrl = spot.thumbnailImageUrl,
                                 username = spot.username,
                                 title = spot.title,
+                                placeName = spot.namePlace ?: "",
                                 description = spot.description,
                                 userId = spot.userId,
                                 latitude = spot.latitude ?: 0.0,

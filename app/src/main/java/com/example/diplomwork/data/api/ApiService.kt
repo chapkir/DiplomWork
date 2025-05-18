@@ -2,6 +2,7 @@ package com.example.diplomwork.data.api
 
 import com.example.diplomwork.data.model.ApiResponse
 import com.example.diplomwork.data.model.ApiResponseWrapper
+import com.example.diplomwork.data.model.ChangePasswordRequest
 import com.example.diplomwork.data.model.CommentRequest
 import com.example.diplomwork.data.model.CommentResponse
 import com.example.diplomwork.data.model.CommentResponseWrapper
@@ -13,12 +14,12 @@ import com.example.diplomwork.data.model.LoginRequest
 import com.example.diplomwork.data.model.LoginResponse
 import com.example.diplomwork.data.model.NotificationResponse
 import com.example.diplomwork.data.model.PageResponse
-import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.model.PostResponse
 import com.example.diplomwork.data.model.ProfileResponse
 import com.example.diplomwork.data.model.RegisterRequest
 import com.example.diplomwork.data.model.RegisterResponse
 import com.example.diplomwork.data.model.SpotDetailResponse
+import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.model.TokenRefreshRequest
 import com.example.diplomwork.data.model.TokenRefreshResponse
 import com.example.diplomwork.data.model.UserExistsResponse
@@ -53,7 +54,6 @@ interface AuthApi {
 }
 
 
-
 interface ProfileApi {
     @GET("api/profile")
     suspend fun getOwnProfile(): ProfileResponse
@@ -83,7 +83,6 @@ interface ProfileApi {
     @GET("api/profile/posts")
     suspend fun getOwnProfilePosts(): List<PostResponse>
 }
-
 
 
 interface SpotApi {
@@ -132,7 +131,6 @@ interface SpotApi {
 }
 
 
-
 interface FollowApi {
     @POST("api/follows/{followerId}/following/{followingId}")
     suspend fun subscribe(
@@ -162,11 +160,16 @@ interface LocationApi {
 }
 
 
-
 interface UserApi {
     @DELETE("api/users/me")
     suspend fun deleteAccount(): Response<Unit>
+
+    @PUT("api/me/password")
+    suspend fun changePassword(
+        @Body request: ChangePasswordRequest
+    ): Response<Unit>
 }
+
 
 interface NotificationApi {
     @GET("api/notifications")
@@ -175,7 +178,6 @@ interface NotificationApi {
     @POST("api/fcm/token")
     suspend fun sendFcmToken(@Body request: FcmTokenRequest): Response<Unit>
 }
-
 
 
 interface PostApi {

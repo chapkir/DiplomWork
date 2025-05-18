@@ -73,6 +73,7 @@ fun SpotsCard(
     imageUrl: String,
     username: String,
     title: String,
+    placeName: String,
     description: String,
     userId: Long,
     latitude: Double,
@@ -180,19 +181,20 @@ fun SpotsCard(
                     ImagesPager(
                         imageUrls = imageUrl,
                         modifier = Modifier
-                            .padding(start = 10.dp)
-                            .weight(0.55f)
+                            .padding(start = 12.dp)
+                            .weight(0.58f)
                     )
                     PlaceInfo(
                         rating = rating.toInt(),
                         title = title,
+                        placeName = placeName,
                         description = description,
                         geo = "$latitude,$longitude",
                         latitude = latitude,
                         longitude = longitude,
                         modifier = Modifier
                             .fillMaxHeight()
-                            .padding(start = 15.dp, end = 10.dp)
+                            .padding(start = 18.dp, end = 10.dp)
                             .weight(0.8f)
                     )
                 }
@@ -354,6 +356,7 @@ private fun ImagesPager(
 private fun PlaceInfo(
     rating: Int,
     title: String,
+    placeName: String,
     description: String,
     geo: String,
     latitude: Double,
@@ -364,7 +367,7 @@ private fun PlaceInfo(
         modifier = modifier,
     ) {
         Text(
-            text = if (title == "") "Без названия" else title,
+            text = if (title == "") placeName else title,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             maxLines = 1,

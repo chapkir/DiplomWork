@@ -23,7 +23,8 @@ data class SpotResponse(
 
     val latitude: Double?,
     val longitude: Double?,
-    val placeName: String?
+    val namePlace: String?
+
 )
 
 

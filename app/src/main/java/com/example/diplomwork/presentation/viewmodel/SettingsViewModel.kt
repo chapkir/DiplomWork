@@ -37,6 +37,12 @@ class SettingsViewModel @Inject constructor(
     private val _deleteResult = MutableSharedFlow<String>()
     val deleteResult: SharedFlow<String> = _deleteResult
 
+    private val _isChangePassword = MutableStateFlow(false)
+    val isChangePassword: StateFlow<Boolean> = _isChangePassword
+
+    private val _changePasswordResult = MutableSharedFlow<String>()
+    val changePassword: SharedFlow<String> = _changePasswordResult
+
     fun logout() {
         viewModelScope.launch {
             try {
@@ -68,6 +74,25 @@ class SettingsViewModel @Inject constructor(
                 _deleteResult.emit("Ошибка: ${e.localizedMessage ?: "Неизвестная ошибка"}")
             } finally {
                 _isDeleting.value = false
+            }
+        }
+    }
+
+    fun changePassword(oldPassword: String, newPassword: String) {
+        viewModelScope.launch {
+            _isChangePassword.value = true
+            try {
+                val response = userRepository.changePassword(oldPassword, newPassword)
+                if (response.isSuccessful) {
+                    _deleteResult.emit("Пароль изменен")
+
+                } else {
+                    _deleteResult.emit("Ошибка изменения пароля: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                _deleteResult.emit("Ошибка: ${e.localizedMessage ?: "Неизвестная ошибка"}")
+            } finally {
+                _isChangePassword.value = false
             }
         }
     }

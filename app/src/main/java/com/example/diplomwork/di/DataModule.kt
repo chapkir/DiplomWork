@@ -70,8 +70,7 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun provideUserRepository(api: UserApi, sessionManager: SessionManager) =
-        UserRepository(api, sessionManager)
+    fun provideUserRepository(api: UserApi) = UserRepository(api)
 
     @Provides
     @Singleton
