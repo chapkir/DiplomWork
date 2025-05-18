@@ -68,8 +68,8 @@ fun ProfileHeader(
                 .height(72.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (isOwnProfile) Avatar(avatarUrl, isUploading, onAvatarClick, avatarUpdateKey)
-            else Avatar(avatarUrl, isUploading = false, onAvatarClick = {}, avatarUpdateKey)
+            if (isOwnProfile) Avatar(avatarUrl, isUploading, onAvatarClick, avatarUpdateKey, isOwnProfile)
+            else Avatar(avatarUrl, isUploading = false, onAvatarClick = {}, avatarUpdateKey, isOwnProfile)
             Column(
                 modifier = Modifier
                     .fillMaxHeight()

@@ -93,10 +93,6 @@ fun AppNavigation(navController: NavHostController) {
             when (currentRoute) {
                 Login::class.simpleName -> BgDefault
                 Register::class.simpleName -> BgDefault
-                Spots::class.simpleName -> Color.Black
-                CreateSpotScreenData::class.simpleName -> Color.Black
-                GalleryScreenData::class.simpleName -> Color.Black
-                SpotDetailScreenData::class.simpleName -> Color.Black
                 else -> MaterialTheme.colorScheme.background
             },
     ) { paddingValues ->

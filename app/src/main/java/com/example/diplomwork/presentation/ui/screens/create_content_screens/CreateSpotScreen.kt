@@ -1,9 +1,11 @@
 package com.example.diplomwork.presentation.ui.screens.create_content_screens
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -25,6 +28,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -41,7 +45,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -81,15 +88,12 @@ fun CreateSpotScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
-            .verticalScroll(rememberScrollState())
-            .imePadding()
+            .background(MaterialTheme.colorScheme.background)
     ) {
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 20.dp, bottom = 20.dp),
+                .height(60.dp),
         ) {
             IconButton(
                 onClick = { onBack() },
@@ -113,154 +117,107 @@ fun CreateSpotScreen(
             )
         }
 
-        HorizontalDivider(modifier = Modifier.padding(bottom = 20.dp))
+        HorizontalDivider()
 
-        // Контент
-        Column(
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .imePadding(),
             verticalArrangement = Arrangement.spacedBy(15.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (imageUrls.isEmpty()) {
-                Card(
-                    shape = RoundedCornerShape(12.dp),
-                    elevation = CardDefaults.cardElevation(5.dp),
+            item {
+                Spacer(modifier = Modifier.height(20.dp))
+
+                ImagesRow(imageUrlsUri)
+            }
+
+            item {
+                AddContentTextField(
+                    label = "Название",
+                    value = createSpotData.title,
+                    onValueChange = { viewModel.updateCreateContentData { copy(title = it) } }
+                )
+            }
+
+            item {
+                AddContentTextField(
+                    label = "Описание (необязательно)",
+                    value = createSpotData.description,
+                    onValueChange = { viewModel.updateCreateContentData { copy(description = it) } }
+                )
+            }
+
+            item {
+                AddContentTextField(
+                    label = "Координаты",
+                    value = createSpotData.geo,
+                    onValueChange = { viewModel.updateCreateContentData { copy(geo = it) } },
+                    readOnly = true
+                )
+            }
+
+            item {
+                AddContentTextField(
+                    label = "Название места",
+                    value = createSpotData.spotName,
+                    onValueChange = { viewModel.updateCreateContentData { copy(spotName = it) } },
+                    readOnly = true
+                )
+            }
+
+            item {
+                AddContentTextField(
+                    label = "Рейтинг",
+                    value = createSpotData.rating,
+                    onValueChange = { viewModel.updateCreateContentData { copy(rating = it) } }
+                )
+            }
+
+            item {
+                error?.let {
+                    Text(text = it, color = Color.Red)
+                }
+            }
+
+
+            item {
+                Box(
                     modifier = Modifier
-                        .width(130.dp)
-                        .padding(horizontal = 5.dp)
+                        .fillMaxWidth(0.65f)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .aspectRatio(0.75f)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(
-                                        Color(0xFFFFA292),
-                                        Color(0xFFD5523B),
-                                    )
-                                ),
-                            ),
-                    ) {
-                        TextButton(
-                            onClick = { },
-                            modifier = Modifier.align(Alignment.Center),
-                            colors = ButtonDefaults.textButtonColors(
-                                contentColor = Color.White.copy(alpha = 0.9f)
+                    Button(
+                        onClick = {
+                            viewModel.uploadContent(
+                                imageUris = imageUrlsUri,
+                                onSuccess = onContentAdded,
                             )
-                        ) {
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = ButtonPrimary,
+                            contentColor = Color.White,
+                            disabledContainerColor = Color.Gray,
+                            disabledContentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = !isLoading
+                    ) {
+                        if (isLoading) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                LoadingSpinnerForElement()
+                            }
+                        } else {
                             Text(
-                                text = "Добавьте фото",
-                                fontSize = 20.sp,
+                                "Опубликовать",
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center,
                                 fontWeight = FontWeight.Bold,
                             )
                         }
-                    }
-                }
-            } else {
-                LazyRow {
-                    items(imageUrlsUri) { imageUri ->
-                        Card(
-                            shape = RoundedCornerShape(12.dp),
-                            elevation = CardDefaults.cardElevation(5.dp),
-                            modifier = Modifier
-                                .width(130.dp)
-                                .padding(horizontal = 5.dp)
-                        ) {
-                            AsyncImage(
-                                model = ImageRequest.Builder(LocalContext.current)
-                                    .data(imageUri)
-                                    .crossfade(300)
-                                    .build(),
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                onState = { state ->
-                                    if (state is AsyncImagePainter.State.Success) {
-                                        val size = state.painter.intrinsicSize
-                                        if (size.width > 0 && size.height > 0) {
-                                            aspectRatio = size.width / size.height
-                                        }
-                                    }
-                                },
-                                modifier = Modifier
-                                    .aspectRatio(aspectRatio)
-                                    .clip(RoundedCornerShape(12.dp))
-                            )
-                        }
-                    }
-                }
-            }
-
-            AddContentTextField(
-                label = "Название",
-                value = createSpotData.title,
-                onValueChange = { viewModel.updateCreateContentData { copy(title = it) } }
-            )
-
-            AddContentTextField(
-                label = "Описание (необязательно)",
-                value = createSpotData.description,
-                onValueChange = { viewModel.updateCreateContentData { copy(description = it) } }
-            )
-
-            AddContentTextField(
-                label = "Координаты",
-                value = createSpotData.geo,
-                onValueChange = { viewModel.updateCreateContentData { copy(geo = it) } },
-                readOnly = true
-            )
-
-            AddContentTextField(
-                label = "Название места",
-                value = createSpotData.spotName,
-                onValueChange = { viewModel.updateCreateContentData { copy(spotName = it) } },
-                readOnly = true
-            )
-
-            AddContentTextField(
-                label = "Рейтинг",
-                value = createSpotData.rating,
-                onValueChange = { viewModel.updateCreateContentData { copy(rating = it) } }
-            )
-
-            error?.let {
-                Text(text = it, color = Color.Red)
-            }
-
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                Button(
-                    onClick = {
-                        viewModel.uploadContent(
-                            imageUris = imageUrlsUri,
-                            onSuccess = onContentAdded,
-                        )
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = ButtonPrimary,
-                        contentColor = Color.White,
-                        disabledContainerColor = Color.Gray,
-                        disabledContentColor = Color.White
-                    ),
-                    enabled = !isLoading
-                ) {
-                    if (isLoading) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            LoadingSpinnerForElement()
-                        }
-                    } else {
-                        Text(
-                            "Опубликовать",
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center,
-                            fontWeight = FontWeight.Bold,
-                        )
                     }
                 }
             }
@@ -268,6 +225,69 @@ fun CreateSpotScreen(
     }
 }
 
+@Composable
+fun ImagesRow(imageUrlsUri: List<Uri>) {
+    var aspectRatio by remember { mutableFloatStateOf(1f) }
+
+    val density = LocalDensity.current
+    val windowInfo = LocalWindowInfo.current
+
+    // containerSize возвращает IntSize (width, height) в PX
+    val screenWidthPx = windowInfo.containerSize.width
+
+    val imageWidthDp = 130.dp
+    val imagePaddingDp = 10.dp // по 5.dp с каждой стороны
+
+    // Переводим размеры в пиксели
+    val imageWidthPx = with(density) { (imageWidthDp + imagePaddingDp).toPx() }
+    val totalImageWidthPx = imageWidthPx * imageUrlsUri.size
+
+    val shouldCenter = totalImageWidthPx <= screenWidthPx
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth(0.9f)
+            .clip(RoundedCornerShape(12.dp)),
+    ) {
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = if (shouldCenter)
+                Arrangement.Center
+            else
+                Arrangement.spacedBy(imagePaddingDp),
+        ) {
+            items(imageUrlsUri) { imageUri ->
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(5.dp),
+                    modifier = Modifier
+                        .width(130.dp)
+                        .padding(horizontal = 5.dp)
+                ) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(imageUri)
+                            .crossfade(300)
+                            .build(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        onState = { state ->
+                            if (state is AsyncImagePainter.State.Success) {
+                                val size = state.painter.intrinsicSize
+                                if (size.width > 0 && size.height > 0) {
+                                    aspectRatio = size.width / size.height
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .aspectRatio(aspectRatio)
+                            .clip(RoundedCornerShape(12.dp))
+                    )
+                }
+            }
+        }
+    }
+}
 
 @Composable
 private fun AddContentTextField(
@@ -286,10 +306,10 @@ private fun AddContentTextField(
         readOnly = readOnly,
         modifier = if (label != "Описание") {
             Modifier
-                .fillMaxWidth(0.95f)
+                .fillMaxWidth(0.9f)
         } else {
             Modifier
-                .fillMaxWidth(0.95f)
+                .fillMaxWidth(0.9f)
                 .height(100.dp)
         },
         singleLine = label != "Описание",
@@ -298,7 +318,7 @@ private fun AddContentTextField(
             fontSize = 15.sp,
             color = Color.White
         ),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Color.White,
             unfocusedBorderColor = Color.Gray,

@@ -28,7 +28,8 @@ fun Avatar(
     avatarUrl: String?,
     isUploading: Boolean,
     onAvatarClick: () -> Unit,
-    avatarUpdateKey: Int
+    avatarUpdateKey: Int,
+    isOwnProfile: Boolean
 ) {
     Box(
         modifier = Modifier
@@ -53,7 +54,7 @@ fun Avatar(
                 contentScale = ContentScale.Crop,
             )
 
-            if (avatarUrl.isNullOrEmpty()) {
+            if (avatarUrl.isNullOrEmpty() && isOwnProfile) {
                 Text(
                     text = "Добавить аватар",
                     color = Color.Gray ,

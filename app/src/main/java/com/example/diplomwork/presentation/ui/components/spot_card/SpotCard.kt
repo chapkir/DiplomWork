@@ -378,7 +378,9 @@ private fun PlaceInfo(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        GeoText(latitude, longitude)
+        Box {
+            GeoText(latitude, longitude)
+        }
 
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -415,7 +417,7 @@ fun GeoText(latitude: Double, longitude: Double, placeName: String? = "Елаг�
     val geo = "$latitude,$longitude"
 
     Text(
-        text = if (placeName.isNullOrBlank()) geo else "$placeName ($geo)",
+        text = geo,
         fontSize = 12.sp,
         color = Color.Gray,
         textDecoration = TextDecoration.Underline,
