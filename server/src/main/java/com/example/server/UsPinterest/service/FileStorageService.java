@@ -146,11 +146,13 @@ public class FileStorageService {
         // Формируем имя файла с расширением .webp
         String filename = "user_" + userId + ".webp";
         Path targetLocation = profileImagesLocation.resolve(filename);
-        // Сжимаем и конвертируем в WebP с настройками миниатюры
-        BufferedImage webpImg = Thumbnails.of(originalImg)
-                .size(thumbnailMaxWidth, thumbnailMaxHeight)
-                .outputFormat("webp")
-                .asBufferedImage();
+        // Рассчитываем новые размеры миниатюры с сохранением пропорций
+        int[] dims = imageProcessor.calculateDimensions(
+                originalImg.getWidth(), originalImg.getHeight(),
+                thumbnailMaxWidth, thumbnailMaxHeight
+        );
+        // Сжимаем и конвертируем в WebP с сохранением пропорций
+        BufferedImage webpImg = imageProcessor.resizeAndConvertToWebP(originalImg, dims[0], dims[1]);
         ImageIO.write(webpImg, "webp", targetLocation.toFile());
         // Возвращаем URL к статическому ресурсу
         return appUrl + "/uploads/profile-images/" + filename;

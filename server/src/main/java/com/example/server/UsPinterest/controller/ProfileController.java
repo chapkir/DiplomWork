@@ -150,15 +150,26 @@ public class ProfileController {
 
             // Используем метод с сортировкой (сначала новые лайки)
             List<Like> likes = likeRepository.findByUserOrderByIdDesc(user);
-            List<PinResponse> pinResponses = new ArrayList<>();
-
-            for (Like like : likes) {
+            List<PinResponse> pinResponses = likes.stream().map(like -> {
                 Pin pin = like.getPin();
-                if (pin != null) {
-                    pinResponses.add(pinService.convertToPinResponse(pin, user));
+                PinResponse dto = pinService.convertToPinResponse(pin, user);
+                Picture picture = pin.getPictures();
+                if (picture != null) {
+                    String thumb1 = picture.getThumbnailImageUrl1();
+                    if (thumb1 != null && !thumb1.isEmpty()) {
+                        dto.setThumbnailImageUrl(fileStorageService.updateImageUrl(thumb1));
+                    }
                 }
-            }
-
+                List<Location> locs = locationRepository.findByPinId(pin.getId());
+                if (!locs.isEmpty()) {
+                    Location loc = locs.get(0);
+                    dto.setLatitude(loc.getLatitude());
+                    dto.setLongitude(loc.getLongitude());
+                    dto.setAddress(loc.getAddress());
+                    dto.setPlaceName(loc.getNameplace());
+                }
+                return dto;
+            }).collect(Collectors.toList());
             return ResponseEntity.ok(pinResponses);
         } catch (Exception e) {
             logger.error("Ошибка при получении лайкнутых пинов", e);
@@ -241,9 +252,18 @@ public class ProfileController {
         try {
             User targetUser = userService.getUserWithCollections(userId);
             List<Like> likes = likeRepository.findByUserOrderByIdDesc(targetUser);
-            List<PinResponse> pinResponses = likes.stream()
-                    .map(like -> pinService.convertToPinResponse(like.getPin(), targetUser))
-                    .collect(Collectors.toList());
+            List<PinResponse> pinResponses = likes.stream().map(like -> {
+                Pin pin = like.getPin();
+                PinResponse dto = pinService.convertToPinResponse(pin, targetUser);
+                Picture picture = pin.getPictures();
+                if (picture != null) {
+                    String thumb1 = picture.getThumbnailImageUrl1();
+                    if (thumb1 != null && !thumb1.isEmpty()) {
+                        dto.setThumbnailImageUrl(fileStorageService.updateImageUrl(thumb1));
+                    }
+                }
+                return dto;
+            }).collect(Collectors.toList());
             return ResponseEntity.ok(pinResponses);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Пользователь не найден");
@@ -308,9 +328,25 @@ public class ProfileController {
     public ResponseEntity<List<PinResponse>> getUserPictures(@PathVariable Long userId) {
         User targetUser = userService.getUserWithCollections(userId);
         List<Pin> userPins = pinRepository.findByUserOrderByCreatedAtDesc(targetUser);
-        List<PinResponse> pinResponses = userPins.stream()
-                .map(pin -> pinService.convertToPinResponse(pin, targetUser))
-                .collect(Collectors.toList());
+        List<PinResponse> pinResponses = userPins.stream().map(pin -> {
+            PinResponse dto = pinService.convertToPinResponse(pin, targetUser);
+            Picture picture = pin.getPictures();
+            if (picture != null) {
+                String thumb1 = picture.getThumbnailImageUrl1();
+                if (thumb1 != null && !thumb1.isEmpty()) {
+                    dto.setThumbnailImageUrl(fileStorageService.updateImageUrl(thumb1));
+                }
+            }
+            List<Location> locs = locationRepository.findByPinId(pin.getId());
+            if (!locs.isEmpty()) {
+                Location loc = locs.get(0);
+                dto.setLatitude(loc.getLatitude());
+                dto.setLongitude(loc.getLongitude());
+                dto.setAddress(loc.getAddress());
+                dto.setPlaceName(loc.getNameplace());
+            }
+            return dto;
+        }).collect(Collectors.toList());
         return ResponseEntity.ok(pinResponses);
     }
 
@@ -330,9 +366,26 @@ public class ProfileController {
     public ResponseEntity<List<PinResponse>> getUserLikedPictures(@PathVariable Long userId) {
         User targetUser = userService.getUserWithCollections(userId);
         List<Like> likes = likeRepository.findByUserOrderByIdDesc(targetUser);
-        List<PinResponse> pinResponses = likes.stream()
-                .map(like -> pinService.convertToPinResponse(like.getPin(), null))
-                .collect(Collectors.toList());
+        List<PinResponse> pinResponses = likes.stream().map(like -> {
+            Pin pin = like.getPin();
+            PinResponse dto = pinService.convertToPinResponse(pin, null);
+            Picture picture = pin.getPictures();
+            if (picture != null) {
+                String thumb1 = picture.getThumbnailImageUrl1();
+                if (thumb1 != null && !thumb1.isEmpty()) {
+                    dto.setThumbnailImageUrl(fileStorageService.updateImageUrl(thumb1));
+                }
+            }
+            List<Location> locs = locationRepository.findByPinId(pin.getId());
+            if (!locs.isEmpty()) {
+                Location loc = locs.get(0);
+                dto.setLatitude(loc.getLatitude());
+                dto.setLongitude(loc.getLongitude());
+                dto.setAddress(loc.getAddress());
+                dto.setPlaceName(loc.getNameplace());
+            }
+            return dto;
+        }).collect(Collectors.toList());
         return ResponseEntity.ok(pinResponses);
     }
 

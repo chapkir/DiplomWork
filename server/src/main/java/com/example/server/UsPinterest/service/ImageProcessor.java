@@ -25,19 +25,11 @@ public class ImageProcessor {
     }
 
     public int[] calculateDimensions(int originalWidth, int originalHeight, int maxWidth, int maxHeight) {
-        double aspectRatio = (double) originalWidth / originalHeight;
-        int widthBound = maxWidth;
-        int heightBound = maxHeight;
-        if (originalHeight > originalWidth) {
-            widthBound = maxHeight;
-            heightBound = maxWidth;
-        }
-        int newWidth = widthBound;
-        int newHeight = (int) (widthBound / aspectRatio);
-        if (newHeight > heightBound) {
-            newHeight = heightBound;
-            newWidth = (int) (heightBound * aspectRatio);
-        }
+        double widthScale = maxWidth / (double) originalWidth;
+        double heightScale = maxHeight / (double) originalHeight;
+        double scale = Math.min(widthScale, heightScale);
+        int newWidth = (int) Math.round(originalWidth * scale);
+        int newHeight = (int) Math.round(originalHeight * scale);
         return new int[]{newWidth, newHeight};
     }
 

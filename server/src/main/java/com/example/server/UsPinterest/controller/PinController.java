@@ -63,6 +63,8 @@ import com.example.server.UsPinterest.repository.PictureRepository;
 import com.example.server.UsPinterest.dto.PictureResponse;
 import com.example.server.UsPinterest.dto.PinThumbnailBasicResponse;
 import com.example.server.UsPinterest.service.NotificationSender;
+import com.example.server.UsPinterest.repository.LocationRepository;
+import com.example.server.UsPinterest.model.Location;
 
 @RestController
 @RequiredArgsConstructor
@@ -86,6 +88,7 @@ public class PinController {
     private final HateoasUtil hateoasUtil;
     private final TagRepository tagRepository;
     private final PictureRepository pictureRepository;
+    private final LocationRepository locationRepository;
     private final NotificationSender notificationSender;
 
     @GetMapping({""})
@@ -101,6 +104,23 @@ public class PinController {
         }
         // Получаем результат курсорной пагинации из сервиса
         CursorPageResponse<PinResponse, String> pageResponse = pinQueryService.getPinsCursor(cursor, size, sortDirection);
+        // Добавляем миниатюру из таблицы pictures и данные локации
+        pageResponse.getContent().forEach(dto -> {
+            pictureRepository.findByPinId(dto.getId()).ifPresent(picture -> {
+                String thumb1 = picture.getThumbnailImageUrl1();
+                if (thumb1 != null && !thumb1.isEmpty()) {
+                    dto.setThumbnailImageUrl(fileStorageService.updateImageUrl(thumb1));
+                }
+            });
+            List<Location> locs = locationRepository.findByPinId(dto.getId());
+            if (!locs.isEmpty()) {
+                Location loc = locs.get(0);
+                dto.setLatitude(loc.getLatitude());
+                dto.setLongitude(loc.getLongitude());
+                dto.setAddress(loc.getAddress());
+                dto.setPlaceName(loc.getNameplace());
+            }
+        });
         // Формируем HATEOAS-ответ
         HateoasResponse<CursorPageResponse<PinResponse, String>> response =
                 hateoasUtil.buildCursorPageResponse(pageResponse, cursor, size);
