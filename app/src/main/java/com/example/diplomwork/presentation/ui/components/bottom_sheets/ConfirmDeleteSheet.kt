@@ -25,7 +25,9 @@ import androidx.compose.ui.unit.dp
 fun ConfirmDeleteBottomSheet(
     onDismiss: () -> Unit,
     onDelete: () -> Unit,
-    sheetState: SheetState
+    sheetState: SheetState,
+    message: String = "Подтвердите удаление",
+    isDeleteAccount: Boolean = false
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -39,7 +41,7 @@ fun ConfirmDeleteBottomSheet(
                 .padding(24.dp)
         ) {
             Text(
-                text = "Удалить изображение?",
+                text = message,
                 style = MaterialTheme.typography.titleLarge
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -53,7 +55,12 @@ fun ConfirmDeleteBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
-                TextButton(onClick = onDismiss) {
+                TextButton(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
                     Text("Отмена")
                 }
                 Spacer(modifier = Modifier.width(8.dp))

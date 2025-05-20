@@ -45,10 +45,6 @@ class ProfileRepository @Inject constructor(
         return api.editProfile(editProfileRequest)
     }
 
-    fun getOwnUsername(): String {
-        return sessionManager.username ?: ""
-    }
-
     fun getOwnUserId(): Long {
         return sessionManager.userId ?: 0L
     }

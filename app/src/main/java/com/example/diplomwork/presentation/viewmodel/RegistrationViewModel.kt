@@ -14,8 +14,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
-    private val authRepository: AuthRepository,
-    private val sessionManager: SessionManager
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     data class RegisterData(
@@ -69,7 +68,7 @@ class RegisterViewModel @Inject constructor(
     }
 
     fun nextStep() {
-        if (_step.value < 4) _step.value += 1
+        if (_step.value < 5) _step.value += 1
     }
 
     fun previousStep() {
@@ -135,8 +134,7 @@ class RegisterViewModel @Inject constructor(
                 val loginResponse = authRepository.login(
                     LoginRequest(registerValue.username, registerValue.password)
                 )
-                sessionManager.saveAuthData(loginResponse.token, loginResponse.refreshToken)
-                sessionManager.username = registerData.value.username
+
                 onCompleteRegistration()
 
             } catch (e: Exception) {

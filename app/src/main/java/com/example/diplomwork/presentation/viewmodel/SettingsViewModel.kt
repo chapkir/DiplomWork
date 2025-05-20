@@ -34,14 +34,12 @@ class SettingsViewModel @Inject constructor(
     private val _isDeleting = MutableStateFlow(false)
     val isDeleting: StateFlow<Boolean> = _isDeleting
 
+    private val _isDeleted = MutableStateFlow(false)
+    val isDeleted: StateFlow<Boolean> = _isDeleted
+
+
     private val _deleteResult = MutableSharedFlow<String>()
     val deleteResult: SharedFlow<String> = _deleteResult
-
-    private val _isChangePassword = MutableStateFlow(false)
-    val isChangePassword: StateFlow<Boolean> = _isChangePassword
-
-    private val _changePasswordResult = MutableSharedFlow<String>()
-    val changePassword: SharedFlow<String> = _changePasswordResult
 
     fun logout() {
         viewModelScope.launch {
@@ -66,33 +64,16 @@ class SettingsViewModel @Inject constructor(
                 val response = userRepository.deleteAccount()
                 if (response.isSuccessful) {
                     _deleteResult.emit("Аккаунт успешно удалён")
-
+                    _isDeleted.value = true
                 } else {
                     _deleteResult.emit("Ошибка удаления аккаунта: ${response.code()}")
+                    _isDeleted.value = false
                 }
             } catch (e: Exception) {
                 _deleteResult.emit("Ошибка: ${e.localizedMessage ?: "Неизвестная ошибка"}")
+                _isDeleted.value = false
             } finally {
                 _isDeleting.value = false
-            }
-        }
-    }
-
-    fun changePassword(oldPassword: String, newPassword: String) {
-        viewModelScope.launch {
-            _isChangePassword.value = true
-            try {
-                val response = userRepository.changePassword(oldPassword, newPassword)
-                if (response.isSuccessful) {
-                    _deleteResult.emit("Пароль изменен")
-
-                } else {
-                    _deleteResult.emit("Ошибка изменения пароля: ${response.code()}")
-                }
-            } catch (e: Exception) {
-                _deleteResult.emit("Ошибка: ${e.localizedMessage ?: "Неизвестная ошибка"}")
-            } finally {
-                _isChangePassword.value = false
             }
         }
     }

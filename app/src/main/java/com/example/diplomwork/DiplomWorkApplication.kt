@@ -8,6 +8,7 @@ import com.example.diplomwork.util.AppConstants
 import com.example.diplomwork.util.ImageUtils
 import dagger.hilt.android.HiltAndroidApp
 import androidx.core.content.edit
+import com.google.firebase.FirebaseApp
 import com.yandex.mapkit.MapKitFactory
 
 @HiltAndroidApp
@@ -19,6 +20,7 @@ class DiplomWorkApplication : Application()
         // Сбрасываем настройки URL сервера при первом запуске
         resetServerUrlIfNeeded()
 
+        FirebaseApp.initializeApp(this)
 
         MapKitFactory.setApiKey("5a489e22-0d88-414a-8bd3-f99babb0b6c2")
         MapKitFactory.initialize(this)

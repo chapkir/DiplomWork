@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -36,6 +35,7 @@ import com.example.diplomwork.presentation.ui.screens.posts_screen.PostsScreen
 import com.example.diplomwork.presentation.ui.screens.profile_screen.ProfileScreen
 import com.example.diplomwork.presentation.ui.screens.registration_screen.RegisterScreen
 import com.example.diplomwork.presentation.ui.screens.search_screen.SearchScreen
+import com.example.diplomwork.presentation.ui.screens.settings_screens.ChangePasswordScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.EditProfileScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.FeedbackScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.LicensesScreen
@@ -216,7 +216,7 @@ fun AppNavigation(navController: NavHostController) {
             composable<Register> {
                 RegisterScreen(
                     onCompleteRegistration = {
-                        navController.navigate(Pictures) {
+                        navController.navigate(Spots) {
                             popUpTo(Register) { inclusive = true }
                         }
                     },
@@ -334,6 +334,17 @@ fun NavGraphBuilder.settingsNavGraph(navController: NavController) {
             )
         }
 
+        composable("changePassword") {
+            ChangePasswordScreen(
+                onBack = { navController.popBackStack() },
+                isPasswordChanged = {
+                    navController.navigate(OwnProfile) {
+                        popUpTo(OwnProfile) { inclusive = false }
+                    }
+                }
+            )
+        }
+
         composable("feedback") { backStackEntry ->
             val parentEntry = remember(backStackEntry) {
                 navController.getBackStackEntry("settings_root")
@@ -355,6 +366,16 @@ fun NavGraphBuilder.settingsNavGraph(navController: NavController) {
             ManagementAccount(
                 viewModel = viewModel,
                 onBack = { navController.popBackStack() },
+                onPasswordChange = {
+                    navController.navigate("changePassword") {
+                        popUpTo("changePassword") { inclusive = false }
+                    }
+                },
+                isAccountDeleted = {
+                    navController.navigate(Login) {
+                        popUpTo(Login) { inclusive = true }
+                    }
+                }
             )
         }
     }

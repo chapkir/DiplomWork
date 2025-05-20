@@ -61,7 +61,7 @@ interface ProfileApi {
     @GET("api/profile/{userId}")
     suspend fun getProfileById(@Path("userId") userId: Long?): ProfileResponse
 
-    @GET("api/profile/pictures")
+    @GET("api/profile/spots")
     suspend fun getOwnProfilePictures(): List<SpotResponse>
 
     @GET("api/profile/{userId}/pictures")

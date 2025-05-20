@@ -124,15 +124,6 @@ fun EditProfileScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         CustomOutlinedTextField(
-            value = profileState.gender,
-            onValueChange = { viewModel.updateProfileData { copy(gender = it) } },
-            label = "Пол",
-            keyboardType = KeyboardType.Text
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        CustomOutlinedTextField(
             value = profileState.bio,
             onValueChange = { viewModel.updateProfileData { copy(bio = it) } },
             label = "О себе",

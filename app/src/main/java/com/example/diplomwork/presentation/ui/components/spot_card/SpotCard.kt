@@ -51,7 +51,9 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.diplomwork.R
@@ -64,8 +66,6 @@ import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.launch
-import androidx.core.net.toUri
-import coil.compose.AsyncImagePainter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -173,8 +173,7 @@ fun SpotsCard(
                     Spacer(modifier = Modifier.height(5.dp))
                     HorizontalDivider(thickness = 2.dp, color = DividerDark)
                     Spacer(modifier = Modifier.height(12.dp))
-                }
-                else Spacer(modifier = Modifier.height(16.dp))
+                } else Spacer(modifier = Modifier.height(16.dp))
                 Row(
                     modifier = Modifier.fillMaxSize()
                 ) {
@@ -205,7 +204,10 @@ fun SpotsCard(
     if (menuSheetState.isVisible) {
         MenuBottomSheet(
             onDismiss = { closeMenuSheet() },
-            onDelete = { openConfirmDeleteSheet() },
+            onDelete = {
+                openConfirmDeleteSheet()
+                closeMenuSheet()
+            },
             onReportSpot = { }, // TODO
             onDownloadPicture = { }, // TODO
             onHideSpot = { }, // TODO
@@ -222,6 +224,7 @@ fun SpotsCard(
                 closeMenuSheet()
             },
             sheetState = confirmDeleteSheetState,
+            message = "Вы уверены, что хотите удалить место?"
         )
     }
 }
@@ -264,6 +267,7 @@ private fun ImagesPager(
             state = pagerState,
             modifier = Modifier
                 .fillMaxSize()
+                .graphicsLayer( clip = false )
                 .clip(RoundedCornerShape(12.dp)),
         ) { page ->
 
@@ -282,7 +286,6 @@ private fun ImagesPager(
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(0.75f)
-                        .graphicsLayer { clip = true }
                 ) {
 
                     Box(
@@ -307,7 +310,7 @@ private fun ImagesPager(
                             .memoryCachePolicy(CachePolicy.ENABLED)
                             .build(),
                         contentDescription = null,
-                        contentScale = ContentScale.Crop,
+                        contentScale = ContentScale.Fit,
                         onState = { state ->
                             isLoading = state is AsyncImagePainter.State.Loading
 
@@ -323,7 +326,8 @@ private fun ImagesPager(
 
                                 if (retryCount < 2) {
                                     retryCount++
-                                    displayUrl = "${imageUrls}?cache_bust=${System.currentTimeMillis()}"
+                                    displayUrl =
+                                        "${imageUrls}?cache_bust=${System.currentTimeMillis()}"
                                 }
                             }
                         },

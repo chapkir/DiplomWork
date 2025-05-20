@@ -277,6 +277,10 @@ fun RegisterScreen(
                     3 -> {
                         hideKeyboard(context)
                         editProfileViewModel.saveProfile()
+                        registerViewModel.nextStep()
+                    }
+
+                    4 -> {
                         onCompleteRegistration()
                     }
                 }
@@ -479,9 +483,9 @@ fun NavigationButton(
                 disabledContentColor = Color.White
             )
         ) {
-            if (isLoading && step == 3) LoadingSpinnerForElement()
+            if (isLoading && step == 4) LoadingSpinnerForElement()
             else Text(
-                if (step < 3) "Далее" else "Завершить",
+                if (step < 5) "Далее" else "Завершить",
                 fontWeight = FontWeight.Bold, fontSize = 17.sp
             )
         }
