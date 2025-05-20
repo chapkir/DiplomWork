@@ -262,6 +262,12 @@ public class ProfileController {
                         dto.setThumbnailImageUrl(fileStorageService.updateImageUrl(thumb1));
                     }
                 }
+                locationRepository.findByPinId(pin.getId()).stream().findFirst().ifPresent(loc -> {
+                    dto.setLatitude(loc.getLatitude());
+                    dto.setLongitude(loc.getLongitude());
+                    dto.setAddress(loc.getAddress());
+                    dto.setPlaceName(loc.getNameplace());
+                });
                 return dto;
             }).collect(Collectors.toList());
             return ResponseEntity.ok(pinResponses);
@@ -394,9 +400,16 @@ public class ProfileController {
     public ResponseEntity<List<PinResponse>> getUserProfileSpots(@PathVariable Long userId) {
         User targetUser = userService.getUserWithCollections(userId);
         List<Pin> userPins = pinRepository.findByUserOrderByCreatedAtDesc(targetUser);
-        List<PinResponse> pinResponses = userPins.stream()
-                .map(pin -> pinService.convertToPinResponse(pin, targetUser))
-                .collect(Collectors.toList());
+        List<PinResponse> pinResponses = userPins.stream().map(pin -> {
+            PinResponse dto = pinService.convertToPinResponse(pin, targetUser);
+            locationRepository.findByPinId(pin.getId()).stream().findFirst().ifPresent(loc -> {
+                dto.setLatitude(loc.getLatitude());
+                dto.setLongitude(loc.getLongitude());
+                dto.setAddress(loc.getAddress());
+                dto.setPlaceName(loc.getNameplace());
+            });
+            return dto;
+        }).collect(Collectors.toList());
         return ResponseEntity.ok(pinResponses);
     }
 }

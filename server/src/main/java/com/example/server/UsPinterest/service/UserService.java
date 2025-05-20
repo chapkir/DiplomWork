@@ -90,6 +90,13 @@ public class UserService {
             logger.warn("Пользователь {} не подтвердил email, выдаем токен: {}", username, e.getMessage());
         }
 
+        // Обновляем время последнего входа
+        User user = findByUsername(username).orElseThrow(() -> 
+            new RuntimeException("Пользователь не найден")
+        );
+        user.setLastLoginTime(LocalDateTime.now());
+        userRepository.save(user);
+
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         return jwtTokenUtil.generateToken(userDetails);
     }

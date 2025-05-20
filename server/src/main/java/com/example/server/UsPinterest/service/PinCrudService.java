@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import com.example.server.UsPinterest.service.BoardService;
 import org.springframework.context.annotation.Lazy;
+import com.example.server.UsPinterest.repository.LocationRepository;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -42,6 +43,7 @@ public class PinCrudService {
     @Lazy
     private final PinService pinService;
     private final TagRepository tagRepository;
+    private final LocationRepository locationRepository;
 
     @CacheEvict(value = {"pins", "search"}, allEntries = true)
     public Pin createPin(PinRequest pinRequest, String username) {
@@ -85,6 +87,8 @@ public class PinCrudService {
         fileStorageService.deleteStoredFile(pin.getImageUrl());
         fileStorageService.deleteStoredFile(pin.getFullhdImageUrl());
         fileStorageService.deleteStoredFile(pin.getThumbnailImageUrl());
+        // удаляем связанные локации
+        locationRepository.deleteAll(locationRepository.findByPinId(id));
         // удаляем сам пин и связанные комментарии/лайки (cascade)
         pinRepository.delete(pin);
     }

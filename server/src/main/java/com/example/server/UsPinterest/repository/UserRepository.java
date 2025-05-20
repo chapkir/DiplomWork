@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,4 +53,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // Проверка существования имени пользователя без учёта регистра
     boolean existsByUsernameIgnoreCase(String username);
+    
+    // Методы для админской панели
+    int countByRegistrationDateAfter(LocalDateTime date);
+    
+    @Query("SELECT COUNT(u) FROM User u WHERE u.lastLoginTime > :date")
+    int countByLastLoginAfter(@Param("date") LocalDateTime date);
+    
+    int countByRegistrationDateBetween(LocalDateTime startDate, LocalDateTime endDate);
 }

@@ -26,6 +26,7 @@ public class PictureResponse {
     private String thumb3;
     private String thumb4;
     private String thumb5;
+    private int picturesCount;
 
     public Long getId() {
         return id;
@@ -225,5 +226,13 @@ public class PictureResponse {
 
     public void setThumb5(String thumb5) {
         this.thumb5 = thumb5;
+    }
+
+    public int getPicturesCount() {
+        return picturesCount;
+    }
+
+    public void setPicturesCount(int picturesCount) {
+        this.picturesCount = picturesCount;
     }
 } 

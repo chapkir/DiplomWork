@@ -3,3 +3,6 @@
 /uploads/**
 /profile-images
 /profile-images/**
+
+# Игнорировать временный/секретный админ-контроллер
+src/main/java/com/example/server/UsPinterest/controller/AdminController.java

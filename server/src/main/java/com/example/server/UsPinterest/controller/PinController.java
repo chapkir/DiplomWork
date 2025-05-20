@@ -470,6 +470,7 @@ public class PinController {
             resp.setThumb4(saved.getThumbnailImageUrl4());
             resp.setThumb5(saved.getThumbnailImageUrl5());
             resp.setId(saved.getId());
+            resp.setPicturesCount(files.length);
 
             HateoasResponse<PictureResponse> response = new HateoasResponse<>(resp);
             response.addSelfLink("/api/pins/" + savedPin.getId() + "/pictures");
@@ -605,6 +606,8 @@ public class PinController {
             resp.setThumb4(saved.getThumbnailImageUrl4());
             resp.setThumb5(saved.getThumbnailImageUrl5());
             resp.setId(saved.getId());
+            resp.setPicturesCount(files.length);
+
             HateoasResponse<PictureResponse> response = new HateoasResponse<>(resp);
             response.addSelfLink("/api/pins/" + pinId + "/pictures");
             return ResponseEntity.ok(response);
@@ -629,13 +632,20 @@ public class PinController {
                             dto.setThumbnailImageUrl(fileStorageService.updateImageUrl(thumb1));
                         }
                     });
+                    // FIRST_EDIT: добавляем координаты местоположения
+                    locationRepository.findByPinId(pin.getId()).stream().findFirst().ifPresent(loc -> {
+                        dto.setLatitude(loc.getLatitude());
+                        dto.setLongitude(loc.getLongitude());
+                        dto.setAddress(loc.getAddress());
+                        dto.setPlaceName(loc.getNameplace());
+                    });
                     return dto;
                 }).collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/{pinId}/pictures")
-    public ResponseEntity<List<String>> getPicturesByPinId(@PathVariable Long pinId) {
+    public ResponseEntity<Map<String, Object>> getPicturesByPinId(@PathVariable Long pinId) {
         Picture picture = pictureRepository.findByPinId(pinId)
                 .orElseThrow(() -> new ResourceNotFoundException("Картинки не найдены для пина " + pinId));
         List<String> thumbnails = new ArrayList<>();
@@ -654,6 +664,105 @@ public class PinController {
         if (picture.getThumbnailImageUrl5() != null) {
             thumbnails.add(fileStorageService.updateImageUrl(picture.getThumbnailImageUrl5()));
         }
-        return ResponseEntity.ok(thumbnails);
+        Map<String, Object> result = new HashMap<>();
+        result.put("pictures", thumbnails);
+        result.put("picturesCount", thumbnails.size());
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/recommendations")
+    public ResponseEntity<List<PinResponse>> getRecommendedPins(
+            @RequestParam(defaultValue = "20") int size) {
+        User currentUser = userService.getCurrentUser();
+        var page = pinRepository.findAll(org.springframework.data.domain.PageRequest.of(
+                0, size, org.springframework.data.domain.Sort.by("likesCount").descending()));
+        List<com.example.server.UsPinterest.model.Pin> pins = page.getContent();
+        List<PinResponse> dtos = pins.stream().map(pin -> {
+            PinResponse dto = pinQueryService.convertToPinResponse(pin, currentUser);
+            pictureRepository.findByPinId(pin.getId()).ifPresent(p -> {
+                String thumb1 = p.getThumbnailImageUrl1();
+                if (thumb1 != null && !thumb1.isEmpty()) {
+                    dto.setThumbnailImageUrl(fileStorageService.updateImageUrl(thumb1));
+                }
+            });
+            List<Location> locs = locationRepository.findByPinId(pin.getId());
+            if (!locs.isEmpty()) {
+                Location loc = locs.get(0);
+                dto.setLatitude(loc.getLatitude());
+                dto.setLongitude(loc.getLongitude());
+                dto.setAddress(loc.getAddress());
+                dto.setPlaceName(loc.getNameplace());
+            }
+            return dto;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<com.example.server.UsPinterest.dto.PageResponse<PinResponse>> searchPins(
+            @RequestParam String query,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        com.example.server.UsPinterest.dto.PageResponse<com.example.server.UsPinterest.model.Pin> result =
+                pinQueryService.getPins(query, page, size);
+        List<PinResponse> dtos = result.getContent().stream().map(pin -> {
+            PinResponse dto = pinQueryService.convertToPinResponse(pin, null);
+            pictureRepository.findByPinId(pin.getId()).ifPresent(p -> {
+                String thumb1 = p.getThumbnailImageUrl1();
+                if (thumb1 != null && !thumb1.isEmpty()) {
+                    dto.setThumbnailImageUrl(fileStorageService.updateImageUrl(thumb1));
+                }
+            });
+            List<Location> locs = locationRepository.findByPinId(pin.getId());
+            if (!locs.isEmpty()) {
+                Location loc = locs.get(0);
+                dto.setLatitude(loc.getLatitude());
+                dto.setLongitude(loc.getLongitude());
+                dto.setAddress(loc.getAddress());
+                dto.setPlaceName(loc.getNameplace());
+            }
+            return dto;
+        }).collect(Collectors.toList());
+        com.example.server.UsPinterest.dto.PageResponse<PinResponse> dtoPage =
+                new com.example.server.UsPinterest.dto.PageResponse<>(
+                        dtos,
+                        result.getPageNo(),
+                        result.getPageSize(),
+                        result.getTotalElements(),
+                        result.getTotalPages(),
+                        result.isLast()
+                );
+        return ResponseEntity.ok(dtoPage);
+    }
+
+    @GetMapping("/collections/{collectionName}")
+    public ResponseEntity<List<PinResponse>> getCollectionByName(
+            @PathVariable String collectionName,
+            @RequestParam(defaultValue = "20") int size) {
+        User currentUser = userService.getCurrentUser();
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(
+                0, size,
+                org.springframework.data.domain.Sort.by("likesCount").descending()
+        );
+        List<Pin> pins = pinRepository.findByTags_NameIgnoreCase(collectionName, pageable);
+        List<PinResponse> dtos = pins.stream().map(pin -> {
+            PinResponse dto = pinQueryService.convertToPinResponse(pin, currentUser);
+            pictureRepository.findByPinId(pin.getId()).ifPresent(pic -> {
+                String thumb1 = pic.getThumbnailImageUrl1();
+                if (thumb1 != null && !thumb1.isEmpty()) {
+                    dto.setThumbnailImageUrl(fileStorageService.updateImageUrl(thumb1));
+                }
+            });
+            List<Location> locs = locationRepository.findByPinId(pin.getId());
+            if (!locs.isEmpty()) {
+                Location loc = locs.get(0);
+                dto.setLatitude(loc.getLatitude());
+                dto.setLongitude(loc.getLongitude());
+                dto.setAddress(loc.getAddress());
+                dto.setPlaceName(loc.getNameplace());
+            }
+            return dto;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 }

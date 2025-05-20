@@ -13,11 +13,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import com.example.server.UsPinterest.repository.PictureRepository;
 import com.example.server.UsPinterest.repository.LocationRepository;
+import org.springframework.context.annotation.Primary;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 @Component
+@Primary
 public abstract class PinStructMapperDecorator implements PinStructMapper {
 
-    private final PinStructMapper delegate;
+    @Autowired
+    @Qualifier("delegate")
+    private PinStructMapper delegate;
 
     @Autowired
     private FileStorageService fileStorageService;
@@ -33,10 +38,6 @@ public abstract class PinStructMapperDecorator implements PinStructMapper {
 
     @Autowired
     private LocationRepository locationRepository;
-
-    public PinStructMapperDecorator(PinStructMapper delegate) {
-        this.delegate = delegate;
-    }
 
     @Override
     public PinResponse toDto(Pin pin) {

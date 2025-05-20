@@ -53,14 +53,13 @@ public class AuthController {
     public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest) {
         authRegisterCounter.increment();
         User savedUser = userService.registerUser(registerRequest);
+        // Автоматически подтверждаем аккаунт, отключаем подтверждение через email
         String token = userService.createVerificationToken(savedUser);
-        // Отправляем email с ссылкой подтверждения
-        emailService.sendVerificationEmail(savedUser.getEmail(), token);
-        // Формируем ответ с токеном
+        userService.confirmEmail(token);
+        // Формируем ответ без токена подтверждения
         Map<String, Object> response = new HashMap<>();
         response.put("username", savedUser.getUsername());
         response.put("email", savedUser.getEmail());
-        response.put("verificationToken", token);
         return ResponseEntity.ok(response);
     }
 
@@ -73,7 +72,8 @@ public class AuthController {
         User user = userService.getUserWithCollectionsByUsername(request.getUsername());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
-        TokenRefreshResponse response = new TokenRefreshResponse(accessToken, refreshToken.getToken());
+        // Добавляем роль пользователя в ответ
+        TokenRefreshResponse response = new TokenRefreshResponse(accessToken, refreshToken.getToken(), user.getRole());
         return ResponseEntity.ok(response);
     }
 
@@ -88,7 +88,8 @@ public class AuthController {
                     UserPrincipal userPrincipal = new UserPrincipal(user);
                     String token = jwtTokenUtil.generateToken(userPrincipal);
                     RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(userPrincipal.getId());
-                    return ResponseEntity.ok(new TokenRefreshResponse(token, newRefreshToken.getToken()));
+                    // Добавляем роль пользователя в ответ
+                    return ResponseEntity.ok(new TokenRefreshResponse(token, newRefreshToken.getToken(), user.getRole()));
                 })
                 .orElseThrow(() -> new TokenRefreshException(requestRefreshToken,
                         "Refresh токен не найден в базе данных!"));

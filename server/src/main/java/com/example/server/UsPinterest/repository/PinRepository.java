@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -54,4 +55,11 @@ public interface PinRepository extends JpaRepository<Pin, Long> {
     Page<Pin> searchByDescriptionOrTags(@Param("text") String text,
                                        @Param("tagNames") java.util.List<String> tagNames,
                                        Pageable pageable);
+
+    @EntityGraph(attributePaths = {"likes", "comments", "likes.user", "comments.user"})
+    List<Pin> findByTags_NameIgnoreCase(String name, Pageable pageable);
+    
+    // Методы для админской панели
+    int countByCreatedAtAfter(LocalDateTime date);
+    int countByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
 }

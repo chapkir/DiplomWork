@@ -37,6 +37,8 @@ public class User {
 
     private LocalDateTime registrationDate;
 
+    private LocalDateTime lastLoginTime;
+
     private String firstName;
 
     private String city;
@@ -44,6 +46,9 @@ public class User {
     private LocalDate birthDate;
 
     private String gender;
+
+    @Column(nullable = false)
+    private String role = "USER";
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private Set<Comment> comments = new HashSet<>();
@@ -135,6 +140,14 @@ public class User {
         this.registrationDate = registrationDate;
     }
 
+    public LocalDateTime getLastLoginTime() {
+        return lastLoginTime;
+    }
+
+    public void setLastLoginTime(LocalDateTime lastLoginTime) {
+        this.lastLoginTime = lastLoginTime;
+    }
+
     public String getFirstName() {
         return firstName;
     }
@@ -165,6 +178,14 @@ public class User {
 
     public void setGender(String gender) {
         this.gender = gender;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 
     public Set<Comment> getComments() {

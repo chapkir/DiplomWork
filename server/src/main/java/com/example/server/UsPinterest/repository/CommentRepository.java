@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -21,4 +22,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     @Query("SELECT COUNT(c) FROM Comment c WHERE c.post.id = :postId")
     long countByPostId(@Param("postId") Long postId);
     Page<Comment> findByPin(com.example.server.UsPinterest.model.Pin pin, Pageable pageable);
+    
+    // Методы для админской панели
+    int countByCreatedAtAfter(LocalDateTime date);
+    int countByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
 }

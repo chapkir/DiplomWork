@@ -7,6 +7,7 @@ public class TokenRefreshResponse {
     private String accessToken;
     private String refreshToken;
     private String tokenType = "Bearer";
+    private String role;
 
     public TokenRefreshResponse() {
     }
@@ -14,6 +15,12 @@ public class TokenRefreshResponse {
     public TokenRefreshResponse(String accessToken, String refreshToken) {
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
+    }
+
+    public TokenRefreshResponse(String accessToken, String refreshToken, String role) {
+        this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
+        this.role = role;
     }
 
     @JsonIgnore
@@ -40,6 +47,14 @@ public class TokenRefreshResponse {
 
     public void setTokenType(String tokenType) {
         this.tokenType = tokenType;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 
     @JsonProperty("token")
