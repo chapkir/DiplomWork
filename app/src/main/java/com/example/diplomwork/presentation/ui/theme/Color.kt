@@ -13,6 +13,8 @@ val Pink40 = Color(0xFF7D5260)
 val DarkBlue = Color(0xFF212855)
 val DarkWhite = Color(0xFFDAD8D8)
 
+val SunOrange = Color(0xFFFFC107)
+
 // Фоновые цвета
 val BgDefault = Color(0xFF121212)  // Основной фон
 val BgProfile = Color(0xFF282828)  // Фон профиля
