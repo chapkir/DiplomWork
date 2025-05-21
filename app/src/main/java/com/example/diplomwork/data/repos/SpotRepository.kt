@@ -29,7 +29,7 @@ class SpotRepository @Inject constructor(
         return Pager(
             config = PagingConfig(
                 pageSize = pageSize,
-                enablePlaceholders = false
+                enablePlaceholders = true
             ),
             pagingSourceFactory = { SpotPagingSource(api, pageSize) }
         ).flow

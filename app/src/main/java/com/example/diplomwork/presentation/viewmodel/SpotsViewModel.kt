@@ -3,12 +3,15 @@ package com.example.diplomwork.presentation.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.map
 import com.example.diplomwork.data.model.LocationResponse
 import com.example.diplomwork.data.model.SpotPicturesResponse
 import com.example.diplomwork.data.model.SpotResponse
+import com.example.diplomwork.data.paging.SpotPagingSource
 import com.example.diplomwork.data.repos.LocationRepository
 import com.example.diplomwork.data.repos.SpotRepository
 import com.example.diplomwork.domain.usecase.DeletePictureUseCase
@@ -116,6 +119,7 @@ class SpotsViewModel @Inject constructor(
                 }
             }
             .cachedIn(viewModelScope)
+
 
     fun loadMorePicturesForSpot(spotId: Long, firstImage: String) {
         viewModelScope.launch {

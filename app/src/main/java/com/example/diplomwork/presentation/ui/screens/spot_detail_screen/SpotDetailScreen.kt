@@ -152,10 +152,10 @@ fun SpotDetailScreen(
                 PlaceInfo(
                     rating = uiState.rating.toInt(),
                     title = uiState.pictureTitle,
+                    placeName = uiState.placeName,
                     description = uiState.pictureDescription,
-                    geo = "нет",
-                    latitude = 43.534534,
-                    longitude = 32.534534,
+                    latitude = uiState.latitude,
+                    longitude = uiState.longitude,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(start = 15.dp, end = 15.dp)
@@ -443,8 +443,8 @@ private fun ActionBar(
 fun PlaceInfo(
     rating: Int,
     title: String,
+    placeName: String,
     description: String,
-    geo: String,
     latitude: Double,
     longitude: Double,
     modifier: Modifier = Modifier
@@ -453,10 +453,10 @@ fun PlaceInfo(
         modifier = modifier,
     ) {
         Text(
-            text = if (title == "") "Без названия" else title,
-            fontSize = 20.sp,
+            text = if (title == "") placeName else title,
+            fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            maxLines = 1,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             color = MaterialTheme.colorScheme.onPrimary
         )

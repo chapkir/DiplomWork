@@ -3,7 +3,9 @@ package com.example.diplomwork.presentation.ui.screens.spots_screen
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -75,7 +77,10 @@ fun SpotsScreen(
 
             loadState.refresh is LoadState.Error -> {
                 val e = (loadState.refresh as LoadState.Error).error
-                ErrorRetryBlock(error = e.message ?: "Ошибка", onRetry = { spots.retry() })
+                ErrorRetryBlock(
+                    error = "Ошибка загрузки, попробуйте перезайти в аккаунт",
+                    onRetry = { spots.retry() }
+                )
             }
 
             spots.itemCount == 0 -> {
@@ -87,19 +92,21 @@ fun SpotsScreen(
             }
 
             else -> {
+                Spacer(modifier = Modifier.height(16.dp))
                 LazyColumn(
                     state = listState,
                     modifier = Modifier
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.background),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(spots.itemCount) { index ->
                         spots[index]?.let { spot ->
 
                             SpotsCard(
                                 firstPicture = spot.thumbnailImageUrl,
-                                additionalPictures = additionalPictures[spot.id]?.pictures ?: emptyList(),
+                                additionalPictures = additionalPictures[spot.id]?.pictures
+                                    ?: emptyList(),
                                 onLoadMore = { id, firstPicture ->
                                     spotsViewModel.loadMorePicturesForSpot(id, firstPicture)
                                 },

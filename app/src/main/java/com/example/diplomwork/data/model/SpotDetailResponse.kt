@@ -18,5 +18,9 @@ data class SpotDetailResponse (
 
     val picturesCount: Int,
 
+    val latitude: Double,
+    val longitude: Double,
+    val namePlace: String,
+
     val fullhdImages: List<String>,
 )
