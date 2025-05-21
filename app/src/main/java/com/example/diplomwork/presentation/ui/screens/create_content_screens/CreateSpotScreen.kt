@@ -2,9 +2,11 @@ package com.example.diplomwork.presentation.ui.screens.create_content_screens
 
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,6 +23,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -37,6 +41,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -84,6 +90,8 @@ fun CreateSpotScreen(
 
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.isError.collectAsState()
+
+    var rating by remember { mutableIntStateOf(createSpotData.rating.toInt()) }
 
     Column(
         modifier = Modifier
@@ -133,8 +141,26 @@ fun CreateSpotScreen(
             }
 
             item {
+                Text(
+                    text = "Насколько вы оцениваете это место?",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.LightGray
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                RatingBar(
+                    rating = rating,
+                    onRatingChanged = { newRating ->
+                        rating = newRating
+                        viewModel.updateCreateContentData { copy(rating = newRating.toString()) }
+                    }
+                )
+            }
+
+            item {
                 AddContentTextField(
                     label = "Название",
+                    placeholder = "Введите название места",
                     value = createSpotData.title,
                     onValueChange = { viewModel.updateCreateContentData { copy(title = it) } }
                 )
@@ -142,7 +168,8 @@ fun CreateSpotScreen(
 
             item {
                 AddContentTextField(
-                    label = "Описание (необязательно)",
+                    label = "Описание",
+                    placeholder = "Кратко опишите место",
                     value = createSpotData.description,
                     onValueChange = { viewModel.updateCreateContentData { copy(description = it) } }
                 )
@@ -159,18 +186,10 @@ fun CreateSpotScreen(
 
             item {
                 AddContentTextField(
-                    label = "Название места",
+                    label = "Название с карт",
                     value = createSpotData.spotName,
                     onValueChange = { viewModel.updateCreateContentData { copy(spotName = it) } },
                     readOnly = true
-                )
-            }
-
-            item {
-                AddContentTextField(
-                    label = "Рейтинг",
-                    value = createSpotData.rating,
-                    onValueChange = { viewModel.updateCreateContentData { copy(rating = it) } }
                 )
             }
 
@@ -185,6 +204,7 @@ fun CreateSpotScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(0.65f)
+                        .padding(bottom = 15.dp)
                 ) {
                     Button(
                         onClick = {
@@ -212,7 +232,7 @@ fun CreateSpotScreen(
                             }
                         } else {
                             Text(
-                                "Опубликовать",
+                                text = "Опубликовать",
                                 modifier = Modifier.fillMaxWidth(),
                                 textAlign = TextAlign.Center,
                                 fontWeight = FontWeight.Bold,
@@ -280,7 +300,7 @@ fun ImagesRow(imageUrlsUri: List<Uri>) {
                             }
                         },
                         modifier = Modifier
-                            .aspectRatio(aspectRatio)
+                            .aspectRatio(0.75f)
                             .clip(RoundedCornerShape(12.dp))
                     )
                 }
@@ -292,6 +312,7 @@ fun ImagesRow(imageUrlsUri: List<Uri>) {
 @Composable
 private fun AddContentTextField(
     label: String,
+    placeholder: String = "",
     value: String,
     onValueChange: (String) -> Unit,
     isError: Boolean = false,
@@ -301,7 +322,15 @@ private fun AddContentTextField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label) },
+        label = { Text(text = label,) },
+        placeholder = {
+            Text(
+                text = placeholder,
+                fontWeight = FontWeight.Medium,
+                fontSize = 15.sp,
+                color = Color.Gray
+            )
+        },
         isError = isError,
         readOnly = readOnly,
         modifier = if (label != "Описание") {
@@ -336,3 +365,22 @@ private fun AddContentTextField(
     )
 }
 
+@Composable
+private fun RatingBar(
+    rating: Int,
+    onRatingChanged: (Int) -> Unit
+) {
+    Row {
+        repeat(5) { index ->
+            val starColor = if (index < rating) Color.Yellow else Color.Gray
+            Icon(
+                imageVector = Icons.Default.Star,
+                contentDescription = "Рейтинг",
+                tint = starColor,
+                modifier = Modifier
+                    .size(30.dp)
+                    .clickable { onRatingChanged(index + 1) }
+            )
+        }
+    }
+}

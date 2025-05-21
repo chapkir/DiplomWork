@@ -3,6 +3,7 @@ package com.example.diplomwork.presentation.ui.screens.spots_screen
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -76,11 +77,14 @@ fun SpotsScreen(
             }
 
             loadState.refresh is LoadState.Error -> {
-                val e = (loadState.refresh as LoadState.Error).error
-                ErrorRetryBlock(
-                    error = "Ошибка загрузки, попробуйте перезайти в аккаунт",
-                    onRetry = { spots.retry() }
-                )
+                Box(modifier = Modifier.fillMaxSize())
+                {
+                    val e = (loadState.refresh as LoadState.Error).error
+                    ErrorRetryBlock(
+                        error = "Ошибка загрузки, попробуйте перезайти в аккаунт",
+                        onRetry = { spots.retry() }
+                    )
+                }
             }
 
             spots.itemCount == 0 -> {
