@@ -24,6 +24,7 @@ import org.springframework.cache.annotation.Cacheable;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -107,10 +108,11 @@ public class PinQueryService {
                 ? pinRepository.findAll(PageRequest.of(0, fetchSize, Sort.by("id").ascending())).getContent()
                 : findPinsGreaterThan(cursorId, fetchSize));
         boolean hasNext = raw.size() > size;
-        if (hasNext) raw.remove(raw.size() - 1);
+        List<Pin> pageList = new ArrayList<>(raw);
+        if (hasNext) pageList.remove(pageList.size() - 1);
         User currentUser = null;
-        List<PinResponse> content = raw.stream().map(p -> convertToPinResponse(p, currentUser)).collect(Collectors.toList());
-        String next = hasNext ? paginationService.encodeCursor(raw.get(raw.size() - 1).getId()) : null;
+        List<PinResponse> content = pageList.stream().map(p -> convertToPinResponse(p, currentUser)).collect(Collectors.toList());
+        String next = hasNext ? paginationService.encodeCursor(pageList.get(pageList.size() - 1).getId()) : null;
         boolean hasPrev = cursorId != null;
         String prev = hasPrev ? paginationService.encodeCursor(cursorId) : null;
         long total = pinRepository.count();
@@ -131,7 +133,8 @@ public class PinQueryService {
                 ? pinRepository.findAll(PageRequest.of(0, fetchSize, Sort.by("id").ascending())).getContent()
                 : findPinsGreaterThan(cursorId, fetchSize));
         boolean hasNext = raw.size() > size;
-        if (hasNext) raw.remove(raw.size() - 1);
+        List<Pin> pageListHd = new ArrayList<>(raw);
+        if (hasNext) pageListHd.remove(pageListHd.size() - 1);
         List<PinFullHdResponse> content = raw.stream()
                 .map(pin -> {
                     PinFullHdResponse dto = pinFullHdStructMapper.toDto(pin);
@@ -142,7 +145,7 @@ public class PinQueryService {
                     dto.setAspectRatio(w != null && h != null && h > 0 ? w.doubleValue() / h : 1.0);
                     return dto;
                 }).collect(Collectors.toList());
-        String next = hasNext ? paginationService.encodeCursor(raw.get(raw.size() - 1).getId()) : null;
+        String next = hasNext ? paginationService.encodeCursor(pageListHd.get(pageListHd.size() - 1).getId()) : null;
         boolean hasPrev = cursorId != null;
         String prev = hasPrev ? paginationService.encodeCursor(cursorId) : null;
         long total = pinRepository.count();
@@ -163,7 +166,8 @@ public class PinQueryService {
                 ? pinRepository.findAll(PageRequest.of(0, fetchSize, Sort.by("id").ascending())).getContent()
                 : findPinsGreaterThan(cursorId, fetchSize));
         boolean hasNext = raw.size() > size;
-        if (hasNext) raw.remove(raw.size() - 1);
+        List<Pin> pageListThumb = new ArrayList<>(raw);
+        if (hasNext) pageListThumb.remove(pageListThumb.size() - 1);
         List<PinThumbnailResponse> content = raw.stream()
                 .map(pin -> {
                     PinThumbnailResponse dto = pinThumbnailStructMapper.toDto(pin);
@@ -174,7 +178,7 @@ public class PinQueryService {
                     dto.setAspectRatio(w2 != null && h2 != null && h2 > 0 ? w2.doubleValue() / h2 : 1.0);
                     return dto;
                 }).collect(Collectors.toList());
-        String next = hasNext ? paginationService.encodeCursor(raw.get(raw.size() - 1).getId()) : null;
+        String next = hasNext ? paginationService.encodeCursor(pageListThumb.get(pageListThumb.size() - 1).getId()) : null;
         boolean hasPrev = cursorId != null;
         String prev = hasPrev ? paginationService.encodeCursor(cursorId) : null;
         long total = pinRepository.count();

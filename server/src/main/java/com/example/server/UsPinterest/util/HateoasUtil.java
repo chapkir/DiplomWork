@@ -22,7 +22,13 @@ public class HateoasUtil {
 
     public <T> HateoasResponse<CursorPageResponse<T, String>> buildCursorPageResponse(CursorPageResponse<T, String> pageResponse, String cursor, int size) {
         HateoasResponse<CursorPageResponse<T, String>> response = new HateoasResponse<>(pageResponse);
-        response.addSelfLink("/api/pins?cursor=" + cursor + "&size=" + size);
+        StringBuilder href = new StringBuilder("/api/pins");
+        if (cursor != null && !cursor.isEmpty()) {
+            href.append("?cursor=").append(cursor).append("&size=").append(size);
+        } else {
+            href.append("?size=").append(size);
+        }
+        response.addSelfLink(href.toString());
         response.addLink("create", "/api/pins", "POST");
         return response;
     }
