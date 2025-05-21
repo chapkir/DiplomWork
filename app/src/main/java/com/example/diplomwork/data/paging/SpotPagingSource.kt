@@ -15,25 +15,30 @@ class SpotPagingSource(
         return try {
             val cursor = params.key
             val response = api.getSpots(cursor = cursor, size = pageSize)
+
             if (response.isSuccessful) {
-                val data = response.body()?.data ?: return LoadResult.Page(emptyList(), null, null)
+                val data = response.body()?.data
+                    ?: return LoadResult.Page(emptyList(), null, null)
+
                 val spots = data.content
-                val nextCursor = spots.lastOrNull()?.id?.toString()?.takeIf { data.hasNext }
+                val nextCursor = data.nextCursor?.takeIf { data.hasNext }
 
                 LoadResult.Page(
                     data = spots,
-                    prevKey = null,
-                    nextKey = nextCursor
+                    prevKey = null,            // Курсорная пагинация редко поддерживает обратную навигацию
+                    nextKey = nextCursor       // Передаём курсор от сервера
                 )
             } else {
                 LoadResult.Error(HttpException(response))
             }
+
         } catch (e: Exception) {
             LoadResult.Error(e)
         }
     }
 
     override fun getRefreshKey(state: PagingState<String, SpotResponse>): String? {
-        return null // можно улучшить, если появится поддержка cursor-смены
+        // Обычно в курсорной пагинации refresh делается с нуля
+        return null
     }
 }

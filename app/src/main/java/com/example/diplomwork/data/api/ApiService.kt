@@ -92,8 +92,8 @@ interface SpotApi {
     @GET("api/spots")
     suspend fun getSpots(
         @Query("cursor") cursor: String? = null,
-        @Query("size") size: Int = 10,
-        @Query("sortDirection") sortDirection: String = "id"
+        @Query("size") size: Int = 5,
+        @Query("sortDirection") sortDirection: String = "desc"
     ): Response<ApiResponseWrapper<CursorPageResponse<SpotResponse>>>
 
     @GET("api/spots/all")

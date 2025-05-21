@@ -5,5 +5,6 @@ data class CursorPageResponse<T>(
     val hasNext: Boolean,
     val hasPrevious: Boolean,
     val pageSize: Int,
-    val totalElements: Int
+    val totalElements: Int,
+    val nextCursor: String?
 )
