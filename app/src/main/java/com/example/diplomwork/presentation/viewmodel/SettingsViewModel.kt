@@ -1,8 +1,8 @@
 package com.example.diplomwork.presentation.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.diplomwork.data.model.FeedbackRequest
 import com.example.diplomwork.data.repos.AuthRepository
 import com.example.diplomwork.data.repos.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -91,12 +91,15 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun sendFeedback() {
-        Log.i(
-            "Feedback",
-            "Плюсы: ${_feedbackData.value.whatLiked}" +
-                    "Минусы: ${_feedbackData.value.whatDisliked}" +
-                    "Рекомендации: ${_feedbackData.value.recommendations}"
-        )
+        viewModelScope.launch {
+            userRepository.sendFeedback(
+                FeedbackRequest(
+                    _feedbackData.value.whatLiked,
+                    _feedbackData.value.whatDisliked,
+                    _feedbackData.value.recommendations
+                )
+            )
+        }
     }
 
 }

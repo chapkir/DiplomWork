@@ -1,5 +1,6 @@
 package com.example.diplomwork.presentation.ui.screens.settings_screens
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -43,6 +45,7 @@ fun FeedbackScreen(
     val feedbackData by viewModel.feedbackData.collectAsState()
     val rating by remember { mutableIntStateOf(0) }
 
+    val context = LocalContext.current
 
     Column(modifier = Modifier.fillMaxSize()) {
 
@@ -114,7 +117,11 @@ fun FeedbackScreen(
                 Spacer(Modifier.height(22.dp))
 
                 Button(
-                    onClick = { viewModel.sendFeedback() },
+                    onClick = {
+                        viewModel.sendFeedback()
+                        Toast.makeText(context, "Спасибо за Ваш отзыв!", Toast.LENGTH_SHORT).show()
+                        onBack()
+                    },
                     modifier = Modifier
                         .fillMaxWidth(0.7f),
                     shape = RoundedCornerShape(15.dp)

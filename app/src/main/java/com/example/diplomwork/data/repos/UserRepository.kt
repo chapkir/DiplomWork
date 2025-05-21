@@ -3,6 +3,7 @@ package com.example.diplomwork.data.repos
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.data.api.UserApi
 import com.example.diplomwork.data.model.ChangePasswordRequest
+import com.example.diplomwork.data.model.FeedbackRequest
 import dagger.hilt.android.scopes.ActivityScoped
 import retrofit2.Response
 import javax.inject.Inject
@@ -25,5 +26,8 @@ class UserRepository @Inject constructor(
         return sessionManager.username ?: ""
     }
 
-    
+    suspend fun sendFeedback(request: FeedbackRequest): Response<Unit> {
+        return api.sendFeedback(request)
+    }
+
 }

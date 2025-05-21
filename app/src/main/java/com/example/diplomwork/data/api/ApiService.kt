@@ -9,6 +9,7 @@ import com.example.diplomwork.data.model.CommentResponseWrapper
 import com.example.diplomwork.data.model.CursorPageResponse
 import com.example.diplomwork.data.model.EditProfileRequest
 import com.example.diplomwork.data.model.FcmTokenRequest
+import com.example.diplomwork.data.model.FeedbackRequest
 import com.example.diplomwork.data.model.LocationRequest
 import com.example.diplomwork.data.model.LocationResponse
 import com.example.diplomwork.data.model.LoginRequest
@@ -178,6 +179,9 @@ interface UserApi {
     suspend fun changePassword(
         @Body request: ChangePasswordRequest
     ): Response<Unit>
+
+    @POST("api/feedback")
+    suspend fun sendFeedback(@Body request: FeedbackRequest): Response<Unit>
 }
 
 
