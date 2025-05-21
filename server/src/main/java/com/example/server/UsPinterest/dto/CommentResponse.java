@@ -63,6 +63,12 @@ public class CommentResponse {
         this.userProfileImageUrl = userProfileImageUrl;
     }
 
+    // Дополнительное поле для JSON-ответа с названием avatarUrl
+    @com.fasterxml.jackson.annotation.JsonProperty("avatarUrl")
+    public String getAvatarUrl() {
+        return userProfileImageUrl;
+    }
+
     public Long getUserId() {
         return userId;
     }

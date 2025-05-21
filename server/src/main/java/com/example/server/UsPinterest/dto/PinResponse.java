@@ -3,9 +3,11 @@ package com.example.server.UsPinterest.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class PinResponse {
     private Long id;
+    @JsonIgnore
     private String imageUrl;
     private String description;
     private Long boardId;
@@ -21,6 +23,7 @@ public class PinResponse {
     private int likesCount;
     private int commentsCount;
     private boolean isLikedByCurrentUser;
+    @JsonIgnore
     private String fullhdImageUrl;
     private Integer fullhdWidth;
     private Integer fullhdHeight;
@@ -166,14 +169,6 @@ public class PinResponse {
         this.isLikedByCurrentUser = isLikedByCurrentUser;
     }
 
-    public String getFullhdImageUrl() {
-        return fullhdImageUrl;
-    }
-
-    public void setFullhdImageUrl(String fullhdImageUrl) {
-        this.fullhdImageUrl = fullhdImageUrl;
-    }
-
     public Integer getFullhdWidth() {
         return fullhdWidth;
     }
@@ -188,14 +183,6 @@ public class PinResponse {
 
     public void setFullhdHeight(Integer fullhdHeight) {
         this.fullhdHeight = fullhdHeight;
-    }
-
-    public String getThumbnailImageUrl() {
-        return thumbnailImageUrl;
-    }
-
-    public void setThumbnailImageUrl(String thumbnailImageUrl) {
-        this.thumbnailImageUrl = thumbnailImageUrl;
     }
 
     public Integer getThumbnailWidth() {
@@ -276,5 +263,27 @@ public class PinResponse {
 
     public void setFullhdImages(java.util.List<String> fullhdImages) {
         this.fullhdImages = fullhdImages;
+    }
+
+    /**
+     * Stub method for compatibility: возвращает null для fullhdImageUrl
+     */
+    public String getFullhdImageUrl() {
+        return null;
+    }
+
+    /**
+     * Stub method for compatibility: заглушка для установки fullhdImageUrl
+     */
+    public void setFullhdImageUrl(String fullhdImageUrl) {
+        // stub
+    }
+
+    public String getThumbnailImageUrl() {
+        return thumbnailImageUrl;
+    }
+
+    public void setThumbnailImageUrl(String thumbnailImageUrl) {
+        this.thumbnailImageUrl = thumbnailImageUrl;
     }
 }

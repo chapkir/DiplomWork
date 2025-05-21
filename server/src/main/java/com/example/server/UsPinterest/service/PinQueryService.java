@@ -80,13 +80,6 @@ public class PinQueryService {
         boolean isLiked = currentUser != null && pin.getLikes().stream()
                 .anyMatch(like -> like.getUser() != null && currentUser.getId().equals(like.getUser().getId()));
         dto.setIsLikedByCurrentUser(isLiked);
-        // Update FullHD and thumbnail URLs if present
-        if (dto.getFullhdImageUrl() != null && !dto.getFullhdImageUrl().isEmpty()) {
-            dto.setFullhdImageUrl(fileStorageService.updateImageUrl(dto.getFullhdImageUrl()));
-        }
-        if (dto.getThumbnailImageUrl() != null && !dto.getThumbnailImageUrl().isEmpty()) {
-            dto.setThumbnailImageUrl(fileStorageService.updateImageUrl(dto.getThumbnailImageUrl()));
-        }
         return dto;
     }
 

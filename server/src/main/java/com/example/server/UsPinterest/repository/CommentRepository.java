@@ -26,4 +26,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     // Методы для админской панели
     int countByCreatedAtAfter(LocalDateTime date);
     int countByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
+
+    Page<com.example.server.UsPinterest.entity.Comment> findByPinOrderByIdDesc(com.example.server.UsPinterest.model.Pin pin, Pageable pageable);
+    List<com.example.server.UsPinterest.entity.Comment> findByPinAndIdLessThanOrderByIdDesc(com.example.server.UsPinterest.model.Pin pin, Long id, Pageable pageable);
 }

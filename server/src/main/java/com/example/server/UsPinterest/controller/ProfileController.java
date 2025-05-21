@@ -84,14 +84,10 @@ public class ProfileController {
             ProfileResponse response = new ProfileResponse();
             response.setId(user.getId());
             response.setUsername(user.getUsername());
-            response.setEmail(user.getEmail());
             response.setBio(user.getBio());
             response.setProfileImageUrl(user.getProfileImageUrl() != null ? user.getProfileImageUrl() : "");
             response.setRegistrationDate(user.getRegistrationDate());
             response.setFirstName(user.getFirstName());
-            response.setCity(user.getCity());
-            response.setBirthDate(user.getBirthDate());
-            response.setGender(user.getGender());
 
             // Set counts for own profile
             int pinsCount = pinRepository.findByUserOrderByCreatedAtDesc(user).size();
@@ -217,14 +213,10 @@ public class ProfileController {
             ProfileResponse response = new ProfileResponse();
             response.setId(targetUser.getId());
             response.setUsername(targetUser.getUsername());
-            response.setEmail(targetUser.getEmail());
             response.setBio(targetUser.getBio());
             response.setProfileImageUrl(targetUser.getProfileImageUrl() != null ? targetUser.getProfileImageUrl() : "");
             response.setRegistrationDate(targetUser.getRegistrationDate());
             response.setFirstName(targetUser.getFirstName());
-            response.setCity(targetUser.getCity());
-            response.setBirthDate(targetUser.getBirthDate());
-            response.setGender(targetUser.getGender());
 
             // Set counts for other profile
             int otherPinsCount = pinRepository.findByUserOrderByCreatedAtDesc(targetUser).size();
@@ -298,7 +290,6 @@ public class ProfileController {
             ProfileResponse response = new ProfileResponse();
             response.setId(updatedUser.getId());
             response.setUsername(updatedUser.getUsername());
-            response.setEmail(updatedUser.getEmail());
             response.setProfileImageUrl(updatedUser.getProfileImageUrl() != null ? updatedUser.getProfileImageUrl() : "");
             response.setRegistrationDate(updatedUser.getRegistrationDate());
             response.setFirstName(updatedUser.getFirstName());

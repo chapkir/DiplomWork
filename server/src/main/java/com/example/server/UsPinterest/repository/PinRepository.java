@@ -31,10 +31,6 @@ public interface PinRepository extends JpaRepository<Pin, Long> {
 
     @Override
     @EntityGraph(attributePaths = {"likes", "comments", "likes.user", "comments.user"})
-    Page<Pin> findAll(Pageable pageable);
-
-    @Override
-    @EntityGraph(attributePaths = {"likes", "comments", "likes.user", "comments.user"})
     Optional<Pin> findById(Long id);
 
     @EntityGraph(attributePaths = {"likes", "comments", "likes.user", "comments.user"})

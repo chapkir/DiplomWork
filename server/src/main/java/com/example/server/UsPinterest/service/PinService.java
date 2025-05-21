@@ -330,14 +330,6 @@ public class PinService {
         Integer w = pin.getImageWidth(), h = pin.getImageHeight();
         response.setAspectRatio(w != null && h != null && h > 0 ? w.doubleValue() / h : 1.0);
 
-        // Обновляем URLы FullHD и миниатюр
-        if (pin.getFullhdImageUrl() != null && !pin.getFullhdImageUrl().isEmpty()) {
-            response.setFullhdImageUrl(fileStorageService.updateImageUrl(pin.getFullhdImageUrl()));
-        }
-        if (pin.getThumbnailImageUrl() != null && !pin.getThumbnailImageUrl().isEmpty()) {
-            response.setThumbnailImageUrl(fileStorageService.updateImageUrl(pin.getThumbnailImageUrl()));
-        }
-
         return response;
     }
 

@@ -41,6 +41,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import jakarta.validation.Valid;
 import java.io.IOException;
@@ -65,6 +68,7 @@ import com.example.server.UsPinterest.dto.PinThumbnailBasicResponse;
 import com.example.server.UsPinterest.service.NotificationSender;
 import com.example.server.UsPinterest.repository.LocationRepository;
 import com.example.server.UsPinterest.model.Location;
+import com.example.server.UsPinterest.service.CommentService;
 
 @RestController
 @RequiredArgsConstructor
@@ -90,6 +94,7 @@ public class PinController {
     private final PictureRepository pictureRepository;
     private final LocationRepository locationRepository;
     private final NotificationSender notificationSender;
+    private final CommentService commentService;
 
     @GetMapping({""})
     public ResponseEntity<?> getAllPins(
@@ -351,6 +356,17 @@ public class PinController {
         response.addLink("pin", "/api/pins/detail/" + id, "GET");
         response.addLink("add-comment", "/api/pins/" + id + "/comments", "POST");
         return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}/comments/{commentId}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> deleteComment(
+            @PathVariable Long id,
+            @PathVariable Long commentId,
+            Authentication authentication) {
+        User currentUser = userService.getCurrentUser();
+        commentService.deleteComment(commentId, id, currentUser.getId());
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -764,5 +780,65 @@ public class PinController {
             return dto;
         }).collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
+    }
+
+    @GetMapping("/{id}/comments/cursor")
+    public ResponseEntity<?> getPinCommentsCursor(
+            @PathVariable Long id,
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "20") int size) {
+        // Загружаем пин
+        Pin pin = pinQueryService.getPinWithLikesAndComments(id);
+        // Декодируем курсор (id последнего комментария)
+        Long cursorId = paginationService.decodeCursor(cursor, Long.class);
+        int fetchSize = size > 0 ? size + 1 : 21;
+        Pageable pageable = PageRequest.of(0, fetchSize, Sort.by(Sort.Direction.DESC, "id"));
+        List<com.example.server.UsPinterest.entity.Comment> raw;
+        if (cursorId == null) {
+            raw = commentRepository.findByPinOrderByIdDesc(pin, pageable).getContent();
+        } else {
+            raw = commentRepository.findByPinAndIdLessThanOrderByIdDesc(pin, cursorId, pageable);
+        }
+        boolean hasNext = raw.size() > size;
+        if (hasNext) {
+            raw.remove(raw.size() - 1);
+        }
+        // Маппинг в DTO
+        List<CommentResponse> dtos = raw.stream().map(comment -> {
+            CommentResponse cr = new CommentResponse();
+            cr.setId(comment.getId());
+            cr.setText(comment.getText());
+            cr.setCreatedAt(comment.getCreatedAt());
+            if (comment.getUser() != null) {
+                cr.setUsername(comment.getUser().getUsername());
+                String userImg = comment.getUser().getProfileImageUrl();
+                if (userImg != null && !userImg.isEmpty()) {
+                    userImg = fileStorageService.updateImageUrl(userImg);
+                }
+                cr.setUserProfileImageUrl(userImg);
+                cr.setUserId(comment.getUser().getId());
+            } else {
+                cr.setUsername("Unknown");
+            }
+            return cr;
+        }).collect(Collectors.toList());
+        String nextCursor = hasNext ? paginationService.encodeCursor(raw.get(raw.size() - 1).getId()) : null;
+        boolean hasPrevious = cursorId != null;
+        String prevCursor = hasPrevious ? paginationService.encodeCursor(cursorId) : null;
+        long totalComments = commentRepository.countByPinId(id);
+        CursorPageResponse<CommentResponse, String> pageResponse = paginationService.createCursorPageResponse(
+                dtos,
+                nextCursor,
+                prevCursor,
+                hasNext,
+                hasPrevious,
+                size,
+                totalComments
+        );
+        HateoasResponse<CursorPageResponse<CommentResponse, String>> response = new HateoasResponse<>(pageResponse);
+        response.addSelfLink("/api/pins/" + id + "/comments/cursor?cursor=" + cursor + "&size=" + size);
+        response.addLink("add-comment", "/api/pins/" + id + "/comments", "POST");
+        response.addLink("pin", "/api/pins/detail/" + id, "GET");
+        return ResponseEntity.ok(response);
     }
 }
