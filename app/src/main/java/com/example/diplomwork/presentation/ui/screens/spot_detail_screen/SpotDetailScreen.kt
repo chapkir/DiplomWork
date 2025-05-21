@@ -237,7 +237,8 @@ fun SpotDetailScreen(
             comments = uiState.comments,
             onDismiss = { closeCommentSheet() },
             onAddComment = { commentText -> viewModel.addComment(commentText) },
-            sheetState = commentSheetState
+            sheetState = commentSheetState,
+            onProfileClick = { onProfileClick(uiState.pictureUserId, uiState.pictureUsername) }
         )
     }
 }
@@ -315,16 +316,18 @@ private fun ImagesPager(
                 }
             }
         }
-        HorizontalPagerIndicator(
-            pagerState = pagerState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 10.dp),
-            activeColor = Color.White,
-            inactiveColor = Color.White.copy(alpha = 0.8f),
-            indicatorWidth = 8.dp,
-            spacing = 6.dp
-        )
+        if (imageUrls.size > 1) {
+            HorizontalPagerIndicator(
+                pagerState = pagerState,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 10.dp),
+                activeColor = Color.White,
+                inactiveColor = Color.White.copy(alpha = 0.8f),
+                indicatorWidth = 8.dp,
+                spacing = 6.dp
+            )
+        }
     }
 }
 
@@ -449,6 +452,8 @@ fun PlaceInfo(
     longitude: Double,
     modifier: Modifier = Modifier
 ) {
+    var isExpanded by remember { mutableStateOf(false) }
+
     Column(
         modifier = modifier,
     ) {
@@ -456,13 +461,11 @@ fun PlaceInfo(
             text = if (title == "") placeName else title,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             color = MaterialTheme.colorScheme.onPrimary
         )
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Рейтинг
         RatingBar(rating = rating)
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -471,15 +474,30 @@ fun PlaceInfo(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Описание
         Text(
-            text = if (description == "") "Без описания" else description,
+            text = if (description.isBlank()) "Без описания" else description,
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium,
-            maxLines = 4,
-            overflow = TextOverflow.Ellipsis,
-            color = MaterialTheme.colorScheme.onPrimary
+            maxLines = if (isExpanded) Int.MAX_VALUE else 4,
+            overflow = if (isExpanded) TextOverflow.Clip else TextOverflow.Ellipsis,
+            color = MaterialTheme.colorScheme.onPrimary,
+            modifier = Modifier.clickable { isExpanded = !isExpanded }
         )
+
+        if (description.isNotBlank()) {
+            Spacer(modifier = Modifier.height(3.dp))
+
+            Text(
+                text = if (isExpanded) "Скрыть" else "Показать полностью",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.Gray,
+                modifier = Modifier
+                    .clickable { isExpanded = !isExpanded }
+                    .padding(vertical = 2.dp)
+            )
+        }
+
     }
 }
 

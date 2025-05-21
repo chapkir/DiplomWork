@@ -99,9 +99,9 @@ fun SpotsCard(
                 modifier = Modifier.fillMaxSize()
             ) {
 
-                if (false) {
+                if (screenName == "Spots") {
                     SpotCardHeader(
-                        onProfileClick = { onProfileClick(id, username) },
+                        onProfileClick = { onProfileClick(userId, username) },
                         userProfileImageUrl = userProfileImageUrl,
                         username = username,
                         openMenuSheet = openMenuSheet

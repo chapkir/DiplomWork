@@ -25,7 +25,7 @@ class SpotRepository @Inject constructor(
     private val sessionManager: SessionManager
 ) {
 
-    fun getSpotsPagingFlow(pageSize: Int = 5): Flow<PagingData<SpotResponse>> {
+    fun getSpotsPagingFlow(pageSize: Int = 10): Flow<PagingData<SpotResponse>> {
         return Pager(
             config = PagingConfig(
                 pageSize = pageSize,

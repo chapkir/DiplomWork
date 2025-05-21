@@ -1,12 +1,13 @@
 package com.example.diplomwork.presentation.ui.components.bottom_sheets
 
-import android.util.Log
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -59,6 +60,7 @@ fun CommentsBottomSheet(
     comments: List<CommentResponse>,
     onDismiss: () -> Unit,
     onAddComment: (String) -> Unit,
+    onProfileClick: () -> Unit = {},
     sheetState: SheetState
 ) {
 
@@ -90,7 +92,8 @@ fun CommentsBottomSheet(
             CommentsContent(
                 comments = comments,
                 onAddComment = onAddComment,
-                sheetNestedScrollConnection = sheetNestedScrollConnection
+                sheetNestedScrollConnection = sheetNestedScrollConnection,
+                onProfileClick = onProfileClick
             )
         }
     }
@@ -100,7 +103,8 @@ fun CommentsBottomSheet(
 fun CommentsContent(
     comments: List<CommentResponse>,
     onAddComment: (String) -> Unit,
-    sheetNestedScrollConnection: NestedScrollConnection
+    sheetNestedScrollConnection: NestedScrollConnection,
+    onProfileClick: () -> Unit,
 ) {
     var commentText by remember { mutableStateOf("") }
 
@@ -146,7 +150,10 @@ fun CommentsContent(
                     .nestedScroll(sheetNestedScrollConnection)
             ) {
                 items(comments) { comment ->
-                    CommentItem(comment = comment)
+                    CommentItem(
+                        comment = comment,
+                        onProfileClick = onProfileClick
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
@@ -217,20 +224,30 @@ fun CommentsContent(
 }
 
 @Composable
-fun CommentItem(comment: CommentResponse) {
+fun CommentItem(
+    comment: CommentResponse,
+    onProfileClick: () -> Unit = {}
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp, horizontal = 12.dp),
+            .padding(vertical = 4.dp, horizontal = 15.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.White.copy(alpha = 0.1f)
         )
     ) {
-        Row() {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
             Box(
                 modifier = Modifier
-                    .size(28.dp)
-                    .clip(RoundedCornerShape(50)),
+                    .fillMaxHeight()
+                    .padding( start = 10.dp)
+                    .size(32.dp)
+                    .clip(RoundedCornerShape(50))
+                    .clickable { onProfileClick() },
                 contentAlignment = Alignment.Center
             ) {
                 AsyncImage(
@@ -248,7 +265,8 @@ fun CommentItem(comment: CommentResponse) {
                 Text(
                     text = comment.username,
                     style = MaterialTheme.typography.titleSmall,
-                    color = Color.White
+                    color = Color.White,
+                    modifier = Modifier.clickable { onProfileClick() }
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(

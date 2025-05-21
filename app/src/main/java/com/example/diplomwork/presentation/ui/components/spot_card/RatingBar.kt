@@ -19,7 +19,7 @@ fun RatingBar(rating: Int) {
                 imageVector = Icons.Default.Star,
                 contentDescription = "Рейтинг",
                 tint = starColor,
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(18.dp)
             )
         }
     }

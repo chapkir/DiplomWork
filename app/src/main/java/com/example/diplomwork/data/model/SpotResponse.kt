@@ -22,9 +22,9 @@ data class SpotResponse(
     val thumbnailImageUrl: String,
     val picturesCount: Int,
 
-    val latitude: Double,
-    val longitude: Double,
-    val namePlace: String,
+    val latitude: Double?,
+    val longitude: Double?,
+    val namePlace: String?,
 
     val createdAt: String
 
