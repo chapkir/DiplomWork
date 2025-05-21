@@ -280,7 +280,6 @@ fun ImagesPager(
                         .fillMaxWidth()
                         .aspectRatio(0.75f)
                 ) {
-                    val imageUrl = displayImages[page]
 
                     if (imageUrl != null) {
                         AsyncImage(
