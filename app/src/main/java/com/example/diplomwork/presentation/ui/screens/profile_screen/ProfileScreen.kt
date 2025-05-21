@@ -37,11 +37,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
+import com.example.diplomwork.data.model.SpotPicturesResponse
 import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.presentation.ui.components.CustomTabPager
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
@@ -60,6 +62,7 @@ fun ProfileScreen(
 ) {
     val context = LocalContext.current
     val profileData by profileViewModel.profileData.collectAsState()
+    val additionalPictures by profileViewModel.imagesUrls.collectAsState()
     val followersCount by profileViewModel.followersCount.collectAsState()
     val followState by profileViewModel.followState.collectAsState()
     val profilePictures by profileViewModel.profilePictures.collectAsState()
@@ -210,16 +213,24 @@ fun ProfileScreen(
                         lineOffset = 2.25
                     ) { page ->
                         when (page) {
-                            0 -> PicturesGrid(
+                            0 -> SpotsGrid(
                                 spots = profilePictures,
+                                additionalPictures = additionalPictures,
+                                onLoadMore = { id, firstPicture ->
+                                    profileViewModel.loadMorePicturesForSpot(id, firstPicture)
+                                },
                                 onPictureClick = onImageClick,
                                 isLoading = isLoadingPictures,
                                 emptyMessage = "Нет добавленных мест",
                                 isError = error.errorLoadSpots
                             )
 
-                            1 -> PicturesGrid(
+                            1 -> SpotsGrid(
                                 spots = likedPictures,
+                                additionalPictures = additionalPictures,
+                                onLoadMore = { id, firstPicture ->
+                                    profileViewModel.loadMorePicturesForSpot(id, firstPicture)
+                                },
                                 onPictureClick = onImageClick,
                                 isLoading = isLoadingLiked,
                                 emptyMessage = "Нет лайкнутых мест",
@@ -252,8 +263,10 @@ private fun ErrorScreen(error: String?, onRetry: () -> Unit) {
 }
 
 @Composable
-private fun PicturesGrid(
+private fun SpotsGrid(
     spots: List<SpotResponse>,
+    additionalPictures: Map<Long, SpotPicturesResponse>,
+    onLoadMore: (Long, String) -> Unit,
     onPictureClick: (Long) -> Unit,
     isLoading: Boolean,
     emptyMessage: String,
@@ -294,14 +307,17 @@ private fun PicturesGrid(
                     items(spots.size) { index ->
                         spots[index].let { spot ->
                             SpotsCard(
-                                imageUrl = spot.thumbnailImageUrl,
+                                firstPicture = spot.thumbnailImageUrl,
+                                additionalPictures = additionalPictures[spot.id]?.pictures ?: emptyList(),
+                                onLoadMore = { id, firstPicture -> onLoadMore(id, firstPicture) },
+                                picturesCount = spot.picturesCount,
                                 username = spot.username,
                                 title = spot.title,
-                                placeName = spot.namePlace ?: "",
+                                placeName = spot.namePlace,
                                 description = spot.description,
                                 userId = spot.userId,
-                                latitude = spot.latitude ?: 0.0,
-                                longitude = spot.longitude ?: 0.0,
+                                latitude = spot.latitude,
+                                longitude = spot.longitude,
                                 rating = spot.rating,
                                 aspectRatio = spot.aspectRatio ?: 1f,
                                 userProfileImageUrl = spot.userProfileImageUrl,

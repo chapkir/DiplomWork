@@ -2,13 +2,16 @@ package com.example.diplomwork.presentation.viewmodel
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.diplomwork.data.model.ProfileResponse
+import com.example.diplomwork.data.model.SpotPicturesResponse
 import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.repos.FollowRepository
 import com.example.diplomwork.data.repos.ProfileRepository
+import com.example.diplomwork.data.repos.SpotRepository
 import com.example.diplomwork.util.ImageUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +29,7 @@ class ProfileViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val profileRepository: ProfileRepository,
     private val followRepository: FollowRepository,
+    private val spotRepository: SpotRepository,
 ) : ViewModel() {
 
     private val _userId: Long = savedStateHandle["userId"] ?: 0L
@@ -33,6 +37,9 @@ class ProfileViewModel @Inject constructor(
 
     private val _profileData = MutableStateFlow<ProfileResponse?>(null)
     val profileData: StateFlow<ProfileResponse?> = _profileData
+
+    private val _imagesUrls = MutableStateFlow<Map<Long, SpotPicturesResponse>>(emptyMap())
+    val imagesUrls: StateFlow<Map<Long, SpotPicturesResponse>> = _imagesUrls
 
     private val _followersCount = MutableStateFlow(0)
     val followersCount: StateFlow<Int> = _followersCount
@@ -115,6 +122,25 @@ class ProfileViewModel @Inject constructor(
                 _error.value = _error.value.copy(errorLoadSpots = "Ошибка при загрузке мест")
             } finally {
                 _isLoadingPictures.value = false
+            }
+        }
+    }
+
+    fun loadMorePicturesForSpot(spotId: Long, firstImage: String) {
+        viewModelScope.launch {
+            try {
+                val response = spotRepository.getSpotPictures(spotId)
+
+                val additional = response.pictures.filterNotNull().filterNot { it == firstImage }
+
+                _imagesUrls.update { currentMap ->
+                    currentMap + (spotId to SpotPicturesResponse(additional))
+                }
+
+            } catch (e: Exception) {
+                Log.e("ViewModel", "Ошибка загрузки картинок для $spotId: ${e.message}", e)
+            } finally {
+                _isLoading.value = false
             }
         }
     }

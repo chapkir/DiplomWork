@@ -3,18 +3,23 @@ package com.example.diplomwork.presentation.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.map
 import com.example.diplomwork.data.model.LocationResponse
+import com.example.diplomwork.data.model.SpotPicturesResponse
+import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.repos.LocationRepository
 import com.example.diplomwork.data.repos.SpotRepository
 import com.example.diplomwork.domain.usecase.DeletePictureUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -83,14 +88,16 @@ import javax.inject.Inject
 @HiltViewModel
 class SpotsViewModel @Inject constructor(
     private val spotRepository: SpotRepository,
-    private val locationRepository: LocationRepository,
     private val deletePictureUseCase: DeletePictureUseCase
 ) : ViewModel() {
 
     private val currentUsername = spotRepository.getCurrentUsername()
 
-    private val _spotLocations = MutableStateFlow<Map<Long, LocationResponse>>(emptyMap())
-    val spotLocations: StateFlow<Map<Long, LocationResponse>> = _spotLocations
+    private val _spots = MutableStateFlow<List<SpotResponse>>(emptyList())
+    val spots: StateFlow<List<SpotResponse>> = _spots.asStateFlow()
+
+    private val _imagesUrls = MutableStateFlow<Map<Long, SpotPicturesResponse>>(emptyMap())
+    val imagesUrls: StateFlow<Map<Long, SpotPicturesResponse>> = _imagesUrls
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -98,15 +105,36 @@ class SpotsViewModel @Inject constructor(
     private val _deleteStatus = MutableSharedFlow<String>(replay = 0)
     val deleteStatus: SharedFlow<String> = _deleteStatus.asSharedFlow()
 
-    val picturesPagingFlow = spotRepository.getPagingPictures()
-        .map { pagingData ->
-            pagingData.map { picture ->
-                picture.copy(
-                    isCurrentUserOwner = picture.username == currentUsername
-                )
+
+    val spotsPagingFlow: Flow<PagingData<SpotResponse>> =
+        spotRepository.getSpotsPagingFlow()
+            .map { pagingData ->
+                pagingData.map { picture ->
+                    picture.copy(
+                        isCurrentUserOwner = picture.username == currentUsername
+                    )
+                }
+            }
+            .cachedIn(viewModelScope)
+
+    fun loadMorePicturesForSpot(spotId: Long, firstImage: String) {
+        viewModelScope.launch {
+            try {
+                val response = spotRepository.getSpotPictures(spotId)
+
+                val additional = response.pictures.filterNotNull().filterNot { it == firstImage }
+
+                _imagesUrls.update { currentMap ->
+                    currentMap + (spotId to SpotPicturesResponse(additional))
+                }
+
+            } catch (e: Exception) {
+                Log.e("ViewModel", "Ошибка загрузки картинок для $spotId: ${e.message}", e)
+            } finally {
+                _isLoading.value = false
             }
         }
-        .cachedIn(viewModelScope)
+    }
 
     fun deletePicture(pictureId: Long) {
         viewModelScope.launch {
@@ -119,21 +147,6 @@ class SpotsViewModel @Inject constructor(
             }
 
             _deleteStatus.emit(message)
-        }
-    }
-
-    fun loadLocationsForVisibleSpots(visibleIds: Set<Long>) {
-        viewModelScope.launch {
-            visibleIds.forEach { spotId ->
-                if (!_spotLocations.value.containsKey(spotId)) {
-                    try {
-                        val location = locationRepository.getSpotLocation(spotId)
-                        _spotLocations.update { it + (spotId to location) }
-                    } catch (e: Exception) {
-                        Log.e("SpotsViewModel", "Ошибка загрузки локации spotId=$spotId", e)
-                    }
-                }
-            }
         }
     }
 }

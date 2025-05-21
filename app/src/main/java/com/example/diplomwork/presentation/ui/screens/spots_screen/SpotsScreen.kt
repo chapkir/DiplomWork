@@ -38,8 +38,8 @@ fun SpotsScreen(
     onImageClick: (Long) -> Unit,
     onProfileClick: (Long, String) -> Unit
 ) {
-    val spots = spotsViewModel.picturesPagingFlow.collectAsLazyPagingItems()
-    val spotLocations by spotsViewModel.spotLocations.collectAsState()
+    val spots = spotsViewModel.spotsPagingFlow.collectAsLazyPagingItems()
+    val additionalPictures by spotsViewModel.imagesUrls.collectAsState()
 
     val context = LocalContext.current
     val listState = rememberLazyListState()
@@ -96,21 +96,21 @@ fun SpotsScreen(
                 ) {
                     items(spots.itemCount) { index ->
                         spots[index]?.let { spot ->
-                            val location = spotLocations[spot.id]
-
-                            LaunchedEffect(spot.id) {
-                                spotsViewModel.loadLocationsForVisibleSpots(setOf(spot.id))
-                            }
 
                             SpotsCard(
-                                imageUrl = spot.thumbnailImageUrl,
+                                firstPicture = spot.thumbnailImageUrl,
+                                additionalPictures = additionalPictures[spot.id]?.pictures ?: emptyList(),
+                                onLoadMore = { id, firstPicture ->
+                                    spotsViewModel.loadMorePicturesForSpot(id, firstPicture)
+                                },
+                                picturesCount = spot.picturesCount,
                                 username = spot.username,
                                 title = spot.title,
-                                placeName = spot.namePlace ?: "",
+                                placeName = spot.namePlace,
                                 description = spot.description,
                                 userId = spot.userId,
-                                latitude = location?.latitude ?: 0.0,
-                                longitude = location?.longitude ?: 0.0,
+                                latitude = spot.latitude,
+                                longitude = spot.longitude,
                                 rating = spot.rating,
                                 aspectRatio = spot.aspectRatio ?: 1f,
                                 userProfileImageUrl = spot.userProfileImageUrl,

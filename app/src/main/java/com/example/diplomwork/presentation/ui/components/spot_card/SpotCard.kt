@@ -30,16 +30,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -53,7 +50,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import coil.compose.AsyncImage
-import coil.compose.AsyncImagePainter
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.diplomwork.R
@@ -70,7 +66,10 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SpotsCard(
-    imageUrl: String,
+    firstPicture: String,
+    additionalPictures: List<String>,
+    onLoadMore: (Long, String) -> Unit,
+    picturesCount: Int,
     username: String,
     title: String,
     placeName: String,
@@ -178,7 +177,10 @@ fun SpotsCard(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     ImagesPager(
-                        imageUrls = imageUrl,
+                        firstPicture = firstPicture,
+                        additionalPictures = additionalPictures,
+                        picturesCount = picturesCount,
+                        onLoadMore = { onLoadMore(id, firstPicture) },
                         modifier = Modifier
                             .padding(start = 12.dp)
                             .weight(0.58f)
@@ -231,128 +233,93 @@ fun SpotsCard(
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-private fun ImagesPager(
-    imageUrls: String,
-    modifier: Modifier
+fun ImagesPager(
+    firstPicture: String,
+    additionalPictures: List<String>,
+    picturesCount: Int,
+    onLoadMore: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val pagerState = rememberPagerState()
-    var isLoading by remember { mutableStateOf(true) }
-    var isError by remember { mutableStateOf(false) }
-    var retryCount by remember { mutableIntStateOf(0) }
+    var isLoadMoreTriggered by remember { mutableStateOf(false) }
 
-    var displayUrl = imageUrls
+    val images = remember(firstPicture, additionalPictures) {
+        buildList {
+            add(firstPicture)
+            addAll(additionalPictures)
+        }
+    }
 
-    // Формируем список изображений
-//    val images = remember(firstPicture, additionalPictures) {
-//        buildList {
-//            firstPicture?.let { add(it) }
-//            addAll(additionalPictures)
-//        }
-//    }
+    val displayImages = remember(images, picturesCount) {
+        List(picturesCount) { index -> images.getOrNull(index) }
+    }
 
-    // Добавим "заглушку", если доп. картинки ещё не загружены
-//    val displayImages = remember(imageUrls) {
-//        if (imageUrls.size == 1 && additionalPictures.isEmpty()) {
-//            images + listOf<String?>(null) // заглушка
-//        } else {
-//            images
-//        }
-//    }
-
-    Column(
-        modifier = modifier
-    ) {
+    Column(modifier = modifier) {
         HorizontalPager(
-            count = 5, //displayImages.size,
+            count = picturesCount,
             state = pagerState,
             modifier = Modifier
                 .fillMaxSize()
-                .graphicsLayer( clip = false )
+                .graphicsLayer(clip = false)
                 .clip(RoundedCornerShape(12.dp)),
         ) { page ->
 
-            // Если пользователь долистал до заглушки и не загружали — вызываем загрузку
-//            if (displayImages[page] == null && additionalPictures.isEmpty()) {
-//                onLoadMore()
-//            }
+            val imageUrl = displayImages[page]
+            if (imageUrl == null && !isLoadMoreTriggered) {
+                isLoadMoreTriggered = true
+                onLoadMore()
+            }
 
             Card(
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(5.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(0.75f)
                 ) {
+                    val imageUrl = displayImages[page]
 
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(
-                                        Color(0xFFFFA292),
-                                        Color(0xFFD5523B),
-                                    )
-                                ),
-                            )
-                            .blur(50.dp),
-                    )
-
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(displayUrl) // TODO Когда несколько картинок imageUrls[page]
-                            .crossfade(300)
-                            .diskCachePolicy(CachePolicy.ENABLED)
-                            .memoryCachePolicy(CachePolicy.ENABLED)
-                            .build(),
-                        contentDescription = null,
-                        contentScale = ContentScale.Fit,
-                        onState = { state ->
-                            isLoading = state is AsyncImagePainter.State.Loading
-
-                            if (state is AsyncImagePainter.State.Error) {
-                                isError = true
-                                val exception = state.result.throwable
-
-                                Log.e(
-                                    "SpotCard",
-                                    "Ошибка загрузки изображения: $displayUrl",
-                                    exception
-                                )
-
-                                if (retryCount < 2) {
-                                    retryCount++
-                                    displayUrl =
-                                        "${imageUrls}?cache_bust=${System.currentTimeMillis()}"
-                                }
-                            }
-                        },
-                        modifier = Modifier
-                            .matchParentSize()
-                            .clip(RoundedCornerShape(12.dp))
-                    )
+                    if (imageUrl != null) {
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(imageUrl)
+                                .crossfade(300)
+                                .diskCachePolicy(CachePolicy.ENABLED)
+                                .memoryCachePolicy(CachePolicy.ENABLED)
+                                .build(),
+                            contentDescription = null,
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier
+                                .matchParentSize()
+                                .clip(RoundedCornerShape(12.dp))
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .background(Color.LightGray.copy(alpha = 0.3f))
+                        )
+                    }
                 }
             }
         }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.CenterHorizontally)
-                .padding(bottom = 10.dp, top = 10.dp)
-        ) {
+
+        if (picturesCount > 1) {
             HorizontalPagerIndicator(
                 pagerState = pagerState,
-                modifier = Modifier.align(Alignment.BottomCenter),
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(vertical = 10.dp),
                 activeColor = ButtonPrimary,
                 inactiveColor = Color.LightGray,
                 indicatorWidth = 6.dp,
                 spacing = 4.dp
             )
-        }
+        } else
+            Spacer(modifier = Modifier.height(10.dp))
     }
 }
 
@@ -386,7 +353,7 @@ private fun PlaceInfo(
         Spacer(modifier = Modifier.height(10.dp))
 
         Box {
-            GeoText(latitude, longitude)
+            GeoText(latitude, longitude, placeName)
         }
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -419,7 +386,7 @@ fun RatingBar(rating: Int) {
 }
 
 @Composable
-fun GeoText(latitude: Double, longitude: Double, placeName: String? = "Елагин парк") {
+fun GeoText(latitude: Double, longitude: Double, placeName: String = "") {
     val context = LocalContext.current
     val geo = "$latitude,$longitude"
 
@@ -430,7 +397,7 @@ fun GeoText(latitude: Double, longitude: Double, placeName: String? = "Елаг�
         textDecoration = TextDecoration.Underline,
         modifier = Modifier.clickable {
             try {
-                val encodedPlaceName = placeName?.replace(" ", "+") ?: ""
+                val encodedPlaceName = placeName.replace(" ", "+")
 
                 val mapUri = if (encodedPlaceName.isNotBlank()) {
                     "https://yandex.ru/maps/?pt=$longitude,$latitude,pm2blm&z=16&l=map&text=$encodedPlaceName"

@@ -137,8 +137,9 @@ fun RegisterScreen(
             onBackStep = { registerViewModel.previousStep() },
             onEditSkip = {
                 hideKeyboard(context)
-                onCompleteRegistration()
-            }
+                registerViewModel.nextStep()
+            },
+            onPermissionsSkip = { onCompleteRegistration() }
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -485,7 +486,7 @@ fun NavigationButton(
         ) {
             if (isLoading && step == 4) LoadingSpinnerForElement()
             else Text(
-                if (step < 5) "Далее" else "Завершить",
+                if (step < 4) "Далее" else "Завершить",
                 fontWeight = FontWeight.Bold, fontSize = 17.sp
             )
         }
@@ -498,12 +499,13 @@ fun StepIndicator(
     onBackOut: () -> Unit,
     onBackStep: () -> Unit,
     onEditSkip: () -> Unit,
+    onPermissionsSkip: () -> Unit,
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
     ) {
-        if (currentStep != 4) {
+        if (currentStep != 3) {
             IconButton(
                 onClick = {
                     if (currentStep == 0) onBackOut()
@@ -534,14 +536,15 @@ fun StepIndicator(
                         .clip(CircleShape)
                         .background(if (i == currentStep) Color.White else Color.Gray)
                 )
-                if (i < 4) Spacer(modifier = Modifier.width(8.dp))
+                if (i in 0..3) Spacer(modifier = Modifier.width(8.dp))
             }
         }
 
         if (currentStep > 2) {
             IconButton(
                 onClick = {
-                    onEditSkip()
+                    if (currentStep == 3) onEditSkip()
+                    else onPermissionsSkip()
                 },
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
@@ -623,7 +626,7 @@ fun StepPermissions() {
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
             .padding(start = 16.dp, end = 16.dp, top = 10.dp)
     ) {
 
@@ -717,6 +720,7 @@ fun PermissionCard(
                             .size(34.dp)
                     )
                 }
+
                 isGranted -> {
                     Icon(
                         imageVector = Icons.Default.Check,
@@ -727,6 +731,7 @@ fun PermissionCard(
                             .size(28.dp)
                     )
                 }
+
                 else -> {
                     Icon(
                         imageVector = Icons.Default.Close,

@@ -9,8 +9,9 @@ import com.example.diplomwork.data.model.ApiResponseWrapper
 import com.example.diplomwork.data.model.CommentRequest
 import com.example.diplomwork.data.model.CommentResponse
 import com.example.diplomwork.data.model.SpotDetailResponse
+import com.example.diplomwork.data.model.SpotPicturesResponse
 import com.example.diplomwork.data.model.SpotResponse
-import com.example.diplomwork.data.paging.PictureFactoryPaging
+import com.example.diplomwork.data.paging.SpotPagingSource
 import kotlinx.coroutines.flow.Flow
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -24,27 +25,32 @@ class SpotRepository @Inject constructor(
     private val sessionManager: SessionManager
 ) {
 
-    // Получение всех картинок
-    suspend fun getPictures(): List<SpotResponse> {
-        return api.getSpot()
+    fun getSpotsPagingFlow(pageSize: Int = 20): Flow<PagingData<SpotResponse>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = pageSize,
+                enablePlaceholders = false
+            ),
+            pagingSourceFactory = { SpotPagingSource(api, pageSize) }
+        ).flow
     }
 
-    // Получение одной картинки по ID
-    suspend fun getSpot(id: Long): SpotDetailResponse {
-        return api.getSpot(id)
+    suspend fun getSpotPictures(spotId: Long): SpotPicturesResponse {
+        return api.getSpotPictures(spotId)
     }
 
-    // Лайк картинки
+    suspend fun getSpotDetail(id: Long): SpotDetailResponse {
+        return api.getSpotDetail(id)
+    }
+
     suspend fun likePicture(pictureId: Long): Response<Unit> {
         return api.likeSpot(pictureId)
     }
 
-    // Убрать лайк с картинки
     suspend fun unlikePicture(pictureId: Long): Response<Unit> {
         return api.unlikeSpot(pictureId)
     }
 
-    //Поиск картинки
     suspend fun searchPictures(query: String, page: Int, size: Int): List<SpotResponse> {
         return api.searchSpots(query, page, size).data.content
     }
@@ -66,16 +72,16 @@ class SpotRepository @Inject constructor(
         return sessionManager.username ?: ""
     }
 
-    fun getPagingPictures(): Flow<PagingData<SpotResponse>> {
-        return Pager(
-            config = PagingConfig(
-                pageSize = 20,
-                prefetchDistance = 15,
-                initialLoadSize = 20
-            ),
-            pagingSourceFactory = { PictureFactoryPaging(api) }
-        ).flow
-    }
+//    fun getPagingPictures(): Flow<PagingData<SpotResponse>> {
+//        return Pager(
+//            config = PagingConfig(
+//                pageSize = 20,
+//                prefetchDistance = 15,
+//                initialLoadSize = 20
+//            ),
+//            pagingSourceFactory = { PictureFactoryPaging(api) }
+//        ).flow
+//    }
 
     suspend fun uploadSpot(
         files: List<MultipartBody.Part>,

@@ -199,7 +199,7 @@ fun PicturesScreen(
     onImageClick: (Long) -> Unit,
     onProfileClick: (Long, String) -> Unit
 ) {
-    val pagingPictures = spotsViewModel.picturesPagingFlow.collectAsLazyPagingItems()
+    val pagingPictures = spotsViewModel.spotsPagingFlow.collectAsLazyPagingItems()
 
     val context = LocalContext.current
 

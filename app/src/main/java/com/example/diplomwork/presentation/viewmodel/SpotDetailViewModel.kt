@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.diplomwork.data.model.CommentRequest
 import com.example.diplomwork.data.model.CommentResponse
 import com.example.diplomwork.data.model.SpotDetailResponse
-import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.repos.SpotRepository
 import com.example.diplomwork.domain.usecase.DeletePictureUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,7 +36,7 @@ class SpotDetailScreenViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            val pictureResult = safeApiCall { spotRepository.getSpot(_pictureId) }
+            val pictureResult = safeApiCall { spotRepository.getSpotDetail(_pictureId) }
 
             pictureResult.getOrNull()?.let { picture ->
                 val currentUserUsername = spotRepository.getCurrentUsername()

@@ -44,10 +44,13 @@ fun ManagementAccount(
     LaunchedEffect(Unit) {
         viewModel.deleteResult.collect { message ->
             Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-            if (isDeleted) {
-                viewModel.logout()
-                isAccountDeleted()
-            }
+        }
+    }
+
+    if (isDeleted) {
+        LaunchedEffect(Unit) {
+            viewModel.logout()
+            isAccountDeleted()
         }
     }
 
@@ -87,29 +90,29 @@ fun ManagementAccount(
             modifier = Modifier.padding(start = 16.dp, top = 20.dp, bottom = 5.dp)
         )
 
-            SettingItem(
-                title = "Отключение аккаунта",
-                onClick = { }
-            )
-            Text(
-                text = "Отключение аккаунта для временного скрытия мест и профиля",
-                color = Color.Gray,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
+        SettingItem(
+            title = "Отключение аккаунта",
+            onClick = { }
+        )
+        Text(
+            text = "Отключение аккаунта для временного скрытия мест и профиля",
+            color = Color.Gray,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
 
-            SettingItem(
-                title = "Удаление данных и аккаунта",
-                onClick = { openConfirmDeleteSheet() }
-            )
-            Text(
-                text = "Безвозвратное удаление данных и всего, что связано с аккаунтом",
-                color = Color.Gray,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
+        SettingItem(
+            title = "Удаление данных и аккаунта",
+            onClick = { openConfirmDeleteSheet() }
+        )
+        Text(
+            text = "Безвозвратное удаление данных и всего, что связано с аккаунтом",
+            color = Color.Gray,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
     }
 
     if (confirmDeleteSheetState.isVisible) {

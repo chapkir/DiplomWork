@@ -6,6 +6,7 @@ import com.example.diplomwork.data.model.ChangePasswordRequest
 import com.example.diplomwork.data.model.CommentRequest
 import com.example.diplomwork.data.model.CommentResponse
 import com.example.diplomwork.data.model.CommentResponseWrapper
+import com.example.diplomwork.data.model.CursorPageResponse
 import com.example.diplomwork.data.model.EditProfileRequest
 import com.example.diplomwork.data.model.FcmTokenRequest
 import com.example.diplomwork.data.model.LocationRequest
@@ -19,6 +20,7 @@ import com.example.diplomwork.data.model.ProfileResponse
 import com.example.diplomwork.data.model.RegisterRequest
 import com.example.diplomwork.data.model.RegisterResponse
 import com.example.diplomwork.data.model.SpotDetailResponse
+import com.example.diplomwork.data.model.SpotPicturesResponse
 import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.model.TokenRefreshRequest
 import com.example.diplomwork.data.model.TokenRefreshResponse
@@ -86,14 +88,22 @@ interface ProfileApi {
 
 
 interface SpotApi {
-    @GET("api/spots/all")
-    suspend fun getSpot(): List<SpotResponse>
 
-    @GET("api/spot/pictures")
-    suspend fun getSpotPictures(): List<SpotResponse>
+    @GET("api/spots")
+    suspend fun getSpots(
+        @Query("cursor") cursor: String? = null,
+        @Query("size") size: Int = 10,
+        @Query("sortDirection") sortDirection: String = "id"
+    ): Response<ApiResponseWrapper<CursorPageResponse<SpotResponse>>>
+
+    @GET("api/spots/all")
+    suspend fun getAllSpots(): List<SpotResponse>
+
+    @GET("api/spots/{spotId}/pictures")
+    suspend fun getSpotPictures(@Path("spotId") spotId: Long): SpotPicturesResponse
 
     @GET("api/pins/{id}")
-    suspend fun getSpot(@Path("id") id: Long): SpotDetailResponse
+    suspend fun getSpotDetail(@Path("id") id: Long): SpotDetailResponse
 
     @DELETE("api/pins/{id}")
     suspend fun deleteSpot(@Path("id") id: Long): Response<Unit>
