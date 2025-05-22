@@ -153,6 +153,20 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedHeaders("*")
                 .maxAge(3600);
 
+        // Добавляю CORS для поиска
+        registry.addMapping("/api/search/**")
+                .allowedOrigins("*")
+                .allowedMethods("GET", "OPTIONS")
+                .allowedHeaders("*")
+                .maxAge(3600);
+
+        // Добавляю CORS для категорий
+        registry.addMapping("/api/category/**")
+                .allowedOrigins("*")
+                .allowedMethods("GET", "OPTIONS")
+                .allowedHeaders("*")
+                .maxAge(3600);
+
         logger.info("CORS mapping configured for all origins and methods");
     }
 

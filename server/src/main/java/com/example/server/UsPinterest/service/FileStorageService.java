@@ -32,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 import com.example.server.UsPinterest.service.ImageProcessor;
 import org.springframework.scheduling.annotation.Async;
 import java.util.concurrent.CompletableFuture;
+import net.coobird.thumbnailator.geometry.Positions;
 
 @Service
 @RequiredArgsConstructor
@@ -146,12 +147,12 @@ public class FileStorageService {
         // Формируем имя файла с расширением .webp
         String filename = "user_" + userId + ".webp";
         Path targetLocation = profileImagesLocation.resolve(filename);
-        // Рассчитываем новые размеры миниатюры с сохранением пропорций
-        int[] dims = imageProcessor.calculateDimensions(
+        // Рассчитываем новые размеры с соотношением сторон 3:4
+        int[] dims = imageProcessor.calculateAspectRatio3x4Dimensions(
                 originalImg.getWidth(), originalImg.getHeight(),
                 thumbnailMaxWidth, thumbnailMaxHeight
         );
-        // Сжимаем и конвертируем в WebP с сохранением пропорций
+        // Сжимаем и конвертируем в WebP с соотношением 3:4
         BufferedImage webpImg = imageProcessor.resizeAndConvertToWebP(originalImg, dims[0], dims[1]);
         ImageIO.write(webpImg, "webp", targetLocation.toFile());
         // Возвращаем URL к статическому ресурсу
@@ -253,12 +254,24 @@ public class FileStorageService {
 
         // Читаем изображение и применяем ориентацию EXIF
         BufferedImage img = imageProcessor.readImage(fileBytes);
+        logger.info("storeResizedImage: оригинал {}x{}, target {}x{}", img.getWidth(), img.getHeight(), maxWidth, maxHeight);
 
-        // Рассчитываем новые размеры с сохранением пропорций
-        int[] dims = imageProcessor.calculateDimensions(img.getWidth(), img.getHeight(), maxWidth, maxHeight);
-
-        // Меняем размер и конвертируем в WebP
-        BufferedImage outImg = imageProcessor.resizeAndConvertToWebP(img, dims[0], dims[1]);
+        // Рассчитываем новые размеры с сохранением соотношения сторон 3:4
+        int[] dims = imageProcessor.calculateAspectRatio3x4Dimensions(
+                img.getWidth(), img.getHeight(),
+                maxWidth, maxHeight
+        );
+        
+        // Масштабируем и обрезаем для полного заполнения c соотношением 3:4
+        BufferedImage outImg = Thumbnails.of(img)
+                .size(dims[0], dims[1])
+                .crop(net.coobird.thumbnailator.geometry.Positions.CENTER)
+                .keepAspectRatio(false)
+                .outputFormat("webp")
+                .asBufferedImage();
+        logger.info("storeResizedImage: результат {}x{}, соотношение {}", 
+                   outImg.getWidth(), outImg.getHeight(), 
+                   String.format("%.2f", outImg.getWidth() / (double) outImg.getHeight()));
 
         try (OutputStream os = Files.newOutputStream(targetLocation)) {
             ImageIO.write(outImg, "webp", os);
@@ -268,14 +281,18 @@ public class FileStorageService {
     }
 
     public ImageInfo storeFullhdFile(MultipartFile file, String customFilename) throws IOException {
-        ImageInfo info = storeResizedImage(file, customFilename, fullhdImagesLocation, "/uploads/" + fullhdImagesDir + "/", fullhdMaxWidth, fullhdMaxHeight);
+        // Сохраняем изображение в FullHD качестве с сохранением исходных пропорций
+        ImageInfo info = storeResizedImage(file, customFilename, fullhdImagesLocation,
+                "/uploads/" + fullhdImagesDir + "/", fullhdMaxWidth, fullhdMaxHeight);
         String filename = getFilenameFromUrl(info.getUrl());
         String url = appUrl + "/uploads/" + fullhdImagesDir + "/" + filename;
         return new ImageInfo(url, info.getWidth(), info.getHeight());
     }
 
     public ImageInfo storeThumbnailFile(MultipartFile file, String customFilename) throws IOException {
-        ImageInfo info = storeResizedImage(file, customFilename, thumbnailImagesLocation, "/uploads/" + thumbnailImagesDir + "/", thumbnailMaxWidth, thumbnailMaxHeight);
+        // Создаем миниатюру с сохранением исходных пропорций
+        ImageInfo info = storeResizedImage(file, customFilename, thumbnailImagesLocation,
+                "/uploads/" + thumbnailImagesDir + "/", thumbnailMaxWidth, thumbnailMaxHeight);
         String filename = getFilenameFromUrl(info.getUrl());
         String url = appUrl + "/uploads/" + thumbnailImagesDir + "/" + filename;
         return new ImageInfo(url, info.getWidth(), info.getHeight());

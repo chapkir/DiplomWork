@@ -24,6 +24,14 @@ import java.util.Map;
 public class SearchController {
     private static final Logger logger = LoggerFactory.getLogger(SearchController.class);
 
+    private static final List<String> CATEGORIES = List.of(
+        "Летняя подборка", 
+        "Вечерние прогулки", 
+        "Гастрономия", 
+        "Достопримечательности", 
+        "Общественные пространства"
+    );
+
     private final SearchService searchService;
     private final Bucket bucket;
 
@@ -78,6 +86,10 @@ public class SearchController {
         Map<String, Object> result = new HashMap<>();
         result.put("pins", pinsResult);
         result.put("users", usersResult);
+        List<String> matchingCategories = CATEGORIES.stream()
+            .filter(cat -> query == null || query.isEmpty() || cat.toLowerCase().contains(query.toLowerCase()))
+            .toList();
+        result.put("categories", matchingCategories);
 
         return ResponseEntity.ok(result);
     }

@@ -57,6 +57,8 @@ import com.example.server.UsPinterest.dto.mapper.PinFullHdStructMapper;
 import com.example.server.UsPinterest.dto.mapper.PinThumbnailStructMapper;
 import org.springframework.context.ApplicationEventPublisher;
 import lombok.RequiredArgsConstructor;
+import com.example.server.UsPinterest.service.ImageProcessor;
+import net.coobird.thumbnailator.geometry.Positions;
 
 @Service
 @Transactional
@@ -87,6 +89,8 @@ public class PinService {
     private final PinThumbnailStructMapper pinThumbnailStructMapper;
 
     private final ApplicationEventPublisher eventPublisher;
+
+    private final ImageProcessor imageProcessor;
 
     @Cacheable(value = "pins", key = "#id")
     public Optional<Pin> getPinById(Long id) {
@@ -535,26 +539,38 @@ public class PinService {
                 }
                 String baseName = filename.contains(".") ? filename.substring(0, filename.lastIndexOf('.')) : filename;
 
-                // FullHD
-                Path fullhdDir = fileStorageService.getFullhdImagesLocation();
+                // FullHD: используем соотношение сторон 3:4
+                int[] fullhdDims = imageProcessor.calculateAspectRatio3x4Dimensions(
+                    originalImg.getWidth(), originalImg.getHeight(),
+                    fileStorageService.getFullhdMaxWidth(), fileStorageService.getFullhdMaxHeight()
+                );
+                
                 BufferedImage fullhdImg = Thumbnails.of(originalImg)
-                        .size(fileStorageService.getFullhdMaxWidth(), fileStorageService.getFullhdMaxHeight())
+                        .size(fullhdDims[0], fullhdDims[1])
+                        .crop(net.coobird.thumbnailator.geometry.Positions.CENTER)
+                        .keepAspectRatio(false)
                         .outputFormat("webp")
                         .asBufferedImage();
                 String fullhdFilename = baseName + ".webp";
-                Path fullhdPath = fullhdDir.resolve(fullhdFilename);
+                Path fullhdPath = fileStorageService.getFullhdImagesLocation().resolve(fullhdFilename);
                 ImageIO.write(fullhdImg, "webp", fullhdPath.toFile());
                 String fullhdUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
                         .path("/uploads/").path(fileStorageService.getFullhdImagesDir()).path("/").path(fullhdFilename).toUriString();
 
-                // Thumbnail
-                Path thumbDir = fileStorageService.getThumbnailImagesLocation();
+                // Thumbnail: используем соотношение сторон 3:4
+                int[] thumbDims = imageProcessor.calculateAspectRatio3x4Dimensions(
+                    originalImg.getWidth(), originalImg.getHeight(),
+                    fileStorageService.getThumbnailMaxWidth(), fileStorageService.getThumbnailMaxHeight()
+                );
+                
                 BufferedImage thumbImg = Thumbnails.of(originalImg)
-                        .size(fileStorageService.getThumbnailMaxWidth(), fileStorageService.getThumbnailMaxHeight())
+                        .size(thumbDims[0], thumbDims[1])
+                        .crop(net.coobird.thumbnailator.geometry.Positions.CENTER)
+                        .keepAspectRatio(false)
                         .outputFormat("webp")
                         .asBufferedImage();
                 String thumbFilename = baseName + ".webp";
-                Path thumbPath = thumbDir.resolve(thumbFilename);
+                Path thumbPath = fileStorageService.getThumbnailImagesLocation().resolve(thumbFilename);
                 ImageIO.write(thumbImg, "webp", thumbPath.toFile());
                 String thumbUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
                         .path("/uploads/").path(fileStorageService.getThumbnailImagesDir()).path("/").path(thumbFilename).toUriString();

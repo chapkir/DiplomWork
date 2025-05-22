@@ -12,6 +12,7 @@ import com.example.server.UsPinterest.repository.PinRepository;
 import com.example.server.UsPinterest.repository.UserRepository;
 import com.example.server.UsPinterest.repository.TagRepository;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,7 +46,10 @@ public class PinCrudService {
     private final TagRepository tagRepository;
     private final LocationRepository locationRepository;
 
-    @CacheEvict(value = {"pins", "search"}, allEntries = true)
+    @Caching(evict = {
+        @CacheEvict(value = {"pins", "search"}, allEntries = true),
+        @CacheEvict(cacheNames = "extended_pins", cacheManager = "extendedPinCacheManager", allEntries = true)
+    })
     public Pin createPin(PinRequest pinRequest, String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
@@ -79,7 +83,10 @@ public class PinCrudService {
         return saved;
     }
 
-    @CacheEvict(value = {"pins", "search"}, allEntries = true)
+    @Caching(evict = {
+        @CacheEvict(value = {"pins", "search"}, allEntries = true),
+        @CacheEvict(cacheNames = "extended_pins", cacheManager = "extendedPinCacheManager", allEntries = true)
+    })
     public void deletePin(Long id) {
         Pin pin = pinRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Пин не найден с id: " + id));

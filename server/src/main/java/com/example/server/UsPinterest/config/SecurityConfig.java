@@ -62,6 +62,7 @@ public class SecurityConfig {
                     auth.requestMatchers("/actuator/**").permitAll();
                     auth.requestMatchers("/api/auth/**").permitAll();
                     auth.requestMatchers("/api/category/**").permitAll();
+                    auth.requestMatchers("/api/search/**").permitAll();
                     auth.requestMatchers("/api/files/**").permitAll();
                     auth.requestMatchers("/api/users/exists/**").permitAll();
                     auth.requestMatchers("/api/locations/**").permitAll();
@@ -76,6 +77,13 @@ public class SecurityConfig {
                     auth.requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll();
                     auth.requestMatchers(HttpMethod.GET, "/api/profile/**").permitAll();
                     auth.requestMatchers(HttpMethod.GET, "/api/pins/**").permitAll();
+                    auth.requestMatchers(
+                            "/v3/api-docs/**",
+                            "/v3/api-docs",
+                            "/swagger-ui/**",
+                            "/swagger-ui.html",
+                            "/webjars/**"
+                    ).permitAll();
                     auth.anyRequest().authenticated(); // Требуем аутентификацию для всех остальных запросов
                 })
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

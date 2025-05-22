@@ -25,17 +25,34 @@ public class ImageProcessor {
     }
 
     public int[] calculateDimensions(int originalWidth, int originalHeight, int maxWidth, int maxHeight) {
+        // Сохраняем исходные пропорции изображения
+        double originalAspectRatio = originalWidth / (double) originalHeight;
+        
+        // Вычисляем размеры с сохранением пропорций в пределах максимальных значений
         double widthScale = maxWidth / (double) originalWidth;
         double heightScale = maxHeight / (double) originalHeight;
         double scale = Math.min(widthScale, heightScale);
+        
         int newWidth = (int) Math.round(originalWidth * scale);
         int newHeight = (int) Math.round(originalHeight * scale);
+        
         return new int[]{newWidth, newHeight};
     }
 
     public BufferedImage resizeAndConvertToWebP(BufferedImage img, int width, int height) throws IOException {
+        // Проверяем соответствие соотношения сторон 3:4
+        double targetAspectRatio = 3.0 / 4.0;
+        
+        // Определяем новые размеры в соотношении 3:4, максимально заполняя доступное пространство
+        int targetWidth = width;
+        int targetHeight = height;
+        
+        // Убеждаемся, что изображение будет покрывать всё доступное пространство
+        // Используем стратегию масштабирования, при которой обрезаются лишние части изображения
         return Thumbnails.of(img)
-                .size(width, height)
+                .size(targetWidth, targetHeight)
+                .crop(net.coobird.thumbnailator.geometry.Positions.CENTER)
+                .keepAspectRatio(false)
                 .outputFormat("webp")
                 .asBufferedImage();
     }
@@ -68,5 +85,34 @@ public class ImageProcessor {
             // Игнорируем ошибки ориентации
         }
         return image;
+    }
+
+    /**
+     * Рассчитывает размеры с соблюдением соотношения сторон 3:4
+     * @param originalWidth Исходная ширина
+     * @param originalHeight Исходная высота
+     * @param maxWidth Максимальная ширина
+     * @param maxHeight Максимальная высота
+     * @return Массив с новой шириной и высотой
+     */
+    public int[] calculateAspectRatio3x4Dimensions(int originalWidth, int originalHeight, int maxWidth, int maxHeight) {
+        // Соотношение сторон 3:4
+        final double targetAspectRatio = 3.0 / 4.0;
+        
+        // Вычисляем размеры для полного покрытия области
+        // Стратегия: вписываем большую сторону по максимуму
+        int resultWidth, resultHeight;
+        
+        // Всегда используем максимально возможные размеры для заполнения всей области
+        resultWidth = maxWidth;
+        resultHeight = (int) Math.round(resultWidth / targetAspectRatio);
+        
+        // Если высота превышает максимальную, корректируем обе стороны
+        if (resultHeight > maxHeight) {
+            resultHeight = maxHeight;
+            resultWidth = (int) Math.round(resultHeight * targetAspectRatio);
+        }
+        
+        return new int[]{resultWidth, resultHeight};
     }
 }

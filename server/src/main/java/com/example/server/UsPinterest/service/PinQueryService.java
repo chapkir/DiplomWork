@@ -20,6 +20,9 @@ import com.example.server.UsPinterest.dto.mapper.PinThumbnailStructMapper;
 import com.example.server.UsPinterest.service.PinService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
+import com.example.server.UsPinterest.repository.PictureRepository;
+import com.example.server.UsPinterest.repository.LocationRepository;
+import com.example.server.UsPinterest.model.Location;
 
 import java.util.List;
 import java.util.Optional;
@@ -48,6 +51,10 @@ public class PinQueryService {
     private final PinThumbnailStructMapper pinThumbnailStructMapper;
 
     private final PinService pinService;
+
+    private final PictureRepository pictureRepository;
+
+    private final LocationRepository locationRepository;
 
     @Cacheable(value = "pins", key = "#id")
     public Optional<Pin> getPinById(Long id) {
@@ -112,11 +119,13 @@ public class PinQueryService {
         if (hasNext) pageList.remove(pageList.size() - 1);
         User currentUser = null;
         List<PinResponse> content = pageList.stream().map(p -> convertToPinResponse(p, currentUser)).collect(Collectors.toList());
-        String next = hasNext ? paginationService.encodeCursor(pageList.get(pageList.size() - 1).getId()) : null;
+        // Вычисляем необработанные значения курсоров
+        Long nextCursorValue = hasNext ? pageList.get(pageList.size() - 1).getId() : null;
         boolean hasPrev = cursorId != null;
-        String prev = hasPrev ? paginationService.encodeCursor(cursorId) : null;
+        Long prevCursorValue = hasPrev ? cursorId : null;
         long total = pinRepository.count();
-        return paginationService.createCursorPageResponse(content, next, prev, hasNext, hasPrev, size, total);
+        // Передаём необработанные курсоры, OpenApiConfig закодирует их в createCursorPageResponse
+        return paginationService.createCursorPageResponse(content, nextCursorValue, prevCursorValue, hasNext, hasPrev, size, total);
     }
 
     @Cacheable(cacheManager = "extendedPinCacheManager", value = "extended_pins", key = "'cursorFullhd_' + #cursor + '_' + #size + '_' + #sortDirection")
@@ -145,11 +154,13 @@ public class PinQueryService {
                     dto.setAspectRatio(w != null && h != null && h > 0 ? w.doubleValue() / h : 1.0);
                     return dto;
                 }).collect(Collectors.toList());
-        String next = hasNext ? paginationService.encodeCursor(pageListHd.get(pageListHd.size() - 1).getId()) : null;
-        boolean hasPrev = cursorId != null;
-        String prev = hasPrev ? paginationService.encodeCursor(cursorId) : null;
-        long total = pinRepository.count();
-        return paginationService.createCursorPageResponse(content, next, prev, hasNext, hasPrev, size, total);
+        // Вычисляем необработанные значения курсоров
+        Long nextCursorValueHd = hasNext ? pageListHd.get(pageListHd.size() - 1).getId() : null;
+        boolean hasPrevHd = cursorId != null;
+        Long prevCursorValueHd = hasPrevHd ? cursorId : null;
+        long totalHd = pinRepository.count();
+        // Передаём необработанные курсоры, OpenApiConfig закодирует их в createCursorPageResponse
+        return paginationService.createCursorPageResponse(content, nextCursorValueHd, prevCursorValueHd, hasNext, hasPrevHd, size, totalHd);
     }
 
     @Cacheable(cacheManager = "extendedPinCacheManager", value = "extended_pins", key = "'cursorThumbnail_' + #cursor + '_' + #size + '_' + #sortDirection")
@@ -178,15 +189,39 @@ public class PinQueryService {
                     dto.setAspectRatio(w2 != null && h2 != null && h2 > 0 ? w2.doubleValue() / h2 : 1.0);
                     return dto;
                 }).collect(Collectors.toList());
-        String next = hasNext ? paginationService.encodeCursor(pageListThumb.get(pageListThumb.size() - 1).getId()) : null;
-        boolean hasPrev = cursorId != null;
-        String prev = hasPrev ? paginationService.encodeCursor(cursorId) : null;
-        long total = pinRepository.count();
-        return paginationService.createCursorPageResponse(content, next, prev, hasNext, hasPrev, size, total);
+        // Вычисляем необработанные значения курсоров
+        Long nextCursorValueThumb = hasNext ? pageListThumb.get(pageListThumb.size() - 1).getId() : null;
+        boolean hasPrevThumb = cursorId != null;
+        Long prevCursorValueThumb = hasPrevThumb ? cursorId : null;
+        long totalThumb = pinRepository.count();
+        // Передаём необработанные курсоры, OpenApiConfig закодирует их в createCursorPageResponse
+        return paginationService.createCursorPageResponse(content, nextCursorValueThumb, prevCursorValueThumb, hasNext, hasPrevThumb, size, totalThumb);
     }
-
 
     public void calculateImageDimensions(Pin pin) {
         pinService.calculateImageDimensions(pin);
+    }
+
+    /**
+     * Обогащает PinResponse миниатюрой и данными локации
+     */
+    public PinResponse enrichPinResponse(PinResponse dto) {
+        pictureRepository.findByPinId(dto.getId()).ifPresent(picture -> {
+            String thumb1 = picture.getThumbnailImageUrl1();
+            if (thumb1 != null && !thumb1.isEmpty()) {
+                dto.setThumbnailImageUrl(fileStorageService.updateImageUrl(thumb1));
+            }
+            dto.setThumbnailWidth(picture.getThumbnailWidth());
+            dto.setThumbnailHeight(picture.getThumbnailHeight());
+        });
+        List<Location> locs = locationRepository.findByPinId(dto.getId());
+        if (!locs.isEmpty()) {
+            Location loc = locs.get(0);
+            dto.setLatitude(loc.getLatitude());
+            dto.setLongitude(loc.getLongitude());
+            dto.setAddress(loc.getAddress());
+            dto.setPlaceName(loc.getNameplace());
+        }
+        return dto;
     }
 }

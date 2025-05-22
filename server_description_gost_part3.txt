@@ -1,0 +1,898 @@
+3 СТРУКТУРА ПРОГРАММНОГО КОМПЛЕКСА
+
+3.1 Модульная организация серверной части
+
+Серверная часть приложения построена на основе модульной архитектуры, что обеспечивает высокую степень изолированности компонентов, возможность их независимого развития и тестирования, а также упрощает сопровождение и расширение функциональности системы.
+
+3.1.1 Принципы модульной организации
+
+При проектировании архитектуры были применены следующие принципы:
+
+1. Принцип единственной ответственности (Single Responsibility Principle)
+Каждый модуль отвечает за решение строго определенной задачи, что упрощает понимание кода и снижает вероятность внесения ошибок при его модификации.
+
+2. Принцип открытости/закрытости (Open/Closed Principle)
+Архитектура позволяет расширять функциональность без изменения существующего кода, что обеспечивается через использование интерфейсов, абстракций и механизмов внедрения зависимостей.
+
+3. Принцип подстановки Лисков (Liskov Substitution Principle)
+Модули разработаны таким образом, чтобы объекты базовых классов могли быть заменены объектами их подклассов без изменения корректности программы.
+
+4. Принцип разделения интерфейсов (Interface Segregation Principle)
+Разработаны специализированные, "тонкие" интерфейсы, что позволяет клиентам зависеть только от тех методов, которые они используют.
+
+5. Принцип инверсии зависимостей (Dependency Inversion Principle)
+Модули высокого уровня не зависят от модулей низкого уровня, а оба типа модулей зависят от абстракций, что обеспечивается через систему внедрения зависимостей Spring.
+
+3.1.2 Организация пакетов
+
+Исходный код приложения организован в иерархическую структуру пакетов, отражающую функциональное назначение компонентов:
+
+com.example.server
+  ├── PinterestApplication.java (точка входа в приложение)
+  └── UsPinterest
+      ├── config (конфигурационные классы)
+      │   ├── SecurityConfig.java
+      │   ├── WebConfig.java
+      │   ├── DataSourceConfig.java
+      │   ├── RabbitMQConfig.java
+      │   └── ...
+      │
+      ├── controller (контроллеры REST API)
+      │   ├── AuthController.java
+      │   ├── PinController.java
+      │   ├── UserController.java
+      │   └── ...
+      │
+      ├── service (сервисы бизнес-логики)
+      │   ├── PinService.java
+      │   ├── UserService.java
+      │   ├── FileStorageService.java
+      │   └── ...
+      │
+      ├── repository (репозитории для доступа к данным)
+      │   ├── PinRepository.java
+      │   ├── UserRepository.java
+      │   ├── BoardRepository.java
+      │   └── ...
+      │
+      ├── model (модели данных)
+      │   ├── User.java
+      │   ├── Pin.java
+      │   ├── Board.java
+      │   └── ...
+      │
+      ├── entity (сущности для данных, не попадающих в основные модели)
+      │   ├── Comment.java
+      │   ├── Like.java
+      │   ├── Feedback.java
+      │   └── ...
+      │
+      ├── dto (объекты передачи данных)
+      │   ├── PinResponse.java
+      │   ├── UserDto.java
+      │   ├── LoginRequest.java
+      │   └── ...
+      │
+      ├── security (компоненты безопасности)
+      │   ├── JwtTokenProvider.java
+      │   ├── JwtAuthenticationFilter.java
+      │   ├── UserPrincipal.java
+      │   └── ...
+      │
+      ├── exception (исключения и их обработчики)
+      │   ├── ResourceNotFoundException.java
+      │   ├── BadRequestException.java
+      │   ├── GlobalExceptionHandler.java
+      │   └── ...
+      │
+      ├── event (классы для работы с событиями)
+      │   ├── NotificationEvent.java
+      │   ├── UserActivityEvent.java
+      │   └── ...
+      │
+      ├── util (утилитарные классы)
+      │   ├── FileUtil.java
+      │   ├── ValidationUtil.java
+      │   ├── SecurityUtil.java
+      │   └── ...
+      │
+      └── validation (валидаторы)
+          ├── EmailValidator.java
+          ├── PasswordValidator.java
+          └── ...
+
+3.1.3 Взаимодействие между модулями
+
+Взаимодействие между модулями организовано в соответствии с принципами многоуровневой архитектуры и осуществляется через четко определенные интерфейсы:
+
+1. Контроллеры получают HTTP-запросы, извлекают и валидируют параметры запросов, делегируют обработку соответствующим сервисам и формируют HTTP-ответы.
+
+2. Сервисы реализуют бизнес-логику, используя данные, предоставленные контроллерами, взаимодействуют с репозиториями для доступа к данным и вызывают другие сервисы при необходимости.
+
+3. Репозитории обеспечивают абстракцию над источником данных (базой данных), предоставляя методы для выполнения операций CRUD и сложных запросов.
+
+4. Модели данных представляют собой сущности предметной области, которые используются на всех уровнях приложения.
+
+5. DTO (Data Transfer Objects) используются для передачи данных между контроллерами и клиентами, а также между различными слоями приложения, когда требуется специфическое представление данных.
+
+Для управления зависимостями и организации взаимодействия между компонентами используется механизм внедрения зависимостей (Dependency Injection) Spring Framework. Это позволяет:
+
+- Уменьшить связанность между компонентами
+- Упростить тестирование путем подмены реальных реализаций моками
+- Централизованно управлять жизненным циклом объектов
+- Переключаться между различными реализациями в зависимости от окружения
+
+3.2 Модели данных
+
+Модели данных являются основой приложения, определяя структуру информации, с которой работает система. В приложении используется набор взаимосвязанных моделей, которые отражают различные аспекты предметной области.
+
+3.2.1 Основные модели
+
+1. User (Пользователь)
+Модель представляет пользователя системы и содержит следующие основные атрибуты:
+
+```java
+@Entity
+@Table(name = "users")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(unique = true, nullable = false)
+    private String username;
+    
+    @Column(unique = true, nullable = false)
+    private String email;
+    
+    @Column(nullable = false)
+    private String password;
+    
+    private String fullName;
+    
+    private String bio;
+    
+    private String avatarUrl;
+    
+    @Column(nullable = false)
+    private boolean enabled;
+    
+    @Enumerated(EnumType.STRING)
+    private Role role;
+    
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+    
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+    
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Board> boards = new HashSet<>();
+    
+    @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Follow> following = new HashSet<>();
+    
+    @OneToMany(mappedBy = "following", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Follow> followers = new HashSet<>();
+    
+    // Другие поля и методы
+}
+```
+
+2. Pin (Пин)
+Модель представляет основной контент приложения - изображения с метаданными:
+
+```java
+@Entity
+@Table(name = "pins")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Pin {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false)
+    private String title;
+    
+    private String description;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+    
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "picture_id")
+    private Picture picture;
+    
+    @ElementCollection
+    @CollectionTable(name = "pin_tags", joinColumns = @JoinColumn(name = "pin_id"))
+    private Set<String> tags = new HashSet<>();
+    
+    @ManyToMany
+    @JoinTable(
+        name = "pin_board",
+        joinColumns = @JoinColumn(name = "pin_id"),
+        inverseJoinColumns = @JoinColumn(name = "board_id")
+    )
+    private Set<Board> boards = new HashSet<>();
+    
+    @OneToMany(mappedBy = "pin", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "pin", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Like> likes = new HashSet<>();
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "location_id")
+    private Location location;
+    
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+    
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+    
+    // Другие поля и методы
+}
+```
+
+3. Picture (Изображение)
+Модель хранит детальную информацию об изображении:
+
+```java
+@Entity
+@Table(name = "pictures")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Picture {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false)
+    private String originalUrl;
+    
+    private String thumbnailUrl;
+    
+    private String fullHdUrl;
+    
+    private String webpUrl;
+    
+    private Integer width;
+    
+    private Integer height;
+    
+    private String contentType;
+    
+    private Long fileSize;
+    
+    @Column(columnDefinition = "jsonb")
+    private String metadata;
+    
+    @Column(length = 50)
+    private String dominantColor;
+    
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+    
+    // Другие поля и методы
+}
+```
+
+4. Board (Доска)
+Модель представляет коллекцию пинов, созданную пользователем:
+
+```java
+@Entity
+@Table(name = "boards")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Board {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false)
+    private String title;
+    
+    private String description;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+    
+    @ManyToMany(mappedBy = "boards")
+    private Set<Pin> pins = new HashSet<>();
+    
+    @Column(nullable = false)
+    private boolean isPrivate = false;
+    
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+    
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+    
+    // Другие поля и методы
+}
+```
+
+3.2.2 Вспомогательные модели
+
+1. Follow (Подписка)
+Модель представляет отношения подписки между пользователями:
+
+```java
+@Entity
+@Table(name = "follows")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Follow {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "follower_id", nullable = false)
+    private User follower;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "following_id", nullable = false)
+    private User following;
+    
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+}
+```
+
+2. Comment (Комментарий)
+Модель представляет комментарии, оставленные пользователями к пинам:
+
+```java
+@Entity
+@Table(name = "comments")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Comment {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false, length = 1000)
+    private String content;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pin_id", nullable = false)
+    private Pin pin;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Comment parent;
+    
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> replies = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Like> likes = new HashSet<>();
+    
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+    
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+}
+```
+
+3. Like (Лайк)
+Модель представляет оценку "нравится", оставленную пользователем:
+
+```java
+@Entity
+@Table(name = "likes")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Like {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pin_id")
+    private Pin pin;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "comment_id")
+    private Comment comment;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id")
+    private Post post;
+    
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+}
+```
+
+4. Post (Пост)
+Модель представляет публикацию пользователя, которая может содержать текст и изображения:
+
+```java
+@Entity
+@Table(name = "posts")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Post {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false)
+    private String content;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+    
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "post_id")
+    private List<Photo> photos = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Like> likes = new HashSet<>();
+    
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+    
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+}
+```
+
+5. Location (Местоположение)
+Модель хранит географические данные для привязки пинов к местоположениям:
+
+```java
+@Entity
+@Table(name = "locations")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Location {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false)
+    private String name;
+    
+    private String address;
+    
+    private Double latitude;
+    
+    private Double longitude;
+    
+    private String city;
+    
+    private String country;
+    
+    @Column(columnDefinition = "jsonb")
+    private String additionalInfo;
+    
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+}
+```
+
+3.2.3 Служебные модели
+
+1. Notification (Уведомление)
+Модель представляет уведомление для пользователя о различных событиях:
+
+```java
+@Entity
+@Table(name = "notifications")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Notification {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false)
+    private String content;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private NotificationType type;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "actor_id")
+    private User actor;
+    
+    @Column(nullable = false)
+    private boolean read = false;
+    
+    @Column(columnDefinition = "jsonb")
+    private String data;
+    
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+}
+```
+
+2. RefreshToken (Токен обновления)
+Модель хранит токены для обновления JWT токенов доступа:
+
+```java
+@Entity
+@Table(name = "refresh_tokens")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class RefreshToken {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false, unique = true)
+    private String token;
+    
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+    
+    @Column(nullable = false)
+    private LocalDateTime expiryDate;
+    
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+}
+```
+
+3. VerificationToken (Токен верификации)
+Модель хранит токены для верификации email пользователей:
+
+```java
+@Entity
+@Table(name = "verification_tokens")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class VerificationToken {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false, unique = true)
+    private String token;
+    
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+    
+    @Column(nullable = false)
+    private LocalDateTime expiryDate;
+    
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+}
+```
+
+4. FcmToken (Токен Firebase Cloud Messaging)
+Модель хранит токены устройств для отправки push-уведомлений:
+
+```java
+@Entity
+@Table(name = "fcm_tokens")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class FcmToken {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false)
+    private String token;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+    
+    private String deviceInfo;
+    
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+    
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+}
+```
+
+5. Feedback (Обратная связь)
+Модель хранит отзывы и предложения пользователей:
+
+```java
+@Entity
+@Table(name = "feedback")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Feedback {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false, length = 2000)
+    private String content;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private FeedbackType type;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+    
+    private String contactInfo;
+    
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+}
+```
+
+3.2.4 Отношения между моделями
+
+В системе реализованы различные типы отношений между моделями:
+
+1. Один ко многим (One-to-Many):
+- User -> Board: один пользователь может иметь много досок
+- User -> Pin: один пользователь может создать много пинов
+- Pin -> Comment: один пин может иметь много комментариев
+- User -> Notification: один пользователь может получать много уведомлений
+
+2. Многие ко многим (Many-to-Many):
+- Pin <-> Board: пин может быть добавлен на несколько досок, и доска может содержать несколько пинов
+- User <-> User (через Follow): пользователь может подписываться на многих пользователей и иметь много подписчиков
+
+3. Один к одному (One-to-One):
+- Pin -> Picture: каждый пин связан с одним изображением
+- User -> RefreshToken: каждый пользователь имеет один токен обновления
+- User -> VerificationToken: каждый пользователь имеет один токен верификации
+
+4. Самореференсные связи:
+- Comment -> Comment: комментарии могут иметь вложенные комментарии (ответы)
+
+Для оптимизации производительности и соблюдения принципов проектирования:
+- Используется ленивая загрузка (FetchType.LAZY) для предотвращения излишней загрузки связанных сущностей
+- Применяется каскадное сохранение и удаление (CascadeType.ALL) для автоматического управления связанными сущностями
+- Используются двунаправленные связи для удобства навигации по объектной модели
+- Применяется orphanRemoval = true для автоматического удаления осиротевших связанных объектов
+
+3.3 Контроллеры и API
+
+Контроллеры являются точкой входа в приложение и отвечают за обработку HTTP-запросов, маршрутизацию и формирование ответов. Разработанный сервер предоставляет RESTful API, который обеспечивает взаимодействие с клиентскими приложениями.
+
+3.3.1 Основные принципы проектирования API
+
+При разработке API были соблюдены следующие принципы:
+
+1. RESTful архитектура:
+- Использование HTTP методов (GET, POST, PUT, DELETE) в соответствии с их семантикой
+- Ресурсно-ориентированная структура эндпоинтов
+- Использование статус-кодов HTTP для индикации результатов операций
+- Применение стандартных заголовков HTTP
+
+2. Версионирование API:
+- Использование префикса "/api/v1" для обеспечения возможности развития API без нарушения обратной совместимости
+
+3. Согласованное именование ресурсов:
+- Использование существительных во множественном числе для ресурсов (/pins, /users, /boards)
+- Использование вложенных ресурсов для выражения отношений (/users/{id}/pins)
+
+4. Пагинация и фильтрация:
+- Поддержка параметров пагинации (page, size) для ограничения размера выборки
+- Поддержка курсорной пагинации для эффективной работы с большими наборами данных
+- Параметры фильтрации для кастомизации выборки
+
+5. Формат запросов и ответов:
+- Использование JSON как основного формата данных
+- Стандартизированная структура ответов с полями для данных, метаданных и ошибок
+- Поддержка HATEOAS для создания самодокументируемого API
+
+3.3.2 Контроллеры управления пользователями
+
+1. AuthController
+Отвечает за аутентификацию и управление доступом пользователей:
+
+```java
+@RestController
+@RequestMapping("/api/v1/auth")
+@Tag(name = "Authentication", description = "API для аутентификации и управления доступом")
+public class AuthController {
+    private final UserService userService;
+    private final RefreshTokenService refreshTokenService;
+    
+    @PostMapping("/login")
+    public ResponseEntity<TokenRefreshResponse> login(@Valid @RequestBody LoginRequest request) {
+        // Логика аутентификации
+    }
+    
+    @PostMapping("/register")
+    public ResponseEntity<MessageResponse> register(@Valid @RequestBody RegisterRequest request) {
+        // Логика регистрации
+    }
+    
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenRefreshResponse> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
+        // Логика обновления токена
+    }
+    
+    @PostMapping("/logout")
+    public ResponseEntity<MessageResponse> logout() {
+        // Логика выхода
+    }
+    
+    @GetMapping("/verify")
+    public ResponseEntity<MessageResponse> verifyAccount(@RequestParam String token) {
+        // Логика верификации аккаунта
+    }
+    
+    @PostMapping("/password/reset")
+    public ResponseEntity<MessageResponse> resetPassword(@Valid @RequestBody PasswordResetRequest request) {
+        // Логика сброса пароля
+    }
+}
+```
+
+2. UserController
+Обеспечивает операции с пользователями:
+
+```java
+@RestController
+@RequestMapping("/api/v1/users")
+@Tag(name = "Users", description = "API для управления пользователями")
+public class UserController {
+    private final UserService userService;
+    
+    @GetMapping
+    public ResponseEntity<PageResponse<ProfileResponse>> getUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String query) {
+        // Логика получения списка пользователей
+    }
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<ProfileResponse> getUser(@PathVariable Long id) {
+        // Логика получения данных пользователя
+    }
+    
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('USER') and @securityUtils.isCurrentUser(#id)")
+    public ResponseEntity<ProfileResponse> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody EditProfileRequest request) {
+        // Логика обновления данных пользователя
+    }
+    
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or @securityUtils.isCurrentUser(#id)")
+    public ResponseEntity<MessageResponse> deleteUser(@PathVariable Long id) {
+        // Логика удаления пользователя
+    }
+    
+    @GetMapping("/{id}/pins")
+    public ResponseEntity<PageResponse<PinThumbnailResponse>> getUserPins(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        // Логика получения пинов пользователя
+    }
+    
+    @GetMapping("/{id}/boards")
+    public ResponseEntity<PageResponse<BoardResponse>> getUserBoards(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        // Логика получения досок пользователя
+    }
+}
+```
+
+3. ProfileController
+Обеспечивает операции с профилем текущего пользователя:
+
+```java
+@RestController
+@RequestMapping("/api/v1/profile")
+@Tag(name = "Profile", description = "API для управления профилем текущего пользователя")
+@PreAuthorize("hasRole('USER')")
+public class ProfileController {
+    private final UserService userService;
+    private final FileStorageService fileStorageService;
+    
+    @GetMapping
+    public ResponseEntity<ProfileResponse> getCurrentProfile() {
+        // Логика получения профиля текущего пользователя
+    }
+    
+    @PutMapping
+    public ResponseEntity<ProfileResponse> updateProfile(@Valid @RequestBody EditProfileRequest request) {
+        // Логика обновления профиля
+    }
+    
+    @PostMapping("/avatar")
+    public ResponseEntity<ProfileResponse> updateAvatar(@RequestParam("file") MultipartFile file) {
+        // Логика обновления аватара
+    }
+    
+    @DeleteMapping("/avatar")
+    public ResponseEntity<ProfileResponse> deleteAvatar() {
+        // Логика удаления аватара
+    }
+    
+    @PutMapping("/password")
+    public ResponseEntity<MessageResponse> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        // Логика изменения пароля
+    }
+    
+    @GetMapping("/pins")
+    public ResponseEntity<PageResponse<PinThumbnailResponse>> getMyPins(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        // Логика получения пинов текущего пользователя
+    }
+    
+    @GetMapping("/boards")
+    public ResponseEntity<PageResponse<BoardResponse>> getMyBoards(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        // Логика получения досок текущего пользователя
+    }
+    
+    @GetMapping("/notifications")
+    public ResponseEntity<PageResponse<NotificationResponse>> getMyNotifications(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        // Логика получения уведомлений текущего пользователя
+    }
+} 
