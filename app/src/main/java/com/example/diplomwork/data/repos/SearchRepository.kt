@@ -11,8 +11,6 @@ import javax.inject.Inject
 class SearchRepository @Inject constructor(
     private val api: SpotApi
 ) {
-
-    // Поиск картинок
     suspend fun searchPictures(
         query: String,
         page: Int,

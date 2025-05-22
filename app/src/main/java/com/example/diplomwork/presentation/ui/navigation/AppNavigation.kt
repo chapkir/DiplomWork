@@ -15,9 +15,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
 import com.example.diplomwork.auth.SessionManager
@@ -34,6 +36,8 @@ import com.example.diplomwork.presentation.ui.screens.pictures_screen.PicturesSc
 import com.example.diplomwork.presentation.ui.screens.posts_screen.PostsScreen
 import com.example.diplomwork.presentation.ui.screens.profile_screen.ProfileScreen
 import com.example.diplomwork.presentation.ui.screens.registration_screen.RegisterScreen
+import com.example.diplomwork.presentation.ui.screens.search_screen.SearchInputScreen
+import com.example.diplomwork.presentation.ui.screens.search_screen.SearchResultsScreen
 import com.example.diplomwork.presentation.ui.screens.search_screen.SearchScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.ChangePasswordScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.EditProfileScreen
@@ -82,7 +86,8 @@ fun AppNavigation(navController: NavHostController) {
                 currentRoute = currentRoute,
                 onNavigate = { route ->
                     navController.navigate(route) {
-                        popUpTo(route) { inclusive = false }
+                        launchSingleTop = true
+                        popUpTo(route) { saveState = true }
                     }
                 },
                 onAddClicked = { openSheet() }
@@ -98,7 +103,7 @@ fun AppNavigation(navController: NavHostController) {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = if (sessionManager.isLoggedIn()) Spots else Login,
+            startDestination = if (sessionManager.isLoggedIn()) OwnProfile else Login,
             modifier = Modifier.padding(paddingValues)
         ) {
             composable<Pictures> {
@@ -150,16 +155,6 @@ fun AppNavigation(navController: NavHostController) {
                     }
                 )
             }
-            composable<EditProfile> {
-                EditProfileScreen(
-                    onBack = { navController.popBackStack() },
-                    onEditSuccess = {
-                        navController.navigate(OwnProfile) {
-                            popUpTo(EditProfile) { inclusive = true }
-                        }
-                    }
-                )
-            }
 
             composable<SpotDetailScreenData> {
                 SpotDetailScreen(
@@ -196,9 +191,7 @@ fun AppNavigation(navController: NavHostController) {
                 )
             }
 
-            composable<Search> {
-                SearchScreen()
-            }
+            searchNavGraph(navController)
 
             composable<Notification> {
                 NotificationScreen(
@@ -328,6 +321,17 @@ fun NavGraphBuilder.settingsNavGraph(navController: NavController) {
             )
         }
 
+        composable<EditProfile> {
+            EditProfileScreen(
+                onBack = { navController.popBackStack() },
+                onEditSuccess = {
+                    navController.navigate(OwnProfile) {
+                        popUpTo(EditProfile) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable<Licenses> {
             LicensesScreen(
                 onBack = { navController.popBackStack() },
@@ -376,6 +380,40 @@ fun NavGraphBuilder.settingsNavGraph(navController: NavController) {
                         popUpTo(Login) { inclusive = true }
                     }
                 }
+            )
+        }
+    }
+}
+
+fun NavGraphBuilder.searchNavGraph(navController: NavController) {
+    navigation(
+        startDestination = "search",
+        route = "search_root"
+    ) {
+        composable<Search> {
+            SearchScreen(
+                onSearchBarClick = {
+                    navController.navigate("search_input"){
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        composable("search_input") {
+            SearchInputScreen(
+                onBack = { navController.popBackStack() },
+            )
+        }
+
+        composable(
+            route = "search_results/{query}",
+            arguments = listOf(navArgument("query") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val query = backStackEntry.arguments?.getString("query").orEmpty()
+            SearchResultsScreen(
+                query = query,
+                onBack = { navController.popBackStack() }
             )
         }
     }

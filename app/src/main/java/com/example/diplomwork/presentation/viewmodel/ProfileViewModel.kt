@@ -76,7 +76,6 @@ class ProfileViewModel @Inject constructor(
 
     private val _isSubscribed = MutableStateFlow(false)
 
-
     init {
         loadProfile()
     }
@@ -96,11 +95,13 @@ class ProfileViewModel @Inject constructor(
                     checkIfSubscribed(_userId)
                 }
             } catch (e: Exception) {
-                _error.value = _error.value.copy(errorLoadProfile = "Ошибка при загрузке профиля")
+                _error.value =
+                    _error.value.copy(errorLoadProfile = "Ошибка при загрузке профиля")
             } finally {
                 _isLoading.value = false
             }
         }
+
     }
 
     fun loadProfilePictures() {

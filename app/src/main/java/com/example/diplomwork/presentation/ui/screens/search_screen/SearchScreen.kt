@@ -2,10 +2,10 @@ package com.example.diplomwork.presentation.ui.screens.search_screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,26 +18,22 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,7 +41,6 @@ import coil.compose.AsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.diplomwork.R
-import com.example.diplomwork.presentation.ui.theme.ErrorColor
 
 data class CategoryCard(
     val title: String,
@@ -59,10 +54,12 @@ enum class TitleLocation {
 }
 
 @Composable
-fun SearchScreen() {
+fun SearchScreen(
+    onSearchBarClick: () -> Unit
+) {
 
     val categoryList = listOf(
-        CategoryCard("Гастрономия", "110 мест", R.drawable.gastronomy),
+        CategoryCard("Гастрономия", "110 мест", R.drawable.gastronomy_2),
         CategoryCard("Вечерние прогулки", "60 мест", R.drawable.evening),
         CategoryCard("Праздники", "186 мест", R.drawable.holidays),
         CategoryCard("Достопримечательности", "42 места", R.drawable.attractions)
@@ -76,7 +73,9 @@ fun SearchScreen() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        SearchBar()
+        SearchBar(
+            onSearchBarClick = onSearchBarClick
+        )
 
         Spacer(Modifier.height(17.dp))
 
@@ -205,21 +204,25 @@ fun CategoryCardItem(
 }
 
 @Composable
-fun SearchBar(
-    searchQuery: String = "",
-    onSearchQueryChange: (String) -> Unit = {},
-    onSearch: () -> Unit = {}
+private fun SearchBar(
+    onSearchBarClick: () -> Unit
 ) {
-    val focusManager = LocalFocusManager.current
-
-    Row(
+    Box(
         modifier = Modifier
-            .fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
+            .fillMaxWidth()
+            .padding(top = 20.dp)
+            .height(52.dp)
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) {
+                onSearchBarClick()
+            }
     ) {
         OutlinedTextField(
-            value = searchQuery,
-            onValueChange = onSearchQueryChange,
+            value = "",
+            onValueChange = {},
+            enabled = false,
             placeholder = {
                 Text(
                     text = "Поиск интересных мест",
@@ -228,40 +231,25 @@ fun SearchBar(
                 )
             },
             trailingIcon = {
-                IconButton(onClick = { }) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_search),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .padding(end = 4.dp)
-                            .size(20.dp)
-                    )
-                }
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_search),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .padding(end = 4.dp)
+                        .size(20.dp)
+                )
             },
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 23.dp)
-                .height(52.dp),
+                .fillMaxSize(),
             singleLine = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(
-                onSearch = {
-                    focusManager.clearFocus()
-                    onSearch()
-                }
-            ),
             textStyle = TextStyle(fontSize = 15.sp),
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color.White,
-                unfocusedBorderColor = Color.White,
-                errorBorderColor = ErrorColor,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.Gray,
-                cursorColor = Color.White,
-                focusedTrailingIconColor = Color.White,
-                unfocusedTrailingIconColor = Color.Gray,
-                errorTrailingIconColor = Color.White
+                disabledBorderColor = Color.LightGray,
+                disabledTextColor = Color.LightGray,
+                disabledPlaceholderColor = Color.LightGray,
+                disabledTrailingIconColor = Color.LightGray,
+                cursorColor = Color.Transparent
             )
         )
     }

@@ -1,6 +1,5 @@
 package com.example.diplomwork.data.model
 
-// Общая обертка для ответов API
 data class ApiResponse<T>(
     val status: String,
     val message: String,
@@ -23,7 +22,6 @@ data class Meta(
     val timestamp: String
 )
 
-// Класс для пагинированных ответов
 data class PageResponse<T>(
     val content: List<T>,
     val totalPages: Int,

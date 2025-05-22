@@ -246,7 +246,6 @@ fun MapScreen(
             )
         }
 
-        // Нижняя карточка с результатом
         searchResultPoint?.let {
             Card(
                 shape = RoundedCornerShape(18.dp),

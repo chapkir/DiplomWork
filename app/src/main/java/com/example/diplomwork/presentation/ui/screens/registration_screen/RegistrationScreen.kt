@@ -379,7 +379,6 @@ private fun RegisterTextField(
             errorLabelColor = ErrorColor,
             focusedTextColor = Color.White,
             unfocusedTextColor = Color.Gray,
-            cursorColor = Color.White,
             focusedTrailingIconColor = Color.White,
             unfocusedTrailingIconColor = Color.Gray,
             errorTrailingIconColor = Color.White
