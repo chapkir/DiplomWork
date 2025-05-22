@@ -43,12 +43,7 @@ public class SearchService {
 
         Pageable pageable = paginationService.createPageable(page, size, sortBy, sortDirection);
         List<String> searchTags = (tags != null && !tags.isEmpty()) ? tags : Collections.emptyList();
-        Page<Pin> pinsPage;
-        if (!searchTags.isEmpty()) {
-            pinsPage = pinRepository.searchByDescriptionOrTags(searchKeyword, searchTags, pageable);
-        } else {
-            pinsPage = pinRepository.findByDescriptionContainingIgnoreCase(searchKeyword, pageable);
-        }
+        Page<Pin> pinsPage = pinRepository.searchByDescriptionOrTags(searchKeyword, searchTags, pageable);
 
         return paginationService.createPageResponse(pinsPage, pin -> pinStructMapper.toDto(pin));
     }

@@ -2,6 +2,7 @@ package com.example.server.UsPinterest.repository;
 
 import com.example.server.UsPinterest.model.Pin;
 import com.example.server.UsPinterest.model.User;
+import com.example.server.UsPinterest.model.Location;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -44,8 +45,10 @@ public interface PinRepository extends JpaRepository<Pin, Long> {
 
     @EntityGraph(attributePaths = {"likes", "comments", "likes.user", "comments.user"})
     @Query(
-        "select distinct p from Pin p left join p.tags t " +
-        "where (:text is null or lower(p.description) like lower(concat('%', :text, '%'))) " +
+        "select distinct p from Pin p left join p.tags t left join Location l with l.pin = p " +
+        "where (:text is null or lower(p.description) like lower(concat('%', :text, '%')) " +
+        "or lower(p.title) like lower(concat('%', :text, '%')) " +
+        "or lower(l.nameplace) like lower(concat('%', :text, '%'))) " +
         "or (:tagNames is not null and t.name in :tagNames)"
     )
     Page<Pin> searchByDescriptionOrTags(@Param("text") String text,
@@ -58,4 +61,7 @@ public interface PinRepository extends JpaRepository<Pin, Long> {
     // Методы для админской панели
     int countByCreatedAtAfter(LocalDateTime date);
     int countByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
+
+    @EntityGraph(attributePaths = {"likes", "comments", "likes.user", "comments.user"})
+    Page<Pin> findByDescriptionContainingIgnoreCaseOrTitleContainingIgnoreCase(String description, String title, Pageable pageable);
 }
