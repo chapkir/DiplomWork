@@ -1,7 +1,6 @@
 package com.example.diplomwork.data.repos
 
 import com.example.diplomwork.data.api.SpotApi
-import com.example.diplomwork.data.model.ApiResponse
 import com.example.diplomwork.data.model.PageResponse
 import com.example.diplomwork.data.model.SpotResponse
 import dagger.hilt.android.scopes.ActivityScoped
@@ -11,11 +10,11 @@ import javax.inject.Inject
 class SearchRepository @Inject constructor(
     private val api: SpotApi
 ) {
-    suspend fun searchPictures(
+    suspend fun searchSpots(
         query: String,
         page: Int,
         size: Int
-    ): ApiResponse<PageResponse<SpotResponse>> {
+    ): PageResponse<SpotResponse> {
         return api.searchSpots(query, page, size)
     }
 }

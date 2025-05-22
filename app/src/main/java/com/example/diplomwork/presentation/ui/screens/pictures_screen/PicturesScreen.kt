@@ -33,6 +33,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.presentation.ui.components.PictureCard
+import com.example.diplomwork.presentation.ui.screens.spots_screen.ErrorRetryBlock
 import com.example.diplomwork.presentation.viewmodel.SpotsViewModel
 
 @Composable
@@ -96,7 +97,14 @@ fun PagingContentGrid(
 
             loadState.refresh is LoadState.Error -> {
                 val e = (loadState.refresh as LoadState.Error).error
-                ErrorRetryBlock(error = e.message ?: "Ошибка", onRetry = { pictures.retry() })
+                ErrorRetryBlock(
+                    error = e.message ?: "Ошибка",
+                    onRetry = { pictures.retry() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .align(Alignment.Center)
+                )
             }
 
             pictures.itemCount == 0 -> {
@@ -145,32 +153,16 @@ fun PagingContentGrid(
                             item(span = StaggeredGridItemSpan.FullLine) {
                                 ErrorRetryBlock(
                                     error = e.message ?: "Ошибка загрузки",
-                                    onRetry = { pictures.retry() })
+                                    onRetry = { pictures.retry() },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp)
+                                )
                             }
                         }
                     }
                 )
             }
-        }
-    }
-}
-
-@Composable
-fun ErrorRetryBlock(error: String, onRetry: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = error,
-            color = Color.White,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onRetry) {
-            Text("Повторить", color = Color.White)
         }
     }
 }

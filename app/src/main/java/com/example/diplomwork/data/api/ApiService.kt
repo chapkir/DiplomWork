@@ -114,7 +114,7 @@ interface SpotApi {
         @Query("query") query: String,
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 20
-    ): ApiResponse<PageResponse<SpotResponse>>
+    ): PageResponse<SpotResponse>
 
     @Multipart
     @POST("api/pins/upload")

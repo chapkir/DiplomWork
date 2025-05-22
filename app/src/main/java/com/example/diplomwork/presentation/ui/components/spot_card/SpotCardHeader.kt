@@ -72,7 +72,7 @@ fun SpotCardHeader(
         ) {
             Text(
                 text = username,
-                fontSize = 15.sp,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onPrimary,
                 textAlign = TextAlign.Center

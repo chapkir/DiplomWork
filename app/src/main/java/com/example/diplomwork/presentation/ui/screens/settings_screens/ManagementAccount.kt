@@ -72,7 +72,7 @@ fun ManagementAccount(
             onClick = { }
         )
         SettingItem(
-            title = "Адрес эдектронной почты",
+            title = "Адрес электронной почты",
             onClick = { }
         )
         SettingItem(

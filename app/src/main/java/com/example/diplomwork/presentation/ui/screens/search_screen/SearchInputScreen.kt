@@ -1,5 +1,6 @@
 package com.example.diplomwork.presentation.ui.screens.search_screen
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,7 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -44,7 +44,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
-import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForElement
+import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
+import com.example.diplomwork.presentation.ui.components.spot_card.SpotCard
 import com.example.diplomwork.presentation.ui.theme.ErrorColor
 import com.example.diplomwork.presentation.viewmodel.SearchViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -57,6 +58,7 @@ fun SearchInputScreen(
     val query by viewModel.searchQuery.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val searchResults by viewModel.searchResults.collectAsState()
+    val noResults by viewModel.noResults.collectAsState()
 
     val context = LocalContext.current
 
@@ -102,7 +104,7 @@ fun SearchInputScreen(
             onQueryChange = { viewModel.onSearchQueryChange(it) },
             onSearch = {
                 focusManager.clearFocus()
-                viewModel.performSearch(reset = true)
+                if (query.isNotBlank()) viewModel.performSearch(reset = true)
             },
             onBack = onBack,
             focusRequester = focusRequester
@@ -113,25 +115,61 @@ fun SearchInputScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            if (isLoading) {
+            when {
 
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    LoadingSpinnerForElement()
-                }
-
-            } else {
-
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(searchResults) { spot ->
-                        Text(text = spot.title)
+                isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        LoadingSpinnerForScreen()
                     }
                 }
 
+                noResults -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Нет результатов по вашему запросу",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                }
+
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(searchResults.size) { index ->
+                            searchResults[index].let { spot ->
+                                Log.e("fff", "$index - ${spot.thumbnailImageUrl}")
+//                                SpotCard(
+//                                    firstPicture = spot.thumbnailImageUrl,
+//                                    additionalPictures = emptyList(), //additionalPictures[spot.id]?.pictures ?: emptyList(),
+//                                    onLoadMore = { id, firstPicture -> }, //onLoadMore(id, firstPicture) },
+//                                    picturesCount = spot.picturesCount,
+//                                    username = spot.username,
+//                                    title = spot.title,
+//                                    placeName = spot.namePlace ?: "",
+//                                    description = spot.description,
+//                                    userId = spot.userId,
+//                                    latitude = spot.latitude ?: 0.0,
+//                                    longitude = spot.longitude ?: 0.0,
+//                                    rating = spot.rating,
+//                                    aspectRatio = spot.aspectRatio ?: 1f,
+//                                    userProfileImageUrl = spot.userProfileImageUrl,
+//                                    id = spot.id,
+//                                    isCurrentUserOwner = spot.isCurrentUserOwner,
+//                                    onSpotClick = { }, //onPictureClick(spot.id) },
+//                                    screenName = "Spots"
+//                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -154,19 +192,6 @@ private fun SearchBar(
             .height(55.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-
-//        IconButton(
-//            onClick = { onBack() },
-//            modifier = Modifier
-//                .padding(end = 10.dp)
-//                .size(33.dp)
-//        ) {
-//            Icon(
-//                painter = painterResource(id = R.drawable.ic_arrow_left),
-//                contentDescription = "OnBack",
-//                tint = Color.White
-//            )
-//        }
 
         OutlinedTextField(
             value = query,

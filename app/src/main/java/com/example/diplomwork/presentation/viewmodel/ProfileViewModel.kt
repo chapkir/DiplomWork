@@ -12,6 +12,7 @@ import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.repos.FollowRepository
 import com.example.diplomwork.data.repos.ProfileRepository
 import com.example.diplomwork.data.repos.SpotRepository
+import com.example.diplomwork.domain.usecase.LoadSpotPicturesUseCase
 import com.example.diplomwork.util.ImageUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +31,7 @@ class ProfileViewModel @Inject constructor(
     private val profileRepository: ProfileRepository,
     private val followRepository: FollowRepository,
     private val spotRepository: SpotRepository,
+    private val loadSpotPicturesUseCase: LoadSpotPicturesUseCase
 ) : ViewModel() {
 
     private val _userId: Long = savedStateHandle["userId"] ?: 0L
@@ -129,10 +131,9 @@ class ProfileViewModel @Inject constructor(
 
     fun loadMorePicturesForSpot(spotId: Long, firstImage: String) {
         viewModelScope.launch {
+            _isLoading.value = true
             try {
-                val response = spotRepository.getSpotPictures(spotId)
-
-                val additional = response.pictures.filterNotNull().filterNot { it == firstImage }
+                val additional = loadSpotPicturesUseCase(spotId, firstImage)
 
                 _imagesUrls.update { currentMap ->
                     currentMap + (spotId to SpotPicturesResponse(additional))

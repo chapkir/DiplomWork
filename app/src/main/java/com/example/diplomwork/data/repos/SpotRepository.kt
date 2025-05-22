@@ -6,6 +6,7 @@ import androidx.paging.PagingData
 import com.example.diplomwork.auth.SessionManager
 import com.example.diplomwork.data.api.SpotApi
 import com.example.diplomwork.data.model.ApiResponseWrapper
+import com.example.diplomwork.data.model.CommentPageData
 import com.example.diplomwork.data.model.CommentRequest
 import com.example.diplomwork.data.model.CommentResponse
 import com.example.diplomwork.data.model.SpotDetailResponse
@@ -52,7 +53,7 @@ class SpotRepository @Inject constructor(
     }
 
     suspend fun searchPictures(query: String, page: Int, size: Int): List<SpotResponse> {
-        return api.searchSpots(query, page, size).data.content
+        return api.searchSpots(query, page, size).content
     }
 
     suspend fun deletePicture(id: Long): Result<Unit> {
@@ -97,13 +98,9 @@ class SpotRepository @Inject constructor(
         )
     }
 
-    suspend fun getSpotComments(pictureId: Long): List<CommentResponse> {
-        return try {
-            val response = api.getSpotComments(pictureId)
-            response.data.content
-        } catch (e: Exception) {
-            emptyList()
-        }
+    suspend fun getSpotComments(pictureId: Long): CommentPageData {
+        val response = api.getSpotComments(pictureId)
+        return response.data
     }
 
     suspend fun addSpotComment(pictureId: Long, comment: CommentRequest): CommentResponse {

@@ -13,7 +13,11 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 
 @Composable
-fun GeoText(latitude: Double, longitude: Double, placeName: String = "") {
+fun GeoText(
+    latitude: Double,
+    longitude: Double,
+    placeName: String = ""
+) {
     val context = LocalContext.current
 
     Text(

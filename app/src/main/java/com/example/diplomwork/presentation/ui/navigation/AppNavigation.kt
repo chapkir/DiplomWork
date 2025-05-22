@@ -86,7 +86,6 @@ fun AppNavigation(navController: NavHostController) {
                 currentRoute = currentRoute,
                 onNavigate = { route ->
                     navController.navigate(route) {
-                        launchSingleTop = true
                         popUpTo(route) { saveState = true }
                     }
                 },
@@ -103,7 +102,7 @@ fun AppNavigation(navController: NavHostController) {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = if (sessionManager.isLoggedIn()) OwnProfile else Login,
+            startDestination = if (sessionManager.isLoggedIn()) Spots else Login,
             modifier = Modifier.padding(paddingValues)
         ) {
             composable<Pictures> {
