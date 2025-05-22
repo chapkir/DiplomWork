@@ -2,7 +2,6 @@ package com.example.diplomwork.presentation.ui.components.spot_card
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -51,7 +50,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SpotsCard(
+fun SpotCard(
     firstPicture: String,
     additionalPictures: List<String>,
     onLoadMore: (Long, String) -> Unit,
@@ -305,7 +304,7 @@ private fun PlaceInfo(
             text = if (description == "") "Без описания" else description,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
-            maxLines = 3,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             color = MaterialTheme.colorScheme.onPrimary
         )

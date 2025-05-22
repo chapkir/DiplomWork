@@ -164,8 +164,8 @@ fun CategoryCardItem(
             if (titleLocation == TitleLocation.Inside) {
                 Column(
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 16.dp, end = 10.dp)
+                        .align(Alignment.BottomStart)
+                        .padding(bottom = 16.dp, start = 20.dp)
                 ) {
                     Text(
                         text = category.title,

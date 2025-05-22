@@ -10,6 +10,7 @@ import com.example.diplomwork.data.model.SpotPicturesResponse
 import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.data.repos.SpotRepository
 import com.example.diplomwork.domain.usecase.DeletePictureUseCase
+import com.example.diplomwork.domain.usecase.LoadSpotPicturesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -26,7 +27,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SpotsViewModel @Inject constructor(
     private val spotRepository: SpotRepository,
-    private val deletePictureUseCase: DeletePictureUseCase
+    private val deletePictureUseCase: DeletePictureUseCase,
+    private val loadSpotPicturesUseCase: LoadSpotPicturesUseCase
 ) : ViewModel() {
 
     private val currentUsername = spotRepository.getCurrentUsername()
@@ -58,10 +60,9 @@ class SpotsViewModel @Inject constructor(
 
     fun loadMorePicturesForSpot(spotId: Long, firstImage: String) {
         viewModelScope.launch {
+            _isLoading.value = true
             try {
-                val response = spotRepository.getSpotPictures(spotId)
-
-                val additional = response.pictures.filterNotNull().filterNot { it == firstImage }
+                val additional = loadSpotPicturesUseCase(spotId, firstImage)
 
                 _imagesUrls.update { currentMap ->
                     currentMap + (spotId to SpotPicturesResponse(additional))

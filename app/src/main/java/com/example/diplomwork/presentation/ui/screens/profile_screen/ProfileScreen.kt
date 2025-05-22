@@ -37,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,7 +46,7 @@ import com.example.diplomwork.data.model.SpotPicturesResponse
 import com.example.diplomwork.data.model.SpotResponse
 import com.example.diplomwork.presentation.ui.components.CustomTabPager
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
-import com.example.diplomwork.presentation.ui.components.spot_card.SpotsCard
+import com.example.diplomwork.presentation.ui.components.spot_card.SpotCard
 import com.example.diplomwork.presentation.viewmodel.ProfileViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.rememberPagerState
@@ -306,9 +305,10 @@ private fun SpotsGrid(
                 ) {
                     items(spots.size) { index ->
                         spots[index].let { spot ->
-                            SpotsCard(
+                            SpotCard(
                                 firstPicture = spot.thumbnailImageUrl,
-                                additionalPictures = additionalPictures[spot.id]?.pictures ?: emptyList(),
+                                additionalPictures =
+                                    additionalPictures[spot.id]?.pictures ?: emptyList(),
                                 onLoadMore = { id, firstPicture -> onLoadMore(id, firstPicture) },
                                 picturesCount = spot.picturesCount,
                                 username = spot.username,
@@ -317,7 +317,7 @@ private fun SpotsGrid(
                                 description = spot.description,
                                 userId = spot.userId,
                                 latitude = spot.latitude ?: 0.0,
-                                longitude = spot.longitude ?: 0.0      ,
+                                longitude = spot.longitude ?: 0.0,
                                 rating = spot.rating,
                                 aspectRatio = spot.aspectRatio ?: 1f,
                                 userProfileImageUrl = spot.userProfileImageUrl,

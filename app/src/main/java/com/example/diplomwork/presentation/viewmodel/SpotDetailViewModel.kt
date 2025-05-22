@@ -70,7 +70,7 @@ class SpotDetailScreenViewModel @Inject constructor(
             try {
                 val commentsResult = safeApiCall { spotRepository.getSpotComments(_pictureId) }
                 _uiState.value = _uiState.value.copy(
-                    comments = commentsResult.getOrNull() ?: emptyList(),
+                    comments = commentsResult.getOrNull()?.content ?: emptyList(),
                 )
             } catch (e: Exception) {
                 Log.e("PictureViewModel", "Ошибка загрузки комментариев: ${e.message}")
@@ -126,10 +126,13 @@ class SpotDetailScreenViewModel @Inject constructor(
 
             if (result.isSuccess) {
                 val updatedComments = spotRepository.getSpotComments(_pictureId)
-                _uiState.value = _uiState.value.copy(comments = updatedComments)
+                _uiState.value = _uiState.value.copy(
+                    comments = updatedComments.content,
+                    commentsCount = updatedComments.totalElements
+                )
             } else {
                 Log.e(
-                    "PictureDetailViewModel",
+                    "SpotDetailViewModel",
                     "ErrorColor adding comment: ${result.exceptionOrNull()?.message}"
                 )
             }
