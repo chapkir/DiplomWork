@@ -12,6 +12,7 @@ import com.example.server.UsPinterest.repository.FollowRepository;
 import com.example.server.UsPinterest.model.Follow;
 import com.example.server.UsPinterest.model.Post;
 import com.example.server.UsPinterest.service.SseService;
+import com.example.server.UsPinterest.repository.PictureRepository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,6 +38,8 @@ public class NotificationService {
     private final UserRepository userRepository;
 
     private final PinRepository pinRepository;
+
+    private final PictureRepository pictureRepository;
 
     private final FollowRepository followRepository;
 
@@ -278,6 +281,13 @@ public class NotificationService {
             if (imageUrl != null && !imageUrl.isEmpty()) {
                 response.setPinImageUrl(fileStorageService.updateImageUrl(imageUrl));
             }
+
+            // Override using Picture entity thumbnail if available
+            pictureRepository.findByPinId(notification.getPin().getId()).ifPresent(picture -> {
+                if (picture.getThumbnailImageUrl() != null && !picture.getThumbnailImageUrl().isEmpty()) {
+                    response.setPinImageUrl(fileStorageService.updateImageUrl(picture.getThumbnailImageUrl()));
+                }
+            });
         }
 
         if (notification.getPost() != null) {

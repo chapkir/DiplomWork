@@ -68,6 +68,9 @@ public abstract class PinStructMapperDecorator implements PinStructMapper {
             if (picture.getImageUrl() != null) {
                 dto.setImageUrl(fileStorageService.updateImageUrl(picture.getImageUrl()));
             }
+            if (picture.getThumbnailImageUrl() != null && !picture.getThumbnailImageUrl().isEmpty()) {
+                dto.setThumbnailImageUrl(fileStorageService.updateImageUrl(picture.getThumbnailImageUrl()));
+            }
             dto.setImageWidth(picture.getImageWidth());
             dto.setImageHeight(picture.getImageHeight());
             dto.setFullhdWidth(picture.getFullhdWidth());

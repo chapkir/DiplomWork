@@ -4,6 +4,8 @@ import com.example.server.UsPinterest.dto.PageResponse;
 import com.example.server.UsPinterest.dto.PinResponse;
 import com.example.server.UsPinterest.dto.ProfileResponse;
 import com.example.server.UsPinterest.service.SearchService;
+import com.example.server.UsPinterest.model.Category;
+import com.example.server.UsPinterest.service.CategoryService;
 
 import io.github.bucket4j.Bucket;
 import org.slf4j.Logger;
@@ -24,16 +26,9 @@ import java.util.Map;
 public class SearchController {
     private static final Logger logger = LoggerFactory.getLogger(SearchController.class);
 
-    private static final List<String> CATEGORIES = List.of(
-        "Летняя подборка", 
-        "Вечерние прогулки", 
-        "Гастрономия", 
-        "Достопримечательности", 
-        "Общественные пространства"
-    );
-
     private final SearchService searchService;
     private final Bucket bucket;
+    private final CategoryService categoryService;
 
     @GetMapping("/pins")
     public ResponseEntity<PageResponse<PinResponse>> searchPins(
@@ -86,7 +81,8 @@ public class SearchController {
         Map<String, Object> result = new HashMap<>();
         result.put("pins", pinsResult);
         result.put("users", usersResult);
-        List<String> matchingCategories = CATEGORIES.stream()
+        List<String> matchingCategories = categoryService.getAllCategories().stream()
+            .map(Category::getName)
             .filter(cat -> query == null || query.isEmpty() || cat.toLowerCase().contains(query.toLowerCase()))
             .toList();
         result.put("categories", matchingCategories);
