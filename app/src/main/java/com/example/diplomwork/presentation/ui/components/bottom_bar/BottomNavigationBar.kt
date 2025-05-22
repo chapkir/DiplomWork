@@ -20,8 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import com.example.diplomwork.presentation.system_settings.systemInsetHeight
 import com.example.diplomwork.presentation.ui.navigation.Screen
-import com.example.diplomwork.presentation.ui.theme.BgDefault
-import com.example.diplomwork.presentation.ui.theme.BgElevated
+import com.example.diplomwork.presentation.ui.theme.BgBottomBar
 import com.example.diplomwork.presentation.ui.theme.Dimens.BottomMenuHeight
 
 @Composable
@@ -42,10 +41,10 @@ fun BottomNavigationBar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(BgDefault),
+            .background(BgBottomBar),
     ) {
         NavigationBar(
-            containerColor = BgDefault,
+            containerColor = BgBottomBar,
             contentColor = Color.White,
             modifier = Modifier
                 .height(
@@ -81,7 +80,7 @@ fun BottomNavigationBar(
                     },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = Color.White,
-                        unselectedIconColor = Color.LightGray.copy(alpha = 0.7f),
+                        unselectedIconColor = Color.LightGray.copy(alpha = 0.8f),
                         selectedTextColor = Color.Blue,
                         unselectedTextColor = Color.Gray,
                         indicatorColor = Color.Transparent

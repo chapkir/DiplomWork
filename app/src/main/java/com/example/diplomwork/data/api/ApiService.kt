@@ -109,6 +109,12 @@ interface SpotApi {
     @DELETE("api/pins/{id}")
     suspend fun deleteSpot(@Path("id") id: Long): Response<Unit>
 
+    @GET("api/category")
+    suspend fun getSpotsByCategory(
+        @Query("categoryName") categoryName: String,
+        @Query("size") size: Int = 30
+    ): List<SpotResponse>
+
     @GET("api/search/pins")
     suspend fun searchSpots(
         @Query("query") query: String,

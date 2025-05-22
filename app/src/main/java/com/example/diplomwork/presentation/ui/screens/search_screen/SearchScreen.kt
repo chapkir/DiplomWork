@@ -1,234 +1,253 @@
+@file:JvmName("SearchScreenKt")
+
 package com.example.diplomwork.presentation.ui.screens.search_screen
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
-import coil.request.CachePolicy
-import coil.request.ImageRequest
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.diplomwork.R
-
-data class CategoryCard(
-    val title: String,
-    val count: String,
-    val imageRes: Int
-)
-
-enum class TitleLocation {
-    Inside,
-    Outside
-}
+import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForElement
+import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
+import com.example.diplomwork.presentation.ui.components.spot_card.SpotCard
+import com.example.diplomwork.presentation.ui.theme.ErrorColor
+import com.example.diplomwork.presentation.viewmodel.SearchViewModel
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun SearchScreen(
-    onSearchBarClick: () -> Unit
+    onBack: () -> Unit,
+    viewModel: SearchViewModel = hiltViewModel()
 ) {
+    val query by viewModel.searchQuery.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val searchResults by viewModel.searchResults.collectAsState()
+    val noResults by viewModel.noResults.collectAsState()
+    val additionalPictures by viewModel.imagesUrls.collectAsState()
+    val isPaginating by viewModel.isPaginating.collectAsState()
 
-    val categoryList = listOf(
-        CategoryCard("Гастрономия", "110 мест", R.drawable.gastronomy_2),
-        CategoryCard("Вечерние прогулки", "60 мест", R.drawable.evening),
-        CategoryCard("Праздники", "186 мест", R.drawable.holidays),
-        CategoryCard("Достопримечательности", "42 места", R.drawable.attractions)
-    )
+    val context = LocalContext.current
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    val focusRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
 
-        SearchBar(
-            onSearchBarClick = onSearchBarClick
-        )
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
 
-        Spacer(Modifier.height(17.dp))
-
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(13.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            item(span = { GridItemSpan(2) }) {
-                Text(
-                    text = "Лето вместе с Spotsy ☀\uFE0F",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    textAlign = TextAlign.Start,
-                    modifier = Modifier
-                        .padding(start = 4.dp, bottom = 5.dp)
-                )
-            }
-
-            item(span = { GridItemSpan(2) }) {
-                CategoryCardItem(
-                    category = CategoryCard(
-                        title = "Летняя подборка ☘\uFE0F",
-                        count = "100",
-                        imageRes = R.drawable.summer_2
-                    ),
-                    titleLocation = TitleLocation.Inside,
-                    onClick = { /* Действие при клике */ },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                )
-            }
-
-            item(span = { GridItemSpan(2) }) {
-                Text(
-                    text = "Популярные категории ✨",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    textAlign = TextAlign.Start,
-                    modifier = Modifier.padding(start = 4.dp, top = 10.dp, bottom = 5.dp)
-                )
-            }
-
-            items(categoryList) { category ->
-                CategoryCardItem(
-                    category = category,
-                    titleLocation = TitleLocation.Outside,
-                    onClick = { /* Действие при клике */ }
-                )
+    LaunchedEffect(Unit) {
+        viewModel.error.collect { errorMessage ->
+            errorMessage?.let {
+                Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
             }
         }
     }
-}
 
-@Composable
-fun CategoryCardItem(
-    category: CategoryCard,
-    modifier: Modifier = Modifier,
-    titleLocation: TitleLocation = TitleLocation.Outside,
-    onClick: () -> Unit,
-) {
-    Column(modifier) {
-        Box(
-            modifier = Modifier
-                .aspectRatio(1.33f)
-                .clip(RoundedCornerShape(16.dp))
-                .clickable { onClick() },
-        ) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(category.imageRes)
-                    .crossfade(300)
-                    .diskCachePolicy(CachePolicy.ENABLED)
-                    .memoryCachePolicy(CachePolicy.ENABLED)
-                    .build(),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .matchParentSize()
-                    .clip(RoundedCornerShape(16.dp))
-            )
+    val listState = rememberLazyListState()
 
-            if (titleLocation == TitleLocation.Inside) {
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(bottom = 16.dp, start = 20.dp)
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+            .distinctUntilChanged()
+            .collect { lastVisibleItemIndex ->
+                if (lastVisibleItemIndex != null &&
+                    lastVisibleItemIndex >= searchResults.lastIndex - 2 &&
+                    !isLoading
                 ) {
-                    Text(
-                        text = category.title,
-                        fontSize = 31.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        text = "2025",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
+                    viewModel.performSearch(reset = false)
                 }
             }
-        }
+    }
 
-        if (titleLocation == TitleLocation.Outside) {
-            Text(
-                text = category.title,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.White,
-                modifier = Modifier.padding(top = 4.dp, start = 8.dp)
-            )
-            Text(
-                text = category.count,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Gray,
-                modifier = Modifier.padding(top = 2.dp, start = 8.dp)
-            )
+    Column(
+        modifier = Modifier
+            .fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        SearchBar(
+            query = query,
+            onQueryChange = { viewModel.onSearchQueryChange(it) },
+            onSearch = {
+                focusManager.clearFocus()
+                if (query.isNotBlank()) viewModel.performSearch(reset = true)
+            },
+            onBack = onBack,
+            focusRequester = focusRequester
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            when {
+
+                isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        LoadingSpinnerForScreen()
+                    }
+                }
+
+                noResults -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Нет результатов по вашему запросу",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                }
+
+                else -> {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(searchResults.size) { index ->
+                            searchResults[index].let { spot ->
+                                SpotCard(
+                                    firstPicture = spot.thumbnailImageUrl,
+                                    additionalPictures =
+                                        additionalPictures[spot.id]?.pictures ?: emptyList(),
+                                    onLoadMore = { id, firstPicture ->
+                                        viewModel.loadMorePicturesForSpot(id, firstPicture)
+                                    },
+                                    picturesCount = spot.picturesCount,
+                                    username = spot.username,
+                                    title = spot.title,
+                                    placeName = spot.namePlace ?: "",
+                                    description = spot.description,
+                                    userId = spot.userId,
+                                    latitude = spot.latitude ?: 0.0,
+                                    longitude = spot.longitude ?: 0.0,
+                                    rating = spot.rating,
+                                    aspectRatio = spot.aspectRatio ?: 1f,
+                                    userProfileImageUrl = spot.userProfileImageUrl,
+                                    id = spot.id,
+                                    isCurrentUserOwner = spot.isCurrentUserOwner,
+                                    onSpotClick = { }, //onPictureClick(spot.id) },
+                                    screenName = "Spots"
+                                )
+                            }
+                        }
+
+                        if (isPaginating) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    LoadingSpinnerForElement()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
 private fun SearchBar(
-    onSearchBarClick: () -> Unit
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onBack: () -> Unit,
+    onSearch: () -> Unit,
+    focusRequester: FocusRequester
 ) {
-    Box(
+
+    Spacer(modifier = Modifier.height(20.dp))
+
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 20.dp)
-            .height(52.dp)
-            .clickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() }
-            ) {
-                onSearchBarClick()
-            }
+            .padding(horizontal = 10.dp)
+            .height(55.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
+
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
-            enabled = false,
+            value = query,
+            onValueChange = onQueryChange,
             placeholder = {
                 Text(
                     text = "Поиск интересных мест",
                     color = Color.Gray,
                     fontSize = 15.sp
                 )
+            },
+            keyboardOptions = KeyboardOptions.Default.copy(
+                imeAction = ImeAction.Search
+            ),
+            keyboardActions = KeyboardActions(
+                onSearch = {
+                    onSearch()
+                }
+            ),
+            leadingIcon = {
+                IconButton(
+                    onClick = { onBack() },
+                    modifier = Modifier
+                        .padding(start = 3.dp)
+                        .size(33.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_arrow_left),
+                        contentDescription = "OnBack",
+                        tint = Color.White
+                    )
+                }
             },
             trailingIcon = {
                 Icon(
@@ -237,19 +256,25 @@ private fun SearchBar(
                     modifier = Modifier
                         .padding(end = 4.dp)
                         .size(20.dp)
+                        .clickable { onSearch() }
                 )
             },
             modifier = Modifier
-                .fillMaxSize(),
+                .fillMaxSize()
+                .focusRequester(focusRequester),
             singleLine = true,
-            textStyle = TextStyle(fontSize = 15.sp),
+            textStyle = TextStyle(fontSize = 17.sp),
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                disabledBorderColor = Color.LightGray,
-                disabledTextColor = Color.LightGray,
-                disabledPlaceholderColor = Color.LightGray,
-                disabledTrailingIconColor = Color.LightGray,
-                cursorColor = Color.Transparent
+                focusedBorderColor = Color.White,
+                unfocusedBorderColor = Color.LightGray,
+                errorBorderColor = ErrorColor,
+                errorLabelColor = ErrorColor,
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedTrailingIconColor = Color.White,
+                unfocusedTrailingIconColor = Color.White,
+                errorTrailingIconColor = Color.White
             )
         )
     }

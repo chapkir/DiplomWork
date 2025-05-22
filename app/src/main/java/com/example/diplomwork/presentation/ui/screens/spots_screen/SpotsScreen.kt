@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForScreen
 import com.example.diplomwork.presentation.ui.components.spot_card.SpotCard
 import com.example.diplomwork.presentation.viewmodel.SpotsViewModel
@@ -116,7 +117,6 @@ fun SpotsScreen(
                     ) {
                         items(spots.itemCount) { index ->
                             spots[index]?.let { spot ->
-
                                 SpotCard(
                                     firstPicture = spot.thumbnailImageUrl,
                                     additionalPictures = additionalPictures[spot.id]?.pictures
@@ -146,11 +146,14 @@ fun SpotsScreen(
                         }
                         if (loadState.append is LoadState.Loading) {
                             item() {
-                                CircularProgressIndicator(
-                                    color = Color.White,
+                                Box(
                                     modifier = Modifier
-                                        .padding(16.dp)
-                                )
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    LoadingSpinnerForElement()
+                                }
                             }
                         }
 

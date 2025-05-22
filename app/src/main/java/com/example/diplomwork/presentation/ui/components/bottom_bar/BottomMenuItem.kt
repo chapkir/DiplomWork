@@ -5,7 +5,7 @@ import com.example.diplomwork.presentation.ui.navigation.AddContent
 import com.example.diplomwork.presentation.ui.navigation.Notification
 import com.example.diplomwork.presentation.ui.navigation.OwnProfile
 import com.example.diplomwork.presentation.ui.navigation.Screen
-import com.example.diplomwork.presentation.ui.navigation.Search
+import com.example.diplomwork.presentation.ui.navigation.Category
 import com.example.diplomwork.presentation.ui.navigation.Spots
 
 sealed class BottomNavItem(
@@ -21,9 +21,9 @@ sealed class BottomNavItem(
     )
 
     object PicturesScreen : BottomNavItem(
-        route = Search,
+        route = Category,
         icon = R.drawable.ic_search,
-        label = "Search"
+        label = "Category"
     )
 
     object AddContentScreen : BottomNavItem(

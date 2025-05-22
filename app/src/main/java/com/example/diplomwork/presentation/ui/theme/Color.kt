@@ -21,6 +21,8 @@ val BgProfile = Color(0xFF282828)  // Фон профиля
 val BgElevated = Color(0xFF1e1e1e)  // Поднятые элементы
 val BgOverlay = Color(0xAA000000)  // Полупрозрачный фон для оверлеев
 
+val BgBottomBar = Color(0xFF232323)  // Фон для боттом бара
+
 // Текстовые цвета
 val TextPrimary = Color(0xFFEAEAEA)  // Основной цвет текста
 val TextSecondary = Color(0xFFB0B0B0)  // Второстепенный текст

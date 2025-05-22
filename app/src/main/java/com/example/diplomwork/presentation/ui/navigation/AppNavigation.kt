@@ -36,9 +36,9 @@ import com.example.diplomwork.presentation.ui.screens.pictures_screen.PicturesSc
 import com.example.diplomwork.presentation.ui.screens.posts_screen.PostsScreen
 import com.example.diplomwork.presentation.ui.screens.profile_screen.ProfileScreen
 import com.example.diplomwork.presentation.ui.screens.registration_screen.RegisterScreen
-import com.example.diplomwork.presentation.ui.screens.search_screen.SearchInputScreen
-import com.example.diplomwork.presentation.ui.screens.search_screen.SearchResultsScreen
 import com.example.diplomwork.presentation.ui.screens.search_screen.SearchScreen
+import com.example.diplomwork.presentation.ui.screens.search_screen.SearchResultsScreen
+import com.example.diplomwork.presentation.ui.screens.search_screen.CategoryScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.ChangePasswordScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.EditProfileScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.FeedbackScreen
@@ -64,10 +64,11 @@ fun AppNavigation(navController: NavHostController) {
         listOf(
             Spots::class.simpleName,
             Settings::class.simpleName,
-            Search::class.simpleName,
+            Category::class.simpleName,
             OwnProfile::class.simpleName,
             OtherProfileScreenData::class.simpleName,
             Notification::class.simpleName,
+            "search"
         )
 
     val showBottomBar = currentRoute.let { route ->
@@ -198,7 +199,7 @@ fun AppNavigation(navController: NavHostController) {
                         navController.navigate(OtherProfileScreenData(userId, username))
                     },
                     onNotificationContent = { pictureId ->
-                        navController.navigate(SpotDetailScreenData(pictureId!!))
+                        navController.navigate(SpotDetailScreenData(pictureId))
                     }
                 )
             }
@@ -389,18 +390,18 @@ fun NavGraphBuilder.searchNavGraph(navController: NavController) {
         startDestination = "search",
         route = "search_root"
     ) {
-        composable<Search> {
-            SearchScreen(
+        composable<Category> {
+            CategoryScreen(
                 onSearchBarClick = {
-                    navController.navigate("search_input"){
+                    navController.navigate("search"){
                         launchSingleTop = true
                     }
                 }
             )
         }
 
-        composable("search_input") {
-            SearchInputScreen(
+        composable("search") {
+            SearchScreen(
                 onBack = { navController.popBackStack() },
             )
         }

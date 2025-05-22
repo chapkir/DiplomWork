@@ -7,7 +7,7 @@ data class NotificationResponse(
     val senderId: Long,
     val senderUsername: String,
     val senderProfileImageUrl: String?,
-    val pinId: Long?,
+    val pinId: Long,
     val postId: Long?,
     val pinImageUrl: String?,
     val postImageUrl: String?,

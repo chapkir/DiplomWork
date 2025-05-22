@@ -51,7 +51,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun NotificationScreen(
     onProfile: (Long, String) -> Unit,
-    onNotificationContent: (Long?) -> Unit,
+    onNotificationContent: (Long) -> Unit,
     viewModel: NotificationViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -117,7 +117,7 @@ fun NotificationScreen(
 fun NotificationItem(
     notification: NotificationResponse,
     onUserClick: (Long, String) -> Unit,
-    onNotificationClick: (Long?) -> Unit
+    onNotificationClick: (Long) -> Unit
 ) {
     val annotatedText = buildAnnotatedString {
         pushStringAnnotation(

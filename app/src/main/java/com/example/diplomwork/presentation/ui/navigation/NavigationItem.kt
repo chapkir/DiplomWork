@@ -39,7 +39,7 @@ object EditProfile : Screen
 object Settings : Screen
 
 @Serializable
-object Search : Screen
+object Category : Screen
 
 @Serializable
 object Map : Screen

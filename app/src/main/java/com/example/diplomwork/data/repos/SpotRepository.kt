@@ -44,6 +44,10 @@ class SpotRepository @Inject constructor(
         return api.getSpotDetail(id)
     }
 
+    suspend fun getSpotsByCategory(categoryName: String): List<SpotResponse> {
+        return api.getSpotsByCategory(categoryName)
+    }
+
     suspend fun likePicture(pictureId: Long): Response<Unit> {
         return api.likeSpot(pictureId)
     }

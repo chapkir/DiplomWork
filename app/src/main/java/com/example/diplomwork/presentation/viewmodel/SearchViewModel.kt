@@ -41,6 +41,9 @@ class SearchViewModel @Inject constructor(
     private val _error = MutableSharedFlow<String?>()
     val error: SharedFlow<String?> = _error
 
+    private val _isPaginating = MutableStateFlow(false)
+    val isPaginating: StateFlow<Boolean> = _isPaginating
+
     private var currentPage = 0
     private var isLastPage = false
 
@@ -49,16 +52,17 @@ class SearchViewModel @Inject constructor(
     }
 
     fun performSearch(reset: Boolean = false) {
-        if (_isLoading.value || (!reset && isLastPage)) return
+        if (_isLoading.value || _isPaginating.value || (!reset && isLastPage)) return
 
         viewModelScope.launch {
-            _isLoading.value = true
-
             if (reset) {
+                _isLoading.value = true
                 currentPage = 0
                 isLastPage = false
                 _searchResults.value = emptyList()
                 _noResults.value = false
+            } else {
+                _isPaginating.value = true
             }
 
             try {
@@ -69,7 +73,6 @@ class SearchViewModel @Inject constructor(
                 )
 
                 val newContent = page.content
-
                 _noResults.value = reset && newContent.isEmpty()
 
                 _searchResults.value = if (reset) {
@@ -80,11 +83,11 @@ class SearchViewModel @Inject constructor(
 
                 isLastPage = page.last
                 currentPage++
-
             } catch (e: Exception) {
                 _error.emit("Ошибка сети: ${e.localizedMessage}")
             } finally {
                 _isLoading.value = false
+                _isPaginating.value = false
             }
         }
     }
