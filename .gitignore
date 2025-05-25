@@ -70,3 +70,7 @@ Thumbs.db
 
 # Ignore admin desktop directory
 /admin-desktop/
+
+/server_description.txt
+/server_description_gost_part1.txt
+/server_description_gost_part2.txt

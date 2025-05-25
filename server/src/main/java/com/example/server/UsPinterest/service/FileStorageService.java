@@ -256,17 +256,13 @@ public class FileStorageService {
         BufferedImage img = imageProcessor.readImage(fileBytes);
         logger.info("storeResizedImage: оригинал {}x{}, target {}x{}", img.getWidth(), img.getHeight(), maxWidth, maxHeight);
 
-        // Рассчитываем новые размеры с сохранением соотношения сторон 3:4
-        int[] dims = imageProcessor.calculateAspectRatio3x4Dimensions(
-                img.getWidth(), img.getHeight(),
-                maxWidth, maxHeight
-        );
-        
-        // Масштабируем и обрезаем для полного заполнения c соотношением 3:4
+        // Рассчитываем коэффициент масштабирования для вписывания в рамки
+        double widthScale = maxWidth / (double) img.getWidth();
+        double heightScale = maxHeight / (double) img.getHeight();
+        double scale = Math.min(widthScale, heightScale);
+        // Масштабируем изображение с сохранением пропорций
         BufferedImage outImg = Thumbnails.of(img)
-                .size(dims[0], dims[1])
-                .crop(net.coobird.thumbnailator.geometry.Positions.CENTER)
-                .keepAspectRatio(false)
+                .scale(scale)
                 .outputFormat("webp")
                 .asBufferedImage();
         logger.info("storeResizedImage: результат {}x{}, соотношение {}", 

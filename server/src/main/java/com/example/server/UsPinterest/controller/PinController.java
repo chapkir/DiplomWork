@@ -44,6 +44,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 
 import jakarta.validation.Valid;
 import java.io.IOException;
@@ -356,6 +358,10 @@ public class PinController {
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('USER')")
+    @Caching(evict = {
+        @CacheEvict(value = {"pins", "search"}, allEntries = true),
+        @CacheEvict(cacheNames = "extended_pins", cacheManager = "extendedPinCacheManager", allEntries = true)
+    })
     public ResponseEntity<?> uploadImages(
             @Valid @ModelAttribute UploadRequest uploadRequest,
             Authentication authentication) {
