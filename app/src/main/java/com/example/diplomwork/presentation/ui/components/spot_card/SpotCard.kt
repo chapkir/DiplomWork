@@ -228,7 +228,7 @@ fun ImagesPager(
                                 .memoryCachePolicy(CachePolicy.ENABLED)
                                 .build(),
                             contentDescription = null,
-                            contentScale = ContentScale.Fit,
+                            contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .matchParentSize()
                                 .clip(RoundedCornerShape(12.dp))

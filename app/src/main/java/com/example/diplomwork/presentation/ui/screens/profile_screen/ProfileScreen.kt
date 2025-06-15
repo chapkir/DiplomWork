@@ -56,7 +56,7 @@ import com.google.accompanist.pager.rememberPagerState
 fun ProfileScreen(
     onSettingsClick: () -> Unit,
     onBack: () -> Unit,
-    onImageClick: (Long) -> Unit,
+    onSpotClick: (Long) -> Unit,
     profileViewModel: ProfileViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -192,7 +192,7 @@ fun ProfileScreen(
                         userId = profileData?.id ?: 0L,
                         username = profileData?.username ?: "Неизвестный",
                         firstName = profileData?.firstName ?: "Неизвестный",
-                        picturesCount = profileData?.pinsCount ?: 0,
+                        spotsCount = profileData?.pinsCount ?: 0,
                         followingCount = profileData?.followingCount ?: 0,
                         followersCount = followersCount,
                         avatarUrl = profileData?.profileImageUrl,
@@ -218,7 +218,7 @@ fun ProfileScreen(
                                 onLoadMore = { id, firstPicture ->
                                     profileViewModel.loadMorePicturesForSpot(id, firstPicture)
                                 },
-                                onPictureClick = onImageClick,
+                                onPictureClick = onSpotClick,
                                 isLoading = isLoadingPictures,
                                 emptyMessage = "Нет добавленных мест",
                                 isError = error.errorLoadSpots
@@ -230,7 +230,7 @@ fun ProfileScreen(
                                 onLoadMore = { id, firstPicture ->
                                     profileViewModel.loadMorePicturesForSpot(id, firstPicture)
                                 },
-                                onPictureClick = onImageClick,
+                                onPictureClick = onSpotClick,
                                 isLoading = isLoadingLiked,
                                 emptyMessage = "Нет лайкнутых мест",
                                 isError = error.errorLoadLikes

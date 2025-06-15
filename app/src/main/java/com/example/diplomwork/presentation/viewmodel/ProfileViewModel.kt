@@ -131,7 +131,6 @@ class ProfileViewModel @Inject constructor(
 
     fun loadMorePicturesForSpot(spotId: Long, firstImage: String) {
         viewModelScope.launch {
-            _isLoading.value = true
             try {
                 val additional = loadSpotPicturesUseCase(spotId, firstImage)
 
