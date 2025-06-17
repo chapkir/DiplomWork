@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
@@ -29,10 +28,11 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.io.ByteArrayInputStream;
 import lombok.RequiredArgsConstructor;
-import com.example.server.UsPinterest.service.ImageProcessor;
 import org.springframework.scheduling.annotation.Async;
 import java.util.concurrent.CompletableFuture;
-import net.coobird.thumbnailator.geometry.Positions;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+import java.util.Iterator;
 
 @Service
 @RequiredArgsConstructor
@@ -45,14 +45,14 @@ public class FileStorageService {
     @Value("${file.upload-dir}")
     private String uploadDir;
 
-    @Value("${file.profile-images-dir:profile-images}")
-    private String profileImagesDir;
-
     @Value("${file.fullhd-images-dir}")
     private String fullhdImagesDir;
 
     @Value("${file.thumbnail-images-dir}")
     private String thumbnailImagesDir;
+
+    @Value("${file.profile-images-dir:profile-images}")
+    private String profileImagesDir;
 
     @Value("${file.fullhd.max-width}")
     private int fullhdMaxWidth;
@@ -70,38 +70,44 @@ public class FileStorageService {
     private String appUrl;
 
     private Path fileStorageLocation;
-    private Path profileImagesLocation;
     private Path fullhdImagesLocation;
     private Path thumbnailImagesLocation;
+    private Path profileImagesLocation;
 
     @PostConstruct
     public void init() {
         try {
             this.fileStorageLocation = Paths.get(uploadDir).toAbsolutePath().normalize();
-            this.profileImagesLocation = Paths.get(uploadDir, profileImagesDir).toAbsolutePath().normalize();
             this.fullhdImagesLocation = Paths.get(uploadDir, fullhdImagesDir).toAbsolutePath().normalize();
             this.thumbnailImagesLocation = Paths.get(uploadDir, thumbnailImagesDir).toAbsolutePath().normalize();
+            this.profileImagesLocation = Paths.get(uploadDir, profileImagesDir).toAbsolutePath().normalize();
 
-            logger.info("Initializing file storage. Main directory: {}", fileStorageLocation);
-            logger.info("Profile images directory: {}", profileImagesLocation);
-            logger.info("FullHD images directory: {}", fullhdImagesLocation);
-            logger.info("Thumbnail images directory: {}", thumbnailImagesLocation);
+            logger.info("Инициализация хранилища файлов. Основная директория: {}", fileStorageLocation);
+            logger.info("Директория FullHD изображений: {}", fullhdImagesLocation);
+            logger.info("Директория миниатюр: {}", thumbnailImagesLocation);
+            logger.info("Директория изображений профиля: {}", profileImagesLocation);
 
             Files.createDirectories(fileStorageLocation);
-            Files.createDirectories(profileImagesLocation);
             Files.createDirectories(fullhdImagesLocation);
             Files.createDirectories(thumbnailImagesLocation);
+            Files.createDirectories(profileImagesLocation);
 
-            logger.info("File storage initialized successfully");
+            logger.info("Хранилище файлов успешно инициализировано");
         } catch (IOException ex) {
-            logger.error("Could not create directories for file storage: {}", ex.getMessage());
-            throw new RuntimeException("Could not create directories for file storage", ex);
+            logger.error("Не удалось создать директории для хранения файлов: {}", ex.getMessage());
+            throw new RuntimeException("Не удалось создать директории для хранения файлов", ex);
         }
     }
 
+    /**
+     * Сохраняет файл в основное хранилище без обработки
+     * @param file файл для сохранения
+     * @param customFilename пользовательское имя файла (опционально)
+     * @return URL для доступа к файлу
+     */
     public String storeFile(MultipartFile file, String customFilename) throws IOException {
         if (file == null || file.isEmpty()) {
-            throw new IOException("Failed to store empty file");
+            throw new IOException("Не удалось сохранить пустой файл");
         }
 
         String originalFilename = StringUtils.cleanPath(file.getOriginalFilename() != null ?
@@ -122,41 +128,70 @@ public class FileStorageService {
             Files.copy(inputStream, targetLocation, StandardCopyOption.REPLACE_EXISTING);
         }
 
+        // Для изображений также автоматически создаем FullHD и миниатюру
+        String contentType = file.getContentType();
+        if (contentType != null && contentType.startsWith("image/")) {
+            try {
+                // Создаем версии асинхронно, чтобы не задерживать ответ пользователю
+                storeFullhdFileAsync(file, filename.substring(0, filename.lastIndexOf('.')));
+                storeThumbnailFileAsync(file, filename.substring(0, filename.lastIndexOf('.')));
+            } catch (Exception e) {
+                logger.warn("Не удалось создать дополнительные версии изображения: {}", e.getMessage());
+            }
+        }
+
         return appUrl + "/uploads/" + filename;
     }
 
+    /**
+     * Сохраняет файл с автоматически сгенерированным именем
+     */
     public String storeFile(MultipartFile file) throws IOException {
         return storeFile(file, null);
     }
 
+    /**
+     * Сохраняет изображение профиля пользователя
+     * @param file файл изображения
+     * @param userId ID пользователя
+     * @return URL к изображению профиля
+     */
     public String storeProfileImage(MultipartFile file, Long userId) throws IOException {
         if (file == null || file.isEmpty()) {
-            throw new IOException("Failed to store empty profile image");
+            throw new IOException("Не удалось сохранить пустое изображение профиля");
         }
-        // Читаем исходное изображение с применением ориентации
+
+        // Читаем изображение напрямую с правильными пропорциями
         byte[] fileBytes = file.getBytes();
-        BufferedImage originalImg;
-        try (InputStream imgIn = new ByteArrayInputStream(fileBytes)) {
-            originalImg = ImageIO.read(imgIn);
+        BufferedImage img = readImageWithCorrectDimensions(fileBytes, file.getContentType());
+
+        if (img == null) {
+            throw new IOException("Не удалось прочитать изображение профиля");
         }
-        // Применяем EXIF ориентацию
-        originalImg = applyExifOrientation(fileBytes, originalImg);
-        if (originalImg == null) {
-            throw new IOException("Не удалось прочитать изображение для аватара");
-        }
+
+        logger.info("storeProfileImage: оригинал {}x{}", img.getWidth(), img.getHeight());
+
         // Формируем имя файла с расширением .webp
         String filename = "user_" + userId + ".webp";
         Path targetLocation = profileImagesLocation.resolve(filename);
-        // Рассчитываем новые размеры с соотношением сторон 3:4
-        int[] dims = imageProcessor.calculateAspectRatio3x4Dimensions(
-                originalImg.getWidth(), originalImg.getHeight(),
-                thumbnailMaxWidth, thumbnailMaxHeight
-        );
-        // Сжимаем и конвертируем в WebP с соотношением 3:4
-        BufferedImage webpImg = imageProcessor.resizeAndConvertToWebP(originalImg, dims[0], dims[1]);
-        ImageIO.write(webpImg, "webp", targetLocation.toFile());
-        // Возвращаем URL к статическому ресурсу
-        return appUrl + "/uploads/profile-images/" + filename;
+
+        // Масштабируем с сохранением пропорций под максимальные размеры миниатюры
+        BufferedImage outImg = Thumbnails.of(img)
+                .size(thumbnailMaxWidth, thumbnailMaxHeight)
+                .keepAspectRatio(true)
+                .outputFormat("webp")
+                .asBufferedImage();
+
+        logger.info("storeProfileImage: результат {}x{}, соотношение {}",
+                outImg.getWidth(), outImg.getHeight(),
+                String.format("%.2f", outImg.getWidth() / (double) outImg.getHeight()));
+
+        // Записываем файл
+        try (OutputStream os = Files.newOutputStream(targetLocation)) {
+            ImageIO.write(outImg, "webp", os);
+        }
+
+        return appUrl + "/uploads/" + profileImagesDir + "/" + filename;
     }
 
     public String getFilenameFromUrl(String imageUrl) {
@@ -182,8 +217,8 @@ public class FileStorageService {
         String path;
         if (imageUrl.contains("/uploads/fullhd/")) {
             path = imageUrl.replace("/uploads/fullhd/", "/api/files/fullhd/");
-        } else if (imageUrl.contains("/uploads/profile-images/")) {
-            path = imageUrl.replace("/uploads/profile-images/", "/api/files/profile-images/");
+        } else if (imageUrl.contains("/uploads/" + profileImagesDir + "/")) {
+            path = imageUrl.replace("/uploads/" + profileImagesDir + "/", "/api/files/profile-images/");
         } else if (imageUrl.contains("/uploads/")) {
             path = imageUrl.replace("/uploads/", "/api/files/");
         } else {
@@ -206,10 +241,6 @@ public class FileStorageService {
         return fileStorageLocation;
     }
 
-    public Path getProfileImagesPath() {
-        return profileImagesLocation;
-    }
-
     public Path getFullhdImagesLocation() {
         return fullhdImagesLocation;
     }
@@ -218,12 +249,20 @@ public class FileStorageService {
         return thumbnailImagesLocation;
     }
 
+    public Path getProfileImagesLocation() {
+        return profileImagesLocation;
+    }
+
     public String getFullhdImagesDir() {
         return fullhdImagesDir;
     }
 
     public String getThumbnailImagesDir() {
         return thumbnailImagesDir;
+    }
+
+    public String getProfileImagesDir() {
+        return profileImagesDir;
     }
 
     public int getFullhdMaxWidth() {
@@ -242,9 +281,58 @@ public class FileStorageService {
         return thumbnailMaxHeight;
     }
 
+    /**
+     * Более надежное чтение изображения с сохранением правильных пропорций
+     */
+    private BufferedImage readImageWithCorrectDimensions(byte[] fileBytes, String contentType) throws IOException {
+        if (fileBytes == null || fileBytes.length == 0) {
+            return null;
+        }
+
+        BufferedImage image = null;
+
+        // Пытаемся прочитать изображение напрямую
+        try (ByteArrayInputStream bis = new ByteArrayInputStream(fileBytes)) {
+            image = ImageIO.read(bis);
+        } catch (Exception e) {
+            logger.warn("Не удалось прочитать изображение стандартным способом: {}", e.getMessage());
+        }
+
+        // Если не удалось прочитать или изображение кажется квадратным, попробуем более точный метод
+        if (image == null || (Math.abs(image.getWidth() - image.getHeight()) < 10 && contentType != null)) {
+            try (ByteArrayInputStream bis = new ByteArrayInputStream(fileBytes);
+                 ImageInputStream iis = ImageIO.createImageInputStream(bis)) {
+
+                Iterator<ImageReader> readers = ImageIO.getImageReaders(iis);
+
+                if (readers.hasNext()) {
+                    ImageReader reader = readers.next();
+                    try {
+                        reader.setInput(iis);
+                        image = reader.read(0);
+                        logger.info("Изображение прочитано специальным способом: {}x{}",
+                                image.getWidth(), image.getHeight());
+                    } finally {
+                        reader.dispose();
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn("Не удалось прочитать изображение специальным способом: {}", e.getMessage());
+            }
+        }
+
+        // Если до сих пор не удалось получить изображение, вернем null
+        if (image == null) {
+            return null;
+        }
+
+        // Применяем EXIF ориентацию
+        return applyExifOrientation(fileBytes, image);
+    }
+
     public ImageInfo storeResizedImage(MultipartFile file, String customFilename, Path targetDir, String uriPath, int maxWidth, int maxHeight) throws IOException {
         if (file == null || file.isEmpty()) {
-            throw new IOException("Failed to store empty file");
+            throw new IOException("Не удалось сохранить пустой файл");
         }
         byte[] fileBytes = file.getBytes();
         String originalFilename = StringUtils.cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown");
@@ -252,22 +340,26 @@ public class FileStorageService {
         String filename = baseName + ".webp";
         Path targetLocation = targetDir.resolve(filename);
 
-        // Читаем изображение и применяем ориентацию EXIF
-        BufferedImage img = imageProcessor.readImage(fileBytes);
-        logger.info("storeResizedImage: оригинал {}x{}, target {}x{}", img.getWidth(), img.getHeight(), maxWidth, maxHeight);
+        // Читаем изображение напрямую с правильными пропорциями
+        BufferedImage img = readImageWithCorrectDimensions(fileBytes, file.getContentType());
 
-        // Рассчитываем коэффициент масштабирования для вписывания в рамки
-        double widthScale = maxWidth / (double) img.getWidth();
-        double heightScale = maxHeight / (double) img.getHeight();
-        double scale = Math.min(widthScale, heightScale);
-        // Масштабируем изображение с сохранением пропорций
+        if (img == null) {
+            throw new IOException("Не удалось прочитать изображение для обработки");
+        }
+
+        logger.info("storeResizedImage: оригинал {}x{}, целевой размер {}x{}",
+                img.getWidth(), img.getHeight(), maxWidth, maxHeight);
+
+        // Масштабируем изображение, вписываясь в рамки, сохраняя пропорции
         BufferedImage outImg = Thumbnails.of(img)
-                .scale(scale)
+                .size(maxWidth, maxHeight)
+                .keepAspectRatio(true)
                 .outputFormat("webp")
                 .asBufferedImage();
-        logger.info("storeResizedImage: результат {}x{}, соотношение {}", 
-                   outImg.getWidth(), outImg.getHeight(), 
-                   String.format("%.2f", outImg.getWidth() / (double) outImg.getHeight()));
+
+        logger.info("storeResizedImage: результат {}x{}, соотношение {}",
+                outImg.getWidth(), outImg.getHeight(),
+                String.format("%.2f", outImg.getWidth() / (double) outImg.getHeight()));
 
         try (OutputStream os = Files.newOutputStream(targetLocation)) {
             ImageIO.write(outImg, "webp", os);
@@ -331,27 +423,75 @@ public class FileStorageService {
     }
 
     private BufferedImage applyExifOrientation(byte[] imageBytes, BufferedImage image) {
+        if (image == null) return null;
+
         try (InputStream metaIn = new ByteArrayInputStream(imageBytes)) {
             Metadata metadata = ImageMetadataReader.readMetadata(metaIn);
             ExifIFD0Directory directory = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
+
             if (directory != null && directory.containsTag(ExifIFD0Directory.TAG_ORIENTATION)) {
                 int orientation = directory.getInt(ExifIFD0Directory.TAG_ORIENTATION);
+                logger.debug("EXIF ориентация: {}", orientation);
+
+                int width = image.getWidth();
+                int height = image.getHeight();
+                boolean dimensionsSwapped = false;
+
+                // Создаем трансформацию в зависимости от ориентации
                 AffineTransform transform = new AffineTransform();
+
                 switch (orientation) {
-                    case 3:
-                        transform.rotate(Math.toRadians(180), image.getWidth() / 2.0, image.getHeight() / 2.0);
+                    case 1: // Нормальная ориентация
+                        return image;
+                    case 2: // Отражение по горизонтали
+                        transform.scale(-1.0, 1.0);
+                        transform.translate(-width, 0);
                         break;
-                    case 6:
-                        transform.rotate(Math.toRadians(90), image.getWidth() / 2.0, image.getHeight() / 2.0);
+                    case 3: // Поворот на 180 градусов
+                        transform.translate(width, height);
+                        transform.rotate(Math.PI);
                         break;
-                    case 8:
-                        transform.rotate(Math.toRadians(270), image.getWidth() / 2.0, image.getHeight() / 2.0);
+                    case 4: // Отражение по вертикали
+                        transform.scale(1.0, -1.0);
+                        transform.translate(0, -height);
+                        break;
+                    case 5: // Отражение по горизонтали и поворот на 270 градусов
+                        transform.rotate(-Math.PI / 2);
+                        transform.scale(-1.0, 1.0);
+                        dimensionsSwapped = true;
+                        break;
+                    case 6: // Поворот на 90 градусов
+                        transform.translate(height, 0);
+                        transform.rotate(Math.PI / 2);
+                        dimensionsSwapped = true;
+                        break;
+                    case 7: // Отражение по горизонтали и поворот на 90 градусов
+                        transform.scale(-1.0, 1.0);
+                        transform.translate(-height, 0);
+                        transform.translate(0, width);
+                        transform.rotate(Math.PI / 2);
+                        dimensionsSwapped = true;
+                        break;
+                    case 8: // Поворот на 270 градусов
+                        transform.translate(0, width);
+                        transform.rotate(-Math.PI / 2);
+                        dimensionsSwapped = true;
                         break;
                     default:
                         return image;
                 }
+
+                // Создаем новое изображение правильных размеров после поворота
+                BufferedImage result;
+                if (dimensionsSwapped) {
+                    result = new BufferedImage(height, width, image.getType());
+                } else {
+                    result = new BufferedImage(width, height, image.getType());
+                }
+
+                // Применяем трансформацию
                 AffineTransformOp op = new AffineTransformOp(transform, AffineTransformOp.TYPE_BILINEAR);
-                return op.filter(image, null);
+                return op.filter(image, result);
             }
         } catch (Exception e) {
             logger.warn("Не удалось применить EXIF ориентацию: {}", e.getMessage());
@@ -369,9 +509,9 @@ public class FileStorageService {
         try {
             Path filePath = fileStorageLocation.resolve(filename).normalize();
             Files.deleteIfExists(filePath);
-            logger.info("Deleted file from storage: {}", filePath);
+            logger.info("Файл удален из хранилища: {}", filePath);
         } catch (Exception e) {
-            logger.warn("Failed to delete file {}: {}", fileUrl, e.getMessage());
+            logger.warn("Не удалось удалить файл {}: {}", fileUrl, e.getMessage());
         }
     }
 }
