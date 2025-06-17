@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -42,7 +41,7 @@ import com.example.diplomwork.presentation.viewmodel.SpotsViewModel
 @Composable
 fun SpotsScreen(
     spotsViewModel: SpotsViewModel = hiltViewModel(),
-    onImageClick: (Long) -> Unit,
+    onSpotClick: (Long) -> Unit,
     onProfileClick: (Long, String) -> Unit
 ) {
     val spots = spotsViewModel.spotsPagingFlow.collectAsLazyPagingItems()
@@ -137,7 +136,7 @@ fun SpotsScreen(
                                     userProfileImageUrl = spot.userProfileImageUrl,
                                     id = spot.id,
                                     isCurrentUserOwner = spot.isCurrentUserOwner,
-                                    onSpotClick = { onImageClick(spot.id) },
+                                    onSpotClick = { onSpotClick(spot.id) },
                                     onProfileClick = onProfileClick,
                                     onSpotDelete = { id -> spotsViewModel.deletePicture(id) },
                                     screenName = "Spots"

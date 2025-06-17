@@ -300,6 +300,7 @@ private fun ImagesPager(
                             .memoryCachePolicy(CachePolicy.ENABLED)
                             .build(),
                         contentDescription = null,
+                        contentScale = ContentScale.Crop,
                         onState = { state ->
                             isLoading = state is AsyncImagePainter.State.Loading
 
@@ -471,7 +472,7 @@ fun PlaceInfo(
         )
         Spacer(modifier = Modifier.height(10.dp))
 
-        RatingBar(rating = rating, starSize = 20, screenName = "Detail")
+        RatingBar(rating = rating, starSize = 20)
 
         Spacer(modifier = Modifier.height(10.dp))
 

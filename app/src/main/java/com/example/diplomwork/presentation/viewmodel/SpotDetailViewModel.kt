@@ -128,7 +128,7 @@ class SpotDetailScreenViewModel @Inject constructor(
                 val updatedComments = spotRepository.getSpotComments(_pictureId)
                 _uiState.value = _uiState.value.copy(
                     comments = updatedComments.content,
-                    commentsCount = updatedComments.totalElements
+                    commentsCount = updatedComments.totalPages
                 )
             } else {
                 Log.e(

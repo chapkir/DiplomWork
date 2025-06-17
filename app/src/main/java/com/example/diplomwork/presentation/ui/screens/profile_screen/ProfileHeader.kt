@@ -8,19 +8,15 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -28,10 +24,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.diplomwork.R
 import com.example.diplomwork.presentation.ui.components.LoadingSpinnerForElement
 import com.example.diplomwork.presentation.ui.screens.profile_screen.profile_components.Avatar
 import com.example.diplomwork.presentation.ui.screens.profile_screen.profile_components.StatCard
+import com.example.diplomwork.presentation.ui.screens.profile_screen.profile_components.StatRow
 import com.example.diplomwork.presentation.viewmodel.FollowState
 
 @Composable
@@ -39,7 +35,7 @@ fun ProfileHeader(
     userId: Long,
     username: String,
     firstName: String,
-    picturesCount: Int,
+    spotsCount: Int,
     followingCount: Int,
     followersCount: Int,
     avatarUrl: String?,
@@ -131,9 +127,17 @@ fun ProfileHeader(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            StatCard("$followersCount", "Подписчики", Modifier.weight(1f))
-            StatCard("$followingCount", "Подписки", Modifier.weight(1f))
-            StatCard("$picturesCount", "Места", Modifier.weight(1f))
+            if (isOwnProfile) {
+                StatCard("$followersCount", "Подписчики", Modifier.weight(1f))
+                StatCard("$followingCount", "Подписки", Modifier.weight(1f))
+                StatCard("$spotsCount", "Места", Modifier.weight(1f))
+            }
+            else{
+                StatRow(
+                    followersCount = "$followersCount",
+                    followingCount = "$followingCount",
+                    spotsCount = "$spotsCount")
+            }
         }
         Spacer(modifier = Modifier.height(9.dp))
 
@@ -142,15 +146,15 @@ fun ProfileHeader(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 10.dp, end = 10.dp, bottom = 11.dp),
-                horizontalArrangement = Arrangement.Center,
+                    .padding(start = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
             when (followState) {
                 is FollowState.Loading -> {
                     Button(
-                        modifier = Modifier.fillMaxWidth(0.5f),
+                        modifier = Modifier.height(30.dp),
                         onClick = { },
+                        shape = RoundedCornerShape(12.dp),
                         colors = ButtonColors(
                             containerColor = Color.Gray,
                             contentColor = Color.White,
@@ -165,8 +169,9 @@ fun ProfileHeader(
                     val isSubscribed = followState.isSubscribed
 
                     Button(
-                        modifier = Modifier.fillMaxWidth(0.5f),
+                        modifier = Modifier.height(30.dp),
                         onClick = { if(isSubscribed) onUnsubscribe(userId) else onSubscribe(userId) },
+                        shape = RoundedCornerShape(12.dp),
                         colors = ButtonColors(
                             containerColor =
                                 if (isSubscribed) Color.Gray else Color.Red.copy(alpha = 0.9f),
@@ -178,7 +183,7 @@ fun ProfileHeader(
                         Text(
                             text = if (isSubscribed) "Отписаться" else "Подписаться",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
+                            fontSize = 11.sp,
                             textAlign = TextAlign.Center,
                         )
                     }
@@ -193,8 +198,9 @@ fun ProfileHeader(
 
                 FollowState.Idle -> {
                     Button(
-                        modifier = Modifier.fillMaxWidth(0.5f),
+                        modifier = Modifier.height(30.dp),
                         onClick = { onSubscribe(userId) },
+                        shape = RoundedCornerShape(12.dp),
                         colors = ButtonColors(
                             containerColor = Color.Red.copy(alpha = 0.9f),
                             contentColor = Color.White,
@@ -205,7 +211,7 @@ fun ProfileHeader(
                         Text(
                             text = "Подписаться",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
+                            fontSize = 11.sp,
                             textAlign = TextAlign.Center,
                         )
                     }

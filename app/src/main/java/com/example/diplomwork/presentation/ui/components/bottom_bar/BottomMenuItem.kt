@@ -14,13 +14,13 @@ sealed class BottomNavItem(
     val label: String,
     val isAddButton: Boolean = false,
 ) {
-    object PostsScreen : BottomNavItem(
+    object SpotsScreen : BottomNavItem(
         route = Spots,
         icon = R.drawable.ic_home,
         label = "Spots",
     )
 
-    object PicturesScreen : BottomNavItem(
+    object CategoriesScreen : BottomNavItem(
         route = Category,
         icon = R.drawable.ic_search,
         label = "Category"

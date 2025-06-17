@@ -1,6 +1,5 @@
 package com.example.diplomwork.data.api
 
-import com.example.diplomwork.data.model.ApiResponse
 import com.example.diplomwork.data.model.ApiResponseWrapper
 import com.example.diplomwork.data.model.ChangePasswordRequest
 import com.example.diplomwork.data.model.CommentRequest

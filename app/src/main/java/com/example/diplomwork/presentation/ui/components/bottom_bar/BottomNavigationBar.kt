@@ -31,8 +31,8 @@ fun BottomNavigationBar(
 ) {
 
     val items = listOf(
-        BottomNavItem.PostsScreen,
-        BottomNavItem.PicturesScreen,
+        BottomNavItem.SpotsScreen,
+        BottomNavItem.CategoriesScreen,
         BottomNavItem.AddContentScreen,
         BottomNavItem.NotificationScreen,
         BottomNavItem.ProfileScreen

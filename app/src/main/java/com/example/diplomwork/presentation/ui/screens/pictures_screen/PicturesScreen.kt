@@ -2,16 +2,12 @@ package com.example.diplomwork.presentation.ui.screens.pictures_screen
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -24,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.LoadState
@@ -39,7 +34,7 @@ import com.example.diplomwork.presentation.viewmodel.SpotsViewModel
 @Composable
 fun PicturesScreen(
     spotsViewModel: SpotsViewModel = hiltViewModel(),
-    onImageClick: (Long) -> Unit,
+    onSpotClick: (Long) -> Unit,
     onProfileClick: (Long, String) -> Unit
 ) {
     val pagingPictures = spotsViewModel.spotsPagingFlow.collectAsLazyPagingItems()
@@ -55,7 +50,7 @@ fun PicturesScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         PagingContentGrid(
             modifier = Modifier.fillMaxSize(),
-            onImageClick = { picture -> onImageClick(picture.id) },
+            onImageClick = { picture -> onSpotClick(picture.id) },
             onProfileClick = onProfileClick,
             onPictureDelete = { id -> spotsViewModel.deletePicture(id) },
             pictures = pagingPictures

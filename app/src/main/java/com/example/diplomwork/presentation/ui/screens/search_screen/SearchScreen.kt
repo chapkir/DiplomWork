@@ -1,5 +1,3 @@
-@file:JvmName("SearchScreenKt")
-
 package com.example.diplomwork.presentation.ui.screens.search_screen
 
 import android.widget.Toast
@@ -30,7 +28,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,6 +56,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 @Composable
 fun SearchScreen(
     onBack: () -> Unit,
+    onSpotClick: (Long) -> Unit,
     viewModel: SearchViewModel = hiltViewModel()
 ) {
     val query by viewModel.searchQuery.collectAsState()
@@ -68,10 +69,15 @@ fun SearchScreen(
     val context = LocalContext.current
 
     val focusRequester = remember { FocusRequester() }
+    val focusRequested = rememberSaveable { mutableStateOf(false) }
+
     val focusManager = LocalFocusManager.current
 
     LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
+        if (!focusRequested.value) {
+            focusRequester.requestFocus()
+            focusRequested.value = true
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -173,7 +179,7 @@ fun SearchScreen(
                                     userProfileImageUrl = spot.userProfileImageUrl,
                                     id = spot.id,
                                     isCurrentUserOwner = spot.isCurrentUserOwner,
-                                    onSpotClick = { }, //onPictureClick(spot.id) },
+                                    onSpotClick = { onSpotClick(spot.id) },
                                     screenName = "Spots"
                                 )
                             }

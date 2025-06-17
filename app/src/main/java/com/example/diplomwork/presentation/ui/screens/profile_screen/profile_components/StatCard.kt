@@ -4,8 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -63,4 +65,65 @@ fun StatCard(
             )
         }
     }
+}
+
+@Composable
+fun StatRow(
+    followersCount: String,
+    followingCount: String,
+    spotsCount: String
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 10.dp)
+    ) {
+        Row(
+
+        ){
+            Text(
+                text = "$followersCount подписчиков",
+                fontWeight = FontWeight.Bold,
+                fontSize = 13.sp,
+                color = Color.Gray
+            )
+        }
+
+        Text(
+            text = " · ",
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            color = Color.Gray
+        )
+
+        Row(
+
+        ){
+            Text(
+                text = "$followingCount подписок",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Gray
+            )
+        }
+
+        Text(
+            text = " · ",
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            color = Color.Gray
+        )
+
+        Row(
+
+        ){
+            Text(
+                text = "$spotsCount мест",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color.Gray
+            )
+        }
+    }
+
 }

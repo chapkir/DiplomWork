@@ -36,9 +36,9 @@ import com.example.diplomwork.presentation.ui.screens.pictures_screen.PicturesSc
 import com.example.diplomwork.presentation.ui.screens.posts_screen.PostsScreen
 import com.example.diplomwork.presentation.ui.screens.profile_screen.ProfileScreen
 import com.example.diplomwork.presentation.ui.screens.registration_screen.RegisterScreen
-import com.example.diplomwork.presentation.ui.screens.search_screen.SearchScreen
-import com.example.diplomwork.presentation.ui.screens.search_screen.SearchResultsScreen
 import com.example.diplomwork.presentation.ui.screens.search_screen.CategoryScreen
+import com.example.diplomwork.presentation.ui.screens.search_screen.SearchResultsScreen
+import com.example.diplomwork.presentation.ui.screens.search_screen.SearchScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.ChangePasswordScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.EditProfileScreen
 import com.example.diplomwork.presentation.ui.screens.settings_screens.FeedbackScreen
@@ -108,7 +108,7 @@ fun AppNavigation(navController: NavHostController) {
         ) {
             composable<Pictures> {
                 PicturesScreen(
-                    onImageClick = { pictureId ->
+                    onSpotClick = { pictureId ->
                         navController.navigate(SpotDetailScreenData(pictureId))
                     },
                     onProfileClick = { userId, username ->
@@ -136,7 +136,7 @@ fun AppNavigation(navController: NavHostController) {
                         }
                     },
                     onBack = { navController.popBackStack() },
-                    onImageClick = { pictureId ->
+                    onSpotClick = { pictureId ->
                         navController.navigate(SpotDetailScreenData(pictureId))
                     }
                 )
@@ -150,7 +150,7 @@ fun AppNavigation(navController: NavHostController) {
                         }
                     },
                     onBack = { navController.popBackStack() },
-                    onImageClick = { pictureId ->
+                    onSpotClick = { pictureId ->
                         navController.navigate(SpotDetailScreenData(pictureId))
                     }
                 )
@@ -169,8 +169,8 @@ fun AppNavigation(navController: NavHostController) {
 
             composable<Spots> {
                 SpotsScreen(
-                    onImageClick = { pictureId ->
-                        navController.navigate(SpotDetailScreenData(pictureId))
+                    onSpotClick = { spotId ->
+                        navController.navigate(SpotDetailScreenData(spotId))
                     },
                     onProfileClick = { userId, username ->
                         navController.navigate(
@@ -393,7 +393,7 @@ fun NavGraphBuilder.searchNavGraph(navController: NavController) {
         composable<Category> {
             CategoryScreen(
                 onSearchBarClick = {
-                    navController.navigate("search"){
+                    navController.navigate("search") {
                         launchSingleTop = true
                     }
                 }
@@ -403,6 +403,9 @@ fun NavGraphBuilder.searchNavGraph(navController: NavController) {
         composable("search") {
             SearchScreen(
                 onBack = { navController.popBackStack() },
+                onSpotClick = { spotId ->
+                    navController.navigate(SpotDetailScreenData(spotId))
+                }
             )
         }
 
