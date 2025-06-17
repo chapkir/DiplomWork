@@ -8,9 +8,11 @@ import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 @Configuration
 @EnableRabbit
+@ConditionalOnProperty(name = "app.rabbit.enabled", havingValue = "true", matchIfMissing = false)
 public class RabbitMQConfig {
     public static final String EXCHANGE = "notification.exchange";
     public static final String QUEUE = "notification.queue";

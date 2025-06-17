@@ -44,6 +44,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 
 import jakarta.validation.Valid;
 import java.io.IOException;
@@ -185,9 +187,9 @@ public class PinController {
         notificationPublisher.publishLikeNotification(user.getId(), pin.getId());
         // Отправляем push-уведомление
         notificationSender.sendNotification(
-            pin.getUser(),
-            "Новый лайк", 
-            String.format("%s лайкнул ваш пин '%s'", user.getUsername(), pin.getTitle())
+                pin.getUser(),
+                "Новый лайк",
+                String.format("%s лайкнул ваш пин '%s'", user.getUsername(), pin.getTitle())
         );
 
         HateoasResponse<Void> response = new HateoasResponse<>(null);
@@ -220,7 +222,7 @@ public class PinController {
 
     @PostMapping("/{id}/comments")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> addComment(
+    public ResponseEntity<CommentResponse> addComment(
             @PathVariable Long id,
             @Valid @RequestBody CommentRequest commentRequest,
             Authentication authentication) {
@@ -228,7 +230,7 @@ public class PinController {
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
         if (!probe.isConsumed()) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .body(new MessageResponse("Слишком много запросов"));
+                    .body(null);
         }
 
         // Загружаем пользователя и пин
@@ -241,6 +243,7 @@ public class PinController {
         comment.setPin(pin);
         comment.setUser(user);
         comment.setCreatedAt(LocalDateTime.now());
+
         // Обработка тегов в комментарии
         Set<Tag> commentTags = new HashSet<>();
         Pattern tagPattern = Pattern.compile("#(\\w+)");
@@ -248,10 +251,11 @@ public class PinController {
         while (tagMatcher.find()) {
             String tagName = tagMatcher.group(1);
             tagRepository.findByNameIgnoreCase(tagName)
-                .ifPresentOrElse(commentTags::add,
-                    () -> commentTags.add(tagRepository.save(new Tag(tagName))));
+                    .ifPresentOrElse(commentTags::add,
+                            () -> commentTags.add(tagRepository.save(new Tag(tagName))));
         }
         comment.setTags(commentTags);
+
         // Обработка упоминаний в комментарии
         Set<User> commentMentions = new HashSet<>();
         Pattern mentionPattern = Pattern.compile("@(\\w+)");
@@ -267,29 +271,57 @@ public class PinController {
         comment.setMentions(commentMentions);
 
         // Сохраняем комментарий и обновляем пин
-        commentRepository.save(comment);
-        pin.getComments().add(comment);
+        Comment savedComment = commentRepository.save(comment);
+        pin.getComments().add(savedComment);
         long totalCommentsLong = commentRepository.countByPinId(id);
         pin.setCommentsCount(Math.toIntExact(totalCommentsLong));
         pinRepository.save(pin);
 
-        // Публикуем уведомление
-        notificationPublisher.publishCommentNotification(user.getId(), pin.getId(), commentRequest.getText());
+        // Публикуем уведомление (не критично для ответа клиенту)
+        try {
+            notificationPublisher.publishCommentNotification(user.getId(), pin.getId(), commentRequest.getText());
+        } catch (Exception ex) {
+            logger.warn("Не удалось отправить событие RabbitMQ: {}", ex.getMessage());
+        }
         // Отправляем push-уведомление
-        notificationSender.sendNotification(
-            pin.getUser(),
-            "Новый комментарий",
-            String.format("%s прокомментировал ваш пин: %s", user.getUsername(), commentRequest.getText())
-        );
+        try {
+            notificationSender.sendNotification(
+                    pin.getUser(),
+                    "Новый комментарий",
+                    String.format("%s прокомментировал ваш пин: %s", user.getUsername(), commentRequest.getText())
+            );
+        } catch (Exception ex) {
+            logger.warn("Не удалось отправить push-уведомление: {}", ex.getMessage());
+        }
 
-        // Формируем ответ
-        PinResponse pinResponse = pinQueryService.convertToPinResponse(pin, user);
-        HateoasResponse<PinResponse> response = new HateoasResponse<>(pinResponse);
-        response.addSelfLink("/api/pins/" + id + "/comments");
-        response.addLink("pin", "/api/pins/detail/" + id, "GET");
-        response.addLink("all-comments", "/api/pins/" + id + "/comments", "GET");
-        response.getMeta().setMessage("Комментарий успешно добавлен");
-        return ResponseEntity.ok(response);
+        // Формируем DTO ответа
+        CommentResponse cr = new CommentResponse();
+        cr.setId(savedComment.getId());
+        cr.setText(savedComment.getText());
+        cr.setCreatedAt(savedComment.getCreatedAt());
+        cr.setUsername(user.getUsername());
+        String avatarUrl = user.getProfileImageUrl();
+        if (avatarUrl != null && !avatarUrl.isEmpty()) {
+            avatarUrl = fileStorageService.updateImageUrl(avatarUrl);
+        }
+        cr.setUserProfileImageUrl(avatarUrl);
+        cr.setUserId(user.getId());
+        // теги
+        if (savedComment.getTags() != null) {
+            java.util.List<String> tagNames = savedComment.getTags().stream()
+                    .map(Tag::getName)
+                    .collect(java.util.stream.Collectors.toList());
+            cr.setTags(tagNames);
+        }
+        // упоминания
+        if (savedComment.getMentions() != null) {
+            java.util.List<String> mentionNames = savedComment.getMentions().stream()
+                    .map(User::getUsername)
+                    .collect(java.util.stream.Collectors.toList());
+            cr.setMentions(mentionNames);
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(cr);
     }
 
     @GetMapping("/{id}/comments")
@@ -356,6 +388,10 @@ public class PinController {
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('USER')")
+    @Caching(evict = {
+            @CacheEvict(value = {"pins", "search"}, allEntries = true),
+            @CacheEvict(cacheNames = "extended_pins", cacheManager = "extendedPinCacheManager", allEntries = true)
+    })
     public ResponseEntity<?> uploadImages(
             @Valid @ModelAttribute UploadRequest uploadRequest,
             Authentication authentication) {

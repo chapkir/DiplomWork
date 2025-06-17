@@ -9,11 +9,13 @@ import com.example.server.UsPinterest.repository.UserRepository;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "app.rabbit.enabled", havingValue = "true", matchIfMissing = false)
 public class NotificationConsumer {
 
     private final NotificationService notificationService;

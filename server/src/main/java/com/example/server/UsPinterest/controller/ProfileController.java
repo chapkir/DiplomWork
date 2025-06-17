@@ -89,7 +89,7 @@ public class ProfileController {
             response.setRegistrationDate(user.getRegistrationDate());
             response.setFirstName(user.getFirstName());
 
-            // Set counts for own profile
+
             int pinsCount = pinRepository.findByUserOrderByCreatedAtDesc(user).size();
             response.setPinsCount(pinsCount);
             int postsCount = postRepository.findByUserOrderByCreatedAtDesc(user).size();
@@ -144,7 +144,7 @@ public class ProfileController {
             String username = authentication.getName();
             User user = userService.getUserWithCollectionsByUsername(username);
 
-            // Используем метод с сортировкой (сначала новые лайки)
+
             List<Like> likes = likeRepository.findByUserOrderByIdDesc(user);
             List<PinResponse> pinResponses = likes.stream().map(like -> {
                 Pin pin = like.getPin();
@@ -218,7 +218,7 @@ public class ProfileController {
             response.setRegistrationDate(targetUser.getRegistrationDate());
             response.setFirstName(targetUser.getFirstName());
 
-            // Set counts for other profile
+
             int otherPinsCount = pinRepository.findByUserOrderByCreatedAtDesc(targetUser).size();
             response.setPinsCount(otherPinsCount);
             int otherPostsCount = postRepository.findByUserOrderByCreatedAtDesc(targetUser).size();

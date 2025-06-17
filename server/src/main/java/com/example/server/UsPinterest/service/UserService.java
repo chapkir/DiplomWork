@@ -86,7 +86,6 @@ public class UserService {
         } catch (BadCredentialsException e) {
             throw new RuntimeException("Неверное имя пользователя или пароль");
         } catch (DisabledException e) {
-            // Пользователь не подтвердил email, но выдаем токен
             logger.warn("Пользователь {} не подтвердил email, выдаем токен: {}", username, e.getMessage());
         }
 
@@ -229,7 +228,6 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new com.example.server.UsPinterest.exception.ResourceNotFoundException("Пользователь не найден с id: " + userId));
 
-        // Обновляем только те поля, которые предоставлены в запросе
         if (request.getFirstName() != null) {
             user.setFirstName(request.getFirstName());
         }
@@ -267,25 +265,23 @@ public class UserService {
     public void deleteUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден с id: " + userId));
-        // Удаляем подписки, где пользователь является подписчиком или тем, на кого подписываются
         followRepository.deleteByFollowerId(userId);
         followRepository.deleteByFollowingId(userId);
-        // Удаляем уведомления, связанные с пользователем как получателем или отправителем
         notificationRepository.deleteByRecipient(user);
         notificationRepository.deleteBySender(user);
-        // Удаляем refresh токены
+
         refreshTokenRepository.deleteByUser(user);
-        // Удаляем токены подтверждения
+
         List<VerificationToken> tokens = verificationTokenRepository.findByUser(user);
         if (tokens != null && !tokens.isEmpty()) {
             verificationTokenRepository.deleteAll(tokens);
         }
-        // Удаляем все пины пользователя с очисткой файлов
+
         List<Pin> pins = pinRepository.findByUserId(userId);
         for (Pin p : pins) {
             pinCrudService.deletePin(p.getId());
         }
-        // Удаляем самого пользователя
+
         userRepository.delete(user);
     }
 
