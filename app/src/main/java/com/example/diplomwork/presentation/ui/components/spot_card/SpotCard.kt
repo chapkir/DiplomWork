@@ -1,6 +1,8 @@
 package com.example.diplomwork.presentation.ui.components.spot_card
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +44,7 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.diplomwork.presentation.ui.components.bottom_sheets.ConfirmDeleteBottomSheet
 import com.example.diplomwork.presentation.ui.components.bottom_sheets.MenuBottomSheet
+import com.example.diplomwork.presentation.ui.theme.BgElevated
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.HorizontalPagerIndicator
@@ -83,11 +86,12 @@ fun SpotCard(
 
     Card(
         shape = RoundedCornerShape(14.dp),
-        elevation = CardDefaults.cardElevation(10.dp),
+        elevation = CardDefaults.cardElevation(5.dp),
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp)
-            .clickable { onSpotClick() }
+            .clickable { onSpotClick() },
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
         Box(
             modifier = Modifier
@@ -228,7 +232,7 @@ fun ImagesPager(
                                 .memoryCachePolicy(CachePolicy.ENABLED)
                                 .build(),
                             contentDescription = null,
-                            contentScale = ContentScale.Crop,
+                            contentScale = ContentScale.Fit,
                             modifier = Modifier
                                 .matchParentSize()
                                 .clip(RoundedCornerShape(12.dp))

@@ -61,7 +61,8 @@ fun SpotsScreen(
     }
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
     ) {
         PullToRefreshBox(
             isRefreshing = isRefreshing,
@@ -100,7 +101,7 @@ fun SpotsScreen(
                 spots.itemCount == 0 -> {
                     Text(
                         text = "Нет доступных мест",
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.padding(16.dp)
                     )
                 }

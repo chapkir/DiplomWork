@@ -9,6 +9,7 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
@@ -24,9 +25,11 @@ val LightColorScheme = lightColorScheme(
     // Цвета текста на фоне элементов
     onPrimary = LightTextPrimary,            // Текст на основной кнопке
     onSecondary = LightTextPrimary,          // Текст на второстепенной кнопке
-    onBackground = LightTextPrimary,         // Текст на основном фоне
+    onBackground = Color.Black,         // Текст на основном фоне
     onSurface = LightTextPrimary,            // Текст на поверхностях
     onError = LightTextPrimary,              // Текст на фоне ошибок
+
+    outline = LightDividerDark, //  Цвет обводки
 
     // Контейнеры и акценты
     primaryContainer = LightBgProfile,       // Контейнер основной кнопки
@@ -48,9 +51,11 @@ val DarkColorScheme = darkColorScheme(
     // Для контрастных текстов
     onPrimary = TextPrimary,  // Цвет текста на основной кнопке
     onSecondary = TextPrimary,  // Цвет текста на второстепенной кнопке
-    onBackground = TextPrimary,  // Цвет текста на основном фоне
+    onBackground = Color.White,  // Цвет текста на основном фоне
     onSurface = TextPrimary,  // Цвет текста на поднятых элементах
     onError = TextPrimary,  // Цвет текста на ошибках
+
+    outline = DividerDark,
 
     // Акценты
     primaryContainer = BgProfile,  // Фон для контейнера основной кнопки

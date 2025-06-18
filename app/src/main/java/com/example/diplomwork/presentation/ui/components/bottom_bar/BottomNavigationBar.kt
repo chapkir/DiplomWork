@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -20,7 +22,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import com.example.diplomwork.presentation.system_settings.systemInsetHeight
 import com.example.diplomwork.presentation.ui.navigation.Screen
-import com.example.diplomwork.presentation.ui.theme.BgBottomBar
 import com.example.diplomwork.presentation.ui.theme.Dimens.BottomMenuHeight
 
 @Composable
@@ -41,16 +42,16 @@ fun BottomNavigationBar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(BgBottomBar),
+            .background(MaterialTheme.colorScheme.background),
     ) {
         NavigationBar(
-            containerColor = BgBottomBar,
-            contentColor = Color.White,
+            containerColor = MaterialTheme.colorScheme.background,
+            contentColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
             modifier = Modifier
                 .height(
                     BottomMenuHeight + systemInsetHeight(WindowInsetsCompat.Type.navigationBars()).value
                 )
-                .padding(horizontal = 15.dp)
+                .padding(top = 1.dp, start = 15.dp, end = 15.dp)
         ) {
             items.forEach { item ->
                 val isSelected = currentRoute == item.route::class.simpleName
@@ -79,8 +80,9 @@ fun BottomNavigationBar(
                         )
                     },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color.White,
-                        unselectedIconColor = Color.LightGray.copy(alpha = 0.8f),
+                        selectedIconColor = MaterialTheme.colorScheme.onBackground,
+                        unselectedIconColor =
+                            MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                         selectedTextColor = Color.Blue,
                         unselectedTextColor = Color.Gray,
                         indicatorColor = Color.Transparent

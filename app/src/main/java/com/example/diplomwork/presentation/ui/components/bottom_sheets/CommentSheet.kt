@@ -80,7 +80,7 @@ fun CommentsBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
-        containerColor = BgDefault,
+        containerColor = MaterialTheme.colorScheme.background,
         scrimColor = Color.Black.copy(alpha = 0.5f),
     ) {
         Column(
@@ -124,7 +124,7 @@ fun CommentsContent(
         ) {
             Text(
                 text = "Комментарии",
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onPrimary,
                 fontSize = 15.sp
             )
         }
@@ -138,7 +138,7 @@ fun CommentsContent(
             ) {
                 Text(
                     text = "Нет комментариев",
-                    color = Color.White.copy(alpha = 0.6f)
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
                 )
             }
         } else {
@@ -176,18 +176,18 @@ fun CommentsContent(
                 placeholder = {
                     Text(
                         text = "Поделитесь своим мнением",
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onBackground,
                         fontSize = 16.sp
                     )
                 },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    cursorColor = Color.White,
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = Color.Gray,
-                    focusedPlaceholderColor = Color.Gray,
-                    unfocusedPlaceholderColor = Color.Gray
+                    focusedTextColor = MaterialTheme.colorScheme.onPrimary,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f),
+                    cursorColor = MaterialTheme.colorScheme.primary,
+                    focusedBorderColor = MaterialTheme.colorScheme.onPrimary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f),
+                    focusedPlaceholderColor = MaterialTheme.colorScheme.onBackground,
+                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                 ),
                 singleLine = true,
                 maxLines = 1,
@@ -208,10 +208,10 @@ fun CommentsContent(
                     .clip(CircleShape),
                 enabled = commentText.isNotBlank(),
                 colors = IconButtonColors(
-                    containerColor = ButtonPrimary,
-                    disabledContainerColor = Color.Gray,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    disabledContainerColor = Color.LightGray,
                     contentColor = Color.White,
-                    disabledContentColor = BgDefault
+                    disabledContentColor = Color.White
                 )
             ) {
                 Icon(
@@ -233,7 +233,7 @@ fun CommentItem(
             .fillMaxWidth()
             .padding(vertical = 4.dp, horizontal = 15.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.1f)
+            containerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.1f)
         )
     ) {
         Row(
@@ -265,14 +265,14 @@ fun CommentItem(
                 Text(
                     text = comment.username,
                     style = MaterialTheme.typography.titleSmall,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.clickable { onProfileClick() }
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = comment.text,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.8f)
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                 )
             }
         }

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
@@ -39,7 +40,7 @@ fun MenuBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
-        containerColor = BgDefault,
+        containerColor = MaterialTheme.colorScheme.background,
         scrimColor = Color.Black.copy(alpha = 0.5f),
     ) {
         Column(
@@ -75,7 +76,7 @@ fun MenuItem(
             )
             .padding(horizontal = 25.dp, vertical = 12.dp),
         color =
-            if (title != "Удалить") Color.LightGray
+            if (title != "Удалить") MaterialTheme.colorScheme.onPrimary
             else Color.Red,
         fontSize = 20.sp,
         fontWeight = FontWeight.Medium,

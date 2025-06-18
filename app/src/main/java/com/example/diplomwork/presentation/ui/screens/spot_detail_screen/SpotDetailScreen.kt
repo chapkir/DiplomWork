@@ -191,7 +191,7 @@ fun SpotDetailScreen(
             Icon(
                 painter = painterResource(id = R.drawable.ic_arrow_back),
                 contentDescription = "back",
-                tint = IconPrimary
+                tint = Color.White.copy(alpha = 0.8f)
             )
         }
         IconButton(
@@ -206,7 +206,7 @@ fun SpotDetailScreen(
                 .align(Alignment.TopEnd),
             colors = IconButtonDefaults.iconButtonColors(
                 contentColor = Color.Black,
-                containerColor = IconPrimary
+                containerColor = Color.White.copy(alpha = 0.8f)
             )
         ) {
             Icon(
@@ -263,10 +263,10 @@ private fun ImagesPager(
             state = pagerState,
             modifier = Modifier
                 .fillMaxSize()
-                .clip(RoundedCornerShape(12.dp)),
+                .clip(RoundedCornerShape(18.dp)),
         ) { page ->
             Card(
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(18.dp),
                 elevation = CardDefaults.cardElevation(5.dp),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -281,14 +281,7 @@ private fun ImagesPager(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(
-                                        Color(0xFFFFA292),
-                                        Color(0xFFD5523B),
-                                    )
-                                ),
-                            )
+                            .background( Color.Gray )
                             .blur(50.dp),
                     )
 
@@ -300,7 +293,7 @@ private fun ImagesPager(
                             .memoryCachePolicy(CachePolicy.ENABLED)
                             .build(),
                         contentDescription = null,
-                        contentScale = ContentScale.Crop,
+                        contentScale = ContentScale.Fit,
                         onState = { state ->
                             isLoading = state is AsyncImagePainter.State.Loading
 
@@ -317,7 +310,7 @@ private fun ImagesPager(
                         },
                         modifier = Modifier
                             .matchParentSize()
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(18.dp))
                     )
                 }
             }
@@ -409,7 +402,7 @@ private fun ActionBar(
                             else R.drawable.ic_favs
                     ),
                     contentDescription = "Лайк",
-                    tint = if (isLiked) Color.Red else Color.White,
+                    tint = if (isLiked) Color.Red else MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(22.dp)
                 )
 
@@ -418,7 +411,7 @@ private fun ActionBar(
                 Text(
                     text = likesCount.toString(),
                     style = MaterialTheme.typography.titleSmall,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onPrimary
                 )
             }
             Spacer(modifier = Modifier.width(10.dp))
@@ -432,7 +425,7 @@ private fun ActionBar(
                 Icon(
                     painter = painterResource(id = R.drawable.ic_comments),
                     contentDescription = "Комментарии",
-                    tint = Color.White,
+                    tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(22.dp)
                 )
 
@@ -441,7 +434,7 @@ private fun ActionBar(
                 Text(
                     text = commentsCount.toString(),
                     style = MaterialTheme.typography.titleSmall,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onPrimary
                 )
             }
         }

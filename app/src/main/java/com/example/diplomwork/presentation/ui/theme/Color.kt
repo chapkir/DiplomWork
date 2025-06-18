@@ -51,7 +51,7 @@ val ErrorColor = Color(0xFFFF2E2A)  // Красный для ошибок
 // Фоновые цвета (светлая тема)
 val LightBgDefault = Color(0xFFFFFFFF)        // Основной фон
 val LightBgProfile = Color(0xFFF3F3F3)         // Фон профиля
-val LightBgElevated = Color(0xFFF8F8F8)        // Поверхности, карточки
+val LightBgElevated = Color(0xFFFFFFFF)        // Поверхности, карточки
 val LightBgOverlay = Color(0x99000000)         // Оверлеи (чёрный с прозрачностью)
 
 // Текстовые цвета (светлая тема)

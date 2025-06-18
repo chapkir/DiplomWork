@@ -94,6 +94,10 @@ fun SpotCardHeader(
         }
     }
     Spacer(modifier = Modifier.height(5.dp))
-    HorizontalDivider(thickness = 2.dp, color = DividerDark)
+    HorizontalDivider(
+        modifier = Modifier.padding(start = 1.dp, end = 1.dp),
+        thickness = 1.dp,
+        color = MaterialTheme.colorScheme.outline
+    )
     Spacer(modifier = Modifier.height(12.dp))
 }
