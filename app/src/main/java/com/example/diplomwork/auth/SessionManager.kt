@@ -81,7 +81,8 @@ class SessionManager @Inject constructor(@ApplicationContext context: Context) {
         get() = prefs.getLong(KEY_EXPIRATION, -1).takeIf { it != -1L }
         private set(value) {
             value?.let {
-                prefs.edit() { putLong(KEY_EXPIRATION, it - TOKEN_REFRESH_MARGIN_MS) }
+                // Сохраняем фактическое время истечения токена без вычета, чтобы не считать токен просроченным раньше времени
+                prefs.edit() { putLong(KEY_EXPIRATION, it) }
                 Log.d(TAG, "Токен истекает: ${Date(it)}")
             }
         }

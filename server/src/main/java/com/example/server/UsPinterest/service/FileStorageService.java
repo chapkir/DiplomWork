@@ -210,6 +210,10 @@ public class FileStorageService {
 
         // если URL абсолютный - оставляем его
         if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+            // Исправляем URL, чтобы использовать localhost вместо chapkir.com
+            if (imageUrl.contains("chapkir.com:8081")) {
+                return imageUrl.replace("chapkir.com:8081", "localhost:8081");
+            }
             return imageUrl;
         }
 
@@ -231,7 +235,8 @@ public class FileStorageService {
         }
 
         // конвертируем в абсолютный URL с хостом
-        String absoluteUrl = appUrl + path;
+        // Используем localhost вместо удаленного хоста
+        String absoluteUrl = "http://localhost:8081" + path;
 
         logger.debug("Преобразование URL: {} -> {}", imageUrl, absoluteUrl);
         return absoluteUrl;

@@ -5,267 +5,333 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Spotsy - Открывай интересные места вокруг себя">
     <meta name="theme-color" content="#FF5F40">
-    
+
     <!-- Preload критических ресурсов -->
     <link rel="preload" href="/css/style.css" as="style">
     <link rel="preload" href="/js/app.js" as="script">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style">
-    
+
     <!-- DNS prefetch для внешних ресурсов -->
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
     <link rel="dns-prefetch" href="https://maps.googleapis.com">
-    
+
     <!-- Основные стили -->
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-    
+
     <!-- PWA манифест -->
     <link rel="manifest" href="/manifest.json">
-    
+
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
-    
+
     <title>Spotsy - Открывай интересные места</title>
+
+    <style>
+        /* Добавляем стили для футера */
+        .footer {
+            background-color: #1E1E1E;
+            padding: 30px 0;
+            margin-top: 50px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .footer-link {
+            color: #B0B0B0;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .footer-link:hover {
+            color: #FF5F40;
+        }
+
+        .privacy-link {
+            position: relative;
+        }
+
+        .privacy-link::after {
+            content: "NEW";
+            position: absolute;
+            top: -8px;
+            right: -28px;
+            background: #FF5F40;
+            color: #fff;
+            font-size: 8px;
+            font-weight: 600;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+    </style>
 </head>
 <body>
-    <!-- Глобальный лоадер -->
-    <div id="global-loader" class="global-loader">
-        <div class="loader-content">
-            <div class="loader-spinner"></div>
-            <div class="loader-text">Загрузка...</div>
+<!-- Глобальный лоадер -->
+<div id="global-loader" class="global-loader">
+    <div class="loader-content">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">Загрузка...</div>
+    </div>
+</div>
+
+<!-- Хедер -->
+<header class="header">
+    <div class="container">
+        <a href="/" class="logo">
+            <span class="logo-gradient">Spotsy</span>
+        </a>
+        <nav class="nav">
+            <a href="#" class="nav-link active" data-view="feed">Спотсы</a>
+            <a href="#" class="nav-link" data-view="favorites">Избранное</a>
+            <a href="#" class="nav-link" data-view="nearby">Рядом со мной</a>
+            <a href="#" class="nav-link" data-view="profile">Профиль</a>
+            <a href="#" class="nav-link" data-view="posts">Публикации</a>
+            <a href="#" class="nav-link auth-action" id="login-btn">Войти</a>
+            <a href="#" class="nav-link auth-action" id="logout-btn" style="display: none;">Выйти</a>
+        </nav>
+    </div>
+</header>
+
+<!-- Формы авторизации -->
+<div id="login-view" class="auth-view">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h2>Войти в Spotsy</h2>
+                <p>Открывайте и делитесь интересными местами</p>
+            </div>
+            <form id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="login-username">Имя пользователя</label>
+                    <input type="text" id="login-username" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Пароль</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Войти</button>
+            </form>
+            <div class="auth-switch">
+                Нет аккаунта? <a href="#" id="show-signup">Регистрация</a>
+            </div>
         </div>
     </div>
+</div>
 
-    <!-- Хедер -->
-    <header class="header">
+<div id="signup-view" class="auth-view">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h2>Регистрация в Spotsy</h2>
+                <p>Присоединяйтесь к сообществу путешественников</p>
+            </div>
+            <form id="signup-form" class="auth-form">
+                <div class="form-group">
+                    <label for="signup-username">Имя пользователя</label>
+                    <input type="text" id="signup-username" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-email">Email</label>
+                    <input type="email" id="signup-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">Пароль</label>
+                    <input type="password" id="signup-password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+            </form>
+            <div class="auth-switch">
+                Уже есть аккаунт? <a href="#" id="show-login">Войти</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="app-views">
+    <!-- Главная страница с местами -->
+    <div id="feed-view" class="view content-view">
         <div class="container">
-            <a href="/" class="logo">
+            <div class="content-header">
+                <h2>Интересные места для посещения</h2>
+                <p>Исследуйте уникальные локации со всего мира</p>
+            </div>
+
+            <!-- Фильтры категорий -->
+            <div class="category-filters">
+                <button class="category-btn active" data-category="all">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 5A2 2 0 015 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Все
+                </button>
+                <button class="category-btn" data-category="food">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M18 8h1a4 4 0 010 8h-1M5 8h2a2 2 0 110 4H5h4a2 2 0 110 4H5m0-8h12v9a2 2 0 01-2 2H7a2 2 0 01-2-2V8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Еда и напитки
+                </button>
+                <button class="category-btn" data-category="nature">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21 21L3 3m13 13l-3-3m-3-3L7 7m3 9a6 6 0 110-12 6 6 0 010 12z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Природа
+                </button>
+                <button class="category-btn" data-category="culture">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 21h18M3 7V5h18v2M8 21V7m8 14V7m-4 14V7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Культура
+                </button>
+                <button class="category-btn" data-category="entertainment">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 21V18m0-12V3m-6 12H3m3-6l-3-3m3 15l-3 3m15-15l3-3m-3 15l3 3m0-9h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Развлечения
+                </button>
+                <button class="category-btn" data-category="sport">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 4v16m-8-8h16M5.45 5.45l13.1 13.1m0-13.1l-13.1 13.1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Спорт
+                </button>
+                <button class="category-btn" data-category="architecture">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 21h18M5 21V7l7-4 7 4v14m-7-8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Архитектура
+                </button>
+            </div>
+
+            <!-- Контейнер для карточек мест -->
+            <div id="feed" class="spots-grid">
+                <!-- Места будут добавлены динамически -->
+            </div>
+
+            <!-- Кнопка "Загрузить еще" -->
+            <button id="load-more-pins" class="load-more-btn">Показать больше мест</button>
+        </div>
+    </div>
+
+    <!-- Избранные места -->
+    <div id="favorites-view" class="view content-view">
+        <div class="container">
+            <div class="content-header">
+                <h2>Ваши избранные места</h2>
+                <p>Сохраненные места, которые вы хотите посетить</p>
+            </div>
+            <div id="favorites-container" class="spots-grid">
+                <!-- Избранные места будут добавлены динамически -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Места рядом с пользователем -->
+    <div id="nearby-view" class="view content-view">
+        <div class="container">
+            <div class="content-header">
+                <h2>Места рядом с вами</h2>
+                <p>Интересные локации в вашем районе</p>
+            </div>
+            <div class="location-permission">
+                <button id="get-location-btn" class="btn btn-primary">Определить мое местоположение</button>
+            </div>
+            <div id="map-container" class="map-container">
+                <!-- Карта будет добавлена динамически -->
+            </div>
+            <div id="nearby-places" class="spots-grid">
+                <!-- Ближайшие места будут добавлены динамически -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Профиль пользователя -->
+    <div id="profile-view" class="view content-view">
+        <div class="container">
+            <div id="profile-content">
+                <!-- Содержимое профиля будет добавлено динамически -->
+            </div>
+            <div id="posts-feed" class="spots-grid">
+                <!-- Посты пользователя будут добавлены динамически -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Публикации -->
+    <div id="posts-view" class="view content-view">
+        <div class="container">
+            <div class="content-header">
+                <h2>Публикации сообщества</h2>
+                <p>Отзывы и впечатления пользователей о различных местах</p>
+            </div>
+            <div id="posts-feed-main" class="spots-grid">
+                <!-- Посты пользователей будут добавлены динамически -->
+            </div>
+            <!-- Кнопка "Загрузить еще" -->
+            <button id="load-more-posts" class="load-more-btn">Показать больше публикаций</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно с деталями места -->
+<div id="spot-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <div id="spot-details">
+            <!-- Детали места будут добавлены динамически -->
+        </div>
+    </div>
+</div>
+
+<!-- Футер -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-logo">
                 <span class="logo-gradient">Spotsy</span>
-            </a>
-            <nav class="nav">
-                <a href="#" class="nav-link active" data-view="feed">Спотсы</a>
-                <a href="#" class="nav-link" data-view="favorites">Избранное</a>
-                <a href="#" class="nav-link" data-view="nearby">Рядом со мной</a>
-                <a href="#" class="nav-link" data-view="profile">Профиль</a>
-                <a href="#" class="nav-link" data-view="posts">Публикации</a>
-                <a href="#" class="nav-link auth-action" id="login-btn">Войти</a>
-                <a href="#" class="nav-link auth-action" id="logout-btn" style="display: none;">Выйти</a>
-            </nav>
-        </div>
-    </header>
-
-    <!-- Формы авторизации -->
-    <div id="login-view" class="auth-view">
-        <div class="auth-container">
-            <div class="auth-card">
-                <div class="auth-header">
-                    <h2>Войти в Spotsy</h2>
-                    <p>Открывайте и делитесь интересными местами</p>
-                </div>
-                <form id="login-form" class="auth-form">
-                    <div class="form-group">
-                        <label for="login-username">Имя пользователя</label>
-                        <input type="text" id="login-username" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="login-password">Пароль</label>
-                        <input type="password" id="login-password" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Войти</button>
-                </form>
-                <div class="auth-switch">
-                    Нет аккаунта? <a href="#" id="show-signup">Регистрация</a>
-                </div>
+                <p>© 2025 Spotsy. Все права защищены.</p>
+            </div>
+            <div class="footer-links">
+                <a href="/privacy.html" class="footer-link privacy-link">Политика конфиденциальности</a>
+                <a href="#" class="footer-link" id="contact-link">Контакты</a>
+                <a href="#" class="footer-link" id="about-link">О проекте</a>
             </div>
         </div>
     </div>
+</footer>
 
-    <div id="signup-view" class="auth-view">
-        <div class="auth-container">
-            <div class="auth-card">
-                <div class="auth-header">
-                    <h2>Регистрация в Spotsy</h2>
-                    <p>Присоединяйтесь к сообществу путешественников</p>
-                </div>
-                <form id="signup-form" class="auth-form">
-                    <div class="form-group">
-                        <label for="signup-username">Имя пользователя</label>
-                        <input type="text" id="signup-username" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="signup-email">Email</label>
-                        <input type="email" id="signup-email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="signup-password">Пароль</label>
-                        <input type="password" id="signup-password" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
-                </form>
-                <div class="auth-switch">
-                    Уже есть аккаунт? <a href="#" id="show-login">Войти</a>
-                </div>
-            </div>
-        </div>
-    </div>
+<!-- Скрипты -->
+<script src="/js/app.js" defer></script>
 
-    <div id="app-views">
-        <!-- Главная страница с местами -->
-        <div id="feed-view" class="view content-view">
-            <div class="container">
-                <div class="content-header">
-                    <h2>Интересные места для посещения</h2>
-                    <p>Исследуйте уникальные локации со всего мира</p>
-                </div>
-                
-                <!-- Фильтры категорий -->
-                <div class="category-filters">
-                    <button class="category-btn active" data-category="all">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M3 5A2 2 0 015 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        Все
-                    </button>
-                    <button class="category-btn" data-category="food">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M18 8h1a4 4 0 010 8h-1M5 8h2a2 2 0 110 4H5h4a2 2 0 110 4H5m0-8h12v9a2 2 0 01-2 2H7a2 2 0 01-2-2V8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        Еда и напитки
-                    </button>
-                    <button class="category-btn" data-category="nature">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M21 21L3 3m13 13l-3-3m-3-3L7 7m3 9a6 6 0 110-12 6 6 0 010 12z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        Природа
-                    </button>
-                    <button class="category-btn" data-category="culture">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M3 21h18M3 7V5h18v2M8 21V7m8 14V7m-4 14V7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        Культура
-                    </button>
-                    <button class="category-btn" data-category="entertainment">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M12 21V18m0-12V3m-6 12H3m3-6l-3-3m3 15l-3 3m15-15l3-3m-3 15l3 3m0-9h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        Развлечения
-                    </button>
-                    <button class="category-btn" data-category="sport">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 4v16m-8-8h16M5.45 5.45l13.1 13.1m0-13.1l-13.1 13.1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        Спорт
-                    </button>
-                    <button class="category-btn" data-category="architecture">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M3 21h18M5 21V7l7-4 7 4v14m-7-8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        Архитектура
-                    </button>
-                </div>
-                
-                <!-- Контейнер для карточек мест -->
-                <div id="feed" class="spots-grid">
-                    <!-- Места будут добавлены динамически -->
-                </div>
-                
-                <!-- Кнопка "Загрузить еще" -->
-                <button id="load-more-pins" class="load-more-btn">Показать больше мест</button>
-            </div>
-        </div>
-        
-        <!-- Избранные места -->
-        <div id="favorites-view" class="view content-view">
-            <div class="container">
-                <div class="content-header">
-                    <h2>Ваши избранные места</h2>
-                    <p>Сохраненные места, которые вы хотите посетить</p>
-                </div>
-                <div id="favorites-container" class="spots-grid">
-                    <!-- Избранные места будут добавлены динамически -->
-                </div>
-            </div>
-        </div>
-        
-        <!-- Места рядом с пользователем -->
-        <div id="nearby-view" class="view content-view">
-            <div class="container">
-                <div class="content-header">
-                    <h2>Места рядом с вами</h2>
-                    <p>Интересные локации в вашем районе</p>
-                </div>
-                <div class="location-permission">
-                    <button id="get-location-btn" class="btn btn-primary">Определить мое местоположение</button>
-                </div>
-                <div id="map-container" class="map-container">
-                    <!-- Карта будет добавлена динамически -->
-                </div>
-                <div id="nearby-places" class="spots-grid">
-                    <!-- Ближайшие места будут добавлены динамически -->
-                </div>
-            </div>
-        </div>
-        
-        <!-- Профиль пользователя -->
-        <div id="profile-view" class="view content-view">
-            <div class="container">
-                <div id="profile-content">
-                    <!-- Содержимое профиля будет добавлено динамически -->
-                </div>
-                <div id="posts-feed" class="spots-grid">
-                    <!-- Посты пользователя будут добавлены динамически -->
-                </div>
-            </div>
-        </div>
-        
-        <!-- Публикации -->
-        <div id="posts-view" class="view content-view">
-            <div class="container">
-                <div class="content-header">
-                    <h2>Публикации сообщества</h2>
-                    <p>Отзывы и впечатления пользователей о различных местах</p>
-                </div>
-                <div id="posts-feed-main" class="spots-grid">
-                    <!-- Посты пользователей будут добавлены динамически -->
-                </div>
-                <!-- Кнопка "Загрузить еще" -->
-                <button id="load-more-posts" class="load-more-btn">Показать больше публикаций</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Модальное окно с деталями места -->
-    <div id="spot-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <div id="spot-details">
-                <!-- Детали места будут добавлены динамически -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Скрипты -->
-    <script src="/js/app.js" defer></script>
-    
-    <!-- Service Worker для PWA -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registration successful');
-                    })
-                    .catch(err => {
-                        console.log('ServiceWorker registration failed:', err);
-                    });
-            });
-        }
-    </script>
+<!-- Service Worker для PWA -->
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('ServiceWorker registration successful');
+                })
+                .catch(err => {
+                    console.log('ServiceWorker registration failed:', err);
+                });
+        });
+    }
+</script>
 </body>
 </html>

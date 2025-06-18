@@ -1154,12 +1154,12 @@ function createSpotCard(spot) {
     
     // Проверяем, находится ли место в избранном
     if (token) {
-      isFavorite(spot.id).then(isLiked => {
-        if (isLiked) {
-          saveBtn.classList.add('active');
-          saveBtn.querySelector('svg').setAttribute('fill', 'currentColor');
-        }
-      });
+      // Проверяем избранное синхронно
+      const isLiked = isFavorite(spot.id);
+      if (isLiked) {
+        saveBtn.classList.add('active');
+        saveBtn.querySelector('svg').setAttribute('fill', 'currentColor');
+      }
     }
   }
   
@@ -1611,29 +1611,36 @@ async function loadProfile() {
                 
                 const fragment = document.createDocumentFragment();
                 posts.forEach((post, index) => {
-                    const card = createSpotCard({
-                        id: post.id,
-                        title: post.title || post.text || 'Публикация пользователя',
-                        description: post.text,
-                        imageUrl: post.thumbnailImageUrl || post.fullhdImageUrl || post.imageUrl || '/img/placeholder.svg',
-                        address: post.location || '',
-                        rating: post.rating || 4.5,
-                        user: { username: user.username },
-                        tags: post.tags || []
-                    });
-                    card.style.animationDelay = `${0.1 * (index % 12)}s`;
-                    card.classList.add('fade-in');
-                    fragment.appendChild(card);
+                    try {
+                        const card = createSpotCard({
+                            id: post.id,
+                            title: post.title || post.text || 'Публикация пользователя',
+                            description: post.text,
+                            imageUrl: post.thumbnailImageUrl || post.fullhdImageUrl || post.imageUrl || '/img/placeholder.svg',
+                            address: post.location || '',
+                            rating: post.rating || 4.5,
+                            user: { username: user.username },
+                            tags: post.tags || []
+                        });
+
+                        if (card) {
+                            card.style.animationDelay = `${0.1 * (index % 12)}s`;
+                            card.classList.add('fade-in');
+                            fragment.appendChild(card);
+                        }
+                    } catch (cardError) {
+                        console.error('Ошибка при создании карточки:', cardError);
+                    }
                 });
-                
+
                 grid.appendChild(fragment);
                 profileContent.appendChild(grid);
             } else {
-                profileContent.appendChild(createEmptyMessage('У вас пока нет публикаций'));
+                profileContent.appendChild(document.createRange().createContextualFragment(createEmptyMessage('У вас пока нет публикаций')));
             }
         } catch (postsError) {
             console.error('Ошибка при загрузке публикаций пользователя:', postsError);
-            
+
             // Продолжаем отображать профиль, но с сообщением об ошибке для постов
             profileContent.innerHTML = `
                 <div class="profile-header">
@@ -1646,7 +1653,7 @@ async function loadProfile() {
                     </div>
                 </div>
             `;
-            
+
             const errorElement = document.createElement('div');
             errorElement.innerHTML = createErrorMessage('Не удалось загрузить публикации');
             profileContent.appendChild(errorElement);
@@ -1708,3 +1715,23 @@ function createAuthRequiredMessage() {
         </div>
     `;
 }
+
+// Добавим скрипт для очистки кеша браузера при загрузке страницы
+(function clearBrowserCache() {
+  console.log('Clearing browser cache for app.js');
+
+  // Добавляем случайный параметр к URL скрипта при следующей загрузке
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+      for (let registration of registrations) {
+        registration.unregister();
+      }
+    });
+  }
+
+  // Очищаем кеш API
+  ApiCache.clear();
+
+  // Устанавливаем версию приложения для отслеживания изменений
+  localStorage.setItem('appVersion', '1.0.1');
+})();
