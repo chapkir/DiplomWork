@@ -211,9 +211,7 @@ public class FileStorageService {
         // если URL абсолютный - оставляем его
         if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
             // Исправляем URL, чтобы использовать localhost вместо chapkir.com
-            if (imageUrl.contains("chapkir.com:8081")) {
-                return imageUrl.replace("chapkir.com:8081", "localhost:8081");
-            }
+
             return imageUrl;
         }
 
